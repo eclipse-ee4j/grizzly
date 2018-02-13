@@ -1,0 +1,234 @@
+/*
+ * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0, which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the
+ * Eclipse Public License v. 2.0 are satisfied: GNU General Public License,
+ * version 2 with the GNU Classpath Exception, which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ */
+
+package org.glassfish.grizzly;
+
+import org.glassfish.grizzly.utils.Holder;
+
+/**
+ * Result of read operation, returned by {@link Readable}.
+ * 
+ * @param <K> type of the message
+ * @param <L> type of the address
+ * 
+ * @author Alexey Stashok
+ */
+public class ReadResult<K, L> implements Result, Cacheable {
+    private static final ThreadCache.CachedTypeIndex<ReadResult> CACHE_IDX =
+            ThreadCache.obtainIndex(ReadResult.class, 4);
+
+    private boolean isRecycled = false;
+
+    public static <K, L> ReadResult<K, L> create(Connection<L> connection) {
+        final ReadResult<K, L> readResult = takeFromCache();
+        if (readResult != null) {
+            readResult.connection = connection;
+            readResult.isRecycled = false;
+            return readResult;
+        }
+
+        return new ReadResult<K, L>(connection);
+    }
+
+    public static <K, L> ReadResult<K, L> create(Connection<L> connection,
+            K message, L srcAddress, int readSize) {
+        final ReadResult<K, L> readResult = takeFromCache();
+        if (readResult != null) {
+            readResult.connection = connection;
+            readResult.message = message;
+            readResult.srcAddressHolder = Holder.staticHolder(srcAddress);
+            readResult.readSize = readSize;
+            readResult.isRecycled = false;
+            
+            return readResult;
+        }
+
+        return new ReadResult<K, L>(connection, message, srcAddress, readSize);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <K, L> ReadResult<K, L> takeFromCache() {
+        return ThreadCache.takeFromCache(CACHE_IDX);
+    }
+
+    /**
+     * Connection, from which data were read.
+     */
+    private Connection<L> connection;
+
+    /**
+     * message data
+     */
+    private K message;
+
+    /**
+     *  Source address.
+     */
+
+    private Holder<L> srcAddressHolder;
+
+    /**
+     * Number of bytes read.
+     */
+    private int readSize;
+
+    protected ReadResult() {
+    }
+    
+    protected ReadResult(final Connection<L> connection) {
+        this(connection, null, null, 0);
+    }
+
+    protected ReadResult(final Connection<L> connection, final K message,
+            final L srcAddress, final int readSize) {
+        this.connection = connection;
+        this.message = message;
+        this.srcAddressHolder = Holder.staticHolder(srcAddress);
+        this.readSize = readSize;
+    }
+
+    /**
+     * Get the {@link Connection} data were read from.
+     * 
+     * @return the {@link Connection} data were read from.
+     */
+    @Override
+    public final Connection<L> getConnection() {
+        checkRecycled();
+        return connection;
+    }
+
+    /**
+     * Get the message, which was read.
+     * 
+     * @return the message, which was read.
+     */
+    public final K getMessage() {
+        checkRecycled();
+        return message;
+    }
+
+    /**
+     * Set the message, which was read.
+     *
+     * @param message the message, which was read.
+     */
+    public final void setMessage(K message) {
+        checkRecycled();
+        this.message = message;
+    }
+
+    /**
+     * Get the source address, the message was read from.
+     *
+     * @return the source address, the message was read from.
+     */
+    public final L getSrcAddress() {
+        checkRecycled();
+        return srcAddressHolder != null ? srcAddressHolder.get() : null;
+    }
+
+    /**
+     * Get the source address, the message was read from.
+     *
+     * @return the source address, the message was read from.
+     */
+    public final Holder<L> getSrcAddressHolder() {
+        checkRecycled();
+        return srcAddressHolder;
+    }
+
+    /**
+     * Set the source address, the message was read from.
+     *
+     * @param srcAddress the source address, the message was read from.
+     */
+    public final void setSrcAddress(L srcAddress) {
+        checkRecycled();
+        this.srcAddressHolder = Holder.staticHolder(srcAddress);
+    }
+
+    /**
+     * Set the source address, the message was read from.
+     *
+     * @param srcAddressHolder the source address, the message was read from.
+     */
+    public final void setSrcAddressHolder(Holder<L> srcAddressHolder) {
+        checkRecycled();
+        this.srcAddressHolder = srcAddressHolder;
+    }
+
+    /**
+     * Get the number of bytes, which were read.
+     *
+     * @return the number of bytes, which were read.
+     */
+    public final int getReadSize() {
+        checkRecycled();
+        return readSize;
+    }
+
+    /**
+     * Set the number of bytes, which were read.
+     *
+     * @param readSize the number of bytes, which were read.
+     */
+    public final void setReadSize(int readSize) {
+        checkRecycled();
+        this.readSize = readSize;
+    }
+
+    /**
+     * One method to set all the WriteResult properties.
+     * 
+     * @param connection
+     * @param message
+     * @param srcAddress
+     * @param readSize 
+     */
+    protected void set(final Connection<L> connection, final K message,
+            final L srcAddress, final int readSize) {
+        this.connection = connection;
+        this.message = message;
+        this.srcAddressHolder = Holder.staticHolder(srcAddress);
+        this.readSize = readSize;
+    }
+    
+    protected void reset() {
+        connection = null;
+        message = null;
+        srcAddressHolder = null;
+        readSize = 0;
+    }
+
+    private void checkRecycled() {
+        if (Grizzly.isTrackingThreadCache() && isRecycled)
+            throw new IllegalStateException("ReadResult has been recycled!");
+    }
+    
+    @Override
+    public void recycle() {
+        reset();
+        isRecycled = true;
+        ThreadCache.putToCache(CACHE_IDX, this);
+    }
+
+    @Override
+    public Object copy() {
+        return ReadResult.create(getConnection(), getMessage(),
+                getSrcAddress(), getReadSize());
+    }
+}

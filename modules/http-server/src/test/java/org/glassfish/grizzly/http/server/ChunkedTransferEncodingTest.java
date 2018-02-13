@@ -1,0 +1,466 @@
+/*
+ * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0, which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the
+ * Eclipse Public License v. 2.0 are satisfied: GNU General Public License,
+ * version 2 with the GNU Classpath Exception, which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ */
+
+package org.glassfish.grizzly.http.server;
+
+import org.glassfish.grizzly.http.ChunkedTransferEncoding;
+import org.glassfish.grizzly.http.FixedLengthTransferEncoding;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.ReadHandler;
+import org.glassfish.grizzly.http.HttpRequestPacket.Builder;
+import org.glassfish.grizzly.http.util.MimeHeaders;
+import org.junit.After;
+import org.junit.Before;
+import org.glassfish.grizzly.http.HttpPacket;
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.runners.Parameterized.Parameters;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.SocketConnectorHandler;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.HttpClientFilter;
+import org.glassfish.grizzly.http.HttpCodecFilter;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.HttpResponsePacket;
+import org.glassfish.grizzly.http.HttpTrailer;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.Protocol;
+import org.glassfish.grizzly.http.io.NIOInputStream;
+import org.glassfish.grizzly.http.io.NIOOutputStream;
+import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.utils.Charsets;
+import org.glassfish.grizzly.utils.ChunkingFilter;
+import org.glassfish.grizzly.utils.Pair;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ * Chunked Transfer-Encoding and HttpHandler tests.
+ * 
+ * @author Alexey Stashok
+ */
+@RunWith(Parameterized.class)
+public class ChunkedTransferEncodingTest {
+    private static final int PORT = 18898;
+
+    private final boolean isChunkWhenParsing;
+    private final boolean isAsyncHttpHandler;
+    
+    private HttpServer httpServer;
+    private EchoHandler echoHandler;
+    private Connection connection;
+    private boolean hasContent;
+
+    @Parameters
+    public static Collection<Object[]> getMode() {
+        return Arrays.asList(new Object[][]{
+                    {Boolean.FALSE, Boolean.FALSE},
+                    {Boolean.FALSE, Boolean.TRUE},
+                    {Boolean.TRUE, Boolean.FALSE},
+                    {Boolean.TRUE, Boolean.TRUE},
+                });
+    }
+
+    @Before
+    public void before() throws Exception {
+        Grizzly.setTrackingThreadCache(true);
+        echoHandler = new EchoHandler();
+        configureHttpServer();
+        startHttpServer(echoHandler);
+    }
+    
+    @After
+    public void after() throws Exception {
+        if (connection != null) {
+            connection.closeSilently();
+        }
+
+        if (httpServer != null) {
+            try {
+                httpServer.shutdownNow();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public ChunkedTransferEncodingTest(boolean isChunkWhenParsing,
+            boolean isAsyncHttpHandler) {
+        this.isChunkWhenParsing = isChunkWhenParsing;
+        this.isAsyncHttpHandler = isAsyncHttpHandler;
+    }
+        
+    @Test
+    public void testNoTrailerHeaders() throws Exception {
+        Map<String, Pair<String, String>> headers =
+                new HashMap<>();
+
+        final int packetsNum = 5;
+        
+        doHttpRequestTest(packetsNum, true, headers, 200);
+    }
+
+    @Test
+    public void testTrailerHeaders() throws Exception {
+        Map<String, Pair<String, String>> headers =
+                new HashMap<>();
+        headers.put("X-Host", new Pair<>("localhost", "localhost"));
+        headers.put("X-Content-length", new Pair<>("2345", "2345"));
+        
+        final int packetsNum = 5;
+        
+        doHttpRequestTest(packetsNum, true, headers, 200);
+    }
+
+    @Test
+    public void testTrailerHeadersWithoutContent() throws Exception {
+        Map<String, Pair<String, String>> headers =
+                new HashMap<>();
+        headers.put("X-Host", new Pair<>("localhost", "localhost"));
+        headers.put("X-Content-length", new Pair<>("2345", "2345"));
+        
+        final int packetsNum = 10;
+        
+        doHttpRequestTest(packetsNum, false, headers, 200);
+    }
+
+    @Test
+    public void testTrailerHeadersOverflow() throws Exception {
+        Map<String, Pair<String, String>> headers =
+                new HashMap<>();
+        // This number of headers should be enough to overflow socket's read buffer,
+        // so trailer headers will not fit into socket read window
+        final int headersNum = HttpCodecFilter.DEFAULT_MAX_HTTP_PACKET_HEADER_SIZE / 2;
+        for (int i = 0; i < headersNum; i++) {
+            headers.put("X-Host-" + i, new Pair<>("localhost", "localhost"));
+        }
+        
+        doHttpRequestTest(1, true, headers, 500);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void doHttpRequestTest(
+            int packetsNum,
+            boolean hasContent,
+            Map<String, Pair<String, String>> trailerHeaders,
+            int expectedResponseCode)
+            throws Exception {
+        
+        final BlockingQueue<HttpContent> queue = new LinkedTransferQueue<>();
+                
+        final NetworkListener networkListener = httpServer.getListener("grizzly");
+        final TCPNIOTransport transport = networkListener.getTransport();
+        
+        FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
+        final HttpClientFilter clientFilter = new HttpClientFilter();
+        clientFilter.addTransferEncoding(new FixedLengthTransferEncoding());
+        clientFilter.addTransferEncoding(new ChunkedTransferEncoding(HttpCodecFilter.DEFAULT_MAX_HTTP_PACKET_HEADER_SIZE));
+        clientFilterChainBuilder.add(new TransportFilter())
+                .add(new HttpClientFilter())
+                .add(new HTTPResponseFilter(queue));
+
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler
+                .builder(transport)
+                .processor(clientFilterChainBuilder.build())
+                .build();
+
+        Future<Connection> future = connectorHandler.connect("localhost", PORT);
+        connection = future.get(10, TimeUnit.SECONDS);
+        assertTrue(connection != null);
+
+        for (int i = 0; i < packetsNum; i++) {
+            final Buffer content;
+            if (hasContent) {
+                content = Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER,
+                    "a=0&b=1", Charsets.ASCII_CHARSET);
+            } else {
+                content = Buffers.EMPTY_BUFFER;
+            }
+
+            List<HttpPacket> httpPackets =
+                    constructMessage(hasContent, trailerHeaders,
+                    i == packetsNum - 1);
+
+
+            for (HttpPacket packet : httpPackets) {
+                connection.write(packet);
+            }
+            
+            if (expectedResponseCode < 400) {
+                final HttpContent responseHttpContent = queue.poll(10000000, TimeUnit.SECONDS);
+                assertNotNull("timeout. packet#" + i, responseHttpContent);
+
+                final HttpResponsePacket responsePacket =
+                        (HttpResponsePacket) responseHttpContent.getHttpHeader();
+
+                assertEquals("packet#" + i, expectedResponseCode, responsePacket.getStatus());
+                
+                // if we don't expect error response - check the content
+                assertEquals("packet#" + i, content, responseHttpContent.getContent());
+                HttpTrailer trailer = (HttpTrailer) responseHttpContent;
+                for (Entry<String, Pair<String, String>> entry : trailerHeaders.entrySet()) {
+                    assertEquals("packet#" + i, entry.getValue().getSecond(),
+                            trailer.getHeader(entry.getKey()));
+                }
+            } else {
+                Throwable t = echoHandler.errors.poll(10, TimeUnit.SECONDS);
+                assertTrue("Unexpected exception " + t, t instanceof IOException);
+                assertTrue("there are other errors: " + echoHandler.errors, echoHandler.errors.isEmpty());
+            }
+        }
+    }
+
+    private List<HttpPacket> constructMessage(
+            final boolean hasContent,
+            final Map<String, Pair<String, String>> trailerHeaders,
+            final boolean isAddCloseHeader) {
+
+        this.hasContent = hasContent;
+
+        final List<HttpPacket> packetList = new ArrayList<>();
+        
+        final Builder requestPacketBuilder = HttpRequestPacket.builder();
+        requestPacketBuilder
+                .method(Method.POST)
+                .uri("/")
+                .protocol(Protocol.HTTP_1_1)
+                .header(Header.Host, "localhost")
+                .contentType("application/x-www-form-urlencoded")
+                .chunked(true);
+
+        if (isAddCloseHeader) {
+            requestPacketBuilder.header(Header.Connection, "close");
+        }
+        
+        final HttpRequestPacket requestPacket = requestPacketBuilder.build();
+        requestPacket.getHeaders().setMaxNumHeaders(-1);
+        
+        if (hasContent) {
+            final HttpContent contentPacket1 = HttpContent.builder(requestPacket)
+                    .content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER,
+                                            "a=0", Charsets.ASCII_CHARSET))
+                    .build();
+            final HttpContent contentPacket2 = HttpContent.builder(requestPacket)
+                    .content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER,
+                                            "&b=1", Charsets.ASCII_CHARSET))
+                    .build();
+
+            packetList.add(contentPacket1);
+            packetList.add(contentPacket2);
+        }
+        
+        final HttpTrailer.Builder trailerBuilder = HttpTrailer.builder(requestPacket);
+        final MimeHeaders trailers = new MimeHeaders();
+        trailers.setMaxNumHeaders(-1);
+        trailerBuilder.headers(trailers);
+
+        for (Entry<String, Pair<String, String>> entry : trailerHeaders.entrySet()) {
+            final String value = entry.getValue().getFirst();
+            trailerBuilder.header(entry.getKey(), value);
+        }
+    
+        final HttpTrailer trailer = trailerBuilder.build();
+        
+        packetList.add(trailer);
+
+        return packetList;
+    }
+    
+    public static class HTTPResponseFilter extends BaseFilter {
+        private final BlockingQueue<HttpContent> queue;
+
+        public HTTPResponseFilter(
+                final BlockingQueue<HttpContent> queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        public NextAction handleRead(FilterChainContext ctx)
+                throws IOException {
+            final HttpContent httpContent = ctx.getMessage();
+            if (!httpContent.isLast()) {
+                return ctx.getStopAction(httpContent);
+            }
+
+            queue.offer(httpContent);
+            return ctx.getStopAction();
+        }
+    }
+    
+    private void configureHttpServer() throws Exception {
+        httpServer = new HttpServer();
+        final NetworkListener listener =
+                new NetworkListener("grizzly",
+                                    NetworkListener.DEFAULT_NETWORK_HOST,
+                                    PORT);
+        listener.setMaxRequestHeaders(-1);
+        listener.setMaxResponseHeaders(-1);
+        listener.getTransport().getAsyncQueueIO().getWriter().setMaxPendingBytesPerConnection(-1);
+        if (isChunkWhenParsing) {
+            listener.registerAddOn(new AddOn() {
+
+                @Override
+                public void setup(final NetworkListener networkListener,
+                        final FilterChainBuilder builder) {
+                    final int idx = builder.indexOfType(TransportFilter.class);
+                    builder.add(idx + 1, new ChunkingFilter(2));
+                }
+            });
+        }
+
+        httpServer.addListener(listener);
+    }
+
+    private void startHttpServer(HttpHandler httpHandler) throws Exception {
+        httpServer.getServerConfiguration().addHttpHandler(httpHandler);
+        httpServer.start();
+    }
+    
+    private class EchoHandler extends HttpHandler {
+        private final BlockingQueue<Throwable> errors =
+                new LinkedTransferQueue<>();
+        
+        @Override
+        public void service(Request request, Response response) throws Exception {
+
+            response.setTrailers(new Supplier<Map<String, String>>() {
+                @Override
+                public Map<String, String> get() {
+                    if (!request.areTrailersAvailable()) {
+                        errors.add(new RuntimeException("Trailers not available"));
+                        return Collections.emptyMap();
+                    }
+                    return request.getTrailers();
+                }
+            });
+
+            if (isAsyncHttpHandler) {
+                doAsync(request, response);
+            } else {
+                doSync(request, response);
+            }
+        }
+
+        public void doAsync(final Request request,
+                            final Response response)
+                throws Exception {
+
+            final NIOInputStream reader = request.getNIOInputStream();
+            final NIOOutputStream writer = response.getNIOOutputStream();                
+
+            response.suspend();
+
+            reader.notifyAvailable(new ReadHandler() {
+
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                @Override
+                public void onDataAvailable() throws Exception {
+                    buffer();
+                    reader.notifyAvailable(this);
+                }
+
+                @Override
+                public void onAllDataRead() throws Exception {
+                    buffer();
+                    echo();
+                    response.resume();
+
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    errors.offer(t);
+                    
+                    response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    response.setDetailMessage("Internal Error");
+                    if (response.isSuspended()) {
+                        response.resume();
+                    }
+                }
+                
+                private void buffer() throws IOException {
+                    int available = reader.readyData();
+                    if (available > 0) {
+                        byte[] b = new byte[available];
+                        int read = reader.read(b);
+                        baos.write(b, 0, read);
+                    }
+                }
+                
+                private void echo() throws IOException {
+
+                    writer.write(baos.toByteArray());
+                }
+            });
+
+        }
+
+        private void doSync(Request request, Response response) throws IOException {
+            try {
+                if (hasContent) {
+                    final InputStream is = request.getInputStream();
+                    final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                    int b;
+                    while ((b = is.read()) != -1) {
+                        bos.write(b);
+                    }
+
+                    bos.close();
+                    final byte[] output = bos.toByteArray();
+
+                    final OutputStream os = response.getOutputStream();
+
+                    os.write(output);
+                }
+            } catch (Throwable t) {
+                errors.offer(t);
+                throw new IOException(t);
+            }
+        }
+        
+    }
+}
