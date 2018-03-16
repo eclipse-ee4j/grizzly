@@ -762,7 +762,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
 
         // Check the PRI message payload
         final Buffer payload = httpContent.getContent();
-        if (payload.remaining() < PRI_PAYLOAD.length) {
+        if (payload.remaining() - 2 < PRI_PAYLOAD.length) {
             return false;
         }
 
