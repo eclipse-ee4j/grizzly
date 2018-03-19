@@ -356,11 +356,7 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
             final CloseType closeType,
             final IOException cause,
             final boolean isCloseOutputGracefully) {
-        
-        if (closeReason != null) {
-            return;
-        }
-        
+
         if (closeReasonUpdater.compareAndSet(this, null,
                 new CloseReason(closeType, cause))) {
             
@@ -566,7 +562,7 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
     private Buffer cachedInputBuffer;
     private boolean cachedIsLast;
     
-    IOException assertCanAcceptData(final boolean fin) {
+    private IOException assertCanAcceptData(final boolean fin) {
         if (isPushStream() && isLocallyInitiatedStream()) {
             return new Http2StreamException(getId(),
                     ErrorCode.PROTOCOL_ERROR,
@@ -612,9 +608,13 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
         return null;
     }
     
-    void offerInputData(final Buffer data, final boolean isLast) {
+    void offerInputData(final Buffer data, final boolean fin) throws IOException {
+        IOException ex = assertCanAcceptData(fin);
+        if (ex != null) {
+            throw ex;
+        }
         final boolean isFirstBufferCached = (cachedInputBuffer == null);
-        cachedIsLast |= isLast;
+        cachedIsLast |= fin;
         cachedInputBuffer = Buffers.appendBuffers(
                 http2Session.getMemoryManager(),
                 cachedInputBuffer, data);
