@@ -179,7 +179,7 @@ public final class UDPNIOTransport extends NIOTransport
     }
 
     @Override
-    public Connection bindToInherited() throws IOException {
+    public Connection<?> bindToInherited() throws IOException {
         return bindingHandler.bindToInherited();
     }
 

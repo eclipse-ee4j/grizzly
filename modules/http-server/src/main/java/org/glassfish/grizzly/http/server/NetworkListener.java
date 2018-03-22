@@ -27,9 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLEngine;
@@ -411,7 +409,7 @@ public class NetworkListener {
      *      accepting incoming client connections
      * @since 2.3.24
      */
-    public Connection getServerConnection() {
+    public Connection<?> getServerConnection() {
         return serverConnection;
     }
     

@@ -98,7 +98,7 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection bind(final int port) throws IOException {
+    public Connection<?> bind(final int port) throws IOException {
         return bind(new InetSocketAddress(port));
     }
 
@@ -106,7 +106,7 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection bind(final String host, final int port) throws IOException {
+    public Connection<?> bind(final String host, final int port) throws IOException {
         return bind(new InetSocketAddress(host, port));
     }
 
@@ -114,7 +114,7 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection bind(final String host, final int port, final int backlog)
+    public Connection<?> bind(final String host, final int port, final int backlog)
             throws IOException {
         return bind(new InetSocketAddress(host, port), backlog);
     }
@@ -123,13 +123,13 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection bind(final String host, final PortRange portRange,
+    public Connection<?> bind(final String host, final PortRange portRange,
             final int backlog) throws IOException {
         return bind(host, portRange, true, backlog);
     }
 
     @Override
-    public Connection bind(final String host, final PortRange portRange,
+    public Connection<?> bind(final String host, final PortRange portRange,
             boolean randomStartPort, final int backlog) throws IOException {
         // Get the initial range parameters
         final int lower = portRange.getLower();
