@@ -148,4 +148,11 @@ class Http2Request extends HttpRequestPacket implements Http2Header {
             final boolean requiresAcknowledgement) {
         super.requiresAcknowledgement(requiresAcknowledgement);
     }
+
+    /**
+     * @param unparsedHostC the unparsedHostC to set
+     */
+    public void setUnparsedHostC(DataChunk unparsedHostC) {
+        this.unparsedHostC = unparsedHostC;
+    }
 }

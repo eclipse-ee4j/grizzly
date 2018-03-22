@@ -67,6 +67,7 @@ import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.ssl.SSLUtils;
 
 import javax.net.ssl.SSLEngine;
+import org.glassfish.grizzly.http.util.DataChunk;
 
 import static org.glassfish.grizzly.http2.Termination.IN_FIN_TERMINATION;
 
@@ -893,6 +894,52 @@ public class Http2ServerFilter extends Http2BaseFilter {
     }
 
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    protected void onHttpHeadersParsed(final HttpHeader httpHeader,
+            final FilterChainContext ctx) {
+
+        Http2Request request = (Http2Request) httpHeader;
+
+        DataChunk hostDC = null;
+
+        // Check for a full URI (including protocol://host:port/)
+        final DataChunk uriBC = request.getRequestURIRef().getRequestURIBC();
+
+        if (uriBC.startsWithIgnoreCase("https", 0)) {
+
+            int pos = uriBC.indexOf("://", 5);
+            int uriBCStart = uriBC.getStart();
+            int slashPos;
+            if (pos != -1) {
+                slashPos = uriBC.indexOf('/', pos + 3);
+                if (slashPos == -1) {
+                    slashPos = uriBC.getLength();
+                    // Set URI as "/"
+                    uriBC.setStart(uriBCStart + pos + 1);
+                    uriBC.setEnd(uriBCStart + pos + 2);
+                } else {
+                    uriBC.setStart(uriBCStart + slashPos);
+                    uriBC.setEnd(uriBC.getEnd());
+                }
+                hostDC = request.getHeaders().setValue(Header.Host);
+                hostDC.set(uriBC, uriBCStart + pos + 3, uriBCStart + slashPos);
+            }
+
+        }
+
+        // --------------------------
+        if (hostDC == null) {
+            hostDC = request.getHeaders().getValue(Header.Host);
+        }
+
+        if (hostDC == null || hostDC.isNull()) {
+            return;
+        }
+        request.setUnparsedHostC(hostDC);
+    }
 
     /**
      *
