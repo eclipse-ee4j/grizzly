@@ -19,6 +19,7 @@ package org.glassfish.grizzly;
 import org.glassfish.grizzly.nio.NIOTransport;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.channels.Channel;
 import java.util.Random;
@@ -124,26 +125,39 @@ public abstract class AbstractBindingHandler implements SocketBinder {
     @Override
     public Connection bind(final String host, final PortRange portRange,
             final int backlog) throws IOException {
-        IOException ioException;
+        return bind(host, portRange, true, backlog);
+    }
+
+    @Override
+    public Connection bind(final String host, final PortRange portRange,
+            boolean randomStartPort, final int backlog) throws IOException {
+        // Get the initial range parameters
         final int lower = portRange.getLower();
         final int range = portRange.getUpper() - lower + 1;
 
-        int offset = RANDOM.nextInt(range);
-        final int start = offset;
+        // Select a start point in the range
+        final int initialOffset;
+        if (randomStartPort) {
+            initialOffset = RANDOM.nextInt(range);
+        } else {
+            initialOffset = 0;
+        }
 
+        // Loop the offset through all ports in the range and attempt
+        // to bind to each
+        int offset = initialOffset;
         do {
             final int port = lower + offset;
-
             try {
                 return bind(host, port, backlog);
-            } catch (IOException e) {
-                ioException = e;
+            } catch (IOException caught) {
+                // Swallow exceptions until the end
             }
-
             offset = (offset + 1) % range;
-        } while (offset != start);
+        } while (offset != initialOffset);
 
-        throw ioException;
+        // If a port can't be bound, throw the exception
+        throw new BindException(String.format("Couldn't bind to any port in the range `%s`.", portRange.toString()));
     }
 
     /**

@@ -198,6 +198,16 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
+    public UDPNIOServerConnection bind(final String host,
+            final PortRange portRange, final boolean randomStartPort, final int backlog) throws IOException {
+
+        return (UDPNIOServerConnection) bindingHandler.bind(host, portRange, randomStartPort, backlog);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind(final Connection connection) {
         final Lock lock = state.getStateLocker().writeLock();
         lock.lock();

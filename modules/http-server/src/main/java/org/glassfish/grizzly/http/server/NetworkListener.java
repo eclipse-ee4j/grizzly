@@ -107,6 +107,13 @@ public class NetworkListener {
     private PortRange portRange;
 
     /**
+     * If a {@link #portRange} is specified, a value of <code>true</code> will
+     * make a random port in the range be the first one the server will attempt
+     * to bind to.
+     */
+    private boolean randomStartPort;
+
+    /**
      * The logical <code>name</code> of this particular <code>NetworkListener</code> instance.
      */
     private final String name;
@@ -296,6 +303,22 @@ public class NetworkListener {
     public NetworkListener(final String name,
         final String host,
         final PortRange portRange) {
+        this(name, host, portRange, true);
+    }
+
+    /**
+     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
+     * <code>port</code>. </p>
+     *
+     * @param name the logical name of the listener.
+     * @param host the network host to which this listener will bind.
+     * @param portRange the network port range to which this listener will bind.
+     * @param randomStartPort whether to pick a random port in the range initially.
+     */
+    public NetworkListener(final String name,
+        final String host,
+        final PortRange portRange,
+        final boolean randomStartPort) {
         validateArg("name", name);
         validateArg("host", host);
 
@@ -303,7 +326,8 @@ public class NetworkListener {
         this.host = host;
         this.port = -1;
         this.portRange = portRange;
-        isBindToInherited = false;
+        this.randomStartPort = randomStartPort;
+        this.isBindToInherited = false;
     }
 
     // ----------------------------------------------------------- Configuration
@@ -709,7 +733,7 @@ public class NetworkListener {
         } else {
             serverConnection = (port != -1) ?
                 transport.bind(host, port) :
-                transport.bind(host, portRange, transport.getServerConnectionBackLog());
+                transport.bind(host, portRange, randomStartPort, transport.getServerConnectionBackLog());
         }
         
         port = ((InetSocketAddress) serverConnection.getLocalAddress()).getPort();

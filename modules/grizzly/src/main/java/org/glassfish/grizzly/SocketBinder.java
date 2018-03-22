@@ -72,6 +72,19 @@ public interface SocketBinder {
     Connection bind(String host, PortRange portRange, int backlog) throws IOException;
 
     /**
+     * Binds Transport to the specific host, and port within a {@link PortRange}.
+     *
+     * @param host the local host the server will bind to
+     * @param portRange {@link PortRange}.
+     * @param randomStartPort if true, a random port in the range will be used as the initial port.
+     * @param backlog the maximum length of the queue
+     * @return bound {@link Connection}
+     *
+     * @throws java.io.IOException
+     */
+    Connection bind(String host, PortRange portRange, boolean randomStartPort, int backlog) throws IOException;
+
+    /**
      * Binds Transport to the specific SocketAddress.
      *
      * @param socketAddress the local address the server will bind to
