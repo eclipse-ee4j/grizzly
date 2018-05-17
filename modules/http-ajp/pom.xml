@@ -29,7 +29,7 @@
     <packaging>bundle</packaging>
     <version>2.4.4-SNAPSHOT</version>
     <name>grizzly-http-ajp</name>
-    <url>http://grizzly.java.net</url>
+    <url>https://projects.eclipse.org/projects/ee4j.grizzly</url>
     <build>
         <defaultGoal>install</defaultGoal>
         <resources>
