@@ -51,5 +51,5 @@ mvn clean install
 
 ## License
 
-This project is licensed under the EPL-2.0 - see the [LICENSE.txt](https://github.com/javaee/grizzly/blob/master/LICENSE.txt) file for details.
+This project is licensed under the EPL-2.0 - see the [LICENSE.txt](https://github.com/eclipse-ee4j/grizzly/blob/master/LICENSE.txt) file for details.
 
