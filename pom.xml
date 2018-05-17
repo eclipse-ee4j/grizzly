@@ -32,7 +32,7 @@
     <url>https://projects.eclipse.org/projects/ee4j.grizzly</url>
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/javaee/grizzly/issues</url>
+        <url>https://github.com/eclipse-ee4j/grizzly/issues</url>
     </issueManagement>
     <mailingLists>
         <mailingList>
@@ -93,11 +93,11 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:https://github.com/javaee/grizzly.git</connection>
+        <connection>scm:git:https://github.com/eclipse-ee4j/grizzly.git</connection>
         <developerConnection>
-            scm:git:git@github.com:javaee/grizzly.git
+            scm:git:git@github.com:eclipse-ee4j/grizzly.git
         </developerConnection>
-        <url>https://github.com/javaee/grizzly</url>
+        <url>https://github.com/eclipse-ee4j/grizzly</url>
       <tag>HEAD</tag>
   </scm>
     <organization>
