@@ -29,7 +29,7 @@
     <packaging>pom</packaging>
     <name>grizzly-project</name>
     <version>2.4.4-SNAPSHOT</version>
-    <url>http://grizzly.java.net</url>
+    <url>https://projects.eclipse.org/projects/ee4j.grizzly</url>
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/javaee/grizzly/issues</url>
