@@ -198,7 +198,7 @@ public class PushPromiseFrame extends HeaderBlockHead {
         }
 
 
-        // --------------------------------------- Methods from HeaderBlockHeaderBuilder
+        // --------------------------------------- Methods from HeaderBlockHeadBuilder
 
 
         @Override
