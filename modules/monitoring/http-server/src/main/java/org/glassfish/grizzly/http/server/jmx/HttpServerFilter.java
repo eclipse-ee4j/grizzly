@@ -57,7 +57,7 @@ public class HttpServerFilter extends JmxObject {
     }
 
 
-    // -------------------------------------------------- Methods from JxmObject
+    // -------------------------------------------------- Methods from JmxObject
 
 
     @Override
