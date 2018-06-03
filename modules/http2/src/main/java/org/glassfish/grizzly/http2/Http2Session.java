@@ -80,7 +80,7 @@ import org.glassfish.grizzly.http2.frames.WindowUpdateFrame;
 
 /**
  * The HTTP2 session abstraction.
- * 
+ *
  * @author Alexey Stashok
  */
 public class Http2Session {
@@ -89,18 +89,18 @@ public class Http2Session {
     private final boolean isServer;
     private final Connection<?> connection;
     Http2State http2State;
-    
+
     private HeadersDecoder headersDecoder;
     private HeadersEncoder headersEncoder;
 
     private final ReentrantLock deflaterLock = new ReentrantLock();
-    
+
     int lastPeerStreamId;
     private int lastLocalStreamId;
     private boolean pushEnabled = true;
 
     private final ReentrantLock newClientStreamLock = new ReentrantLock();
-    
+
     private volatile FilterChain http2StreamChain;
     private volatile FilterChain htt2SessionChain;
 
@@ -110,28 +110,28 @@ public class Http2Session {
     private volatile int concurrentStreamsCount;
 
     private final TreeMap<Integer, Http2Stream> streamsMap = new TreeMap<>();
-    
+
     // (Optimization) We may read several DataFrames belonging to the same
     // Http2Stream, so in order to not process every DataFrame separately -
     // we buffer them and only then passing for processing.
     final List<Http2Stream> streamsToFlushInput = new ArrayList<>();
-    
+
     // The List object used to store header frames. Could be used by
     // Http2Session streams, when they write headers
     protected final List<Http2Frame> tmpHeaderFramesList =
             new ArrayList<>(2);
-    
+
     private final Object sessionLock = new Object();
-    
+
     private volatile CloseType closeFlag;
-    
+
     private int peerStreamWindowSize = getDefaultStreamWindowSize();
     private volatile int localStreamWindowSize = getDefaultStreamWindowSize();
-    
+
     private volatile int localConnectionWindowSize = getDefaultConnectionWindowSize();
 
     private volatile int maxHeaderListSize;
-    
+
     private volatile int localMaxConcurrentStreams = getDefaultMaxConcurrentStreams();
     private int peerMaxConcurrentStreams = getDefaultMaxConcurrentStreams();
 
@@ -149,31 +149,31 @@ public class Http2Session {
     // HTTP/1.1 Upgrade is still in progress
     private volatile boolean isPrefaceReceived;
     private volatile boolean isPrefaceSent;
-    
+
     public static Http2Session get(final Connection connection) {
         final Http2State http2State = Http2State.get(connection);
         return http2State != null
                 ? http2State.getHttp2Session()
                 : null;
     }
-    
+
     static void bind(final Connection connection,
             final Http2Session http2Session) {
         Http2State.obtain(connection).setHttp2Session(http2Session);
     }
-    
+
     private final Holder<?> addressHolder;
 
     final Http2BaseFilter handlerFilter;
 
     private final int localMaxFramePayloadSize;
     private int peerMaxFramePayloadSize = getSpecDefaultFramePayloadSize();
-    
+
     private boolean isFirstInFrame = true;
     private volatile SSLBaseFilter sslFilter;
-    
+
     private final AtomicInteger unackedReadBytes  = new AtomicInteger();
-        
+
     public Http2Session(final Connection<?> connection,
                         final boolean isServer,
                         final Http2BaseFilter handlerFilter) {
@@ -191,12 +191,12 @@ public class Http2Session {
                 Float.valueOf(
                         getDefaultMaxConcurrentStreams() * http2Configuration.getStreamsHighWaterMark())
                         .intValue();
-        
+
         final int customMaxFramePayloadSz
                 = handlerFilter.getLocalMaxFramePayloadSize() > 0
                 ? handlerFilter.getLocalMaxFramePayloadSize()
                 : -1;
-        
+
         // apply custom max frame value only if it's in [getSpecMinFramePayloadSize(); getSpecMaxFramePayloadSize()] range
         localMaxFramePayloadSize =
                 customMaxFramePayloadSz >= getSpecMinFramePayloadSize() &&
@@ -213,16 +213,16 @@ public class Http2Session {
             lastLocalStreamId = -1;
             lastPeerStreamId = 0;
         }
-        
+
         addressHolder = Holder.lazyHolder(new NullaryFunction<Object>() {
             @Override
             public Object evaluate() {
                 return connection.getPeerAddress();
             }
         });
-        
+
         connection.addCloseListener(new ConnectionCloseListener());
-        
+
         this.outputSink = newOutputSink();
 
         NetLogger.logOpen(this);
@@ -331,39 +331,39 @@ public class Http2Session {
     protected Http2Stream newStream(final HttpRequestPacket request,
             final int streamId, final int refStreamId,
             final boolean exclusive, final int priority) {
-        
+
         return new Http2Stream(this, request, streamId, refStreamId,
                                exclusive, priority);
     }
 
     protected Http2Stream newUpgradeStream(final HttpRequestPacket request, final int priority) {
-        
+
         return new Http2Stream(this, request, priority);
     }
 
     protected void checkFrameSequenceSemantics(final Http2Frame frame)
             throws Http2SessionException {
-        
+
         final int frameType = frame.getType();
-        
+
         if (isFirstInFrame) {
             if (frameType != SettingsFrame.TYPE) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "First in frame should be a SettingsFrame (preface)", frame);
                 }
-                
+
                 throw new Http2SessionException(ErrorCode.PROTOCOL_ERROR);
             }
-            
+
             isPrefaceReceived = true;
             handlerFilter.onPrefaceReceived(this);
-            
+
             // Preface received - change the HTTP2 connection state
             Http2State.get(connection).setOpen();
-            
+
             isFirstInFrame = false;
         }
-        
+
         // 1) make sure the header frame sequence comes without interleaving
         if (isParsingHeaders()) {
             if (frameType != ContinuationFrame.TYPE) {
@@ -382,10 +382,10 @@ public class Http2Session {
             throw new Http2SessionException(ErrorCode.PROTOCOL_ERROR);
         }
     }
-    
+
     protected void onOversizedFrame(final Buffer buffer)
             throws Http2SessionException {
-        
+
         final int oldPos = buffer.position();
         try {
             throw new Http2SessionException(ErrorCode.FRAME_SIZE_ERROR);
@@ -393,11 +393,11 @@ public class Http2Session {
             buffer.position(oldPos);
         }
     }
-    
+
     boolean isParsingHeaders() {
         return headersDecoder != null && headersDecoder.isProcessingHeaders();
     }
-    
+
     /**
      * @return The max <tt>payload</tt> size to be accepted by this side
      */
@@ -416,7 +416,7 @@ public class Http2Session {
     /**
      * Sets the max <tt>payload</tt> size to be accepted by the peer.
      * The method is called during the {@link SettingsFrame} processing.
-     * 
+     *
      * @param peerMaxFramePayloadSize max payload size accepted by the peer.
      * @throws Http2SessionException if the peerMaxFramePayloadSize violates the limits
      */
@@ -428,8 +428,8 @@ public class Http2Session {
         }
         this.peerMaxFramePayloadSize = peerMaxFramePayloadSize;
     }
-    
-    
+
+
     public int getLocalStreamWindowSize() {
         return localStreamWindowSize;
     }
@@ -437,15 +437,15 @@ public class Http2Session {
     public void setLocalStreamWindowSize(int localStreamWindowSize) {
         this.localStreamWindowSize = localStreamWindowSize;
     }
-    
+
     public int getPeerStreamWindowSize() {
         return peerStreamWindowSize;
     }
-    
+
     void setPeerStreamWindowSize(final int peerStreamWindowSize) throws Http2StreamException {
         synchronized (sessionLock) {
             final int delta = peerStreamWindowSize - this.peerStreamWindowSize;
-            
+
             this.peerStreamWindowSize = peerStreamWindowSize;
 
             if (!streamsMap.isEmpty()) {
@@ -468,12 +468,12 @@ public class Http2Session {
     public void setLocalConnectionWindowSize(final int localConnectionWindowSize) {
         this.localConnectionWindowSize = localConnectionWindowSize;
     }
-    
+
     @SuppressWarnings("unused")
     public int getAvailablePeerConnectionWindowSize() {
         return outputSink.getAvailablePeerConnectionWindowSize();
     }
-    
+
     /**
      * @return the maximum number of concurrent streams allowed for this session by our side.
      */
@@ -525,12 +525,12 @@ public class Http2Session {
         this.pushEnabled = pushEnabled;
     }
 
-    
+
     public int getNextLocalStreamId() {
         lastLocalStreamId += 2;
         return lastLocalStreamId;
     }
-    
+
     public Connection getConnection() {
         return connection;
     }
@@ -538,26 +538,26 @@ public class Http2Session {
     public MemoryManager getMemoryManager() {
         return connection.getMemoryManager();
     }
-    
+
     public boolean isServer() {
         return isServer;
     }
 
     public boolean isLocallyInitiatedStream(final int streamId) {
         assert streamId > 0;
-        
+
         return isServer() ^ ((streamId % 2) != 0);
-        
+
 //        Same as
 //        return isServer() ?
 //                (streamId % 2) == 0 :
-//                (streamId % 2) == 1;        
+//                (streamId % 2) == 1;
     }
-    
+
     Http2State getHttp2State() {
         return http2State;
     }
-    
+
     boolean isHttp2InputEnabled() {
         return isPrefaceReceived;
     }
@@ -569,7 +569,7 @@ public class Http2Session {
     public Http2Stream getStream(final int streamId) {
         return streamsMap.get(streamId);
     }
-    
+
     protected Http2SessionOutputSink getOutputSink() {
         return outputSink;
     }
@@ -588,7 +588,7 @@ public class Http2Session {
         }
         return sessionClosed;
     }
-    
+
     /**
      * Terminate the HTTP2 session sending a GOAWAY frame using the specified
      * error code and optional detail.  Once the GOAWAY frame is on the wire, the
@@ -682,7 +682,10 @@ public class Http2Session {
                         Integer.MAX_VALUE,
                         true);
         if (!invalidStreams.isEmpty()) {
-            for (final Http2Stream stream : invalidStreams.values()) {
+            // needs to iterate over copied list to prevent
+            // bug #1995 - ConcurrentModificationException
+            List<Http2Stream> closedStreams = new ArrayList<>(invalidStreams.values());
+            for (final Http2Stream stream : closedStreams) {
                 stream.closedRemotely();
                 deregisterStream();
             }
@@ -724,7 +727,7 @@ public class Http2Session {
         NetLogger.log(NetLogger.Context.TX, this, f);
         outputSink.writeDownStream(f);
     }
-    
+
     void sendPreface() {
         if (!isPrefaceSent) {
             synchronized (sessionLock) {
@@ -736,7 +739,7 @@ public class Http2Session {
                     }
 
                     isPrefaceSent = true;
-                    
+
                     if (!isServer) {
                         // If it's HTTP2 client, which uses HTTP/1.1 upgrade mechanism -
                         // it can have unacked user data sent from the server.
@@ -748,7 +751,7 @@ public class Http2Session {
             }
         }
     }
-    
+
     protected void sendServerPreface() {
         final SettingsFrame settingsFrame = prepareSettings().build();
 
@@ -763,7 +766,7 @@ public class Http2Session {
             }
         } : null));
     }
-    
+
     protected void sendClientPreface() {
         // send preface (PRI * ....)
         final HttpRequestPacket request =
@@ -772,16 +775,16 @@ public class Http2Session {
                 .uri("*")
                 .protocol(Protocol.HTTP_2_0)
                 .build();
-        
+
         final Buffer priPayload =
                 Buffers.wrap(connection.getMemoryManager(), PRI_PAYLOAD);
-        
-        final SettingsFrame settingsFrame = prepareSettings().build();        
+
+        final SettingsFrame settingsFrame = prepareSettings().build();
         final Buffer settingsBuffer = settingsFrame.toBuffer(getMemoryManager());
-        
+
         final Buffer payload = Buffers.appendBuffers(
                 connection.getMemoryManager(), priPayload, settingsBuffer);
-        
+
         final HttpContent content = HttpContent.builder(request)
                 .content(payload)
                 .build();
@@ -790,12 +793,12 @@ public class Http2Session {
 
         connection.write(content);
     }
-    
+
     HeadersDecoder getHeadersDecoder() {
         if (headersDecoder == null) {
             headersDecoder = new HeadersDecoder(getMemoryManager(), getMaxHeaderListSize(), 4096);
         }
-        
+
         return headersDecoder;
     }
 
@@ -807,19 +810,19 @@ public class Http2Session {
         if (headersEncoder == null) {
             headersEncoder = new HeadersEncoder(getMemoryManager(), 4096);
         }
-        
+
         return headersEncoder;
     }
 
     /**
      * Encodes the {@link HttpHeader} and locks the compression lock.
-     * 
+     *
      * @param ctx the current {@link FilterChainContext}
      * @param httpHeader the {@link HttpHeader} to encode
      * @param streamId the stream associated with this request
      * @param isLast is this the last frame?
      * @param toList the target {@link List}, to which the frames will be serialized
-     * 
+     *
      * @return the HTTP2 header frames sequence
      * @throws IOException if an error occurs encoding the header
      */
@@ -832,16 +835,16 @@ public class Http2Session {
             final List<Http2Frame> toList,
             final Map<String,String> capture)
             throws IOException {
-        
+
         final Buffer compressedHeaders = !httpHeader.isRequest()
                 ? EncoderUtils.encodeResponseHeaders(
                         this, (HttpResponsePacket) httpHeader, capture)
                 : EncoderUtils.encodeRequestHeaders(
                         this, (HttpRequestPacket) httpHeader, capture);
-        
+
         final List<Http2Frame> headerFrames =
                 bufferToHeaderFrames(streamId, compressedHeaders, isLast, toList);
-        
+
         handlerFilter.onHttpHeadersEncoded(httpHeader, ctx);
 
         return headerFrames;
@@ -866,18 +869,18 @@ public class Http2Session {
         final Buffer compressedHeaders = EncoderUtils.encodeTrailerHeaders(this, trailerHeaders, capture);
         return bufferToHeaderFrames(streamId, compressedHeaders, true, toList);
     }
-    
+
     /**
      * Encodes the {@link HttpRequestPacket} as a {@link PushPromiseFrame}
      * and locks the compression lock.
-     * 
+     *
      * @param ctx the current {@link FilterChainContext}
      * @param httpRequest the  {@link HttpRequestPacket} to encode.
      * @param streamId the stream associated with this request.
      * @param promisedStreamId the push promise stream ID.
      * @param toList the target {@link List}, to which the frames will be serialized
      * @return the HTTP2 push promise frames sequence
-     * 
+     *
      * @throws IOException if an error occurs encoding the request
      */
     @SuppressWarnings("SameParameterValue")
@@ -898,16 +901,16 @@ public class Http2Session {
                         promisedStreamId,
                         EncoderUtils.encodeRequestHeaders(this, httpRequest, capture),
                         toList);
-        
+
         handlerFilter.onHttpHeadersEncoded(httpRequest, ctx);
 
         return headerFrames;
     }
-    
+
     /**
      * Encodes a compressed header buffer as a {@link HeadersFrame} and
      * a sequence of 0 or more {@link ContinuationFrame}s.
-     * 
+     *
      * @param streamId the stream associated with the headers.
      * @param compressedHeaders a {@link Buffer} containing compressed headers
      * @param isEos will any additional data be sent after these headers?
@@ -921,15 +924,15 @@ public class Http2Session {
                 HeadersFrame.builder()
                         .streamId(streamId)
                         .endStream(isEos);
-        
+
         return completeHeadersProviderFrameSerialization(builder,
                 streamId, compressedHeaders, toList);
     }
-    
+
     /**
      * Encodes a compressed header buffer as a {@link PushPromiseFrame} and
      * a sequence of 0 or more {@link ContinuationFrame}s.
-     * 
+     *
      * @param streamId the stream associated with these headers
      * @param promisedStreamId the stream of the push promise
      * @param compressedHeaders the compressed headers to be sent
@@ -939,19 +942,19 @@ public class Http2Session {
     private List<Http2Frame> bufferToPushPromiseFrames(final int streamId,
             final int promisedStreamId, final Buffer compressedHeaders,
             final List<Http2Frame> toList) {
-        
+
         final PushPromiseFrame.PushPromiseFrameBuilder builder =
                 PushPromiseFrame.builder()
                         .streamId(streamId)
                         .promisedStreamId(promisedStreamId);
-        
+
         return completeHeadersProviderFrameSerialization(builder,
                 streamId, compressedHeaders, toList);
     }
-    
+
     /**
      * Completes the {@link HeaderBlockFragment} sequence serialization.
-     * 
+     *
      * @param streamId the stream associated with this {@link HeaderBlockFragment}
      * @param compressedHeaders the {@link Buffer} containing the compressed headers
      * @param toList the {@link List} to which {@link Http2Frame}s will be added
@@ -964,11 +967,11 @@ public class Http2Session {
             List<Http2Frame> toList) {
         // we assume deflaterLock is acquired and held by this thread
         assert deflaterLock.isHeldByCurrentThread();
-        
+
         if (toList == null) {
             toList = tmpHeaderFramesList;
         }
-        
+
         if (compressedHeaders.remaining() <= peerMaxFramePayloadSize) {
             toList.add(
                     builder.endHeaders(true)
@@ -978,20 +981,20 @@ public class Http2Session {
 
             return toList;
         }
-        
+
         Buffer remainder = compressedHeaders.split(
                 compressedHeaders.position() + peerMaxFramePayloadSize);
-        
+
         toList.add(
                 builder.endHeaders(false)
                 .compressedHeaders(compressedHeaders)
                 .build());
-        
+
         assert remainder != null;
-        
+
         do {
             final Buffer buffer = remainder;
-            
+
             remainder = buffer.remaining() <= peerMaxFramePayloadSize
                     ? null
                     : buffer.split(buffer.position() + peerMaxFramePayloadSize);
@@ -1002,16 +1005,16 @@ public class Http2Session {
                     .compressedHeaders(buffer)
                     .build());
         } while (remainder != null);
-        
+
         return toList;
     }
-    
+
     /**
      * The {@link ReentrantLock}, which assures that requests assigned to newly
      * allocated stream IDs will be sent to the server in their order.
      * So that request associated with the stream ID '5' won't be sent before
      * the request associated with the stream ID '3' etc.
-     * 
+     *
      * @return the {@link ReentrantLock}
      */
     public ReentrantLock getNewClientStreamLock() {
@@ -1023,15 +1026,15 @@ public class Http2Session {
                              final int streamId, final int parentStreamId,
                              final boolean exclusive, final int priority)
     throws Http2SessionException {
-        
+
         final Http2Stream stream = newStream(request,
                 streamId, parentStreamId, exclusive, priority);
-        
+
         synchronized(sessionLock) {
             if (isClosed()) {
                 return null; // if the session is closed is set - return null to ignore stream creation
             }
-            
+
             if (concurrentStreamsCount >= getLocalMaxConcurrentStreams()) {
                 // throw Session level exception because headers were not decompressed,
                 // so compression context is lost
@@ -1050,11 +1053,11 @@ public class Http2Session {
             if (streamId < lastPeerStreamId) {
                 throw new Http2SessionException(ErrorCode.PROTOCOL_ERROR);
             }
-            
+
             registerStream(streamId, stream);
             lastPeerStreamId = streamId;
         }
-        
+
         return stream;
     }
 
@@ -1077,21 +1080,21 @@ public class Http2Session {
             final boolean exclusive,
             final int priority)
             throws Http2StreamException {
-        
+
         final Http2Stream stream = newStream(request,
                 streamId, parentStreamId, exclusive,
                 priority);
-        
+
         synchronized(sessionLock) {
             if (isClosed()) {
                 throw new Http2StreamException(streamId,
                         ErrorCode.REFUSED_STREAM, "Session is closed");
             }
-            
+
             if (concurrentStreamsCount >= getLocalMaxConcurrentStreams()) {
                 throw new Http2StreamException(streamId, ErrorCode.REFUSED_STREAM);
             }
-            
+
             if (parentStreamId > 0) {
                 final Http2Stream mainStream = getStream(parentStreamId);
                 if (mainStream == null) {
@@ -1099,18 +1102,18 @@ public class Http2Session {
                             "The parent stream does not exist");
                 }
             }
-            
+
             registerStream(streamId, stream);
             lastLocalStreamId = streamId;
         }
-        
+
         return stream;
     }
 
     /**
      * The method is called to create an {@link Http2Stream} initiated via
      * HTTP/1.1 Upgrade mechanism.
-     * 
+     *
      * @param request the request that initiated the upgrade
      * @param priority the stream priority
      * @param fin is more content expected?
@@ -1122,7 +1125,7 @@ public class Http2Session {
     public Http2Stream acceptUpgradeStream(final HttpRequestPacket request,
             final int priority, final boolean fin)
             throws Http2StreamException {
-        
+
         request.setExpectContent(!fin);
         final Http2Stream stream = newUpgradeStream(request, priority);
 
@@ -1134,7 +1137,7 @@ public class Http2Session {
     /**
      * The method is called on the client side, when the server confirms
      * HTTP/1.1 -> HTTP/2.0 upgrade with '101' response.
-     * 
+     *
      * @param request the request that initiated the upgrade
      * @param priority the priority of the stream
      *
@@ -1145,7 +1148,7 @@ public class Http2Session {
     public Http2Stream openUpgradeStream(final HttpRequestPacket request,
             final int priority)
             throws Http2StreamException {
-        
+
         // we already sent headers - so the initial state is OPEN
         final Http2Stream stream = newUpgradeStream(request, priority);
 
@@ -1183,17 +1186,17 @@ public class Http2Session {
             }
         }
     }
-    
+
     FilterChain getHttp2SessionChain() {
         return htt2SessionChain;
     }
-    
+
     /**
      * Called from {@link Http2Stream} once stream is completely closed.
      */
     void deregisterStream() {
         decStreamCount();
-        
+
         final boolean isCloseSession;
         synchronized (sessionLock) {
             // If we're in GOAWAY state and there are no streams left - close this session
@@ -1213,7 +1216,7 @@ public class Http2Session {
                 }
             }
         }
-        
+
         if (isCloseSession) {
             if (sessionClosed != null) {
                 sessionClosed.result(this);
@@ -1235,7 +1238,7 @@ public class Http2Session {
         final HttpContext httpContext = httpContent.getHttpHeader()
                 .getProcessingState().getHttpContext();
         httpContext.attach(upstreamContext);
-        
+
         handlerFilter.onHttpContentParsed(httpContent, upstreamContext);
         final HttpHeader header = httpContent.getHttpHeader();
         if (httpContent.isLast()) {
@@ -1253,11 +1256,11 @@ public class Http2Session {
                              final HttpPacket message) {
         final FilterChainContext upstreamContext =
                 http2StreamChain.obtainFilterChainContext(connection, stream);
-        
+
         final HttpContext httpContext = message.getHttpHeader()
                 .getProcessingState().getHttpContext();
         httpContext.attach(upstreamContext);
-        
+
         sendMessageUpstream(stream, message, upstreamContext);
     }
 
@@ -1286,9 +1289,9 @@ public class Http2Session {
     }
 
     protected SettingsFrameBuilder prepareSettings() {
-        
+
         final SettingsFrameBuilder builder = SettingsFrame.builder();
-        
+
         if (getLocalMaxConcurrentStreams() != getDefaultMaxConcurrentStreams()) {
             builder.setting(SETTINGS_MAX_CONCURRENT_STREAMS, getLocalMaxConcurrentStreams());
         }
@@ -1298,7 +1301,7 @@ public class Http2Session {
         }
 
         builder.setting(SETTINGS_MAX_HEADER_LIST_SIZE, getMaxHeaderListSize());
-        
+
         return builder;
     }
 
@@ -1306,7 +1309,7 @@ public class Http2Session {
      * Acknowledge that certain amount of data has been read.
      * Depending on the total amount of un-acknowledge data the HTTP2 connection
      * can decide to send a window_update message to the peer.
-     * 
+     *
      * @param sz size, in bytes, of the data being acknowledged
      */
     void ackConsumedData(final int sz) {
@@ -1319,14 +1322,14 @@ public class Http2Session {
      * can decide to send a window_update message to the peer.
      * Unlike the {@link #ackConsumedData(int)}, this method also requests an
      * HTTP2 stream to acknowledge consumed data to the peer.
-     * 
+     *
      * @param stream the stream that data is being ack'd on.
      * @param sz size, in bytes, of the data being acknowledged
      */
     void ackConsumedData(final Http2Stream stream, final int sz) {
         final int currentUnackedBytes
                 = unackedReadBytes.addAndGet(sz);
-        
+
         if (isPrefaceSent) {
             // ACK HTTP2 connection flow control
             final int windowSize = getLocalConnectionWindowSize();
@@ -1337,7 +1340,7 @@ public class Http2Session {
 
                 sendWindowUpdate(0, currentUnackedBytes);
             }
-            
+
             if (stream != null) {
                 // ACK HTTP2 stream flow control
                 final int streamUnackedBytes
@@ -1406,7 +1409,7 @@ public class Http2Session {
                     closeFlag = type;
                 }
             }
-            
+
             if (isClosing) {
                 for (Http2Stream stream : streamsMap.values()) {
                     stream.closedRemotely();
