@@ -1129,8 +1129,7 @@ public class SingleEndpointPool<E> {
      * Establish new pool connection.
      */
     private void connect() {
-        final GrizzlyFuture<Connection> future = endpoint.connect();
-        future.addCompletionHandler(defaultConnectionCompletionHandler);
+        final GrizzlyFuture<Connection> future = endpoint.connect(defaultConnectionCompletionHandler);
         
         if (connectTimeoutMillis >= 0) {
             final ConnectTimeoutTask connectTimeoutTask

@@ -16,6 +16,7 @@
 
 package org.glassfish.grizzly.connectionpool;
 
+import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ConnectorHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -31,6 +32,10 @@ import org.glassfish.grizzly.GrizzlyFuture;
 public abstract class Endpoint<E> {
     public abstract Object getId();
     public abstract GrizzlyFuture<Connection> connect();
+    
+	protected GrizzlyFuture<Connection> connect(CompletionHandler<Connection> commpletionHandler) {
+		return connect();
+	}
     
     /**
      * The method is called, once new {@link Connection} related to the

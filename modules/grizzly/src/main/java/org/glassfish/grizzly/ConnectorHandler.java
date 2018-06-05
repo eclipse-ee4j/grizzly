@@ -66,8 +66,9 @@ public interface ConnectorHandler<E> {
      * @param remoteAddress remote address to connect to
      * @param localAddress local address to bind a {@link Connection} to
      * @param completionHandler {@link CompletionHandler}
+     * resulting {@link Connection}
      */
-    void connect(E remoteAddress,
+    Future<Connection> connect(E remoteAddress,
                  E localAddress,
                  CompletionHandler<Connection> completionHandler);
 }
