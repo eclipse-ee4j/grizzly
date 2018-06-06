@@ -1022,13 +1022,6 @@ public abstract class Http2BaseFilter extends HttpBaseFilter {
             throw new Http2StreamException(streamId, ErrorCode.STREAM_CLOSED);
         }
 
-        // @TODO Is there a better spot for this check?
-        // Check stream state to ensure we can send this upstream
-        final IOException error = stream.assertCanAcceptData(fin);
-        if (error != null) {
-            throw error;
-        }
-
         stream.offerInputData(data, fin);
     }
 

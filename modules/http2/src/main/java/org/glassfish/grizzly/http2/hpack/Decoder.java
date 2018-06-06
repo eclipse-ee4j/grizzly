@@ -178,9 +178,9 @@ public final class Decoder {
      * errors. In other words, if the decoding operation has thrown a decoding
      * error, the decoder is no longer usable.
      *
-     * @param headerBlock
+     * @param headerBlockChunk
      *         the chunk of the header block, may be empty
-     * @param endOfHeaderBlock
+     * @param finalChunk
      *         true if the chunk is the final (or the only one) in the sequence
      *
      * @param consumer
@@ -190,20 +190,22 @@ public final class Decoder {
      * @throws NullPointerException
      *         if either headerBlock or consumer are null
      */
-    public void decode(Buffer headerBlock, boolean endOfHeaderBlock,
+    public void decode(Buffer headerBlockChunk, boolean finalChunk,
                        DecodingCallback consumer) {
-        requireNonNull(headerBlock, "headerBlock");
+        requireNonNull(headerBlockChunk, "headerBlock");
         requireNonNull(consumer, "consumer");
-        while (headerBlock.hasRemaining()) {
-            proceed(headerBlock, consumer);
+        while (headerBlockChunk.hasRemaining()) {
+            // it will be the end of the header block if it's the final bit of the final chunk
+            boolean endOfHeaderBlock = finalChunk && headerBlockChunk.remaining() == 1;
+            proceed(headerBlockChunk, consumer, endOfHeaderBlock);
         }
-        if (endOfHeaderBlock && state != State.READY) {
+        if (finalChunk && state != State.READY) {
             throw new RuntimeException(
                     new ProtocolException("Unexpected end of header block"));
         }
     }
 
-    private void proceed(Buffer input, DecodingCallback action) {
+    private void proceed(Buffer input, DecodingCallback action, boolean endOfHeaderBlock) {
         switch (state) {
             case READY:
                 resumeReady(input);
@@ -220,9 +222,13 @@ public final class Decoder {
             case LITERAL_NEVER_INDEXED:
                 resumeLiteralNeverIndexed(input, action);
                 break;
-            case SIZE_UPDATE:
+            case SIZE_UPDATE: {
+                if (endOfHeaderBlock) {
+                    throw new RuntimeException("The dynamic table size must not be changed at the end of the header block.");
+                }
                 resumeSizeUpdate(input, action);
                 break;
+            }
             default:
                 throw new InternalError(
                         "Unexpected decoder state: " + String.valueOf(state));
