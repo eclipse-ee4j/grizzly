@@ -69,10 +69,10 @@ public abstract class AbstractSocketConnectorHandler
     }
 
     @Override
-    public void connect(SocketAddress remoteAddress,
+    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress,
             SocketAddress localAddress,
             CompletionHandler<Connection> completionHandler) {
-        connectAsync(remoteAddress, localAddress, completionHandler, false);
+        return connectAsync(remoteAddress, localAddress, completionHandler, false);
     }
 
     protected abstract FutureImpl<Connection> connectAsync(

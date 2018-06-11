@@ -325,10 +325,10 @@ public final class UDPNIOTransport extends NIOTransport
      * @param completionHandler {@link CompletionHandler}.
      */
     @Override
-    public void connect(SocketAddress remoteAddress,
+    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress,
             SocketAddress localAddress,
             CompletionHandler<Connection> completionHandler) {
-        connectorHandler.connect(remoteAddress, localAddress,
+        return connectorHandler.connect(remoteAddress, localAddress,
                 completionHandler);
     }
 
