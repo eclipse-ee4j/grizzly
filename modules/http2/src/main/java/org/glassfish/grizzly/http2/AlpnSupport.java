@@ -25,10 +25,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLEngine;
 import org.glassfish.grizzly.CloseListener;
+import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.ICloseType;
 import org.glassfish.grizzly.Transport;
 import org.glassfish.grizzly.npn.AlpnClientNegotiator;
 import org.glassfish.grizzly.npn.AlpnServerNegotiator;
@@ -119,10 +119,11 @@ public class AlpnSupport {
                 if (negotiator != null) {
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
-                    connection.addCloseListener(new CloseListener() {
+                    connection.addCloseListener(new CloseListener<Closeable, CloseType>() {
                         @Override
-                        public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-                            NegotiationSupport.removeClientNegotiator(sslEngine);
+                        public void onClosed(Closeable closeable, CloseType type) throws IOException {
+                            NegotiationSupport.removeAlpnClientNegotiator(sslEngine);
+                            SSL_TO_CONNECTION_MAP.remove(sslEngine);
                         }
                     });
                     setConnection(sslEngine, connection);
@@ -145,10 +146,11 @@ public class AlpnSupport {
 
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
-                    connection.addCloseListener(new CloseListener() {
+                    connection.addCloseListener(new CloseListener<Closeable, CloseType>() {
                         @Override
-                        public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-                            NegotiationSupport.removeServerNegotiator(sslEngine);
+                        public void onClosed(Closeable closeable, CloseType type) throws IOException {
+                            NegotiationSupport.removeAlpnServerNegotiator(sslEngine);
+                            SSL_TO_CONNECTION_MAP.remove(sslEngine);
                         }
                     });
                     setConnection(sslEngine, connection);
