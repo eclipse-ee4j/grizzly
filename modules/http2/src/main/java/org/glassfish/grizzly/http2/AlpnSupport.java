@@ -23,7 +23,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.SSLEngine;
+
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
@@ -44,7 +46,7 @@ import org.glassfish.grizzly.ssl.SSLUtils;
 public class AlpnSupport {
     private final static Logger LOGGER = Grizzly.logger(AlpnSupport.class);
 
-    private final static Map<SSLEngine, Connection> SSL_TO_CONNECTION_MAP =
+    private final static Map<SSLEngine, Connection<?>> SSL_TO_CONNECTION_MAP =
             new WeakHashMap<>();
     
     private static final AlpnSupport INSTANCE;
@@ -74,14 +76,14 @@ public class AlpnSupport {
         return INSTANCE;
     }
 
-    public static Connection getConnection(final SSLEngine engine) {
+    public static Connection<?> getConnection(final SSLEngine engine) {
         synchronized (SSL_TO_CONNECTION_MAP) {
             return SSL_TO_CONNECTION_MAP.get(engine);
         }
     }
     
     private static void setConnection(final SSLEngine engine,
-            final Connection connection) {
+            final Connection<?> connection) {
         synchronized (SSL_TO_CONNECTION_MAP) {
             SSL_TO_CONNECTION_MAP.put(engine, connection);
         }
@@ -99,7 +101,7 @@ public class AlpnSupport {
             new SSLFilter.HandshakeListener() {
 
         @Override
-        public void onStart(final Connection connection) {
+        public void onStart(final Connection<?> connection) {
             final SSLEngine sslEngine = SSLUtils.getSSLEngine(connection);
             assert sslEngine != null;
             
@@ -161,11 +163,11 @@ public class AlpnSupport {
         }
 
         @Override
-        public void onComplete(final Connection connection) {
+        public void onComplete(final Connection<?> connection) {
         }
 
         @Override
-        public void onFailure(Connection connection, Throwable t) {
+        public void onFailure(Connection<?> connection, Throwable t) {
         }
     };
     
@@ -181,7 +183,7 @@ public class AlpnSupport {
         putServerSideNegotiator(transport, negotiator);
     }
     
-    public void setServerSideNegotiator(final Connection connection,
+    public void setServerSideNegotiator(final Connection<?> connection,
             final AlpnServerNegotiator negotiator) {
         putServerSideNegotiator(connection, negotiator);
     }
@@ -192,7 +194,7 @@ public class AlpnSupport {
         putClientSideNegotiator(transport, negotiator);
     }
 
-    public void setClientSideNegotiator(final Connection connection,
+    public void setClientSideNegotiator(final Connection<?> connection,
             final AlpnClientNegotiator negotiator) {
         putClientSideNegotiator(connection, negotiator);
     }

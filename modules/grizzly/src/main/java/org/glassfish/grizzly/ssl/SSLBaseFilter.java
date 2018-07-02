@@ -1076,9 +1076,9 @@ public class SSLBaseFilter extends BaseFilter {
     } // END InternalProcessingHandler
     
     public interface HandshakeListener {
-        void onStart(Connection connection);
-        void onComplete(Connection connection);
-        void onFailure(Connection connection, Throwable t);
+        void onStart(Connection<?> connection);
+        void onComplete(Connection<?> connection);
+        void onFailure(Connection<?> connection, Throwable t);
     }
     
     protected static class SSLTransportFilterWrapper extends TransportFilter {
