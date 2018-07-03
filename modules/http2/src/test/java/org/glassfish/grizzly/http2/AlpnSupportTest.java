@@ -61,9 +61,15 @@ public class AlpnSupportTest extends AbstractHttp2Test {
             }
         }
 
-        // Perform a garbage collection and wait for it to finish
+        // Perform a garbage collection and wait for 10 seconds to see if the engine reference clears
         System.gc();
-        Thread.sleep(500);
+        for (int i = 0; i < 10; i++) {
+            if (AlpnSupport.getConnection(engine) == null) {
+                break;
+            }
+            System.gc();
+            Thread.sleep(1000);
+        }
 
         // Check the connection is gone
         assertNull("The SSLEngine was left hanging in the ALPN map.", AlpnSupport.getConnection(engine));
