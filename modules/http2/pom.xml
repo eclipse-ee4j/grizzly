@@ -84,7 +84,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>
-                        -XX:+HeapDumpOnOutOfMemoryError -Xbootclasspath/p:${settings.localRepository}/org/glassfish/grizzly/grizzly-npn-bootstrap/1.7/grizzly-npn-bootstrap-1.7.jar
+                        -XX:+HeapDumpOnOutOfMemoryError -Xbootclasspath/p:${settings.localRepository}/org/glassfish/grizzly/grizzly-npn-bootstrap/1.8/grizzly-npn-bootstrap-1.8.jar
                     </argLine>
                 </configuration>
             </plugin>
