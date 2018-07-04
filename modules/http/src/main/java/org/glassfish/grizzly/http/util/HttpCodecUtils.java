@@ -51,13 +51,14 @@ public class HttpCodecUtils {
             return;
         }
 
-        if (hostDC.getType() == DataChunk.Type.Bytes) {
-            final ByteChunk valueBC = hostDC.getByteChunk();
-            final int valueS = valueBC.getStart();
-            final int valueL = valueBC.getEnd() - valueS;
+        if (hostDC.getType() == DataChunk.Type.Bytes || hostDC.getType() == DataChunk.Type.String) {
+            final int valueS = hostDC.getStart();
+            final int valueL = hostDC.getEnd() - valueS;
             int colonPos = -1;
 
-            final byte[] valueB = valueBC.getBuffer();
+            final byte[] valueB = hostDC.getType() == DataChunk.Type.Bytes ? 
+                    hostDC.getByteChunk().getBuffer() : hostDC.toString().getBytes();
+
             final boolean ipv6 = (valueB[valueS] == '[');
             boolean bracketClosed = false;
             for (int i = 0; i < valueL; i++) {
