@@ -179,7 +179,7 @@ public final class UDPNIOTransport extends NIOTransport
     }
 
     @Override
-    public Connection bindToInherited() throws IOException {
+    public Connection<?> bindToInherited() throws IOException {
         return bindingHandler.bindToInherited();
     }
 
@@ -192,6 +192,16 @@ public final class UDPNIOTransport extends NIOTransport
             final PortRange portRange, final int backlog) throws IOException {
 
         return (UDPNIOServerConnection) bindingHandler.bind(host, portRange, backlog);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public UDPNIOServerConnection bind(final String host,
+            final PortRange portRange, final boolean randomStartPort, final int backlog) throws IOException {
+
+        return (UDPNIOServerConnection) bindingHandler.bind(host, portRange, randomStartPort, backlog);
     }
 
     /**

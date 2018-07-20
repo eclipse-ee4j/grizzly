@@ -234,7 +234,16 @@ public final class TCPNIOTransport extends NIOTransport implements
             final PortRange portRange, final int backlog) throws IOException {
 
         return (TCPNIOServerConnection) bindingHandler.bind(host, portRange, backlog);
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TCPNIOServerConnection bind(final String host,
+            final PortRange portRange, final boolean randomStartPort, final int backlog) throws IOException {
+
+        return (TCPNIOServerConnection) bindingHandler.bind(host, portRange, randomStartPort, backlog);
     }
     
     /**
