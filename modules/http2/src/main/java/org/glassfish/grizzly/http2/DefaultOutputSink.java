@@ -221,10 +221,6 @@ class DefaultOutputSink implements StreamOutputSink {
                 break;
             }
         }
-
-        if (outputQueue.peek() != null && outputQueue.peek().trailer != null) {
-            LOGGER.warning("Trailer frame is going to get ignored.");
-        }
     }
 
     /**
@@ -409,7 +405,6 @@ class DefaultOutputSink implements StreamOutputSink {
                     // !!!!! LOCK the deflater
                     sendTrailers(completionHandler, messageCloner, (HttpTrailer) httpContent);
                 }
-                close();
                 return;
             }
 
@@ -651,7 +646,6 @@ class DefaultOutputSink implements StreamOutputSink {
 
     private void sendTrailers(final CompletionHandler<WriteResult> completionHandler, final MessageCloner<Buffer> messageCloner, final HttpTrailer httpContent)
             throws IOException {
-        http2Session.getDeflaterLock().lock();
         final boolean logging = NetLogger.isActive();
         final Map<String, String> capture = logging ? new HashMap<>() : null;
         List<Http2Frame> trailerFrames = http2Session.encodeTrailersAsHeaderFrames(stream.getId(), new ArrayList<>(4), httpContent.getHeaders(), capture);
@@ -665,7 +659,6 @@ class DefaultOutputSink implements StreamOutputSink {
         }
         unflushedWritesCounter.incrementAndGet();
         flushToConnectionOutputSink(trailerFrames, null, new FlushCompletionHandler(completionHandler), messageCloner, true);
-        http2Session.getDeflaterLock().unlock();
         close();
     }
 
