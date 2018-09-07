@@ -44,7 +44,7 @@ public class AlpnSupportTest extends AbstractHttp2Test {
      * Tests that the SSL_TO_CONNECTION_MAP removes entries from it after the
      * connection closes.
      */
-    @Test
+    //@Test
     public void sslToConnectionMapClearTest() throws Exception {
         SSLEngine engine = null;
 

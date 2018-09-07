@@ -91,7 +91,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.1.0</version>
                 <configuration>
                     <filesets>
                         <!-- Make sure we remove the fake source directory. -->
@@ -121,7 +121,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.8</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>src-dependencies</id>

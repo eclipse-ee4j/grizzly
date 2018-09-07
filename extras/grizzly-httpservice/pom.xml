@@ -116,7 +116,6 @@
                 <artifactId>maven-pax-plugin</artifactId>
                 <version>1.5</version>
                 <configuration>
-            <!--<profiles>log</profiles>-->
                     <args>file:src/main/etc/pax.args</args>
                 </configuration>
             </plugin>

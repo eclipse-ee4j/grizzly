@@ -58,43 +58,6 @@
                     <unpackBundle>true</unpackBundle>
                 </configuration>
             </plugin>
-            <!--
-            <plugin>
-                <groupId>org.jvnet.jaxb2.maven2</groupId>
-                <artifactId>maven-jaxb2-plugin</artifactId>
-                <version>0.8.0</version>
-                <executions>
-                    <execution>
-                        <id>servlet 3.0</id>
-                        <configuration>
-                            <schemaIncludes>
-                                <includeSchema>**/web-app_3_0.xsd</includeSchema>
-                            </schemaIncludes>
-                            <generatePackage>org.glassfish.grizzly.servlet.ver30</generatePackage>
-                            <strict>true</strict>
-                            <catalog>src/main/resources/catalog.cat</catalog>
-                        </configuration>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>servlet 2.5</id>
-                        <configuration>
-                            <forceRegenerate>true</forceRegenerate>
-                            <schemaIncludes>
-                                <includeSchema>**/web-app_2_5.xsd</includeSchema>
-                            </schemaIncludes>
-                            <generatePackage>org.glassfish.grizzly.servlet.ver25</generatePackage>
-                            <strict>true</strict>
-                        </configuration>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
         </plugins>
     </build>
     <dependencies>
