@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2007, 2018 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
     terms of the Eclipse Public License v. 2.0, which is available at
@@ -209,7 +209,7 @@
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.1.0</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
@@ -236,7 +236,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.5.2</version>
+                <version>3.0.5</version>
                 <configuration>
                     <threshold>low</threshold>
                     <excludeFilterFile>${findbugs.common}
@@ -280,6 +280,16 @@
             <id>release-profile</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>${sonatypeOssDistMgmtReleasesUrl}</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <inherited>true</inherited>
                         <groupId>org.codehaus.mojo</groupId>
@@ -332,7 +342,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
+                <version>3.0.0</version>
                 <configuration>
                     <aggregate>true</aggregate>
                     <debug>true</debug>
@@ -364,7 +374,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.13</version>
+                <version>2.20.1</version>
                 <configuration>
                     <forkMode>always</forkMode>
                 </configuration>
@@ -372,7 +382,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.13</version>
+                <version>2.20.1</version>
                 <configuration>
                     <linkXRef>false</linkXRef>
                 </configuration>
@@ -432,7 +442,7 @@
         <junit-version>4.12</junit-version>
         <maven-plugin.version>1.0.0</maven-plugin.version>
         <servlet-version>4.0.0-b07</servlet-version>
-        <felix-version>2.4.0</felix-version>
+        <felix-version>3.5.0</felix-version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>3.2.0-b003</gmbal.version>
         <maven.compiler.argument>
