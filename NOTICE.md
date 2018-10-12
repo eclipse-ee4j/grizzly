@@ -31,50 +31,12 @@ SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
 The project maintains the following source code repositories:
 
 * https://github.com/eclipse-ee4j/grizzly
-* https://github.com/eclipse-ee4j/grizzly-npn
-* https://github.com/eclipse-ee4j/grizzly-thrift
-* https://github.com/eclipse-ee4j/grizzly-memcached
-* https://github.com/eclipse-ee4j/grizzly-ahc
 
 ## Third-party Content
 
 This project leverages the following third party content.
 
-Apache Commons FileUpload (1.2.2)
-
-* License: Apache License, 2.0
-
 Apache Commons IO (2.0.1)
-
-* License: Apache License, 2.0
-
-Apache Log4j (1.2.17)
-
-* License: Apache License 2.0
-
-Apache Thrift (0.10.0)
-
-* License: Apache-2.0
-* Project: https://thrift.apache.org/
-* Source: https://git-wip-us.apache.org/repos/asf?p=thrift.git
-
-Apache Thrift (0.11.0)
-
-* License: Apache-2.0
-* Project: https://thrift.apache.org/
-* Source: https://github.com/apache/thrift/tree/0.11.0
-
-apache zookeeper (3.4.11)
-
-* License: Apache-2.0
-* Project: https://zookeeper.apache.org/
-* Source: https://git-wip-us.apache.org/repos/asf?p=zookeeper.git
-
-commons-pool (1.6)
-
-* License: Apache-2.0
-
-Guava (11.0.2)
 
 * License: Apache License, 2.0
 
@@ -87,15 +49,7 @@ JUnit (4.12)
 
 * License: Eclipse Public License
 
-Logback Classic (1.2.3)
-
-* License: EPL-1.0
-
 mockito (1.9.5)
-
-* License: Apache License, 2.0, New BSD license, MIT license
-
-mockito (1.10.19)
 
 * License: Apache License, 2.0, New BSD license, MIT license
 
@@ -107,21 +61,6 @@ OSGi Compendium APIs Version: v (4.2)
 
 * License: Apache License, 2.0
 
-SLF4J API (1.7.12)
-
-* License: MIT
-* Project: https://www.slf4j.org/
-* Source: https://github.com/qos-ch/slf4j
-
-slf4j-simple (1.5.8)
-
-* License: MIT
-* Project: https://www.slf4j.org/
-* Source: https://github.com/qos-ch/slf4j
-
-TestNG (6.8.8)
-
-* License: Apache License, 2.0
 
 ## Cryptography
 
