@@ -188,14 +188,26 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.5.3</version>
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <preparationGoals>clean install</preparationGoals>
+                    <useReleaseProfile>false</useReleaseProfile>
                     <pushChanges>false</pushChanges>
-                    <goals>deploy -Dmaven.test.skip=true</goals>
+                    <arguments>${release.arguments}</arguments>
                 </configuration>
+             </plugin>
+             <plugin>
+                 <groupId>org.sonatype.plugins</groupId>
+                 <artifactId>nexus-staging-maven-plugin</artifactId>
+                     <version>1.6.8</version>
+                     <configuration>
+                         <serverId>ossrh</serverId>
+                         <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                         <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                         <!-- Skip based on the maven.deploy.skip property -->
+                         <skipNexusStagingDeployMojo>${maven.deploy.skip}</skipNexusStagingDeployMojo>
+                     </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -317,6 +329,18 @@
                                         <source>src/main/webapp</source>
                                     </sources>
                                 </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -484,5 +508,6 @@
         <findbugs.common>exclude-common.xml</findbugs.common>
         <jdk.compile.version>1.8</jdk.compile.version>
         <grizzly.alpn.version>1.8</grizzly.alpn.version>
+        <release.arguments></release.arguments>
     </properties>
 </project>
