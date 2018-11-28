@@ -192,6 +192,7 @@
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <preparationGoals>clean install</preparationGoals>
                     <useReleaseProfile>false</useReleaseProfile>
                     <pushChanges>false</pushChanges>
                     <arguments>${release.arguments}</arguments>
