@@ -450,11 +450,6 @@
         <dependencies>
             <dependency>
                 <groupId>org.glassfish.gmbal</groupId>
-                <artifactId>gmbal-api-only</artifactId>
-                <version>${gmbal.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.glassfish.gmbal</groupId>
                 <artifactId>gmbal</artifactId>
                 <version>${gmbal.version}</version>
             </dependency>
@@ -501,14 +496,14 @@
         <servlet-version>4.0.0-b07</servlet-version>
         <felix-version>3.5.0</felix-version>
         <cobertura.version>2.4</cobertura.version>
-        <gmbal.version>3.2.0-b003</gmbal.version>
+        <gmbal.version>4.0.0</gmbal.version>
         <maven.compiler.argument>
             -Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides
         </maven.compiler.argument>
         <findbugs.skip>false</findbugs.skip>
         <findbugs.common>exclude-common.xml</findbugs.common>
-        <jdk.compile.version>1.8</jdk.compile.version>
-        <grizzly.alpn.version>1.8</grizzly.alpn.version>
+        <jdk.compile.version>1.9</jdk.compile.version>
+        <grizzly.alpn.version>1.9</grizzly.alpn.version>
         <release.arguments></release.arguments>
     </properties>
 </project>
