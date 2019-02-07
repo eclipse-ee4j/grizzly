@@ -152,15 +152,15 @@ public class Http2Session {
 
         this.http2Configuration = handlerFilter.getConfiguration();
 
-        int maxConcurrentStreams =
-                this.http2Configuration.getMaxConcurrentStreams() != -1
-                ? this.http2Configuration.getMaxConcurrentStreams()
-                : getDefaultMaxConcurrentStreams();
+        if (this.http2Configuration.getMaxConcurrentStreams() != -1) {
+            this.setLocalMaxConcurrentStreams(this.http2Configuration.getMaxConcurrentStreams());
+        } else {
+            this.setLocalMaxConcurrentStreams(this.getDefaultMaxConcurrentStreams());
+        }
 
-        this.streamsHighWaterMark =
-                Float.valueOf(
-                    maxConcurrentStreams * http2Configuration.getStreamsHighWaterMark()
-                ).intValue();
+        if (this.http2Configuration.getInitialWindowSize() != -1) {
+            this.localStreamWindowSize = this.http2Configuration.getInitialWindowSize();
+        }
 
         final int customMaxFramePayloadSz
                 = handlerFilter.getLocalMaxFramePayloadSize() > 0
@@ -168,23 +168,23 @@ public class Http2Session {
                 : -1;
 
         // apply custom max frame value only if it's in [getSpecMinFramePayloadSize(); getSpecMaxFramePayloadSize()] range
-        localMaxFramePayloadSize =
+        this.localMaxFramePayloadSize =
                 customMaxFramePayloadSz >= getSpecMinFramePayloadSize() &&
                 customMaxFramePayloadSz <= getSpecMaxFramePayloadSize()
                 ? customMaxFramePayloadSz
                 : getSpecDefaultFramePayloadSize();
 
-        maxHeaderListSize = handlerFilter.getConfiguration().getMaxHeaderListSize();
+        this.maxHeaderListSize = handlerFilter.getConfiguration().getMaxHeaderListSize();
 
         if (isServer) {
-            lastLocalStreamId = 0;
-            lastPeerStreamId = -1;
+            this.lastLocalStreamId = 0;
+            this.lastPeerStreamId = -1;
         } else {
-            lastLocalStreamId = -1;
-            lastPeerStreamId = 0;
+            this.lastLocalStreamId = -1;
+            this.lastPeerStreamId = 0;
         }
 
-        addressHolder = Holder.lazyHolder((NullaryFunction<Object>) () -> connection.getPeerAddress());
+        this.addressHolder = Holder.lazyHolder((NullaryFunction<Object>) () -> connection.getPeerAddress());
 
         connection.addCloseListener(new ConnectionCloseListener());
 
@@ -452,7 +452,10 @@ public class Http2Session {
      */
     public void setLocalMaxConcurrentStreams(int localMaxConcurrentStreams) {
         this.localMaxConcurrentStreams = localMaxConcurrentStreams;
-        streamsHighWaterMark = Float.valueOf(localMaxConcurrentStreams * 0.5f).intValue();
+        this.streamsHighWaterMark =
+            Float.valueOf(
+                this.localMaxConcurrentStreams * this.http2Configuration.getStreamsHighWaterMark()
+            ).intValue();
     }
 
     /**
