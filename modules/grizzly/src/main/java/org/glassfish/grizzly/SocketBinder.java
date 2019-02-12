@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,10 +31,10 @@ public interface SocketBinder {
     /**
      * Binds Transport to the specific port on localhost.
      *
-     * @param port
+     * @param port the port to bind to
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(int port) throws IOException;
 
@@ -41,21 +42,21 @@ public interface SocketBinder {
      * Binds Transport to the specific host and port.
      *
      * @param host the local host the server will bind to
-     * @param port
+     * @param port specific port to bind to
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(String host, int port) throws IOException;
 
     /**
      * Binds Transport to the specific host and port.
      * @param host the local host the server will bind to
-     * @param port
+     * @param port the port to bind to
      * @param backlog the maximum length of the queue
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(String host, int port, int backlog) throws IOException;
 
@@ -67,7 +68,7 @@ public interface SocketBinder {
      * @param backlog the maximum length of the queue
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(String host, PortRange portRange, int backlog) throws IOException;
 
@@ -80,7 +81,7 @@ public interface SocketBinder {
      * @param backlog the maximum length of the queue
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(String host, PortRange portRange, boolean randomStartPort, int backlog) throws IOException;
 
@@ -90,7 +91,7 @@ public interface SocketBinder {
      * @param socketAddress the local address the server will bind to
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(SocketAddress socketAddress) throws IOException;
 
@@ -101,7 +102,7 @@ public interface SocketBinder {
      * @param backlog the maximum length of the queue
      * @return bound {@link Connection}
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bind(SocketAddress socketAddress, int backlog) throws IOException;
 
@@ -111,22 +112,19 @@ public interface SocketBinder {
      * 
      * @return bound {@link Connection}
      * 
-     * @throws IOException 
+     * @throws IOException  if unable to bind i.e. if port already bound
      */
     Connection<?> bindToInherited() throws IOException;
     
     /**
      * Unbinds bound {@link Transport} connection.
      * @param connection {@link Connection}
-     *
-     * @throws java.io.IOException
      */
     void unbind(Connection<?> connection);
 
     /**
      * Unbinds all bound {@link Transport} connections.
      *
-     * @throws java.io.IOException
      */
     void unbindAll();
 

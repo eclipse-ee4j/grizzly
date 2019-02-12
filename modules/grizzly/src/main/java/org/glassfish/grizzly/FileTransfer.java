@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -117,8 +118,9 @@ public class FileTransfer implements WritableMessage {
      * {@link WritableByteChannel}.
      * 
      * @param c the {@link WritableByteChannel}
-     * @return
-     * @throws IOException
+     * @return the number of bytes that have been transferred
+     * @throws IOException if an error occurs while processing
+     * @see java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel) 
      */
     public long writeTo(final WritableByteChannel c) throws IOException {
         final long written = fileChannel.transferTo(pos, len, c);

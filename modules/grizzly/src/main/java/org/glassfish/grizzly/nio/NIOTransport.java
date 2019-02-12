@@ -385,6 +385,7 @@ public abstract class NIOTransport extends AbstractTransport
      * The transport will be started only if its current state is {@link State#STOPPED},
      * otherwise the call will be ignored without exception thrown and the transport
      * state will remain the same as it was before the method call.
+     * @throws java.io.IOException if an attempt was made to actually start which failed
      */
     @Override
     public void start() throws IOException {

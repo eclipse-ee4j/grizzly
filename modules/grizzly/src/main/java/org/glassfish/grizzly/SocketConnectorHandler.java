@@ -42,7 +42,7 @@ public interface SocketConnectorHandler extends ConnectorHandler<SocketAddress> 
      * @return {@link Future} of connect operation, which could be used to get
      * resulting {@link Connection}.
      * 
-     * @throws java.io.IOException
+     * @throws java.io.IOException not actually thrown
      */
     Future<Connection> connect(String host, int port) throws IOException;
 }

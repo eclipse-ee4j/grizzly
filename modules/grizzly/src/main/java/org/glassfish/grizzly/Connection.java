@@ -59,7 +59,6 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * {@link IOException} giving the reason why this <tt>Connection</tt>
      * was closed.
      * 
-     * @throws IOException 
      */
     @Override
     void assertOpen() throws IOException;
@@ -104,7 +103,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * {@link ProcessorSelector}, associated withthe {@link Connection} is also
      * <tt>null</tt> - will ask {@link Transport} for a {@link Processor}.
      *
-     * @param ioEvent
+     * @param ioEvent event to obtain the processor for
      * @return the default {@link Processor}, which will process
      * {@link Connection} I/O events.
      */
@@ -167,9 +166,9 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
 
     /**
      * Returns the {@link Processor} state associated with this <tt>Connection</tt>.
-     * @param <E>
+     * @param <E> state of the {@link Processor}
      * @param processor {@link Processor}
-     * @param factory
+     * @param factory factory that is used to initialise the state
      * 
      * @return the {@link Processor} state associated with this <tt>Connection</tt>.
      */
@@ -182,13 +181,14 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * The thread will be chosen based on {@link #getTransport() Transport}
      * settings, especially current I/O strategy.
      * 
-     * @param event
-     * @param runnable 
+     * @param event event to get the thread pool from
+     * @param runnable Runnable to run in the thread
      */
     void executeInEventThread(IOEvent event, Runnable runnable);
     
     /**
-     * @return an associated {@link MemoryManager}. It's a shortcut for {@link #getTransport()#getMemoryManager()}
+     * @return an associated {@link MemoryManager}. It's a shortcut for
+     * {@link #getTransport()}{@link Transport#getMemoryManager() .getMemoryManager()}
      * @since 2.3.18
      */
     MemoryManager<?> getMemoryManager();
@@ -268,9 +268,10 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
     /**
      * Returns the current value for the blocking read timeout converted to the
      * provided {@link TimeUnit} specification.  If this value hasn't been
-     * explicitly set, it will default to {@value #DEFAULT_READ_TIMEOUT} seconds.
+     * explicitly set, it will default to 30 seconds.
      *
      * @param timeUnit the {@link TimeUnit} to convert the returned result to.
+     * @return the read timeout value
      *
      * @since 2.3
      */
@@ -282,7 +283,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * A value of zero or less effectively disables the timeout.
      *
      * @param timeout the new timeout value
-     * @param timeUnit the {@TimeUnit} specification of the provided value.
+     * @param timeUnit the {@link TimeUnit} specification of the provided value.
      *
      * @see Connection#setReadTimeout(long, java.util.concurrent.TimeUnit)
      *
@@ -293,9 +294,10 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
     /**
      * Returns the current value for the blocking write timeout converted to the
      * provided {@link TimeUnit} specification.  If this value hasn't been
-     * explicitly set, it will default to {@value #DEFAULT_WRITE_TIMEOUT} seconds.
+     * explicitly set, it will default to 30 seconds.
      *
      * @param timeUnit the {@link TimeUnit} to convert the returned result to.
+     * @return the write timeout value
      *
      * @since 2.3
      */
@@ -307,7 +309,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * A value of zero or less effectively disables the timeout.
      *
      * @param timeout  the new timeout value
-     * @param timeUnit the {@TimeUnit} specification of the provided value.
+     * @param timeUnit the {@link TimeUnit} specification of the provided value.
      *
      * @see Connection#setWriteTimeout(long, java.util.concurrent.TimeUnit)
      *
@@ -349,7 +351,6 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * This method is similar to {@link #terminateSilently()}, but additionally
      * provides the reason why the <tt>Connection</tt> will be closed.
      * 
-     * @param reason 
      */
     @Override
     void terminateWithReason(IOException reason);
@@ -386,8 +387,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * 
      * This method is similar to {@link #closeSilently()}, but additionally
      * provides the reason why the <tt>Connection</tt> will be closed.
-     * 
-     * @param reason 
+     *
      */
     @Override
     void closeWithReason(IOException reason);
@@ -427,6 +427,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>,
      * Remove the {@link CloseListener}.
      *
      * @param closeListener {@link CloseListener}.
+     * @return true if listener successfully removed
      *
      * @deprecated use {@link #removeCloseListener(org.glassfish.grizzly.CloseListener)}
      */

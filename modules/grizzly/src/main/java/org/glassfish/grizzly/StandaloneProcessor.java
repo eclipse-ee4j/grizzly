@@ -96,6 +96,7 @@ public class StandaloneProcessor implements Processor {
      * Get the {@link Connection} {@link StreamReader}, to read data from the
      * {@link Connection}.
      *
+     * @param connection {@link Connection} to get the {@link StreamReader} for
      * @return the {@link Connection} {@link StreamReader}, to read data from the
      * {@link Connection}.
      */
@@ -107,6 +108,7 @@ public class StandaloneProcessor implements Processor {
      * Get the {@link Connection} {@link StreamWriter}, to write data to the
      * {@link Connection}.
      *
+     * @param connection connection to get the {@link StreamWriter} for
      * @return the {@link Connection} {@link StreamWriter}, to write data to the
      * {@link Connection}.
      */

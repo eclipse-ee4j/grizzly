@@ -65,7 +65,7 @@ public interface Processor<E extends Context> {
     /**
      * Is this {@link Processor} interested in processing the i/o event
      * 
-     * @param ioEvent
+     * @param ioEvent the event to check if the Processor is interested in
      * @return true, if this {@link Processor} is interested and execution
      * process will start, false otherwise.
      */
