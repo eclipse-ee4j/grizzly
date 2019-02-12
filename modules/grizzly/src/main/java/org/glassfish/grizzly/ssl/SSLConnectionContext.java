@@ -361,7 +361,6 @@ public final class SSLConnectionContext {
         
         if (allocator != null && isOverflow) {
             updateBufferSizes();
-            output = ensureBufferSize(output, netBufferSize, allocator);
             return wrap(input, output, null);
         } else if (isOverflow || status == Status.BUFFER_UNDERFLOW) {
             return new SslResult(output, new SSLException("SSL wrap error: " + status));
