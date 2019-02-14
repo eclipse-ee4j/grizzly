@@ -1147,24 +1147,24 @@ public abstract class HttpHeader extends HttpPacket
             if (mimeHeaders == null) {
                 mimeHeaders = new MimeHeaders();
             }
-            if(!handleSpecialHeaderAdd(name, value)) {
+            if(!handleSpecialHeaderAdd(Header.find(name), value)) {
                 mimeHeaders.addValue(name).setString(value);
             }
             return (T) this;
         }
 
         /**
-         * Remove the specified header from this builder.  This method is only
+         * Remove the specified name from this builder.  This method is only
          * useful if using the same builder to create multiple objects.
          *
-         * @param header the mime header.
+         * @param name the mime header name.
          * @return this
          */
         @SuppressWarnings({"unchecked"})
-        public final T removeHeader(String header) {
+        public final T removeHeader(String name) {
             if (mimeHeaders != null) {
-                mimeHeaders.removeHeader(header);
-                handleSpecialHeaderRemove(header);
+                mimeHeaders.removeHeader(name);
+                handleSpecialHeaderRemove(Header.find(name));
             }
             return (T) this;
         }
@@ -1180,7 +1180,7 @@ public abstract class HttpHeader extends HttpPacket
             if (mimeHeaders == null) {
                 mimeHeaders = new MimeHeaders();
             }
-            if(!handleSpecialHeaderAdd(header.toString(), value)) {
+            if(!handleSpecialHeaderAdd(header, value)) {
                 mimeHeaders.addValue(header).setString(value);
             }
 
@@ -1198,7 +1198,7 @@ public abstract class HttpHeader extends HttpPacket
         public final T removeHeader(Header header) {
             if (mimeHeaders != null) {
                 mimeHeaders.removeHeader(header);
-                handleSpecialHeaderRemove(header.toString());
+                handleSpecialHeaderRemove(header);
             }
             return (T) this;
         }
@@ -1254,31 +1254,22 @@ public abstract class HttpHeader extends HttpPacket
 
         protected abstract HttpHeader create();
 
-        private boolean handleSpecialHeaderAdd(final String name,
+        private boolean handleSpecialHeaderAdd(final Header header,
                                             final String value) {
-            final char c = name.charAt(0);
-            boolean isC = (c == 'c' || c == 'C');
-            if (isC && Header.ContentLength.equals(Header.find(name))) {
+            if (Header.ContentLength.equals(header)) {
                 contentLength = Long.parseLong(value);
                 return true;
-            }
-            boolean isU = (c == 'u' || c == 'U');
-            if (isU && Header.Upgrade.equals(Header.find(name))) {
+            } else if (Header.Upgrade.equals(header)) {
                 upgrade = value;
                 return true;
             }
             return false;
         }
 
-        private void handleSpecialHeaderRemove(final String name) {
-            final char c = name.charAt(0);
-            boolean isC = (c == 'c' || c == 'C');
-            if (isC && Header.ContentLength.toString().equals(name)) {
+        private void handleSpecialHeaderRemove(final Header header) {
+            if (Header.ContentLength.equals(header)) {
                 contentLength = null;
-                return;
-            }
-            boolean isU = (c == 'u' || c == 'U');
-            if (isU && Header.Upgrade.toString().equals(name)) {
+            } else if (Header.Upgrade.equals(header)) {
                 upgrade = null;
             }
         }
