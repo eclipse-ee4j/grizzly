@@ -252,6 +252,9 @@ public class AjpHandlerFilter extends BaseFilter {
                 return AjpMessageUtils.appendContentAndTrim(memoryManager,
                         encodedBuffer, contentBuffer);
             }
+            else if (encodedBuffer == null) {
+                encodedBuffer = Buffers.EMPTY_BUFFER;
+            }
         }
 
         assert encodedBuffer != null;
