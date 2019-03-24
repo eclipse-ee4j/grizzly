@@ -256,6 +256,7 @@ public class AjpHandlerFilter extends BaseFilter {
                 encodedBuffer = Buffers.EMPTY_BUFFER;
             }
         }
+        
 
         assert encodedBuffer != null;
         encodedBuffer.trim();
