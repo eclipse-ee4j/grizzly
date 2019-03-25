@@ -29,16 +29,15 @@ public interface WriteHandler {
      * This callback will be invoked when the requirements as dictated
      * by writer are met.
      * 
-     * @throws Exception, {@link Exception} might be thrown by the custom
+     * @throws Exception {@link Exception} might be thrown by the custom
      *  handler code. This exception will be delegated for processing to
      *  {@link #onError(java.lang.Throwable)}.
      */
     void onWritePossible() throws Exception;
 
     /**
-     * <p>
      * Invoked when an error occurs processing the request asynchronously.
-     * </p>
+     * @param t cause of error
      */
     void onError(final Throwable t);
 

@@ -43,6 +43,7 @@ public interface WritableMessage {
     /**
      * Perform message specific actions to release resources held by the
      * entity backing this <code>WritableMessage</code>.
+     * @return true if successfully released
      */
     boolean release();
     
@@ -51,7 +52,7 @@ public interface WritableMessage {
      * (for example {@link org.glassfish.grizzly.FileTransfer}),
      * which is not loaded in memory.
      * 
-     * <tt>False</tt>, if the message is
+     * @return <tt>False</tt>, if the message is
      * located in memory (like {@link org.glassfish.grizzly.Buffer}).
      */
     boolean isExternal();

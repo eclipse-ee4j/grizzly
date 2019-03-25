@@ -22,7 +22,7 @@ import org.glassfish.grizzly.attributes.AttributeStorage;
  * <tt>Transformer</tt> interface, which knows how to transform the original
  * data to some custom representation.
  * A <tt>Transformer</tt> implementation could be stateful or stateless. However
- * it's very easy to write stateful <tt>Transformer</tt>, which actaully doesn't
+ * it's very easy to write stateful <tt>Transformer</tt>, which actually doesn't
  * save any state internally, but uses {@link AttributeStorage} as an external
  * state storage. Please note, that {@link AttributeStorage} is being passed
  * as the parameter to all <tt>Transformer</tt> methods. This way it's
@@ -48,9 +48,10 @@ public interface Transformer<K, L> {
      * 
      * @param storage the external state storage, where <tt>Transformer</tt> could
      *        get/put a state.
+     * @param input data to transform
      * @return the result {@link TransformationResult}
      * 
-     * @throws org.glassfish.grizzly.TransformationException
+     * @throws org.glassfish.grizzly.TransformationException if failed to transport i.e. invalid types
      */
     TransformationResult<K, L> transform(AttributeStorage storage, K input)
             throws TransformationException;

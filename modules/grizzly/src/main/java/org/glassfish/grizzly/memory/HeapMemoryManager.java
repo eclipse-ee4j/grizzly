@@ -173,6 +173,11 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     // ------------------------------------------------------- Protected Methods
 
 
+    /**
+     * Creates a new HeapBuffer with a a specified size. 
+     * @param size size of buffer created
+     * @return 
+     */
     protected HeapBuffer allocateHeapBuffer(final int size) {
         if (size > maxBufferSize) {
             // Don't use pool
@@ -294,6 +299,11 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
         return new RecyclableByteBufferWrapper(underlyingByteBuffer);
     }
 
+    /**
+     * Gets the thread local buffer pool
+     * If the pool is not an instance of HeapBufferThreadLocalPool then null is returned
+     * @return 
+     */
     @SuppressWarnings("unchecked")
     private static HeapBufferThreadLocalPool getHeapBufferThreadLocalPool() {
         final ThreadLocalPool pool = getThreadLocalPool();

@@ -43,6 +43,7 @@ public interface Writer<L> {
      * @param message the {@link WritableMessage}, from which the data will be written
      * @return {@link Future}, using which it's possible to check the
      *         result
+     * @throws java.io.IOException not thrown
      */
     GrizzlyFuture<WriteResult<WritableMessage, L>> write(Connection<L> connection,
                                                          WritableMessage message) throws IOException;
@@ -180,7 +181,7 @@ public interface Writer<L> {
         /**
          * Returns the maximum number of write() method reentrants a thread is
          * allowed to made. This is related to possible
-         * write()->onComplete()->write()->... chain, which may grow infinitely
+         * write()-&gt;onComplete()-&gt;write()-&gt;... chain, which may grow infinitely
          * and cause StackOverflow. Using maxWriteReentrants value it's possible
          * to limit such a chain.
          *
@@ -195,6 +196,7 @@ public interface Writer<L> {
          * Returns the current write reentrants counter. Might be useful, if
          * developer wants to use custom notification mechanism, based on on {@link #canWrite(org.glassfish.grizzly.Connection)}
          * and various write methods.
+         * @return current reentrants counter
          */
         public static Reentrant getWriteReentrant() {
             // ThreadLocal otherwise

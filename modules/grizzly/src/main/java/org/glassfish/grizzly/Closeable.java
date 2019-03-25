@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,6 +26,7 @@ import java.util.concurrent.Future;
  * <tt>Closeable</tt> interface contains two sets of methods: close* and terminate*,
  * so interface implementations can provide graceful and abrupt releasing of resources.
  * 
+ * @see java.io.Closeable
  * @author Alexey Stashok
  */
 public interface Closeable {
@@ -40,11 +42,9 @@ public interface Closeable {
     
     /**
      * Checks if this <tt>Closeable</tt> is open and ready to be used.
-     * If this <tt>Closeable</tt> is closed - this method throws
-     * {@link IOException} giving the reason why this <tt>Closeable</tt>
+     * If this <tt>Closeable</tt> is closed then an IOException will be thrown
+     * @throws IOException giving the reason why this <tt>Closeable</tt>
      * was closed.
-     * 
-     * @throws IOException 
      */
     void assertOpen() throws IOException;
     
@@ -73,7 +73,8 @@ public interface Closeable {
      * This method is similar to {@link #terminateSilently()}, but additionally
      * provides the reason why the <tt>Closeable</tt> will be closed.
      * 
-     * @param cause 
+     * @param cause reason why terminated. This will be thrown is 
+     * {@link #isOpen()} is called subsequently
      */
     void terminateWithReason(IOException cause);
     
@@ -96,6 +97,7 @@ public interface Closeable {
      *
      * @return {@link java.util.concurrent.Future}, which could be checked in case, if close operation
      *         will be run asynchronously
+     * @see java.io.Closeable#close() which is not asynchronous
      */
     GrizzlyFuture<Closeable> close();
     
@@ -120,7 +122,8 @@ public interface Closeable {
      * This method is similar to {@link #closeSilently()}, but additionally
      * provides the reason why the <tt>Closeable</tt> will be closed.
      * 
-     * @param cause 
+     * @param cause reason why closed, this will be thrown by
+     * {@link #isOpen()} if called subsequently
      */
     void closeWithReason(IOException cause);
     
