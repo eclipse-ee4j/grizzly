@@ -19,12 +19,10 @@ package org.glassfish.grizzly.http2;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -104,10 +102,7 @@ public class Http2Session {
     private volatile FilterChain http2StreamChain;
     private volatile FilterChain htt2SessionChain;
 
-    private static final AtomicIntegerFieldUpdater<Http2Session> concurrentStreamCountUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(Http2Session.class, "concurrentStreamsCount");
-    @SuppressWarnings("unused")
-    private volatile int concurrentStreamsCount;
+    private final AtomicInteger concurrentStreamsCount = new AtomicInteger(0);
 
     private final TreeMap<Integer, Http2Stream> streamsMap = new TreeMap<>();
 
@@ -654,7 +649,7 @@ public class Http2Session {
                         ? lastPeerStreamId
                         : 0));
                 if (goingAwayLastStreamId != Integer.MAX_VALUE) {
-                    if (concurrentStreamsCount != 0) {
+                    if (concurrentStreamsCount.get() > 0) {
                         pruneStreams();
                     }
                 }
@@ -1035,7 +1030,7 @@ public class Http2Session {
                 return null; // if the session is closed is set - return null to ignore stream creation
             }
 
-            if (concurrentStreamsCount >= getLocalMaxConcurrentStreams()) {
+            if (concurrentStreamsCount.get() >= getLocalMaxConcurrentStreams()) {
                 // throw Session level exception because headers were not decompressed,
                 // so compression context is lost
                 throw new Http2SessionException(ErrorCode.REFUSED_STREAM);
@@ -1091,7 +1086,7 @@ public class Http2Session {
                         ErrorCode.REFUSED_STREAM, "Session is closed");
             }
 
-            if (concurrentStreamsCount >= getLocalMaxConcurrentStreams()) {
+            if (concurrentStreamsCount.get() >= getLocalMaxConcurrentStreams()) {
                 throw new Http2StreamException(streamId, ErrorCode.REFUSED_STREAM);
             }
 
@@ -1195,12 +1190,11 @@ public class Http2Session {
      * Called from {@link Http2Stream} once stream is completely closed.
      */
     void deregisterStream() {
-        decStreamCount();
-
         final boolean isCloseSession;
         synchronized (sessionLock) {
+            decStreamCount();
             // If we're in GOAWAY state and there are no streams left - close this session
-            isCloseSession = isGoingAway() && concurrentStreamsCount == 0;
+            isCloseSession = isGoingAway() && concurrentStreamsCount.get() <= 0;
             if (!isCloseSession) {
                 if (checkCount++ > http2Configuration.getCleanFrequencyCheck() && streamsMap.size() > streamsHighWaterMark) {
                     checkCount = 0;
@@ -1387,12 +1381,12 @@ public class Http2Session {
         }
     }
 
-    void incStreamCount() {
-        concurrentStreamCountUpdater.incrementAndGet(this);
+    private void incStreamCount() {
+        concurrentStreamsCount.incrementAndGet();
     }
 
-    void decStreamCount() {
-        concurrentStreamCountUpdater.decrementAndGet(this);
+    private void decStreamCount() {
+        concurrentStreamsCount.decrementAndGet();
     }
 
     private final class ConnectionCloseListener implements CloseListener<Closeable, CloseType> {
