@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -269,6 +270,21 @@ public class SSLEngineConfigurator implements SSLEngineFactory {
 
     public SSLEngineConfigurator setWantClientAuth(boolean wantClientAuth) {
         this.wantClientAuth = wantClientAuth;
+        return this;
+    }
+
+    /**
+     * Apply {@link SSLParameters} to this SSLEngineConfigurator.
+     *
+     * @param sslParameters
+     * @return this SSLEngineConfigurator
+     */
+    public SSLEngineConfigurator setSSLParameters(SSLParameters sslParameters) {
+        this.setEnabledCipherSuites(sslParameters.getCipherSuites());
+        this.setEnabledProtocols(sslParameters.getProtocols());
+        this.setNeedClientAuth(sslParameters.getNeedClientAuth());
+        this.setWantClientAuth(sslParameters.getWantClientAuth());
+
         return this;
     }
 
