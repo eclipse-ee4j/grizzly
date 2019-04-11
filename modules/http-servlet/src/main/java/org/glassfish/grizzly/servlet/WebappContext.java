@@ -335,7 +335,7 @@ public class WebappContext implements ServletContext {
                 deployed = false;
 
                 final HttpServer server = DEPLOYED_APPS.remove(this);
-                destoryServlets(server);
+                destroyServlets(server);
 
                 // destroy filter instances
                 destroyFilters();
@@ -1835,7 +1835,7 @@ public class WebappContext implements ServletContext {
      *
      * @param server
      */
-    private void destoryServlets(HttpServer server) {
+    private void destroyServlets(HttpServer server) {
         if (servletHandlers != null && !servletHandlers.isEmpty()) {
             ServerConfiguration config = server.getServerConfiguration();
             for (final ServletHandler handler : servletHandlers) {
