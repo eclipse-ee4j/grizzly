@@ -106,16 +106,14 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
 
         try {
             do {
-                final FilterExecution execution = executeChainPart(ctx,
-                        executor, ctx.getFilterIdx(), end, filtersState);
+                final FilterExecution execution = executeChainPart(ctx, executor, ctx.getFilterIdx(), end, filtersState);
                 switch (execution.type) {
                     case FilterExecution.TERMINATE_TYPE:
                         return ProcessorResult.createTerminate();
                     case FilterExecution.REEXECUTE_TYPE:
                         ctx = execution.getContext();
                         
-                        final int idx = filtersState.peekUnparsedIdx(
-                                ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
+                        final int idx = filtersState.peekUnparsedIdx(ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
                         if (idx != -1) {
                             // if there is a remainder associated with the connection
                             // rerun the filter chain with the new context right away

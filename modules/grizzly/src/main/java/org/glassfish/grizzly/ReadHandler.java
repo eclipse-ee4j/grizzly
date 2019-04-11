@@ -32,7 +32,7 @@ public interface ReadHandler {
      * be consumed by the handler implementation before re-registering.
      * </p>
      *
-     * @throws Exception, {@link Exception} might be thrown by the custom
+     * @throws Exception {@link Exception} might be thrown by the custom
      *  handler code. This exception will be delegated for processing to
      *  {@link #onError(java.lang.Throwable)}.
      */
@@ -53,7 +53,7 @@ public interface ReadHandler {
      * Invoked when all data for the current request has been read.
      * </p>
      * 
-     * @throws Exception, {@link Exception} might be thrown by the custom
+     * @throws Exception {@link Exception} might be thrown by the custom
      *  handler code. This exception will be delegated for processing to
      *  {@link #onError(java.lang.Throwable)}.
      */

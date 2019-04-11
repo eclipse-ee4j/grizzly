@@ -30,6 +30,7 @@ public interface Readable<L> {
 
     /**
      * Method reads data.
+     * @param <M> type of data to read
      * @return {@link Future}, using which it's possible to check the result
      */
     <M> GrizzlyFuture<ReadResult<M, L>> read();

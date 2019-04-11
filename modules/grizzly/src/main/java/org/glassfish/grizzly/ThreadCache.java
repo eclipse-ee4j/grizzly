@@ -33,8 +33,7 @@ public final class ThreadCache {
     
     private static int indexCounter;
 
-    private static final ThreadLocal<ObjectCache> genericCacheAttr =
-            new ThreadLocal<ObjectCache>();
+    private static final ThreadLocal<ObjectCache> genericCacheAttr = new ThreadLocal<ObjectCache>();
 
     public static synchronized <E> CachedTypeIndex<E> obtainIndex(
             Class<E> clazz, int size) {
@@ -79,7 +78,7 @@ public final class ThreadCache {
      * Unlike {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
      * object won't be removed from cache.
      *
-     * @param <E>
+     * @param <E> cached object type
      * @param index the cached object type index.
      * @return cached object.
      */
@@ -92,7 +91,7 @@ public final class ThreadCache {
      * Unlike {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
      * object won't be removed from cache.
      *
-     * @param <E>
+     * @param <E> cached object type
      * @param currentThread current {@link Thread}
      * @param index the cached object type index.
      * @return cached object.
@@ -118,7 +117,7 @@ public final class ThreadCache {
      * Unlike {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
      * object will be removed from cache.
      *
-     * @param <E>
+     * @param <E> cached object type
      * @param index the cached object type index
      * @return cached object
      */
@@ -131,7 +130,7 @@ public final class ThreadCache {
      * Unlike {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
      * object will be removed from cache.
      *
-     * @param <E>
+     * @param <E> cached object type
      * @param currentThread current {@link Thread}
      * @param index the cached object type index
      * @return cached object
@@ -183,7 +182,7 @@ public final class ThreadCache {
          * Unlike {@link #take(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
          * object won't be removed from cache.
          * 
-         * @param <E>
+         * @param <E> cached object type
          * @param index the cached object type index.
          * @return cached object.
          */
@@ -207,7 +206,7 @@ public final class ThreadCache {
          * Unlike {@link #get(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
          * object will be removed from cache.
          *
-         * @param <E>
+         * @param <E> cached object type
          * @param index the cached object type index.
          * @return cached object.
          */

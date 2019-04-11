@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,16 +29,16 @@ public interface IOEventLifeCycleListener {
     /**
      * {@link IOEvent} processing suspended.
      *
-     * @param context
-     * @throws IOException
+     * @param context IO Context
+     * @throws IOException on error
      */
     void onContextSuspend(Context context) throws IOException;
 
     /**
      * {@link IOEvent} processing resumed.
      *
-     * @param context
-     * @throws IOException
+     * @param context IO Context
+     * @throws IOException on error
      */
     void onContextResume(Context context) throws IOException;
 
@@ -47,31 +48,32 @@ public interface IOEventLifeCycleListener {
      * {@link Connection#disableIOEvent(org.glassfish.grizzly.IOEvent)} might be
      * explicitly called.
      * 
-     * @param context
+     * @param context IO Context on error
      */
     void onContextManualIOEventControl(final Context context) throws IOException;
 
     /**
      * Reregister {@link IOEvent} interest.
      *
-     * @param context
-     * @throws IOException
+     * @param context IO Context
+     * @throws IOException on error
      */
     void onReregister(Context context) throws IOException;
 
     /**
      * {@link IOEvent} processing completed.
      * 
-     * @param context 
-     * @throws IOException
+     * @param context  IO Context
+     * @param data data produced
+     * @throws IOException on error
      */
     void onComplete(Context context, Object data) throws IOException;
 
     /**
      * Detaching {@link IOEvent} processing out of this {@link Context}.
      *
-     * @param context
-     * @throws IOException
+     * @param context IO Context
+     * @throws IOException on error
      */
     void onLeave(Context context) throws IOException;
 
@@ -79,8 +81,8 @@ public interface IOEventLifeCycleListener {
      * Terminate {@link IOEvent} processing in this thread, but it's going to
      * be continued later.
      *
-     * @param context
-     * @throws IOException
+     * @param context IO Context
+     * @throws IOException on error
      * 
      * @deprecated will never be invoked
      */
@@ -91,21 +93,24 @@ public interface IOEventLifeCycleListener {
      *
      * @param context original {@link Context} to be rerun
      * @param newContext new context, which will replace original {@link Context}
-     * @throws IOException
+     * @throws IOException on error
      */
     void onRerun(Context context, Context newContext) throws IOException;
 
     /**
      * Error occurred during {@link IOEvent} processing.
      *
-     * @param context
+     * @param context IO Context
+     * @param description description of error. This may be ignored.
+     * @throws java.io.IOException on error
      */
     void onError(Context context, Object description) throws IOException;
 
     /**
      * {@link IOEvent} wasn't processed.
      *
-     * @param context
+     * @param context IO Context on error
+     * @throws java.io.IOException on error
      */
     void onNotRun(Context context) throws IOException;
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -163,7 +164,7 @@ public abstract class AbstractBindingHandler implements SocketBinder {
     /**
      * This operation is not supported by implementations of {@link AbstractBindingHandler}.
      *
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException by default
      */
     @Override
     public final void unbindAll() {

@@ -432,8 +432,8 @@ public abstract class AbstractTransport implements Transport {
     /**
      * Close the connection, managed by Transport
      * 
-     * @param connection
-     * @throws IOException
+     * @param connection {@link org.glassfish.grizzly.nio.NIOConnection} to close
+     * @throws IOException not used
      */
     protected abstract void closeConnection(Connection connection) throws IOException;
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -121,6 +122,8 @@ public interface Transport extends MonitoringAware<TransportProbe> {
      * then {@link Transport} will try to get {@link Processor} using
      * {@link ProcessorSelector#select(IOEvent, Connection)}.
      *
+     * @param ioEvent the type of events the Processor should handle
+     * @param connection connection to obtain Processor for
      * @return the default {@link Processor}, which will process
      * {@link Connection} I/O events, if one doesn't have
      * own {@link Processor} preferences.
@@ -382,14 +385,15 @@ public interface Transport extends MonitoringAware<TransportProbe> {
     /**
      * Starts the transport
      * 
-     * @throws IOException
+     * @throws IOException if transport fails to start. This may not occur if Transport
+     * was not in {@link State#STOPPED}.
      */
     void start() throws IOException;
     
     /**
      * Stops the transport and closes all the connections
      * 
-     * @throws IOException
+     * @throws IOException if there was an error shutting down
      *
      * @deprecated Use {@link #shutdownNow()}.
      */
@@ -434,8 +438,8 @@ public interface Transport extends MonitoringAware<TransportProbe> {
     /**
      * Forcibly stops the transport and closes all connections.
      *
-     * @throws IOException
-     *
+     * @throws IOException if there was an error shutting down
+     * @see #shutdown() to complete gracefully
      * @since 2.3.5
      */
     void shutdownNow() throws IOException;
@@ -529,11 +533,13 @@ public interface Transport extends MonitoringAware<TransportProbe> {
 
     /**
      * Get the monitoring configuration for Transport {@link Connection}s.
+     * @return the configuration
      */
     MonitoringConfig<ConnectionProbe> getConnectionMonitoringConfig();
 
     /**
      * Get the monitoring configuration for Transport thread pool.
+     * @return the configuration
      */
     MonitoringConfig<ThreadPoolProbe> getThreadPoolMonitoringConfig();
 
@@ -556,6 +562,7 @@ public interface Transport extends MonitoringAware<TransportProbe> {
      * explicitly set, it will default to {@value #DEFAULT_READ_TIMEOUT} seconds.
      *
      * @param timeUnit the {@link TimeUnit} to convert the returned result to.
+     * @return the value of the read timeout
      *
      * @since 2.3
      */
@@ -567,7 +574,7 @@ public interface Transport extends MonitoringAware<TransportProbe> {
      * A value of zero or less effectively disables the timeout.
      *
      * @param timeout the new timeout value
-     * @param timeUnit the {@TimeUnit} specification of the provided value.
+     * @param timeUnit the {@link TimeUnit} specification of the provided value.
      *
      * @see Connection#setReadTimeout(long, java.util.concurrent.TimeUnit)
      *
@@ -581,6 +588,7 @@ public interface Transport extends MonitoringAware<TransportProbe> {
      * explicitly set, it will default to {@value #DEFAULT_WRITE_TIMEOUT} seconds.
      *
      * @param timeUnit the {@link TimeUnit} to convert the returned result to.
+     * @return the value of the write timeout
      *
      * @since 2.3
      */
@@ -592,7 +600,7 @@ public interface Transport extends MonitoringAware<TransportProbe> {
      * A value of zero or less effectively disables the timeout.
      *
      * @param timeout  the new timeout value
-     * @param timeUnit the {@TimeUnit} specification of the provided value.
+     * @param timeUnit the {@link TimeUnit} specification of the provided value.
      *
      * @see Connection#setWriteTimeout(long, java.util.concurrent.TimeUnit)
      *

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -140,6 +141,7 @@ public abstract class AbstractSocketConnectorHandler
      * Remove the {@link ConnectionProbe}.
      *
      * @param probe the {@link ConnectionProbe}.
+     * @return true if probe was in the list and is now removed
      */
     public boolean removeMonitoringProbe(ConnectionProbe probe) {
         return probes.remove(probe);
@@ -190,7 +192,7 @@ public abstract class AbstractSocketConnectorHandler
     /**
      * Builder
      *
-     * @param <E>
+     * @param <E> itself
      */
     @SuppressWarnings("unchecked")
     public abstract static class Builder<E extends Builder> {
