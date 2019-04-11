@@ -40,12 +40,12 @@ import org.glassfish.grizzly.utils.Charsets;
  *
  * @see HttpRequestPacket
  * @see HttpResponsePacket
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class HttpHeader extends HttpPacket
         implements MimeHeadersPacket, AttributeStorage {
-    
+
     private final static byte[] CHUNKED_ENCODING_BYTES =
             Constants.CHUNKED_ENCODING.getBytes(Charsets.ASCII_CHARSET);
 
@@ -58,7 +58,7 @@ public abstract class HttpHeader extends HttpPacket
     protected boolean isChunked;
     private final byte[] tmpContentLengthBuffer = new byte[20];
     private final byte[] tmpHeaderEncodingBuffer = new byte[512];
-    
+
     protected long contentLength = -1;
 
     protected final SettableContentType contentType = ContentType.newSettableContentType();
@@ -66,13 +66,13 @@ public abstract class HttpHeader extends HttpPacket
     protected boolean isExpectContent = true;
 
     protected boolean isSkipRemainder;
-    
+
     /**
      * <tt>true</tt> if HTTP message payload is broken due to inappropriate
      * Transfer-Encoding or Content-Encoding settings.
      */
     protected boolean isContentBroken;
-    
+
     protected boolean secure;
 
     /**
@@ -80,7 +80,7 @@ public abstract class HttpHeader extends HttpPacket
      * "Content-Encoding" headers and act as none of them were specified.
      */
     private boolean isIgnoreContentModifiers;
-    
+
     protected final DataChunk upgrade = DataChunk.newInstance();
 
     private TransferEncoding transferEncoding;
@@ -107,7 +107,7 @@ public abstract class HttpHeader extends HttpPacket
     protected HttpHeader(final MimeHeaders headers) {
         this.headers = headers;
     }
-    
+
     void setHeaderBuffer(final Buffer headerBuffer) {
         this.headerBuffer = headerBuffer;
     }
@@ -120,14 +120,14 @@ public abstract class HttpHeader extends HttpPacket
         if (activeAttributes == null) {
             activeAttributes = attributes;
         }
-        
+
         return activeAttributes;
-    }    
+    }
 
     /**
      * Returns <tt>true</tt>, if the current <tt>HttpHeader</tt> represent
      * HTTP request message, or <tt>false</tt> otherwise.
-     * 
+     *
      * @return <tt>true</tt>, if the current <tt>HttpHeader</tt> represent
      * HTTP request message, or <tt>false</tt> otherwise.
      */
@@ -180,14 +180,14 @@ public abstract class HttpHeader extends HttpPacket
     protected final boolean isContentEncodingsSelected() {
         return isContentEncodingsSelected;
     }
-    
+
     protected final void setContentEncodingsSelected(final boolean isContentEncodingsSelected) {
         this.isContentEncodingsSelected = isContentEncodingsSelected;
     }
 
     /**
      * Get the {@link TransferEncoding}, responsible for the parsing/serialization of the HTTP message content
-     * 
+     *
      * @return the {@link TransferEncoding}, responsible for the parsing/serialization of the HTTP message content
      */
     public TransferEncoding getTransferEncoding() {
@@ -206,7 +206,7 @@ public abstract class HttpHeader extends HttpPacket
     /**
      * Returns <tt>true</tt>, if this {@link HttpPacket} content will be transferred
      * in chunking mode, or <tt>false</tt> if case of fixed-length message.
-     * 
+     *
      * @return <tt>true</tt>, if this {@link HttpPacket} content will be transferred
      * in chunking mode, or <tt>false</tt> if case of fixed-length message.
      */
@@ -242,7 +242,7 @@ public abstract class HttpHeader extends HttpPacket
      * information. <tt>false</tt> is returned if content no additional content
      * data is expected.
      * Note: this method could be used only when we <b>parse</b> the HTTP message
-     * 
+     *
      * @return <tt>true</tt>, if HTTP message, represented by this header still
      * expects additional content basing either on content-length or chunking
      * information. <tt>false</tt> is returned if content no additional content
@@ -261,7 +261,7 @@ public abstract class HttpHeader extends HttpPacket
      * interested in parsing the rest of this HTTP message content and waits
      * for the next HTTP message to come on this {@link org.glassfish.grizzly.Connection}.
      * Otherwise returns <tt>false</tt>.
-     * 
+     *
      * @return <tt>true</tt>, if either application or HTTP core part is not
      * interested in parsing the rest of this HTTP message content and waits
      * for the next HTTP message to come on this {@link org.glassfish.grizzly.Connection}.
@@ -286,12 +286,12 @@ public abstract class HttpHeader extends HttpPacket
 
     /**
      * Returns <tt>true</tt>, if HTTP packet payload
-     * was detected as broken due to unexpected error occurred during 
+     * was detected as broken due to unexpected error occurred during
      * Transfer-Encoding or Content-Encoding processing.
      * Otherwise returns <tt>false</tt>.
-     * 
+     *
      * @return <tt>true</tt>, if HTTP packet payload
-     * was detected as broken due to unexpected error occurred during 
+     * was detected as broken due to unexpected error occurred during
      * Transfer-Encoding or Content-Encoding processing.
      * Otherwise returns <tt>false</tt>.
      */
@@ -301,17 +301,17 @@ public abstract class HttpHeader extends HttpPacket
 
     /**
      * Set flag, which is set to <tt>true</tt>, means that HTTP packet payload
-     * was detected as broken due to unexpected error occurred during 
+     * was detected as broken due to unexpected error occurred during
      * Transfer-Encoding or Content-Encoding processing.
      *
      * @param isBroken <tt>true</tt>, means that HTTP packet payload
-     * was detected as broken due to unexpected error occurred during 
+     * was detected as broken due to unexpected error occurred during
      * Transfer-Encoding or Content-Encoding processing.
      */
     public void setContentBroken(final boolean isBroken) {
         this.isContentBroken = isBroken;
     }
-    
+
     /**
      * @return the "Upgrade" header value.
      */
@@ -365,16 +365,16 @@ public abstract class HttpHeader extends HttpPacket
     /**
      * Set <tt>true</tt> if parser has to ignore "Transfer-Encoding" and
      * "Content-Encoding" headers and act as none of them were specified.
-     * 
-     * @param isIgnoreContentModifiers 
+     *
+     * @param isIgnoreContentModifiers
      */
     public void setIgnoreContentModifiers(boolean isIgnoreContentModifiers) {
         this.isIgnoreContentModifiers = isIgnoreContentModifiers;
     }
-    
+
     /**
      * Makes sure content-length header is present.
-     * 
+     *
      * @param defaultLength default content-length value.
      */
     protected void makeContentLengthHeader(final long defaultLength) {
@@ -402,7 +402,7 @@ public abstract class HttpHeader extends HttpPacket
     /**
      * Get the content-length of this {@link HttpPacket}. Applicable only in case
      * of fixed-length HTTP message.
-     * 
+     *
      * @return the content-length of this {@link HttpPacket}. Applicable only
      * in case of fixed-length HTTP message.
      */
@@ -439,7 +439,7 @@ public abstract class HttpHeader extends HttpPacket
      * Is this <tt>HttpHeader</tt> written? <tt>true</tt>, if this
      * <tt>HttpHeader</tt> has been already serialized, and only {@link HttpContent}
      * messages might be serialized for this {@link HttpPacket}.
-     * 
+     *
      * @return  <tt>true</tt>, if this <tt>HttpHeader</tt> has been already
      * serialized, and only {@link HttpContent} messages might be serialized
      * for this {@link HttpPacket}.
@@ -471,7 +471,7 @@ public abstract class HttpHeader extends HttpPacket
      */
     protected void makeTransferEncodingHeader(final String defaultValue) {
         final int idx = headers.indexOf(Header.TransferEncoding, 0);
-        
+
         if (idx == -1) {
             headers.addValue(Header.TransferEncoding).setBytes(
                     CHUNKED_ENCODING_BYTES);
@@ -508,7 +508,7 @@ public abstract class HttpHeader extends HttpPacket
 
         if (isCommitted())
             return;
-        
+
         contentType.setCharacterEncoding(charset);
     }
 
@@ -561,14 +561,14 @@ public abstract class HttpHeader extends HttpPacket
     public void setContentType(final String contentType) {
         this.contentType.set(contentType);
     }
-    
+
     /**
      * Sets the content type.
      *
      * This method must preserve any charset that may already have
      * been set via a call to request/response.setContentType(),
      * request/response.setLocale(), or request/response.setCharacterEncoding().
-     * 
+     *
      * This method copies the passed contentType state into this <tt>ContentType</tt>.
      *
      * @param contentType the content type
@@ -576,7 +576,7 @@ public abstract class HttpHeader extends HttpPacket
     public void setContentType(final ContentType contentType) {
         this.contentType.set(contentType);
     }
-    
+
     /**
      * @return {@link ContentType} holder
      */
@@ -586,7 +586,7 @@ public abstract class HttpHeader extends HttpPacket
 
     // -------------------- Headers --------------------
 
-    
+
     /**
      * {@inheritDoc}
      */
@@ -603,7 +603,7 @@ public abstract class HttpHeader extends HttpPacket
         if (name == null || name.isEmpty()) {
             return null;
         }
-        
+
         String result = handleGetSpecialHeader(name);
         return (result != null) ? result : headers.getHeader(name);
     }
@@ -675,7 +675,7 @@ public abstract class HttpHeader extends HttpPacket
 
         value.serializeToDataChunk(headers.setValue(header));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -687,7 +687,7 @@ public abstract class HttpHeader extends HttpPacket
         if (handleSetSpecialHeaders(name, value)) {
             return;
         }
-        
+
         headers.addValue(name).setString(value);
     }
 
@@ -702,10 +702,10 @@ public abstract class HttpHeader extends HttpPacket
         if (handleSetSpecialHeaders(name, value)) {
             return;
         }
-        
+
         value.serializeToDataChunk(headers.setValue(name));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -745,7 +745,7 @@ public abstract class HttpHeader extends HttpPacket
             return false;
         }
         final String result = handleGetSpecialHeader(name);
-        
+
         return result != null || headers.getHeader(name) != null;
     }
 
@@ -764,7 +764,7 @@ public abstract class HttpHeader extends HttpPacket
     /**
      * Get the HTTP message protocol version as {@link DataChunk}
      * (avoiding creation of a String object). The result format is "HTTP/1.x".
-     * 
+     *
      * @return the HTTP message protocol version as {@link DataChunk}
      * (avoiding creation of a String object). The result format is "HTTP/1.x".
      */
@@ -824,7 +824,7 @@ public abstract class HttpHeader extends HttpPacket
     public void setSecure(boolean secure) {
         this.secure = secure;
     }
-    
+
     /**
      * Get the HTTP message content builder.
      *
@@ -873,7 +873,7 @@ public abstract class HttpHeader extends HttpPacket
             headerBuffer = null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -897,7 +897,7 @@ public abstract class HttpHeader extends HttpPacket
     private final boolean handleSetSpecialHeaders(final String name, final HeaderValue value) {
         return isSpecialHeaderSet(name) && setValueBasedOnHeader(name, value.get());
     }
-    
+
     private final boolean handleSetSpecialHeaders(final Header header, final String value) {
         return isSpecialHeaderSet(header.toString()) && setValueBasedOnHeader(header, value);
     }
@@ -905,7 +905,7 @@ public abstract class HttpHeader extends HttpPacket
     private final boolean handleSetSpecialHeaders(final Header header, final HeaderValue value) {
         return isSpecialHeaderSet(header.toString()) && setValueBasedOnHeader(header, value.get());
     }
-    
+
     private static boolean isSpecialHeader(final String name) {
         return isSpecialHeader(name.charAt(0));
     }
@@ -1031,7 +1031,7 @@ public abstract class HttpHeader extends HttpPacket
             return false;
         }
     }
-    
+
     /**
      * Flush internal fields for special header names to the headers map.
      */
@@ -1039,17 +1039,17 @@ public abstract class HttpHeader extends HttpPacket
         if (contentLength >= 0) {
             headers.setValue(Header.ContentLength).setString(String.valueOf(contentLength));
         }
-        
+
         final String ct = getContentType();
         if (ct != null) {
             headers.setValue(Header.ContentType).setString(String.valueOf(ct));
         }
-        
+
         if (!upgrade.isNull()) {
             headers.setValue(Header.Upgrade).setString(upgrade.toString());
         }
     }
-    
+
     /**
      * <tt>HttpHeader</tt> message builder.
      */
@@ -1147,23 +1147,24 @@ public abstract class HttpHeader extends HttpPacket
             if (mimeHeaders == null) {
                 mimeHeaders = new MimeHeaders();
             }
-            mimeHeaders.addValue(name).setString(value);
-            handleSpecialHeaderAdd(name, value);
+            if(!handleSpecialHeaderAdd(Header.find(name), value)) {
+                mimeHeaders.addValue(name).setString(value);
+            }
             return (T) this;
         }
 
         /**
-         * Remove the specified header from this builder.  This method is only
+         * Remove the specified name from this builder.  This method is only
          * useful if using the same builder to create multiple objects.
          *
-         * @param header the mime header.
+         * @param name the mime header name.
          * @return this
          */
         @SuppressWarnings({"unchecked"})
-        public final T removeHeader(String header) {
+        public final T removeHeader(String name) {
             if (mimeHeaders != null) {
-                mimeHeaders.removeHeader(header);
-                handleSpecialHeaderRemove(header);
+                mimeHeaders.removeHeader(name);
+                handleSpecialHeaderRemove(Header.find(name));
             }
             return (T) this;
         }
@@ -1179,8 +1180,9 @@ public abstract class HttpHeader extends HttpPacket
             if (mimeHeaders == null) {
                 mimeHeaders = new MimeHeaders();
             }
-            mimeHeaders.addValue(header).setString(value);
-            handleSpecialHeaderAdd(header.toString(), value);
+            if(!handleSpecialHeaderAdd(header, value)) {
+                mimeHeaders.addValue(header).setString(value);
+            }
 
             return (T) this;
         }
@@ -1196,11 +1198,11 @@ public abstract class HttpHeader extends HttpPacket
         public final T removeHeader(Header header) {
             if (mimeHeaders != null) {
                 mimeHeaders.removeHeader(header);
-                handleSpecialHeaderRemove(header.toString());
+                handleSpecialHeaderRemove(header);
             }
             return (T) this;
         }
-        
+
         /**
          * Sets the maximum number of headers allowed.
          */
@@ -1252,32 +1254,25 @@ public abstract class HttpHeader extends HttpPacket
 
         protected abstract HttpHeader create();
 
-        private void handleSpecialHeaderAdd(final String name,
+        private boolean handleSpecialHeaderAdd(final Header header,
                                             final String value) {
-            final char c = name.charAt(0);
-            boolean isC = (c == 'c' || c == 'C');
-            if (isC && Header.ContentLength.toString().equals(name)) {
+            if (Header.ContentLength.equals(header)) {
                 contentLength = Long.parseLong(value);
-                return;
-            }
-            boolean isU = (c == 'u' || c == 'U');
-            if (isU && Header.Upgrade.toString().equals(name)) {
+                return true;
+            } else if (Header.Upgrade.equals(header)) {
                 upgrade = value;
+                return true;
             }
+            return false;
         }
 
-        private void handleSpecialHeaderRemove(final String name) {
-            final char c = name.charAt(0);
-            boolean isC = (c == 'c' || c == 'C');
-            if (isC && Header.ContentLength.toString().equals(name)) {
+        private void handleSpecialHeaderRemove(final Header header) {
+            if (Header.ContentLength.equals(header)) {
                 contentLength = null;
-                return;
-            }
-            boolean isU = (c == 'u' || c == 'U');
-            if (isU && Header.Upgrade.toString().equals(name)) {
+            } else if (Header.Upgrade.equals(header)) {
                 upgrade = null;
             }
         }
-        
+
     }
 }
