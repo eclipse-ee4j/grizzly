@@ -11,10 +11,12 @@ import org.glassfish.grizzly.memory.MemoryManager;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
- * Test {@link Http2Session}
+ * Test {@link Http2Session}.
  * @author Sven Diedrichsen (sven.diedrichsen@gmail.com)
  * @since 26.05.18
  */
@@ -23,7 +25,8 @@ public class Http2SessionTest {
     private Http2Configuration configuration =
             Http2Configuration.builder()
                 .cleanPercentage(1.0f)
-                .streamsHighWaterMark(0.01f).build();
+                .streamsHighWaterMark(0.01f)
+                .maxConcurrentStreams(150).build();
 
     private Http2Session session;
 
@@ -77,4 +80,8 @@ public class Http2SessionTest {
         verify(stream, times(3)).closedRemotely();
     }
 
+    @Test
+    public void testCtorInitializesLocalMaxConcurrentStreams() {
+        assertThat("Http2Sessions LocalMaxConcurrentStreams supposed to be taken from configuration.", session.getLocalMaxConcurrentStreams(), is(150));
+    }
 }
