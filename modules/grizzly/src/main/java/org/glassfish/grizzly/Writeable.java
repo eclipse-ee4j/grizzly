@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ld.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,6 +32,7 @@ public interface Writeable<L> extends OutputSink {
     /**
      * Method writes the <tt>buffer</tt>.
      *
+     * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
      * @return {@link Future}, using which it's possible to check the
      *         result
@@ -40,6 +42,7 @@ public interface Writeable<L> extends OutputSink {
     /**
      * Method writes the <tt>buffer</tt>.
      *
+     * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
      * @param completionHandler {@link CompletionHandler},
      *        which will get notified, when write will be completed
@@ -50,6 +53,7 @@ public interface Writeable<L> extends OutputSink {
     /**
      * Method writes the <tt>buffer</tt>.
      *
+     * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
      * @param completionHandler {@link CompletionHandler},
      *        which will get notified, when write will be completed
@@ -64,6 +68,7 @@ public interface Writeable<L> extends OutputSink {
     /**
      * Method writes the <tt>buffer</tt> to the specific address.
      *
+     * @param <M> type of data to be written
      * @param dstAddress the destination address the <tt>buffer</tt> will be
      *        sent to
      * @param message the buffer, from which the data will be written
@@ -77,6 +82,7 @@ public interface Writeable<L> extends OutputSink {
      /**
      * Method writes the <tt>buffer</tt> to the specific address.
      *
+     * @param <M> type of data to be written
      * @param dstAddress the destination address the <tt>buffer</tt> will be
      *        sent to
      * @param message the buffer, from which the data will be written

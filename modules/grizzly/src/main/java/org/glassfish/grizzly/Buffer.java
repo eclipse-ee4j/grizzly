@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -48,6 +49,8 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     /**
      * Prepend data from header.position() to header.limit() to the
      * current buffer.  This will change the value returned by buffer()!
+     * @param header the data to prepend
+     * @return the new buffer
      * @throws IllegalArgumentException if header.limit() - header.position()
      * is greater than headerSize.
      */
@@ -89,7 +92,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
 
     /**
      * Tells whether or not this buffer is
-     * <a href="ByteBuffer.html#direct"><i>direct</i></a>. </p>
+     * <a href="ByteBuffer.html#direct"><i>direct</i></a>.
      *
      * @return  <tt>true</tt> if, and only if, this buffer is direct
      */
@@ -97,6 +100,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     
     /**
      * Try to dispose <tt>Buffer</tt> if it's allowed.
+     * @return true if successfully disposed
      */
     boolean tryDispose();
 
@@ -115,14 +119,14 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     Object underlying();
 
     /**
-     * Returns this buffer's capacity. </p>
+     * Returns this buffer's capacity.
      *
      * @return  The capacity of this buffer
      */
     int capacity();
 
     /**
-     * Returns this buffer's position. </p>
+     * Returns this buffer's position.
      *
      * @return  The position of this buffer
      */
@@ -130,7 +134,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
 
     /**
      * Sets this buffer's position.  If the mark is defined and larger than the
-     * new position then it is discarded. </p>
+     * new position then it is discarded.
      *
      * @param  newPosition
      *         The new position value; must be non-negative
@@ -144,7 +148,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     Buffer position(int newPosition);
 
     /**
-     * Returns this buffer's limit. </p>
+     * Returns this buffer's limit.
      *
      * @return  The limit of this buffer
      */
@@ -153,7 +157,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     /**
      * Sets this buffer's limit.  If the position is larger than the new limit
      * then it is set to the new limit.  If the mark is defined and larger than
-     * the new limit then it is discarded. </p>
+     * the new limit then it is discarded.
      *
      * @param  newLimit
      *         The new limit value; must be non-negative
@@ -167,7 +171,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     Buffer limit(int newLimit);
 
     /**
-     * Sets this buffer's mark at its position. </p>
+     * Sets this buffer's mark at its position.
      *
      * @return  This buffer
      */
@@ -246,23 +250,25 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
 
     /**
      * Returns the number of elements between the current position and the
-     * limit. </p>
+     * limit.
      *
      * @return  The number of elements remaining in this buffer
      */
+    @Override
     int remaining();
 
     /**
      * Tells whether there are any elements between the current position and
-     * the limit. </p>
+     * the limit.
      *
      * @return  <tt>true</tt> if, and only if, there is at least one element
      *          remaining in this buffer
      */
+    @Override
     boolean hasRemaining();
 
     /**
-     * Tells whether or not this buffer is read-only. </p>
+     * Tells whether or not this buffer is read-only.
      *
      * @return  <tt>true</tt> if, and only if, this buffer is read-only
      */
@@ -304,6 +310,8 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * buffer is direct, and it will be read-only if, and only if, this buffer
      * is read-only.  </p>
      *
+     * @param position the position of the start of the slice
+     * @param limit the limit to take the slice up to
      * @return  The new <code>Buffer</code>
      */
     Buffer slice(int position, int limit);
@@ -349,7 +357,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     // -- Singleton get/put methods --
     /**
      * Relative <i>get</i> method.  Reads the byte at this buffer's
-     * current position, and then increments the position. </p>
+     * current position, and then increments the position.
      *
      * @return  The byte at the buffer's current position
      *
@@ -379,7 +387,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
 
     /**
      * Absolute <i>get</i> method.  Reads the byte at the given
-     * index. </p>
+     * index.
      *
      * @param  index
      *         The index from which the byte will be read
@@ -427,8 +435,8 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * <pre>
      *     src.get(a, 0, a.length) </pre>
      *
+     * @param dst destination array to put the bytes into
      * @return  This buffer
-     *
      * @throws BufferUnderflowException
      *          If there are fewer than <tt>length</tt> bytes
      *          remaining in this buffer
@@ -455,11 +463,11 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * the loop
      *
      * <pre>
-     *     for (int i = off; i < off + len; i++)
+     *     for (int i = off; i &lt; off + len; i++)
      *         dst[i] = src.get(); </pre>
      *
      * except that it first checks that there are sufficient bytes in
-     * this buffer and it is potentially much more efficient. </p>
+     * this buffer and it is potentially much more efficient. 
      *
      * @param  dst
      *         The array into which bytes are to be written
@@ -496,6 +504,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * <pre>
      *     src.get(a, 0, a.remaining()) </pre>
      *
+     * @param dst destination {@link ByteBuffer} to put the data into
      * @return  This buffer
      *
      * @throws BufferUnderflowException
@@ -524,11 +533,11 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * the loop
      *
      * <pre>
-     *     for (int i = off; i < off + len; i++)
+     *     for (int i = off; i &lt; off + len; i++)
      *         dst.put(i) = src.get(); </pre>
      *
      * except that it first checks that there are sufficient bytes in
-     * this buffer and it is potentially much more efficient. </p>
+     * this buffer and it is potentially much more efficient.
      *
      * @param  dst
      *         The {@link ByteBuffer} into which bytes are to be written
@@ -580,7 +589,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      *         dst.put(src.get()); </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  src
      *         The source buffer from which bytes are to be read;
@@ -613,7 +622,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      *
      * <p> Otherwise, this method copies
      * <i>n</i>&nbsp;=&nbsp;<tt>length</tt> bytes from the given
-     * <tt>postion</tt> in the source buffer into this buffer, starting from
+     * <tt>position</tt> in the source buffer into this buffer, starting from
      * the current buffer position.
      * The positions of this buffer is then incremented by <i>length</i>.
      *
@@ -622,11 +631,12 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * as the loop
      *
      * <pre>
-     *     for (int i = 0; i < length; i++)
-     *         dst.put(src.get(i + position)); </pre>
+     *     for (int i = 0; i &lt; length; i++)
+     *         dst.put(src.get(i + position)); 
+     * </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  src
      *         The source buffer from which bytes are to be read;
@@ -674,7 +684,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      *         dst.put(src.get()); </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  src
      *         The source buffer from which bytes are to be read;
@@ -707,7 +717,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      *
      * <p> Otherwise, this method copies
      * <i>n</i>&nbsp;=&nbsp;<tt>length</tt> bytes from the given
-     * <tt>postion</tt> in the source buffer into this buffer, starting from
+     * <tt>position</tt> in the source buffer into this buffer, starting from
      * the current buffer position.
      * The positions of this buffer is then incremented by <i>length</i>.
      *
@@ -716,11 +726,11 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * as the loop
      *
      * <pre>
-     *     for (int i = 0; i < length; i++)
+     *     for (int i = 0; i &lt; length; i++)
      *         dst.put(src.get(i + position)); </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  src
      *         The source buffer from which bytes are to be read;
@@ -755,6 +765,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * <pre>
      *     dst.put(a, 0, a.length) </pre>
      *
+     * @param src source of bytes to put into the Buffer
      * @return  This buffer
      *
      * @throws BufferOverflowException
@@ -785,11 +796,11 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * the loop
      *
      * <pre>
-     *     for (int i = off; i < off + len; i++)
+     *     for (int i = off; i &lt; off + len; i++)
      *         dst.put(a[i]); </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  src
      *         The array from which bytes are to be read
@@ -835,11 +846,11 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * the loop
      *
      * <pre>
-     *     for (int i = 0; i < src.length(); i++)
+     *     for (int i = 0; i &lt; src.length(); i++)
      *         dst.put((byte) src.charAt(i)); </pre>
      *
      * except that it first checks that there is sufficient space in this
-     * buffer and it is potentially much more efficient. </p>
+     * buffer and it is potentially much more efficient.
      *
      * @param  s
      *         The {@link String} from which bytes are to be read
@@ -882,7 +893,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * <blockquote><pre>
      * buf.clear();          // Prepare buffer for use
      * for (;;) {
-     *     if (in.read(buf) < 0 && !buf.hasRemaining())
+     *     if (in.read(buf) &lt; 0 &amp;&amp; !buf.hasRemaining())
      *         break;        // No more bytes to transfer
      *     buf.flip();
      *     out.write(buf);
@@ -911,7 +922,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     ByteOrder order();
 
     /**
-     * Modifies this buffer's byte order.  </p>
+     * Modifies this buffer's byte order.
      *
      * @param  bo
      *         The new byte order,
@@ -1412,7 +1423,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     /**
      * Returns {@link Buffer} content as {@link String}
      * @param charset the {@link Charset}, which will be use
-     * for byte[] -> {@link String} transformation.
+     * for byte[] -&gt; {@link String} transformation.
      *
      * @return {@link String} representation of this {@link Buffer} content.
      */
@@ -1421,7 +1432,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
     /**
      * Returns {@link Buffer}'s chunk content as {@link String}
      * @param charset the {@link Charset}, which will be use
-     * for byte[] -> {@link String} transformation.
+     * for byte[] -&gt; {@link String} transformation.
      * @param position the first byte offset in the <tt>Buffer</tt> (inclusive)
      * @param limit the last byte offset in the <tt>Buffer</tt> (exclusive)
      *
@@ -1455,7 +1466,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * guaranteed to be independent, so it's recommended to save and restore
      * position, limit values if it is planned to change them or
      * {@link ByteBuffer#slice()} the returned {@link ByteBuffer}.
-     * <p/>
+     * </p>
      *
      * @return this <code>Buffer</code> as a {@link ByteBuffer}.
      */
@@ -1476,8 +1487,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * guaranteed to be independent, so it's recommended to save and restore
      * position, limit values if it is planned to change them or
      * {@link ByteBuffer#slice()} the returned {@link ByteBuffer}.
-     * <p/>
-     *
+     * </p>
      * @param position the position for the starting subsequence for the
      *                 returned {@link ByteBuffer}.
      * @param limit the limit for the ending of the subsequence of the
@@ -1513,6 +1523,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * {@link CompositeBuffer} or not.
      * </p>
      *
+     * @param array this buffer as a {@link ByteBufferArray}
      * @return returns the provided {@link ByteBufferArray} with the converted
      *  {@link ByteBuffer} added to provided <code>array</code>.
      *
@@ -1549,6 +1560,9 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * {@link CompositeBuffer} or not.
      * </p>
      *
+     * @param array the {@link ByteBufferArray} to append this to
+     * @param position the start position within the source <code>buffer</code>
+     * @param limit the limit, or number, of bytes to include in the resulting {@link ByteBuffer}
      * @return returns the provided {@link ByteBufferArray} with the converted
      *         {@link ByteBuffer} added to provided <code>array</code>.
      *
@@ -1578,6 +1592,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * {@link CompositeBuffer} or not.
      * </p>
      *
+     * @param array the base array to append to
      * @return Returns the specified {@link BufferArray} after adding this <code>Buffer</code>.
      */
     BufferArray toBufferArray(BufferArray array);
@@ -1608,6 +1623,7 @@ public interface Buffer extends Comparable<Buffer>, WritableMessage {
      * {@link CompositeBuffer} or not.
      * </p>
      *
+     * @param array the {@link BufferArray} to prepend to
      * @param position the new position for this <code>Buffer</code>
      * @param limit the new limit for this <code>Buffer</code>
      *

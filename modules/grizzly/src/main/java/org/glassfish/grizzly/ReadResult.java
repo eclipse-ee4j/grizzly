@@ -194,10 +194,10 @@ public class ReadResult<K, L> implements Result, Cacheable {
     /**
      * One method to set all the WriteResult properties.
      * 
-     * @param connection
-     * @param message
-     * @param srcAddress
-     * @param readSize 
+     * @param connection the connection the data was read from
+     * @param message the message which was read
+     * @param srcAddress the source address the message was read from
+     * @param readSize number of bytes which were read
      */
     protected void set(final Connection<L> connection, final K message,
             final L srcAddress, final int readSize) {

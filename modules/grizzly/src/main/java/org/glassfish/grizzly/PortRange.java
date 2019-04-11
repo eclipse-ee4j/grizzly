@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -35,6 +36,8 @@ public class PortRange {
     /**
      * Creates a port range with the given bounds (both inclusive).
      *
+     * @param low start of port range
+     * @param high end of port range
      * @throws IllegalArgumentException is either bound is not between
      *         1 and 65535, or if <code>high</code> is lower than
      *         <code>low</code>.
@@ -49,6 +52,7 @@ public class PortRange {
 
     /**
      * Creates a port range containing a single port.
+     * @param port port
      */
     public PortRange(final int port) {
         this(port, port);
@@ -61,6 +65,7 @@ public class PortRange {
      *
      * The bounds must be between 1 and 65535, both inclusive.
      *
+     * @param s either "number" or "number:number"
      * @return The port range represented by <code>s</code>.
      */
     public static PortRange valueOf(String s)

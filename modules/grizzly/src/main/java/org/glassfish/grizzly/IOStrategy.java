@@ -81,8 +81,8 @@ public interface IOStrategy extends WorkerThreadPoolConfigProducer {
      * processing for the given <tt>connection</tt>. A <tt>null</tt> value will
      * be returned if the <tt>ioEvent</tt> should be executed in the kernel thread.
      * 
-     * @param connection
-     * @param ioEvent
+     * @param connection {@link Connection}
+     * @param ioEvent the event to get the Executor for
      * @return an {@link Executor} to be used to run given <tt>ioEvent</tt>
      * processing for the given <tt>connection</tt>
      */

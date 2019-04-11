@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -101,7 +102,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     // ---------------------------------------------------------- Public Methods
 
     /**
-     * @return the number of {@link Selector}s to be created to serve Transport
+     * @return the number of {@link java.nio.channels.Selector}s to be created to serve Transport
      * connections. <tt>-1</tt> is the default value, which lets the Transport
      * to pick the value, usually it's equal to the number of CPU cores
      * {@link Runtime#availableProcessors()}
@@ -111,12 +112,12 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * Sets the number of {@link Selector}s to be created to serve Transport
+     * Sets the number of {@link java.nio.channels.Selector}s to be created to serve Transport
      * connections. <tt>-1</tt> is the default value, which lets the Transport
      * to pick the value, usually it's equal to the number of CPU cores
      * {@link Runtime#availableProcessors()}.
      * 
-     * @param selectorRunnersCount 
+     * @param selectorRunnersCount number of channels
      * @return the builder
      */
     public T setSelectorRunnersCount(final int selectorRunnersCount) {
@@ -138,6 +139,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
      * Sets the {@link ThreadPoolConfig} that will be used to construct the
      *  {@link java.util.concurrent.ExecutorService} for <code>IOStrategies</code>
      *  that require worker threads
+     * @param workerConfig the config
+     * @return this builder
      */
     public T setWorkerThreadPoolConfig(final ThreadPoolConfig workerConfig) {
         this.workerConfig = workerConfig;
@@ -157,6 +160,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
      * Sets the {@link ThreadPoolConfig} that will be used to construct the
      *  {@link java.util.concurrent.ExecutorService} which will run the {@link NIOTransport}'s
      *  {@link org.glassfish.grizzly.nio.SelectorRunner}s.
+     * @param kernelConfig the config
+     * @return this builder
      */
     public T setSelectorThreadPoolConfig(final ThreadPoolConfig kernelConfig) {
         this.kernelConfig = kernelConfig;
@@ -306,6 +311,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     
     /**
+     * @return the Transport name
      * @see Transport#getName()
      */
     public String getName() {
@@ -314,7 +320,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * @see Transport#setName(String)
-     *
+     * @param name the {@link Transport} name
      * @return this <code>NIOTransportBuilder</code>
      */
     public T setName(String name) {
@@ -323,6 +329,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @return the default {@link Processor} if a {@link Connection}
+     * does not specify a preference
      * @see Transport#getProcessor()
      */
     public Processor getProcessor() {
@@ -330,6 +338,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @param processor the default {@link Processor} if a {@link Connection}
+     * does not specify a preference
      * @see Transport#setProcessor(Processor)
      *
      * @return this <code>NIOTransportBuilder</code>
@@ -340,7 +350,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @see Transport#getProcessorSelector() ()
+     * @return the default {@link ProcessorSelector}
+     * @see Transport#getProcessorSelector()
      */
     public ProcessorSelector getProcessorSelector() {
         return processorSelector;
@@ -348,7 +359,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * @see Transport#setProcessorSelector(ProcessorSelector)
-     *
+     * @param processorSelector the default {@link ProcessorSelector}
      * @return this <code>NIOTransportBuilder</code>
      */
     public T setProcessorSelector(ProcessorSelector processorSelector) {
@@ -357,7 +368,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @see Transport#getReadBufferSize() ()
+     * @return the default buffer size
+     * @see Transport#getReadBufferSize()
      */
     public int getReadBufferSize() {
         return readBufferSize;
@@ -365,7 +377,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * @see Transport#setReadBufferSize(int)
-     *
+     * @param readBufferSize the new buffer size
      * @return this <code>NIOTransportBuilder</code>
      */
     public T setReadBufferSize(int readBufferSize) {
@@ -374,6 +386,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @return the default buffer size
      * @see Transport#getWriteBufferSize()
      */
     public int getWriteBufferSize() {
@@ -382,7 +395,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * @see Transport#setWriteBufferSize(int)
-     *
+     * @param writeBufferSize the new write buffer size
      * @return this <code>NIOTransportBuilder</code>
      */
     public T setWriteBufferSize(int writeBufferSize) {
@@ -391,15 +404,20 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @see NIOTransport#getClientSocketSoTimeout()
+     * @return gets the timeout on socket blocking operations
+     * on the client
+     * @see java.net.Socket#getSoTimeout()
      */
     public int getClientSocketSoTimeout() {
         return clientSocketSoTimeout;
     }
 
     /**
+     * Sets the timeout on socket blocking operations for the
+     * client
+     * @param clientSocketSoTimeout the specified timeout in milliseconds
      * @return this <code>NIOTransportBuilder</code>
-     * @see NIOTransport#setClientSocketSoTimeout(int)
+     * @see java.net.Socket#setSoTimeout(int)
      */
     public T setClientSocketSoTimeout(int clientSocketSoTimeout) {
         this.clientSocketSoTimeout = clientSocketSoTimeout;
@@ -407,13 +425,16 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @see NIOTransport#getConnectionTimeout()
+     * @return value of the connectio timeout in milliseconds
+     * @see java.net.URLConnection#getConnectTimeout()
      */
     public int getConnectionTimeout() {
         return connectionTimeout;
     }
 
     /**
+     * @param connectionTimeout the value of the connection
+     * timeout in milliseconds
      * @return this <code>NIOTransportBuilder</code>
      * @see NIOTransport#setConnectionTimeout(int)
      */
@@ -423,6 +444,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @param timeUnit the {@link TimeUnit} to convert the result to
+     * @return the blocking read timeout in the specified {@link TimeUnit}
      * @see Transport#getReadTimeout(java.util.concurrent.TimeUnit)
      */
     public long getReadTimeout(final TimeUnit timeUnit) {
@@ -434,6 +457,10 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * Sets the value of the blocking read timeout
+     * @param timeout the new timeout value
+     * @param timeUnit the unit of the new timeout value
+     * @return this NioTransportBuilder
      * @see Transport#setReadTimeout(long, java.util.concurrent.TimeUnit)
      */
     public T setReadTimeout(final long timeout, final TimeUnit timeUnit) {
@@ -446,6 +473,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @param timeUnit the {@link TimeUnit} to convert the result to
+     * @return the value of the write timeout
      * @see Transport#getWriteTimeout(java.util.concurrent.TimeUnit)
      */
     public long getWriteTimeout(final TimeUnit timeUnit) {
@@ -457,6 +486,9 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @param timeout the new write timeout value
+     * @param timeUnit the {@link TimeUnit} of the timeout value
+     * @return this NIOTransportBuilder
      * @see Transport#setWriteTimeout(long, java.util.concurrent.TimeUnit)
      */
     public T setWriteTimeout(final long timeout, final TimeUnit timeUnit) {
@@ -470,15 +502,19 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
 
     /**
-     * @see org.glassfish.grizzly.nio.transport.TCPNIOTransport#isReuseAddress()
+     * Whether address may be reused for multiple sockets
+     * @return SO_REUSEADDR
+     * @see <a href="http://man7.org/linux/man-pages/man7/socket.7.html">Socket man page</a>
      */
     public boolean isReuseAddress() {
         return reuseAddress;
     }
 
     /**
+     * Sets whether address may be reused for multiple sockets
+     * @param reuseAddress SO_REUSEADDR
      * @return this <code>TCPNIOTransportBuilder</code>
-     * @see org.glassfish.grizzly.nio.transport.TCPNIOTransport#setReuseAddress(boolean)
+     * @see <a href="http://man7.org/linux/man-pages/man7/socket.7.html">Socket man page</a>
      */
     public T setReuseAddress(boolean reuseAddress) {
         this.reuseAddress = reuseAddress;
@@ -486,19 +522,18 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * Max asynchronous write queue size in bytes
+     * @return the value is per connection, not transport total.
      * @see org.glassfish.grizzly.asyncqueue.AsyncQueueWriter#getMaxPendingBytesPerConnection()
-     * <p/>
-     * Note: the value is per connection, not transport total.
      */
     public int getMaxAsyncWriteQueueSizeInBytes() {
         return maxPendingBytesPerConnection;
     }
 
     /**
+     * @param maxAsyncWriteQueueSizeInBytes the value is per connection, not transport total.
      * @return this <code>TCPNIOTransportBuilder</code>
      * @see org.glassfish.grizzly.asyncqueue.AsyncQueueWriter#setMaxPendingBytesPerConnection(int)
-     * <p/>
-     * Note: the value is per connection, not transport total.
      */
     public T setMaxAsyncWriteQueueSizeInBytes(final int maxAsyncWriteQueueSizeInBytes) {
         this.maxPendingBytesPerConnection = maxAsyncWriteQueueSizeInBytes;
@@ -506,6 +541,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @return true, if NIOTransport is configured to use AsyncQueueWriter, optimized to be used in connection multiplexing mode, or false otherwise. 
      * @see org.glassfish.grizzly.nio.NIOTransport#isOptimizedForMultiplexing()
      */
     public boolean isOptimizedForMultiplexing() {
@@ -513,6 +549,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
+     * @param optimizedForMultiplexing Configure NIOTransport to be optimized for connection multiplexing
      * @see org.glassfish.grizzly.nio.NIOTransport#setOptimizedForMultiplexing(boolean)
      *
      * @return this <code>TCPNIOTransportBuilder</code>
@@ -562,7 +599,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     // ------------------------------------------------------- Protected Methods
 
     /**
-     * See: <a href="http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205">http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205</a>
+     * @return this NIOTransportBuilder
+     * @see <a href="http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205">http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205</a>
      */
     protected abstract T getThis();
 

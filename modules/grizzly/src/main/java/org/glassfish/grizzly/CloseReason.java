@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -68,8 +69,8 @@ public class CloseReason {
      * Returns information about an error, that caused the {@link Connection} to
      * be closed.
      * 
-     * If the cause wasn't specified by user - the default value {@link #DEFAULT_CAUSE} will be returned.
-     * 
+     * If the cause wasn't specified by user and it was closed locally then {@link #LOCALLY_CLOSED} will be returned.
+     * If the cause wasn't specified by user and it was closed remotely then {@link #REMOTELY_CLOSED} will be returned.
      * @return information about an error, that caused the {@link Connection} to
      * be closed
      */
