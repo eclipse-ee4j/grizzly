@@ -482,10 +482,17 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
             final FiltersState filtersState, final int filterIdx) {
 
         if (filtersState != null) {
+            Object message = ctx.getMessage();
+            if (message instanceof Buffer) {
+                Buffer bufferMessage = (Buffer) message;
+                if (!bufferMessage.hasRemaining()) {
+                    return;
+                }
+            }
             ctx.setMessage(filtersState.append(ctx.getOperation(),
-                    filterIdx, ctx.getMessage()));
+                    filterIdx, message));
+            }
         }
-    }
 
     /**
      * Stores the Filter associated remainder. This remainder will be reused next
