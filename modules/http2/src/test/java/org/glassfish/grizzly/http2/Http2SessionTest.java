@@ -26,7 +26,8 @@ public class Http2SessionTest {
             Http2Configuration.builder()
                 .cleanPercentage(1.0f)
                 .streamsHighWaterMark(0.01f)
-                .maxConcurrentStreams(150).build();
+                .maxConcurrentStreams(150)
+                .initialWindowSize(2).build();
 
     private Http2Session session;
 
@@ -84,4 +85,10 @@ public class Http2SessionTest {
     public void testCtorInitializesLocalMaxConcurrentStreams() {
         assertThat("Http2Sessions LocalMaxConcurrentStreams supposed to be taken from configuration.", session.getLocalMaxConcurrentStreams(), is(150));
     }
+
+    @Test
+    public void testCtorInitializesLocalStreamWindowSize() {
+        assertThat("Http2Sessions LocalStreamWindowSize supposed to be taken from configuration.", session.getLocalStreamWindowSize(), is(2));
+    }
+
 }
