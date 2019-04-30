@@ -101,11 +101,6 @@
             </dependency>
             <dependency>
                 <groupId>org.glassfish.grizzly</groupId>
-                <artifactId>grizzly-compression</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.glassfish.grizzly</groupId>
                 <artifactId>grizzly-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
