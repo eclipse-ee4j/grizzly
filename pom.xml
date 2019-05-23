@@ -148,8 +148,8 @@
                                     <message>You need JDK ${jdk.compile.version} and above to compile Grizzly! JDK 1.7 could be still used at runtime</message>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.0.3,)</version>
-                                    <message>You need Maven 3.0.3 or above!</message>
+                                    <version>[3.3.9,)</version>
+                                    <message>You need Maven 3.3.9 or above!</message>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
