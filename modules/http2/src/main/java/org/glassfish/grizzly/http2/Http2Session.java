@@ -16,64 +16,29 @@
 
 package org.glassfish.grizzly.http2;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.CloseListener;
-import org.glassfish.grizzly.CloseType;
-import org.glassfish.grizzly.Closeable;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Context;
-import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.IOEvent;
-import org.glassfish.grizzly.IOEventLifeCycleListener;
-import org.glassfish.grizzly.ProcessorExecutor;
-import org.glassfish.grizzly.WriteResult;
+import org.glassfish.grizzly.*;
 import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.http.*;
 import org.glassfish.grizzly.http.util.MimeHeaders;
-import org.glassfish.grizzly.http2.frames.DataFrame;
-import org.glassfish.grizzly.http2.frames.PingFrame;
-import org.glassfish.grizzly.http2.frames.PriorityFrame;
-import org.glassfish.grizzly.http2.frames.UnknownFrame;
+import org.glassfish.grizzly.http2.frames.*;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
-import org.glassfish.grizzly.http.HttpContent;
-import org.glassfish.grizzly.http.HttpContext;
-import org.glassfish.grizzly.http.HttpHeader;
-import org.glassfish.grizzly.http.HttpPacket;
-import org.glassfish.grizzly.http.HttpRequestPacket;
-import org.glassfish.grizzly.http.HttpResponsePacket;
-import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.Protocol;
-
-import org.glassfish.grizzly.http2.frames.ContinuationFrame;
-import org.glassfish.grizzly.http2.frames.ErrorCode;
-import org.glassfish.grizzly.http2.frames.GoAwayFrame;
-import org.glassfish.grizzly.http2.frames.HeadersFrame;
-import org.glassfish.grizzly.http2.frames.Http2Frame;
-import org.glassfish.grizzly.http2.frames.PushPromiseFrame;
-import org.glassfish.grizzly.http2.frames.RstStreamFrame;
-import org.glassfish.grizzly.http2.frames.SettingsFrame;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.ssl.SSLBaseFilter;
 import org.glassfish.grizzly.utils.Futures;
 import org.glassfish.grizzly.utils.Holder;
 import org.glassfish.grizzly.utils.NullaryFunction;
 
-import static org.glassfish.grizzly.http2.frames.SettingsFrame.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import static org.glassfish.grizzly.http2.Http2BaseFilter.PRI_PAYLOAD;
-import org.glassfish.grizzly.http2.frames.HeaderBlockFragment;
-import org.glassfish.grizzly.http2.frames.WindowUpdateFrame;
+import static org.glassfish.grizzly.http2.frames.SettingsFrame.*;
 
 
 /**
@@ -182,10 +147,16 @@ public class Http2Session {
         this.handlerFilter = handlerFilter;
 
         this.http2Configuration = handlerFilter.getConfiguration();
-        streamsHighWaterMark =
-                Float.valueOf(
-                        getDefaultMaxConcurrentStreams() * http2Configuration.getStreamsHighWaterMark())
-                        .intValue();
+
+        if (this.http2Configuration.getMaxConcurrentStreams() != -1) {
+            this.setLocalMaxConcurrentStreams(this.http2Configuration.getMaxConcurrentStreams());
+        } else {
+            this.setLocalMaxConcurrentStreams(this.getDefaultMaxConcurrentStreams());
+        }
+
+        if (this.http2Configuration.getInitialWindowSize() != -1) {
+            this.localStreamWindowSize = this.http2Configuration.getInitialWindowSize();
+        }
 
         final int customMaxFramePayloadSz
                 = handlerFilter.getLocalMaxFramePayloadSize() > 0
@@ -193,28 +164,23 @@ public class Http2Session {
                 : -1;
 
         // apply custom max frame value only if it's in [getSpecMinFramePayloadSize(); getSpecMaxFramePayloadSize()] range
-        localMaxFramePayloadSize =
+        this.localMaxFramePayloadSize =
                 customMaxFramePayloadSz >= getSpecMinFramePayloadSize() &&
                 customMaxFramePayloadSz <= getSpecMaxFramePayloadSize()
                 ? customMaxFramePayloadSz
                 : getSpecDefaultFramePayloadSize();
 
-        maxHeaderListSize = handlerFilter.getConfiguration().getMaxHeaderListSize();
+        this.maxHeaderListSize = handlerFilter.getConfiguration().getMaxHeaderListSize();
 
         if (isServer) {
-            lastLocalStreamId = 0;
-            lastPeerStreamId = -1;
+            this.lastLocalStreamId = 0;
+            this.lastPeerStreamId = -1;
         } else {
-            lastLocalStreamId = -1;
-            lastPeerStreamId = 0;
+            this.lastLocalStreamId = -1;
+            this.lastPeerStreamId = 0;
         }
 
-        addressHolder = Holder.lazyHolder(new NullaryFunction<Object>() {
-            @Override
-            public Object evaluate() {
-                return connection.getPeerAddress();
-            }
-        });
+        this.addressHolder = Holder.lazyHolder((NullaryFunction<Object>) () -> connection.getPeerAddress());
 
         connection.addCloseListener(new ConnectionCloseListener());
 
@@ -482,7 +448,10 @@ public class Http2Session {
      */
     public void setLocalMaxConcurrentStreams(int localMaxConcurrentStreams) {
         this.localMaxConcurrentStreams = localMaxConcurrentStreams;
-        streamsHighWaterMark = Float.valueOf(localMaxConcurrentStreams * 0.5f).intValue();
+        this.streamsHighWaterMark =
+            Float.valueOf(
+                this.localMaxConcurrentStreams * this.http2Configuration.getStreamsHighWaterMark()
+            ).intValue();
     }
 
     /**
