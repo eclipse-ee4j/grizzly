@@ -502,7 +502,7 @@
         </maven.compiler.argument>
         <findbugs.skip>false</findbugs.skip>
         <findbugs.common>exclude-common.xml</findbugs.common>
-        <jdk.compile.version>1.9</jdk.compile.version>
+        <jdk.compile.version>1.8</jdk.compile.version>
         <grizzly.alpn.version>1.9</grizzly.alpn.version>
         <release.arguments></release.arguments>
     </properties>
