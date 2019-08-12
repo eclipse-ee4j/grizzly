@@ -3,4 +3,4 @@ dist: trusty
 jdk:
   - oraclejdk8
 sudo: false
-script: mvn --batch-mode -Dstyle.color=always --fail-at-end clean verify
+script: mvn --fail-at-end clean verify
