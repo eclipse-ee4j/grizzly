@@ -3,4 +3,4 @@ dist: trusty
 jdk:
   - oraclejdk8
 sudo: false
-script: ./mvnw --fail-at-end clean verify
+script: ./mvnw --no-transfer-progress --fail-at-end clean verify
