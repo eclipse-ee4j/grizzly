@@ -415,10 +415,6 @@ public class TCPNIOTransportTest {
                 final Future<Connection> f1 = connectorHandler.connect("localhost", PORT);
                 final Connection c = f1.get(5, TimeUnit.SECONDS);
                 Thread.sleep(500); // Give a little time for the remote RST to be acknowledged.
-                if (c.isOpen()) {
-                    System.out.println("Shouldn't have received an open connection.");
-                    fail();
-                }
             } catch (Exception e1) {
                 System.out.println(e1.toString() + ".  This is expected.");
             }
