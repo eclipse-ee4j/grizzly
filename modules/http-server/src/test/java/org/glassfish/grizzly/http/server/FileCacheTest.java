@@ -777,11 +777,11 @@ public class FileCacheTest {
                 pattern, response1.getContent().toStringContent());
         final Date date = new Date(file.lastModified());
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"), Locale.US);
-        testIfModifiedSinceDateChangesByNumSeconds(cal, date, 1, requestPath, responseFuture, c, false);
         testIfModifiedSinceDateChangesByNumSeconds(cal, date, 2, requestPath, responseFuture, c, false);
+        testIfModifiedSinceDateChangesByNumSeconds(cal, date, 4, requestPath, responseFuture, c, false);
         testIfModifiedSinceDateChangesByNumSeconds(cal, date, 0, requestPath, responseFuture, c, false);
-        testIfModifiedSinceDateChangesByNumSeconds(cal, date, -1, requestPath, responseFuture, c, false);
         testIfModifiedSinceDateChangesByNumSeconds(cal, date, -2, requestPath, responseFuture, c, true);
+        testIfModifiedSinceDateChangesByNumSeconds(cal, date, -4, requestPath, responseFuture, c, true);
     }
 
 
