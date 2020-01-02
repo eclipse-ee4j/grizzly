@@ -129,7 +129,7 @@ public class Activator implements BundleActivator {
         NetworkListener networkListener = new NetworkListener("osgi-listener",
                 "0.0.0.0", port);
         
-        System.out.println("PORT=" + port);
+        logger.info("HttpServer will listen on " + port);
         if (cometEnabled) {
             logger.info("Enabling Comet.");
             networkListener.registerAddOn(new CometAddOn());
