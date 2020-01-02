@@ -204,6 +204,7 @@ public class SSLAttributesTest {
         if (cacertsUrl != null) {
             sslContextConfigurator.setTrustStoreFile(cacertsUrl.getFile());
             sslContextConfigurator.setTrustStorePass("changeit");
+            sslContextConfigurator.setSecurityProtocol("TLSv1.2");
         }
 
         // override system properties

@@ -197,7 +197,7 @@ public class KeepAliveTest extends TestCase {
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             connectFuture.get(10, TimeUnit.SECONDS);
 
-            for (int i=0; i <= maxKeepAliveRequests; i++) {
+            for (int i=0; i < maxKeepAliveRequests; i++) {
                 final Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
                         .method("GET")
                             .uri("/path").protocol(Protocol.HTTP_1_1)
