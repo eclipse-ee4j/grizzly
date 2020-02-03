@@ -32,15 +32,7 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
     /**
      * Keep alive probes
      */
-    protected final DefaultMonitoringConfig<KeepAliveProbe> monitoringConfig =
-            new DefaultMonitoringConfig<KeepAliveProbe>(KeepAliveProbe.class) {
-
-        @Override
-        public Object createManagementObject() {
-            return createJmxManagementObject();
-        }
-
-    };
+    protected final DefaultMonitoringConfig<KeepAliveProbe> monitoringConfig;
     
     /**
      * The number int seconds a connection may be idle before being timed out.
@@ -53,13 +45,22 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
     private int maxRequestsCount = Constants.DEFAULT_MAX_KEEP_ALIVE;
 
     public KeepAlive() {
+        monitoringConfig = new DefaultMonitoringConfig<KeepAliveProbe>(KeepAliveProbe.class) {
+
+            @Override
+            public Object createManagementObject() {
+                return createJmxManagementObject();
+            }
+
+        };
     }
 
     /**
      * The copy constructor.
-     * @param keepAlive
+     * @param keepAlive the {@link KeepAlive} to copy
      */
     public KeepAlive(final KeepAlive keepAlive) {
+        this.monitoringConfig = keepAlive.monitoringConfig;
         this.idleTimeoutInSeconds = keepAlive.idleTimeoutInSeconds;
         this.maxRequestsCount = keepAlive.maxRequestsCount;
     }
