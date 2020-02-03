@@ -101,7 +101,7 @@ public class WebappContext implements ServletContext {
 
     private static final Set<SessionTrackingMode> DEFAULT_SESSION_TRACKING_MODES =
         EnumSet.of(SessionTrackingMode.COOKIE);
-    
+
     /* Servlet major/minor versions */
     private static final int MAJOR_VERSION = 4;
     private static final int MINOR_VERSION = 0;
@@ -123,12 +123,12 @@ public class WebappContext implements ServletContext {
     /* Registrations */
     protected final Map<String, ServletRegistration> servletRegistrations =
             new HashMap<>(8, 1.0f);
-    
+
     protected final Map<String, FilterRegistration> filterRegistrations =
             new LinkedHashMap<>(4, 1.0f);
     protected final Map<String, FilterRegistration> unmodifiableFilterRegistrations =
             Collections.unmodifiableMap(filterRegistrations);
-            
+
 
     /* SessionManager that will be used for the ServletHandlers */
     private SessionManager sessionManager = ServletSessionManager.instance();
@@ -174,9 +174,9 @@ public class WebappContext implements ServletContext {
      * Session cookie config
      */
     private javax.servlet.SessionCookieConfig sessionCookieConfig;
-    
+
     private Set<SessionTrackingMode> sessionTrackingModes;
-    
+
     /**
      * Destroy listener to be registered on {@link ServletHandler} to make sure
      * we undeploy entire application when {@link ServletHandler#destroy()} is invoked.
@@ -195,7 +195,7 @@ public class WebappContext implements ServletContext {
      * they were defined in the deployment descriptor.
      */
     private final List<FilterMap> filterMaps = new ArrayList<>();
-    
+
     // ------------------------------------------------------------ Constructors
 
     protected WebappContext() {
@@ -333,9 +333,9 @@ public class WebappContext implements ServletContext {
         try {
             if (deployed) {
                 deployed = false;
-                
+
                 final HttpServer server = DEPLOYED_APPS.remove(this);
-                destoryServlets(server);
+                destroyServlets(server);
 
                 // destroy filter instances
                 destroyFilters();
@@ -413,7 +413,7 @@ public class WebappContext implements ServletContext {
      * @return a FilterRegistration object that may be used to further
      * configure the registered filter, or <tt>null</tt> if this
      * WebappContext already contains a complete FilterRegistration for a
-     * filter with the given <tt>filterName</tt> 
+     * filter with the given <tt>filterName</tt>
      *
      * @throws IllegalStateException if this WebappContext has already
      * been initialized
@@ -507,7 +507,7 @@ public class WebappContext implements ServletContext {
      * <p>The registered filter may be further configured via the returned
      * {@link FilterRegistration} object.
      *
-     * <p>The specified <tt>className</tt> will be loaded using the 
+     * <p>The specified <tt>className</tt> will be loaded using the
      * classloader associated with the application represented by this
      * WebappContext.
      *
@@ -522,7 +522,7 @@ public class WebappContext implements ServletContext {
      * @return a FilterRegistration object that may be used to further
      * configure the registered filter, or <tt>null</tt> if this
      * WebappContext already contains a complete FilterRegistration for
-     * a filter with the given <tt>filterName</tt> 
+     * a filter with the given <tt>filterName</tt>
      *
      * @throws IllegalStateException if this WebappContext has already
      * been initialized
@@ -574,7 +574,7 @@ public class WebappContext implements ServletContext {
      * @return a ServletRegistration object that may be used to further
      * configure the registered servlet, or <tt>null</tt> if this
      * WebappContext already contains a complete ServletRegistration for
-     * the given <tt>servletName</tt> 
+     * the given <tt>servletName</tt>
      *
      * @throws IllegalStateException if this WebappContext has already
      * been initialized
@@ -632,7 +632,7 @@ public class WebappContext implements ServletContext {
      * @throws IllegalStateException if this WebappContext has already
      * been initialized
      *
-     * @throws IllegalArgumentException if the given servlet instance 
+     * @throws IllegalArgumentException if the given servlet instance
      * implements {@link javax.servlet.SingleThreadModel}
      */
     @SuppressWarnings({"deprecation"})
@@ -673,7 +673,7 @@ public class WebappContext implements ServletContext {
      * <p>The registered servlet may be further configured via the returned
      * {@link ServletRegistration} object.
      *
-     * <p>The specified <tt>className</tt> will be loaded using the 
+     * <p>The specified <tt>className</tt> will be loaded using the
      * classloader associated with the application represented by this
      * WebappContext.
      *
@@ -689,7 +689,7 @@ public class WebappContext implements ServletContext {
      * @return a ServletRegistration object that may be used to further
      * configure the registered servlet, or <tt>null</tt> if this
      * WebappContext already contains a complete ServletRegistration for
-     * a servlet with the given <tt>servletName</tt> 
+     * a servlet with the given <tt>servletName</tt>
      *
      * @throws IllegalStateException if this WebappContext has already
      * been initialized
@@ -831,11 +831,11 @@ public class WebappContext implements ServletContext {
         if (deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
-        
+
         if (listenerClass == null) {
             throw new IllegalArgumentException("'listener' cannot be null");
         }
-        
+
         try {
             addListener(createEventListenerInstance(listenerClass));
         } catch (Exception e) {
@@ -859,7 +859,7 @@ public class WebappContext implements ServletContext {
      * </ul>
      *
      * <p>As part of this method call, the container must load the class
-     * with the specified class name to ensure that it implements one of 
+     * with the specified class name to ensure that it implements one of
      * the required interfaces.
      *
      * <p>If the class with the given name implements a listener interface
@@ -903,10 +903,10 @@ public class WebappContext implements ServletContext {
         if (deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
-        
+
         eventListenerInstances.add(eventListener);
     }
-    
+
 
 
     @SuppressWarnings("unchecked")
@@ -945,10 +945,10 @@ public class WebappContext implements ServletContext {
         if (deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
-        
+
         securityRoles.addAll(Arrays.asList(roleNames));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1034,7 +1034,7 @@ public class WebappContext implements ServletContext {
     public int getEffectiveMinorVersion() {
         return MINOR_VERSION;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1435,10 +1435,10 @@ public class WebappContext implements ServletContext {
             contextInitParams.put(name, value);
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1608,7 +1608,7 @@ public class WebappContext implements ServletContext {
         return null;
     }
 
-    
+
 
     // ------------------------------------------------------- Protected Methods
 
@@ -1741,11 +1741,11 @@ public class WebappContext implements ServletContext {
 //            fireContainerEvent("addFilterMap", filterMap);
 //        }
     }
-    
+
     protected List<FilterMap> getFilterMaps() {
         return filterMaps;
     }
-    
+
     /**
      * Removes any filter mappings from this Context.
      */
@@ -1758,7 +1758,7 @@ public class WebappContext implements ServletContext {
 //            }
 //        }
         filterMaps.clear();
-    }    
+    }
     /**
      * Gets the current servlet name mappings of the Filter with
      * the given name.
@@ -1827,7 +1827,7 @@ public class WebappContext implements ServletContext {
         for (final FilterRegistration registration : filterRegistrations.values()) {
             registration.filter.destroy();
         }
-        
+
         removeFilterMaps();
     }
 
@@ -1835,7 +1835,7 @@ public class WebappContext implements ServletContext {
      *
      * @param server
      */
-    private void destoryServlets(HttpServer server) {
+    private void destroyServlets(HttpServer server) {
         if (servletHandlers != null && !servletHandlers.isEmpty()) {
             ServerConfiguration config = server.getServerConfiguration();
             for (final ServletHandler handler : servletHandlers) {
@@ -1868,13 +1868,14 @@ public class WebappContext implements ServletContext {
                     new LinkedList<>(servletRegistrations.values());
             Collections.sort(sortedRegistrations);
             for (final ServletRegistration registration : sortedRegistrations) {
-                ServletHandler servletHandler;
                 final ServletConfigImpl sConfig =
                         createServletConfig(registration);
 
+                ServletHandler servletHandler = new ServletHandler(sConfig);
                 if (registration.servlet != null) {
                     try {
                         registration.servlet.init(sConfig);
+                        servletHandler.setServletInstance(registration.servlet);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -1883,12 +1884,11 @@ public class WebappContext implements ServletContext {
                         Servlet servletInstance = createServletInstance(registration);
                         LOGGER.log(Level.INFO, "Loading Servlet: {0}", servletInstance.getClass().getName());
                         servletInstance.init(sConfig);
+                        servletHandler.setServletInstance(servletInstance);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
-                servletHandler = new ServletHandler(sConfig);
-                servletHandler.setServletInstance(registration.servlet);
                 servletHandler.setServletClass(registration.servletClass);
                 servletHandler.setServletClassName(registration.className);
                 servletHandler.setSessionManager(sessionManager);
@@ -1901,17 +1901,17 @@ public class WebappContext implements ServletContext {
                 final String[] patterns = registration.urlPatterns.getArray();
                 if (patterns != null && patterns.length > 0) {
                     final String[] mappings = new String[patterns.length];
-                    
+
                     for (int i = 0; i < patterns.length; i++) {
                         final String pattern = patterns[i];
-                        
+
                         if (pattern.length() == 0 || "/".equals(pattern)) {
                             defaultMappingAdded = true;
                         }
-                        
+
                         mappings[i] = updateMappings(servletHandler, pattern);
                     }
-                                
+
                     serverConfig.addHttpHandler(servletHandler, mappings);
                 } else {
                     serverConfig.addHttpHandler(servletHandler,
@@ -1967,7 +1967,7 @@ public class WebappContext implements ServletContext {
                     servletHandler.setFilterChainFactory(filterChainFactory);
                     servletHandler.setExpectationHandler(registration.expectationHandler);
                     servletHandler.addOnDestroyListener(onDestroyListener);
-                    
+
                     serverConfig.addHttpHandler(servletHandler,
                                                     updateMappings(servletHandler,
                                                             "/"));
@@ -2125,7 +2125,7 @@ public class WebappContext implements ServletContext {
             }
         }
     }
-    
+
     /**
      * Instantiates the given Servlet class.
      *
@@ -2134,10 +2134,10 @@ public class WebappContext implements ServletContext {
     protected Servlet createServletInstance(final ServletRegistration registration)
             throws Exception {
         String servletClassName = registration.className;
-        Class<? extends Servlet> servletClass = registration.servletClass;
         if (servletClassName != null) {
             return (Servlet) ClassLoaderUtil.load(servletClassName);
         } else {
+            Class<? extends Servlet> servletClass = registration.servletClass;
             return createServletInstance(servletClass);
         }
     }
@@ -2151,7 +2151,7 @@ public class WebappContext implements ServletContext {
             throws Exception {
         return servletClass.newInstance();
     }
-    
+
     /**
      * Instantiates the given Filter class.
      *
@@ -2177,7 +2177,7 @@ public class WebappContext implements ServletContext {
             throws Exception {
         return filterClass.newInstance();
     }
-    
+
     /**
      * Instantiates the given EventListener class.
      *
@@ -2187,7 +2187,7 @@ public class WebappContext implements ServletContext {
             throws Exception {
         return eventListenerClass.newInstance();
     }
-    
+
     /**
      * Instantiates the given EventListener class.
      *
@@ -2210,7 +2210,7 @@ public class WebappContext implements ServletContext {
             throws Exception {
         return clazz.newInstance();
     }
-    
+
     /**
      * Validate the syntax of a proposed <code>&lt;url-pattern&gt;</code>
      * for conformance with specification requirements.
@@ -2243,7 +2243,7 @@ public class WebappContext implements ServletContext {
             return false;
 
     }
-    
+
     /**
      * Check for unusual but valid <code>&lt;url-pattern&gt;</code>s.
      * See Bugzilla 34805, 43079 &amp; 43080
@@ -2257,8 +2257,8 @@ public class WebappContext implements ServletContext {
                         " section SRV.11.2 of the Servlet specification" , urlPattern);
             }
         }
-    }    
-    
+    }
+
     // ---------------------------------------------------------- Nested Classes
 
 
