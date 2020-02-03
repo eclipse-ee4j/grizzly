@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2012, 2018 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
     terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,13 +21,13 @@
     <parent>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-project</artifactId>
-        <version>2.4.4-SNAPSHOT</version>
+        <version>2.4.5-SNAPSHOT</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>grizzly-websockets-server</artifactId>
     <packaging>jar</packaging>
-    <version>2.4.4-SNAPSHOT</version>
+    <version>2.4.5-SNAPSHOT</version>
     <name>grizzly-websockets-server</name>
     <build>
         <defaultGoal>install</defaultGoal>
@@ -132,7 +132,7 @@
                         </goals>
                         <configuration>
                             <classifier>sources</classifier>
-                            <excludeArtifactIds>junit</excludeArtifactIds>
+                            <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
                             <!-- fudge an actual source hierarchy so that the source
                                  plugin can actually do something useful.  Otherwise,
                                  you'll end up with an empty source jar -->

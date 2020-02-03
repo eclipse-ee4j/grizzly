@@ -187,6 +187,10 @@ public class SSLStreamWriter extends TransformerStreamWriter {
                         handshakeStatus = sslEngine.getHandshakeStatus();
                         break;
                     }
+                    case NOT_HANDSHAKING:
+                    case FINISHED: {
+                        return true;
+                    }
                     default: {
                         throw new RuntimeException("Invalid Handshaking State"
                                 + handshakeStatus);

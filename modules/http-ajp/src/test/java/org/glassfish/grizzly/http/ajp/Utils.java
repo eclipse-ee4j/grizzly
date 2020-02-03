@@ -18,7 +18,10 @@ package org.glassfish.grizzly.http.ajp;
 
 import java.io.*;
 import java.net.URL;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 
@@ -28,6 +31,9 @@ import org.glassfish.grizzly.memory.MemoryManager;
  * @author Alexey Stashok
  */
 public class Utils {
+
+    private static final Logger logger = Grizzly.logger(Utils.class);
+
     public static byte[] loadResourceFile(final String filename) throws Exception {
         final ClassLoader cl = Utils.class.getClassLoader();
         final URL url = cl.getResource(filename);
@@ -189,7 +195,7 @@ public class Utils {
         if (bytes.length() > 0) {
             final int i = 50 - count % 8;
             final String format = "%-" + i + "s   %s";
-            System.out.println("format = " + format);
+            logger.fine("format = " + format);
             table.append(String.format(format, bytes, chars).trim());
         }
 

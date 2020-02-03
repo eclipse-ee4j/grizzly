@@ -798,7 +798,7 @@ public class SSLTest {
             TrustManager[] trustManagers = new TrustManager[]{ trustManager };
             SecureRandom secureRandom = new SecureRandom();
 
-            SSLContext sslContext = SSLContext.getInstance("TLS");
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
             sslContext.init(keyManagers, trustManagers, secureRandom);
 
             return sslContext;

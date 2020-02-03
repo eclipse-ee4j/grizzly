@@ -1138,7 +1138,7 @@ public class HttpServerFilter extends HttpCodecFilter {
         final int requestsProcessed = keepAliveContext.requestsProcessed++;
         final int maxRequestCount = keepAlive.getMaxRequestsCount();
         final boolean isKeepAlive = (maxRequestCount == -1 ||
-                keepAliveContext.requestsProcessed <= maxRequestCount);
+                keepAliveContext.requestsProcessed < maxRequestCount);
         
         if (requestsProcessed == 0) {
             if (isKeepAlive) { // New keep-alive connection

@@ -1,5 +1,6 @@
 language: java
+dist: trusty
 jdk:
   - oraclejdk8
 sudo: false
-script: mvn clean verify
+script: mvn --fail-at-end clean verify
