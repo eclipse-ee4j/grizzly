@@ -159,7 +159,6 @@ public final class ByteChunk implements Chunk, Cloneable, Serializable {
     // -------------------- Setup --------------------
 
     public void allocate( int initial, int limit  ) {
-        boolean output = true;
         if( buff==null || buff.length < initial ) {
             buff=new byte[initial];
         }
