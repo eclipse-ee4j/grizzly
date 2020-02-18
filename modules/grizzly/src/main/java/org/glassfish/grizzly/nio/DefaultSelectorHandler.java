@@ -30,7 +30,6 @@ import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.utils.Futures;
-import org.glassfish.grizzly.utils.JdkVersion;
 
 /**
  * Default implementation of NIO <code>SelectorHandler</code>
