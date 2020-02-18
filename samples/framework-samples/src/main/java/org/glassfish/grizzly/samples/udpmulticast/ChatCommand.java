@@ -64,9 +64,9 @@ public abstract class ChatCommand {
             case 5:
                 return new UnblockSourceCommand(splitString);
             case 6:
-                return new ListNetworkInterfacesCommand(splitString);
+                return new ListNetworkInterfacesCommand();
             case 7:
-                return new ExitCommand(splitString);
+                return new ExitCommand();
         }
         
         return null;
@@ -348,7 +348,7 @@ public abstract class ChatCommand {
      * List available network interfaces
      */
     private static class ListNetworkInterfacesCommand extends ChatCommand {
-        public ListNetworkInterfacesCommand(String[] params) throws Exception {
+        public ListNetworkInterfacesCommand() throws Exception {
         }
 
         @Override
@@ -368,7 +368,7 @@ public abstract class ChatCommand {
      * Exit chat app
      */
     private static class ExitCommand extends ChatCommand {
-        public ExitCommand(String[] params) throws Exception {
+        public ExitCommand() throws Exception {
         }
 
         @Override

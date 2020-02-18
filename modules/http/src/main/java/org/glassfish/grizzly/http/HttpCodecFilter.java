@@ -1816,8 +1816,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter
             do {
                 commaIdx = bc.indexOf(',', currentIdx);
                 int endMatch = commaIdx >= 0 ? commaIdx : bc.getLength();
-                final ContentEncoding ce = lookupContentEncoding(bc, currentIdx,
-                        endMatch);
+                final ContentEncoding ce = lookupContentEncoding(bc, currentIdx);
                 if (ce != null && ce.wantDecode(httpHeader)) {
                     endMatchDecoded = endMatch;
                     encodings.add(0, ce);
@@ -1887,7 +1886,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter
     }
     
     private ContentEncoding lookupContentEncoding(final DataChunk bc,
-            final int startIdx, final int endIdx) {
+            final int startIdx) {
         final ContentEncoding[] encodings = contentEncodings.getArray();
 
         if (encodings != null) {

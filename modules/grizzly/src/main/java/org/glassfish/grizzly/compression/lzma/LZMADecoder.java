@@ -59,7 +59,7 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         Buffer decodedBuffer = null;
         Decoder.State decState = null;
         if (input.hasRemaining()) {
-            decState = decodeBuffer(memoryManager, input, state);
+            decState = decodeBuffer(input, state);
             decodedBuffer = state.getDst();
         }
 
@@ -102,8 +102,7 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
     // --------------------------------------------------------- Private Methods
 
 
-    private Decoder.State decodeBuffer(final MemoryManager memoryManager,
-                                       final Buffer buffer,
+    private Decoder.State decodeBuffer(final Buffer buffer,
                                        final LZMAInputState state) {
 
         state.setSrc(buffer);
