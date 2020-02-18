@@ -615,29 +615,6 @@ public class Cookie implements Cloneable, Cacheable {
         return buf.toString();
     }
 
-    /*
-     * Tests a string and returns true if the string counts as a
-     * reserved token in the Java language.
-     *
-     * @param value        the <code>String</code> to be tested
-     *
-     * @return            <tt>true</tt> if the <code>String</code> is
-     *                a reserved token; <tt>false</tt>
-     *                if it is not
-     */
-
-    private static boolean isToken(String value) {
-    int len = value.length();
-
-    for (int i = 0; i < len; i++) {
-        char c = value.charAt(i);
-
-        if (c < 0x20 || c >= 0x7f || tspecials.indexOf(c) != -1)
-        return false;
-    }
-    return true;
-    }
-
     /**
      *
      * Overrides the standard <code>java.lang.Object.clone</code>
