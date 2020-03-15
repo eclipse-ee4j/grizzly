@@ -191,7 +191,7 @@ public class CometEngine {
             synchronized (activeContexts) {
                 cometContext = activeContexts.get(topic);
                 if (cometContext == null) {
-                    cometContext = new CometContext<E>(this, topic);
+                    cometContext = new CometContext<E>(topic);
                     NotificationHandler notificationHandler;
                     try {
                         notificationHandler = notificationClass.newInstance();
