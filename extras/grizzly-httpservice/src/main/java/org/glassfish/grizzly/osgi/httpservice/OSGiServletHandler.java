@@ -24,7 +24,6 @@ import org.osgi.service.http.HttpContext;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
-import java.lang.String;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
