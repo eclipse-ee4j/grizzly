@@ -118,7 +118,7 @@ public class CometContext<E> {
      *
      * @param contextTopic the context path
      */
-    public CometContext(CometEngine engine, String contextTopic) {
+    public CometContext(String contextTopic) {
         topic = contextTopic;
         attributes = new ConcurrentHashMap<>();
         handlers = new CopyOnWriteArrayList<CometHandler>();
