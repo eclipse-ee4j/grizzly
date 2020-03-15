@@ -62,17 +62,6 @@ public abstract class AbstractStreamReader implements StreamReader {
 
     protected final AtomicBoolean isClosed = new AtomicBoolean(false);
     
-    private static void msg(final String msg) {
-        LOGGER.log(Level.INFO, "READERSTREAM:DEBUG:{0}", msg);
-    }
-
-    private static void displayBuffer(final String str,
-            final Buffer wrapper) {
-        msg(str);
-        msg("\tposition()     = " + wrapper.position());
-        msg("\tlimit()        = " + wrapper.limit());
-        msg("\tcapacity()     = " + wrapper.capacity());
-    }
     // Concurrency considerations:
     // Only one thread (the consumer) may invoke the readXXX methods.
     // dataReceived and close may be invoked by a producer thread.

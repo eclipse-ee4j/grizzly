@@ -927,21 +927,6 @@ public class DataChunk implements Chunk {
         reset();
     }
 
-    private static boolean equalsIgnoreCase(String s, byte[] b) {
-        final int len = b.length;
-        if (s.length() != len) {
-            return false;
-        }
-
-        for (int i = 0; i < len; i++) {
-            if (Ascii.toLower(s.charAt(i)) != Ascii.toLower(b[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     /**
      * Compares the String to the specified byte array representing
      * lower-case ASCII characters.
