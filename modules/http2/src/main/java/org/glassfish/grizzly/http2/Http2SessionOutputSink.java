@@ -33,13 +33,11 @@ import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.WriteResult;
-import org.glassfish.grizzly.asyncqueue.AsyncQueueRecord;
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
 import org.glassfish.grizzly.asyncqueue.TaskQueue;
 import org.glassfish.grizzly.http2.frames.DataFrame;
 import org.glassfish.grizzly.http2.frames.ErrorCode;
 import org.glassfish.grizzly.http2.frames.Http2Frame;
-import org.glassfish.grizzly.http2.utils.ChunkedCompletionHandler;
 
 /**
  * Class represents an output sink associated with specific {@link Http2Session}

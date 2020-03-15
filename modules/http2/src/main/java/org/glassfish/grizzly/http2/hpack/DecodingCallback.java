@@ -16,9 +16,6 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
-
-
 /**
  * Delivers results of the {@link Decoder#decode(Buffer, boolean,
  * DecodingCallback) decoding operation}.
