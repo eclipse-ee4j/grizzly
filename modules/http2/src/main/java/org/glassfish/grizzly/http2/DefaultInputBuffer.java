@@ -324,7 +324,6 @@ class DefaultInputBuffer implements StreamInputBuffer {
     @Override
     public void close(final Termination termination) {
         if (inputClosed.compareAndSet(false, true)) {
-            final Termination.TerminationType type = termination.getType();
             if (termination.isSessionClosed()) {
                 return;
             }
@@ -342,7 +341,6 @@ class DefaultInputBuffer implements StreamInputBuffer {
         final boolean isSet = closeFlagUpdater.compareAndSet(this, null, termination);
         
         if (inputClosed.compareAndSet(false, true)) {
-            final Termination.TerminationType type = termination.getType();
             if (!termination.isSessionClosed()) {
                 offer0(new InputElement(termination, true, true));
             }

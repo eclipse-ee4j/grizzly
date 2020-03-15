@@ -132,14 +132,12 @@ public final class CharChunk implements Chunk, Cloneable, Serializable {
     // -------------------- Setup --------------------
 
     public void allocate( int initial, int limit  ) {
-        boolean output = true;
         if( buff==null || buff.length < initial ) {
             buff=new char[initial];
         }
         this.limit=limit;
         start=0;
         end=0;
-        output =true;
         isSet=true;
         resetStringCache();
     }

@@ -469,7 +469,6 @@ public final class Parameters {
 
             if (nameEnd <= nameStart) {
                 if (LOGGER.isLoggable(Level.INFO)) {
-                    String extract;
                     if (valueEnd < nameStart) {
                         LOGGER.info(LogMessages.INFO_GRIZZLY_HTTP_PARAMETERS_INVALID_CHUNK(
                                 nameStart,

@@ -857,8 +857,6 @@ public class Http2Session {
             final Map<String,String> capture)
             throws IOException {
 
-        final boolean logging = NetLogger.isActive();
-
         final List<Http2Frame> headerFrames =
                 bufferToPushPromiseFrames(
                         streamId,
