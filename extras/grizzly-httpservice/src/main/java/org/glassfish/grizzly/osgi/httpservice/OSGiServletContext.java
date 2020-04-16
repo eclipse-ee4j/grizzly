@@ -23,7 +23,7 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.osgi.service.http.HttpContext;
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.InputStream;

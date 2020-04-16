@@ -16,9 +16,9 @@
 
 package org.glassfish.grizzly.servlet;
 
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import java.io.IOException;
 
 public interface FilterChainInvoker {

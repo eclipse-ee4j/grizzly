@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.Servlet;
+import jakarta.servlet.Servlet;
 
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.HttpRequestPacket;

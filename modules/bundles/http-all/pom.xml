@@ -43,7 +43,7 @@
                         </Import-Package>
                         <Export-Package>
                             org.glassfish.grizzly.*;-split-package:=merge-first;version=${project.version},
-                            javax.servlet.*;version=${servlet-version};-split-package:=merge-first
+                            jakarta.servlet.*;version=${servlet-version};-split-package:=merge-first
                         </Export-Package>
                         <Embed-Dependency>org.glassfish.grizzly;scope=runtime
                         </Embed-Dependency>
@@ -168,8 +168,8 @@
             <artifactId>grizzly-websockets</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
     </dependencies>
 

@@ -42,8 +42,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.glassfish.grizzly</groupId>
@@ -91,7 +91,7 @@
                             *,
                         </Import-Package>
                         <Export-Package>
-                            javax.servlet;javax.servlet.http;version=2.5,
+                            jakarta.servlet;javax.servlet.http;version=2.5,
                             org.osgi.service.http,
                             org.glassfish.grizzly.osgi.httpservice.*;version=${project.version}
                         </Export-Package>

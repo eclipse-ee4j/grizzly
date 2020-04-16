@@ -18,8 +18,8 @@
 package org.glassfish.grizzly.servlet;
 
 import java.io.IOException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.localization.LogMessages;

@@ -20,8 +20,8 @@ import org.osgi.service.http.HttpContext;
 import org.osgi.framework.Bundle;
 import org.osgi.service.http.HttpService;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URL;
 

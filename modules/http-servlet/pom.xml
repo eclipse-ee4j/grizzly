@@ -48,7 +48,7 @@
                     <instructions>
                         <Import-Package>
                             org.glassfish.grizzly*;version=${project.version},
-                            javax.servlet*;version="[4.0,4.2)",
+                            jakarta.servlet*;version="[4.0,4.2)",
                             *,
                         </Import-Package>
                         <Export-Package>
@@ -66,8 +66,8 @@
             <artifactId>grizzly-http-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

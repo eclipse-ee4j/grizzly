@@ -21,7 +21,7 @@ import java.io.CharConversionException;
 import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 import org.glassfish.grizzly.http.util.URLDecoder;
 
 /**
