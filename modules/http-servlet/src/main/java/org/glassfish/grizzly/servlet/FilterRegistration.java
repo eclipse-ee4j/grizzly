@@ -19,15 +19,15 @@ package org.glassfish.grizzly.servlet;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 
 /**
  * Allows customization of a {@link Filter} registered with the {@link WebappContext}.
  *
  * @since 2.2
  */
-public class FilterRegistration extends Registration implements javax.servlet.FilterRegistration.Dynamic {
+public class FilterRegistration extends Registration implements jakarta.servlet.FilterRegistration.Dynamic {
 
     protected Class<? extends Filter> filterClass;
     protected Filter filter;

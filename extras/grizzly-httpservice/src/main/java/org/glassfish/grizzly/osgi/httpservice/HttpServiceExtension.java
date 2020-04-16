@@ -19,8 +19,8 @@ package org.glassfish.grizzly.osgi.httpservice;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 
-import javax.servlet.Filter;
-import javax.servlet.ServletException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.ServletException;
 import java.util.Dictionary;
 
 /**
@@ -43,12 +43,12 @@ public interface HttpServiceExtension extends HttpService {
      * Additionally, it should be noted that the registered {@link Filter}s are
      * effectively associated with a particular {@link HttpContext}.  Therefore,
      * if you wish to have multiple filters associated with a particular
-     * {@link javax.servlet.Servlet}, then you should use the same {@link HttpContext}
+     * {@link jakarta.servlet.Servlet}, then you should use the same {@link HttpContext}
      * instance to perform the registration.
      *
      * {@link Filter}s will be invoked in registration order.
      *
-     * This method will invoke {@link Filter#init(javax.servlet.FilterConfig)} during
+     * This method will invoke {@link Filter#init(jakarta.servlet.FilterConfig)} during
      * the registration process.
      *
      * When registering a {@link Filter}, take care not to reuse the same Filter
@@ -59,7 +59,7 @@ public interface HttpServiceExtension extends HttpService {
      * @param filter the {@link Filter} to register.
      * @param urlPattern the url pattern that will invoke this {@link Filter}.
      * @param initParams the initialization params that will be passed to the
-     *                   filter when {@link Filter#init(javax.servlet.FilterConfig)}
+     *                   filter when {@link Filter#init(jakarta.servlet.FilterConfig)}
      *                   is invoked.
      * @param context the {@link HttpContext} associated with this {@link Filter}.
      *

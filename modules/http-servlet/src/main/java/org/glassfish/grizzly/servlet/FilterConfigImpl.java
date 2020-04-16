@@ -20,9 +20,9 @@ package org.glassfish.grizzly.servlet;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 import org.glassfish.grizzly.http.server.util.Enumerator;
 
 

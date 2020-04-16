@@ -32,26 +32,26 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestAttributeEvent;
-import javax.servlet.ServletRequestAttributeListener;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletMapping;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.MappingMatch;
-import javax.servlet.http.Part;
-import javax.servlet.http.PushBuilder;
-import javax.servlet.http.WebConnection;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestAttributeEvent;
+import jakarta.servlet.ServletRequestAttributeListener;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletMapping;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.MappingMatch;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.http.PushBuilder;
+import jakarta.servlet.http.WebConnection;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.Grizzly;
@@ -1162,21 +1162,21 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
      * {@inheritDoc}
      */
     @Override
-    public javax.servlet.http.Cookie[] getCookies() {
+    public jakarta.servlet.http.Cookie[] getCookies() {
         final Cookie[] internalCookies = request.getCookies();
         if (internalCookies == null) {
             return null;
         }
         
         int cookieIdx = 0;
-        javax.servlet.http.Cookie[] cookies = new javax.servlet.http.Cookie[internalCookies.length];
+        jakarta.servlet.http.Cookie[] cookies = new jakarta.servlet.http.Cookie[internalCookies.length];
         for (Cookie cookie : internalCookies) {
             if (cookie instanceof CookieWrapper) {
                 cookies[cookieIdx++] = ((CookieWrapper) cookie).getWrappedCookie();
             } else {
                 try {
-                    javax.servlet.http.Cookie currentCookie =
-                            new javax.servlet.http.Cookie(
+                    jakarta.servlet.http.Cookie currentCookie =
+                            new jakarta.servlet.http.Cookie(
                                     cookie.getName(), cookie.getValue());
                     currentCookie.setComment(cookie.getComment());
                     if (cookie.getDomain() != null) {
@@ -1594,8 +1594,8 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
      *
      * @exception IOException if an I/O error occurred during the upgrade
      *
-     * @see javax.servlet.http.HttpUpgradeHandler
-     * @see javax.servlet.http.WebConnection
+     * @see jakarta.servlet.http.HttpUpgradeHandler
+     * @see jakarta.servlet.http.WebConnection
      *
      * @since Servlet 3.1
      */

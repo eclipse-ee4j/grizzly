@@ -20,7 +20,7 @@ package org.glassfish.grizzly.servlet;
  * Class that may be used to configure various properties of cookies 
  * used for session tracking purposes.
  */
-public class SessionCookieConfig implements javax.servlet.SessionCookieConfig {
+public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig {
 
     private String name;
     private String domain;

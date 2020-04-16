@@ -89,8 +89,10 @@
     <modules>
         <module>http-server-multipart</module>
         <module>http-server-jaxws</module>
+        <!-- This has dependencies on javax.servlet that need to be fixed in upstream projects
         <module>grizzly-httpservice</module>
         <module>bundles</module>
+        -->
         <module>http-servlet-extras</module>
         <module>connection-pool</module>
         <module>tls-sni</module>

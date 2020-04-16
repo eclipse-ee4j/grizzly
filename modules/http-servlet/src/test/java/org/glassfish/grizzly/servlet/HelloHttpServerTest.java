@@ -24,10 +24,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import junit.framework.TestCase;
 import org.glassfish.grizzly.Grizzly;
@@ -170,7 +170,7 @@ public class HelloHttpServerTest extends TestCase {
 
     /**
      * Hello world servlet.  Most servlets will extend
-     * javax.servlet.http.HttpServlet as this one does.
+     * jakarta.servlet.http.HttpServlet as this one does.
      */
     public static class HelloServlet extends HttpServlet {
       /**

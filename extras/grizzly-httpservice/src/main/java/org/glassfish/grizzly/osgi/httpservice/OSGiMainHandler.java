@@ -23,9 +23,9 @@ import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import javax.servlet.Filter;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -130,14 +130,14 @@ public class OSGiMainHandler extends HttpHandler implements OSGiHandler {
      * Keeps truck of all registrations, takes care of thread safety.
      *
      * @param alias       Alias to register, if wrong value than throws {@link org.osgi.service.http.NamespaceException}.
-     * @param servlet     Servlet to register under alias, if fails to {@link javax.servlet.Servlet#init(javax.servlet.ServletConfig)}
-     *                    throws {@link javax.servlet.ServletException}.
-     * @param initparams  Initial parameters to populate {@link javax.servlet.ServletContext} with.
+     * @param servlet     Servlet to register under alias, if fails to {@link jakarta.servlet.Servlet#init(javax.servlet.ServletConfig)}
+     *                    throws {@link jakarta.servlet.ServletException}.
+     * @param initparams  Initial parameters to populate {@link jakarta.servlet.ServletContext} with.
      * @param context     OSGi {@link org.osgi.service.http.HttpContext}, provides mime handling, security and bundle specific resource access.
      * @param httpService Used to {@link HttpService#createDefaultHttpContext()} if needed.
      * @throws org.osgi.service.http.NamespaceException
      *                                        If alias was invalid or already registered.
-     * @throws javax.servlet.ServletException If {@link javax.servlet.Servlet#init(javax.servlet.ServletConfig)} fails.
+     * @throws jakarta.servlet.ServletException If {@link javax.servlet.Servlet#init(javax.servlet.ServletConfig)} fails.
      */
     public void registerServletHandler(final String alias,
                                        final Servlet servlet,
@@ -412,7 +412,7 @@ public class OSGiMainHandler extends HttpHandler implements OSGiHandler {
      *
      * @param servlet     {@link Servlet} been registered.
      * @param httpContext {@link HttpContext} used for registration.
-     * @param initparams  Init parameters that will be visible in {@link javax.servlet.ServletContext}.
+     * @param initparams  Init parameters that will be visible in {@link jakarta.servlet.ServletContext}.
      * @return Found or created {@link OSGiServletHandler}.
      */
     private OSGiServletHandler findOrCreateOSGiServletHandler(

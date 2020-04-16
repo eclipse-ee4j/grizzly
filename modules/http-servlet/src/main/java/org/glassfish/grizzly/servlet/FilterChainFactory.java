@@ -19,14 +19,14 @@ package org.glassfish.grizzly.servlet;
 
 import java.util.List;
 import java.util.Map;
-import javax.servlet.DispatcherType;
-import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.util.Globals;
 
 /**
- * <code>FilterChainFactory</code> is responsible for building a {@link javax.servlet.FilterChain}
+ * <code>FilterChainFactory</code> is responsible for building a {@link jakarta.servlet.FilterChain}
  * instance with the Filters that need to be invoked for a particular request URI.
  *
  * TODO: We should look into how to cache these.  They currently are re-built

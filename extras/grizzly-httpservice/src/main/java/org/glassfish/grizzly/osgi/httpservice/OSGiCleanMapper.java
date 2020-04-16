@@ -27,7 +27,7 @@ import java.util.TreeSet;
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.osgi.service.http.HttpContext;
 
-import javax.servlet.Servlet;
+import jakarta.servlet.Servlet;
 import java.util.concurrent.locks.ReentrantLock;
 import org.glassfish.grizzly.http.server.HttpHandler;
 
@@ -192,10 +192,10 @@ class OSGiCleanMapper {
     }
 
     /**
-     * Executes unregistering of <code>alias</code> optionally calling {@link javax.servlet.Servlet#destroy()}.
+     * Executes unregistering of <code>alias</code> optionally calling {@link jakarta.servlet.Servlet#destroy()}.
      *
      * @param alias                Alias to unregister.
-     * @param callDestroyOnServlet If <code>true</code> call {@link javax.servlet.Servlet#destroy()}, else don't call.
+     * @param callDestroyOnServlet If <code>true</code> call {@link jakarta.servlet.Servlet#destroy()}, else don't call.
      */
     public void doUnregister(String alias, boolean callDestroyOnServlet) {
         if (containsAlias(alias)) {

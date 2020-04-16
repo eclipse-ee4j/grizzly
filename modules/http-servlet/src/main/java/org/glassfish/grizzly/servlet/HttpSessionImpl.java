@@ -21,14 +21,14 @@ import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionAttributeListener;
-import javax.servlet.http.HttpSessionBindingEvent;
-import javax.servlet.http.HttpSessionBindingListener;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionIdListener;
-import javax.servlet.http.HttpSessionListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionAttributeListener;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionIdListener;
+import jakarta.servlet.http.HttpSessionListener;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.Session;
 import org.glassfish.grizzly.localization.LogMessages;
@@ -155,7 +155,7 @@ public class HttpSessionImpl implements HttpSession {
      * {@inheritDoc}
      */
     @Override
-    public javax.servlet.http.HttpSessionContext getSessionContext() {
+    public jakarta.servlet.http.HttpSessionContext getSessionContext() {
         return null;
     }
 
