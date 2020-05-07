@@ -16,9 +16,9 @@
 
 package org.glassfish.grizzly.jaxws;
 
-import javax.jws.WebService;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
+import jakarta.jws.WebService;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
 
 @WebService
 public class AddService {

@@ -10,9 +10,9 @@
 
 package org.glassfish.grizzly.samples.jaxws.service;
 
-import javax.jws.WebService;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
+import jakarta.jws.WebService;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
 
 /**
  * Simple "add" web service implementation.

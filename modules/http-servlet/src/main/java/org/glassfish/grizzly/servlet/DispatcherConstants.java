@@ -20,7 +20,7 @@ package org.glassfish.grizzly.servlet;
 /**
  * Constants based on Servlet3.0 spec.
  * This class will be able to be replaced by Servlet3.0 API
- * such as <code>jakarta.servlet.RequestDispatcher</code> and <code>javax.servlet.DispatcherType</code>
+ * such as <code>jakarta.servlet.RequestDispatcher</code> and <code>jakarta.servlet.DispatcherType</code>
  *
  * @author Bongjae Chang
  */

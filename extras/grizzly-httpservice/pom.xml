@@ -91,7 +91,7 @@
                             *,
                         </Import-Package>
                         <Export-Package>
-                            jakarta.servlet;javax.servlet.http;version=2.5,
+                            jakarta.servlet;jakarta.servlet.http;version=5.0,
                             org.osgi.service.http,
                             org.glassfish.grizzly.osgi.httpservice.*;version=${project.version}
                         </Export-Package>

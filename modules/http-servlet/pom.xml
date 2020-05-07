@@ -71,20 +71,26 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
             <version>${jersey-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
             <version>${jersey-version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.0.0-M1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <properties>
-        <jersey-version>1.1.5</jersey-version>
+        <jersey-version>3.0.0-M1</jersey-version>
         <maven.compiler.argument>-Xlint:unchecked,-deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</maven.compiler.argument>
     </properties>
 </project>
