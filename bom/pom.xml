@@ -31,7 +31,7 @@
     <artifactId>grizzly-bom</artifactId>
     <packaging>pom</packaging>
     <name>grizzly-bom</name>
-    <version>2.4.5-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <description>Grizzly Bill of Materials (BOM)</description>
 
