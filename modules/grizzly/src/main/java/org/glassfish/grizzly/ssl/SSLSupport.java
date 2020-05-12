@@ -31,20 +31,20 @@ public interface SSLSupport {
     /**
      * The Request attribute key for the cipher suite.
      */
-    String CIPHER_SUITE_KEY = "javax.servlet.request.cipher_suite";
+    String CIPHER_SUITE_KEY = "jakarta.servlet.request.cipher_suite";
     /**
      * The Request attribute key for the key size.
      */
-    String KEY_SIZE_KEY = "javax.servlet.request.key_size";
+    String KEY_SIZE_KEY = "jakarta.servlet.request.key_size";
     /**
      * The Request attribute key for the client certificate chain.
      */
-    String CERTIFICATE_KEY = "javax.servlet.request.X509Certificate";
+    String CERTIFICATE_KEY = "jakarta.servlet.request.X509Certificate";
     /**
      * The Request attribute key for the session id.
      * This one is a Tomcat extension to the Servlet spec.
      */
-    String SESSION_ID_KEY = "javax.servlet.request.ssl_session_id";
+    String SESSION_ID_KEY = "jakarta.servlet.request.ssl_session_id";
 
     /**
      * The cipher suite being used on this connection.

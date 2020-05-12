@@ -58,7 +58,7 @@ public class CookieWrapper extends Cookie {
         super(name,value);
     }
     
-    private javax.servlet.http.Cookie wrappedCookie = null;
+    private jakarta.servlet.http.Cookie wrappedCookie = null;
             
     /**
      *
@@ -427,12 +427,12 @@ public class CookieWrapper extends Cookie {
         return wrappedCookie.clone();
     }
 
-    public javax.servlet.http.Cookie getWrappedCookie() {
+    public jakarta.servlet.http.Cookie getWrappedCookie() {
         return wrappedCookie;
     }
 
     
-    public void setWrappedCookie(javax.servlet.http.Cookie wrappedCookie) {
+    public void setWrappedCookie(jakarta.servlet.http.Cookie wrappedCookie) {
         this.wrappedCookie = wrappedCookie;
     }
 }

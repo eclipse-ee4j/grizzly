@@ -71,7 +71,7 @@ public class ServletSessionManager implements SessionManager {
 
         assert servletRequest != null;
 
-        final javax.servlet.SessionCookieConfig cookieConfig =
+        final jakarta.servlet.SessionCookieConfig cookieConfig =
                 servletRequest.getContextImpl().getSessionCookieConfig();
 
         if (cookieConfig.getDomain() != null) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2008, 2018 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
     terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,13 +21,13 @@
     <parent>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-project</artifactId>
-        <version>2.4.5-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>grizzly-http-servlet</artifactId>
     <packaging>bundle</packaging>
-    <version>2.4.5-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <name>grizzly-http-servlet</name>
     <build>
         <defaultGoal>install</defaultGoal>
@@ -48,7 +48,7 @@
                     <instructions>
                         <Import-Package>
                             org.glassfish.grizzly*;version=${project.version},
-                            javax.servlet*;version="[4.0,4.2)",
+                            jakarta.servlet*;version="[4.0,4.2)",
                             *,
                         </Import-Package>
                         <Export-Package>
@@ -66,25 +66,31 @@
             <artifactId>grizzly-http-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
             <version>${jersey-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.sun.jersey</groupId>
+            <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
             <version>${jersey-version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.0.0-M1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <properties>
-        <jersey-version>1.1.5</jersey-version>
+        <jersey-version>3.0.0-M1</jersey-version>
         <maven.compiler.argument>-Xlint:unchecked,-deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</maven.compiler.argument>
     </properties>
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,21 +19,21 @@ package org.glassfish.grizzly.servlet;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.localization.LogMessages;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.ServletRequestListener;
-import javax.servlet.ServletResponse;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestEvent;
+import jakarta.servlet.ServletRequestListener;
+import jakarta.servlet.ServletResponse;
 import java.io.IOException;
 import java.util.EventListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation of <code>javax.servlet.FilterChain</code> used to manage
+ * Implementation of <code>jakarta.servlet.FilterChain</code> used to manage
  * the execution of a set of filters for a particular request.  When the
  * set of defined filters has all been executed, the next call to
  * <code>doFilter()</code> will execute the servlet's <code>service()</code>
@@ -98,7 +98,7 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
      * @param response The servlet response we are creating
      *
      * @exception java.io.IOException if an input/output error occurs
-     * @exception javax.servlet.ServletException if a servlet exception occurs
+     * @exception jakarta.servlet.ServletException if a servlet exception occurs
      */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)

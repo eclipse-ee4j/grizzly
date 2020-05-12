@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,18 +21,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.Servlet;
-import javax.servlet.ServletSecurityElement;
+import jakarta.servlet.MultipartConfigElement;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletSecurityElement;
 import org.glassfish.grizzly.utils.ArraySet;
 
 /**
- * Allows customization of a {@link javax.servlet.Servlet} registered with the {@link WebappContext}.
+ * Allows customization of a {@link jakarta.servlet.Servlet} registered with the {@link WebappContext}.
  *
  * @since 2.2
  */
 public class ServletRegistration extends Registration
-        implements javax.servlet.ServletRegistration.Dynamic, Comparable<ServletRegistration> {
+        implements jakarta.servlet.ServletRegistration.Dynamic, Comparable<ServletRegistration> {
 
     protected Class<? extends Servlet> servletClass;
     protected final ArraySet<String> urlPatterns = new ArraySet<String>(String.class);
@@ -164,7 +164,7 @@ public class ServletRegistration extends Registration
      * initialize the Servlet during the initialization phase of the
      * WebappContext, that is, after it has invoked all of the
      * ServletContextListener objects configured for the WebappContext
-     * at their {@link javax.servlet.ServletContextListener#contextInitialized}
+     * at their {@link jakarta.servlet.ServletContextListener#contextInitialized}
      * method.
      * <p/>
      * <p>If <tt>loadOnStartup</tt> is a negative integer, the container

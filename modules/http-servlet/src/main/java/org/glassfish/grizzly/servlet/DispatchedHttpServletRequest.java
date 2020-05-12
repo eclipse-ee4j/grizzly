@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,11 @@ import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.glassfish.grizzly.http.server.util.Enumerator;
 import org.glassfish.grizzly.http.server.util.Globals;
 import org.glassfish.grizzly.http.server.util.ParameterMap;
@@ -35,7 +35,7 @@ import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.utils.Charsets;
 
 /**
- * Wrapper around a <code>javax.servlet.http.HttpServletRequest</code>
+ * Wrapper around a <code>jakarta.servlet.http.HttpServletRequest</code>
  * that transforms an application request object (which might be the original
  * one passed to a servlet.
  *
@@ -184,7 +184,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             if (specialAttributes != null) {
                 value = specialAttributes.get(name);
             }
-            if (value == null && name.startsWith("javax.servlet.forward")) {
+            if (value == null && name.startsWith("jakarta.servlet.forward")) {
                 /*
                  * If it's a forward special attribute, and null, delegate
                  * to the wrapped request. This will allow access to the
@@ -793,7 +793,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
                 String current = parentEnumeration.nextElement();
                 if (!isSpecial(current) ||
                         (!dispatcherType.equals(DispatcherType.FORWARD) &&
-                        current.startsWith("javax.servlet.forward") &&
+                        current.startsWith("jakarta.servlet.forward") &&
                         getAttribute(current) != null)) {
                     result = current;
                 }

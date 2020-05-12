@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,7 +23,7 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.osgi.service.http.HttpContext;
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.InputStream;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,16 +32,16 @@ import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.localization.LogMessages;
 
-import javax.servlet.Filter;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextAttributeEvent;
-import javax.servlet.ServletContextAttributeListener;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.ServletException;
-import javax.servlet.SingleThreadModel;
+import jakarta.servlet.Filter;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextAttributeEvent;
+import jakarta.servlet.ServletContextAttributeListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.SingleThreadModel;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,9 +67,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.SessionTrackingMode;
-import javax.servlet.descriptor.JspConfigDescriptor;
-import javax.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.SessionTrackingMode;
+import jakarta.servlet.descriptor.JspConfigDescriptor;
+import jakarta.servlet.http.HttpUpgradeHandler;
 
 import static java.util.concurrent.TimeUnit.*;
 
@@ -173,7 +173,7 @@ public class WebappContext implements ServletContext {
     /**
      * Session cookie config
      */
-    private javax.servlet.SessionCookieConfig sessionCookieConfig;
+    private jakarta.servlet.SessionCookieConfig sessionCookieConfig;
 
     private Set<SessionTrackingMode> sessionTrackingModes;
 
@@ -633,7 +633,7 @@ public class WebappContext implements ServletContext {
      * been initialized
      *
      * @throws IllegalArgumentException if the given servlet instance
-     * implements {@link javax.servlet.SingleThreadModel}
+     * implements {@link jakarta.servlet.SingleThreadModel}
      */
     @SuppressWarnings({"deprecation"})
     @Override
@@ -806,17 +806,17 @@ public class WebappContext implements ServletContext {
      * following interfaces:
      * <ul>
      * <li>{@link ServletContextAttributeListener}</tt>
-     * <li>{@link javax.servlet.ServletRequestListener}</tt>
-     * <li>{@link javax.servlet.ServletRequestAttributeListener}</tt>
-     * <li>{@link javax.servlet.http.HttpSessionListener}</tt>
-     * <li>{@link javax.servlet.http.HttpSessionAttributeListener}</tt>
+     * <li>{@link jakarta.servlet.ServletRequestListener}</tt>
+     * <li>{@link jakarta.servlet.ServletRequestAttributeListener}</tt>
+     * <li>{@link jakarta.servlet.http.HttpSessionListener}</tt>
+     * <li>{@link jakarta.servlet.http.HttpSessionAttributeListener}</tt>
      * </ul>
      *
      * <p>If the given listener is an instance of a listener interface whose
      * invocation order corresponds to the declaration order (i.e., if it
-     * is an instance of {@link javax.servlet.ServletRequestListener},
+     * is an instance of {@link jakarta.servlet.ServletRequestListener},
      * {@link ServletContextListener}, or
-     * {@link javax.servlet.http.HttpSessionListener}),
+     * {@link jakarta.servlet.http.HttpSessionListener}),
      * then the listener will be added to the end of the ordered list of
      * listeners of that interface.
      *
@@ -852,10 +852,10 @@ public class WebappContext implements ServletContext {
      * interfaces:
      * <ul>
      * <li>{@link ServletContextAttributeListener}</tt>
-     * <li>{@link javax.servlet.ServletRequestListener}</tt>
-     * <li>{@link javax.servlet.ServletRequestAttributeListener}</tt>
-     * <li>{@link javax.servlet.http.HttpSessionListener}</tt>
-     * <li>{@link javax.servlet.http.HttpSessionAttributeListener}</tt>
+     * <li>{@link jakarta.servlet.ServletRequestListener}</tt>
+     * <li>{@link jakarta.servlet.ServletRequestAttributeListener}</tt>
+     * <li>{@link jakarta.servlet.http.HttpSessionListener}</tt>
+     * <li>{@link jakarta.servlet.http.HttpSessionAttributeListener}</tt>
      * </ul>
      *
      * <p>As part of this method call, the container must load the class
@@ -864,9 +864,9 @@ public class WebappContext implements ServletContext {
      *
      * <p>If the class with the given name implements a listener interface
      * whose invocation order corresponds to the declaration order (i.e.,
-     * if it implements {@link javax.servlet.ServletRequestListener},
+     * if it implements {@link jakarta.servlet.ServletRequestListener},
      * {@link ServletContextListener}, or
-     * {@link javax.servlet.http.HttpSessionListener}),
+     * {@link jakarta.servlet.http.HttpSessionListener}),
      * then the new listener will be added to the end of the ordered list of
      * listeners of that interface.
      *
@@ -1266,7 +1266,7 @@ public class WebappContext implements ServletContext {
      * {@inheritDoc}
      */
     @Override
-    public javax.servlet.ServletRegistration.Dynamic addJspFile(final String servletName, final String jspFile) {
+    public jakarta.servlet.ServletRegistration.Dynamic addJspFile(final String servletName, final String jspFile) {
         if (deployed) throw new IllegalStateException();
         if (servletName == null) throw new IllegalArgumentException();
         return null; // JSP not supported out of the box.
@@ -1551,7 +1551,7 @@ public class WebappContext implements ServletContext {
      * {@inheritDoc}
      */
     @Override
-    public javax.servlet.SessionCookieConfig getSessionCookieConfig() {
+    public jakarta.servlet.SessionCookieConfig getSessionCookieConfig() {
         if (sessionCookieConfig == null) {
             sessionCookieConfig = new SessionCookieConfig(this);
         }

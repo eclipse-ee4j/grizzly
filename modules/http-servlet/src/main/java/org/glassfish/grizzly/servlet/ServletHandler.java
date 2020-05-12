@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,14 +23,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.DispatcherType;
-import static javax.servlet.DispatcherType.REQUEST;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.DispatcherType;
+import static jakarta.servlet.DispatcherType.REQUEST;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.Note;
 import org.glassfish.grizzly.http.server.AfterServiceListener;
@@ -298,8 +298,8 @@ public class ServletHandler extends HttpHandler {
     /**
      * Load a {@link Servlet} instance.
      *
-     * @throws javax.servlet.ServletException If failed to
-     * {@link Servlet#init(javax.servlet.ServletConfig)}.
+     * @throws jakarta.servlet.ServletException If failed to
+     * {@link Servlet#init(jakarta.servlet.ServletConfig)}.
      */
     protected void loadServlet() throws ServletException {
 
@@ -329,7 +329,7 @@ public class ServletHandler extends HttpHandler {
      * Configure the {@link WebappContext}
      * and {@link ServletConfigImpl}
      * 
-     * @throws javax.servlet.ServletException Error while configuring
+     * @throws jakarta.servlet.ServletException Error while configuring
      * {@link Servlet}.
      */
     protected void configureServletEnv() throws ServletException {
@@ -392,9 +392,9 @@ public class ServletHandler extends HttpHandler {
      * more than one context path. In such cases this method will return the
      * actual context path used by the request and it may differ from the
      * path returned by the
-     * {@link javax.servlet.ServletContext#getContextPath()} method.
+     * {@link jakarta.servlet.ServletContext#getContextPath()} method.
      * The context path returned by
-     * {@link javax.servlet.ServletContext#getContextPath()}
+     * {@link jakarta.servlet.ServletContext#getContextPath()}
      * should be considered as the prime or preferred context path of the
      * application.
      *
@@ -402,7 +402,7 @@ public class ServletHandler extends HttpHandler {
      *			portion of the request URI that indicates the context
      *			of the request
      *
-     * @see javax.servlet.ServletContext#getContextPath()
+     * @see jakarta.servlet.ServletContext#getContextPath()
      */
     public String getContextPath() {
         return contextPath;
@@ -419,7 +419,7 @@ public class ServletHandler extends HttpHandler {
 
     /**
      * Destroy this Servlet and its associated
-     * {@link javax.servlet.ServletContextListener}
+     * {@link jakarta.servlet.ServletContextListener}
      */
     @Override
     public void destroy() {

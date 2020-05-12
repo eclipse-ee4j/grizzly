@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,15 +19,15 @@ package org.glassfish.grizzly.servlet;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 
 /**
  * Allows customization of a {@link Filter} registered with the {@link WebappContext}.
  *
  * @since 2.2
  */
-public class FilterRegistration extends Registration implements javax.servlet.FilterRegistration.Dynamic {
+public class FilterRegistration extends Registration implements jakarta.servlet.FilterRegistration.Dynamic {
 
     protected Class<? extends Filter> filterClass;
     protected Filter filter;
