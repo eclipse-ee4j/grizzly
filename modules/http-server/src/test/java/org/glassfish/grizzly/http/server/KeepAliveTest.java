@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,16 +18,17 @@ package org.glassfish.grizzly.http.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.SecureRandom;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.GenericCloseListener;
 import org.glassfish.grizzly.SocketConnectorHandler;
@@ -47,6 +48,8 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.Futures;
 
+import junit.framework.TestCase;
+
 /**
  * Testing HTTP keep-alive
  * 
@@ -54,7 +57,17 @@ import org.glassfish.grizzly.utils.Futures;
  */
 @SuppressWarnings("unchecked")
 public class KeepAliveTest extends TestCase {
-    private static final int PORT = 18895;
+    private static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 18895 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
     
     public void testHttp11KeepAlive() throws Exception {
         final String msg = "Hello world #";
@@ -362,6 +375,7 @@ public class KeepAliveTest extends TestCase {
         final HttpClient client = new HttpClient(clientTransport);
 
         try {
+            Thread.sleep(100);
             server.start();
             clientTransport.start();
 

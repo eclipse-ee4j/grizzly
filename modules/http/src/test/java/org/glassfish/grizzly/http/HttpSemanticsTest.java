@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -38,6 +38,7 @@ import org.glassfish.grizzly.utils.ChunkingFilter;
 import junit.framework.TestCase;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,11 +59,20 @@ import org.glassfish.grizzly.nio.transport.TCPNIOConnection;
 /**
  * Test cases to validate HTTP protocol semantics.
  */
-@SuppressWarnings("Duplicates")
 public class HttpSemanticsTest extends TestCase {
 
-    public static final int PORT = 19004;
+    public static final int PORT = PORT();
     private static final int MAX_HEADERS_SIZE = 8192;
+    
+    static int PORT() {
+        try {
+            int port = 19004 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
     
     @SuppressWarnings("deprecation")
     private final HttpServerFilter httpServerFilter =
@@ -894,6 +904,7 @@ public class HttpSemanticsTest extends TestCase {
         transport.setProcessor(filterChain);
         TCPNIOTransport ctransport = TCPNIOTransportBuilder.newInstance().build();
         try {
+            Thread.sleep(100);
             transport.bind(PORT);
             transport.start();
 

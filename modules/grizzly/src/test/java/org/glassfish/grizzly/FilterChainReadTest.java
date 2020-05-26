@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,6 +31,7 @@ import org.glassfish.grizzly.utils.StringFilter;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.security.SecureRandom;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
@@ -48,7 +49,17 @@ import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
  */
 @SuppressWarnings("unchecked")
 public class FilterChainReadTest extends TestCase {
-    public static final int PORT = 7785;
+    public static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 7785 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private static final Logger logger = Grizzly.logger(FilterChainReadTest.class);
 
@@ -97,7 +108,9 @@ public class FilterChainReadTest extends TestCase {
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(400);
             transport.bind(PORT);
+            Thread.sleep(400);
             transport.start();
 
             final BlockingQueue<String> resultQueue = new LinkedTransferQueue<>();

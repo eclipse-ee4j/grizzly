@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -50,6 +50,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,7 +78,17 @@ import static org.junit.Assert.fail;
 public class PushTest extends AbstractHttp2Test {
 
     private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
-    private static final int PORT = 19999;
+    private static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 19999 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private final boolean isSecure;
     private final boolean priorKnowledge;
@@ -1237,6 +1248,7 @@ public class PushTest extends AbstractHttp2Test {
                             final HttpHandlerRegistration... registrations) {
         final HttpServer server = createServer(registrations);
         try {
+            Thread.sleep(100);
             server.start();
             sendRequest(server, request, queue);
             assertThat(validator.call(), IsNull.<Throwable>nullValue());
@@ -1253,6 +1265,7 @@ public class PushTest extends AbstractHttp2Test {
                            final CountDownLatch latch) {
         final HttpServer server = createServer(HttpHandlerRegistration.of(handler, "/test"));
         try {
+            Thread.sleep(100);
             server.start();
 
             sendTestRequest(server);
@@ -1273,6 +1286,7 @@ public class PushTest extends AbstractHttp2Test {
                            final CountDownLatch latch) {
         final HttpServer server = createServer(HttpHandlerRegistration.of(handler, "/test"));
         try {
+            Thread.sleep(50);
             server.start();
 
             sendRequest(server, request);

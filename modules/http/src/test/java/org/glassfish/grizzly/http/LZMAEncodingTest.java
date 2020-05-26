@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -40,6 +40,7 @@ import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,17 @@ import static org.junit.Assert.assertTrue;
 
 public class LZMAEncodingTest {
 
-    public static final int PORT = 19200;
+    public static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 19200 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private final FutureImpl<Throwable> exception = SafeFutureImpl.create();
 
@@ -356,6 +367,7 @@ public class LZMAEncodingTest {
 
         TCPNIOTransport ctransport = TCPNIOTransportBuilder.newInstance().build();
         try {
+            Thread.sleep(100);
             transport.bind(PORT);
             transport.start();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,6 +19,7 @@ package org.glassfish.grizzly.http2;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -53,11 +54,20 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("Duplicates")
 @RunWith(Parameterized.class)
 public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
-    private static final int PORT = 8004;
+    private static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 8004 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private static final char[] ALPHA = "abcdefghijklmnopqrstuvwxyz".toCharArray();
 
@@ -1102,6 +1112,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final FutureImpl<String> parseResult = SafeFutureImpl.create();
         TCPNIOTransport ctransport = TCPNIOTransportBuilder.newInstance().build();
         try {
+            Thread.sleep(50);
             server.start();
 
             FilterChain clientFilterChain = createClientFilterChainAsBuilder(
