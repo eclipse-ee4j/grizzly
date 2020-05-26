@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -47,8 +47,7 @@ public final class ProcessingState {
      * This flag indicates whether error occurred during the HTTP processing.
      * </p>
      *
-     * @return <tt>true</tt>, if error occurred during the HTTP processing, or
-     * <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if error occurred during the HTTP processing, or <tt>false</tt> otherwise.
      */
     public boolean isError() {
         return error;
@@ -59,8 +58,7 @@ public final class ProcessingState {
      * This flag indicates whether error occurred during the HTTP processing.
      * </p>
      *
-     * @param error <tt>true</tt>, if error occurred during the HTTP processing, or
-     * <tt>false</tt> otherwise.
+     * @param error <tt>true</tt>, if error occurred during the HTTP processing, or <tt>false</tt> otherwise.
      */
     public void setError(boolean error) {
         this.error = error;
@@ -68,17 +66,17 @@ public final class ProcessingState {
 
     /**
      * <p>
-     * Method returns <tt>true</tt> only if the connection is in keep-alive mode
-     * and there was no error occurred during the packet processing.
+     * Method returns <tt>true</tt> only if the connection is in keep-alive mode and there was no error occurred during the
+     * packet processing.
      * </p>
      *
-     * @return <tt>true</tt> only if the connection is in keep-alive mode
-     * and there was no error occurred during the packet processing.
+     * @return <tt>true</tt> only if the connection is in keep-alive mode and there was no error occurred during the packet
+     * processing.
      */
     public boolean isStayAlive() {
         return keepAlive && !error;
     }
-    
+
     /**
      * <p>
      * This flag controls the connection keep-alive feature.
@@ -107,7 +105,7 @@ public final class ProcessingState {
      * </p>
      *
      * @return {@link HttpContext} associated with the processing.
-     */    
+     */
     public HttpContext getHttpContext() {
         return httpContext;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,32 +18,27 @@ package org.glassfish.grizzly;
 
 /**
  * Represents the result of message encoding/decoding.
- * 
+ *
  * @author Alexey Stashok
  */
 public class TransformationResult<I, O> implements Cacheable {
-    private static final ThreadCache.CachedTypeIndex<TransformationResult> CACHE_IDX =
-            ThreadCache.obtainIndex(TransformationResult.class, 2);
+    private static final ThreadCache.CachedTypeIndex<TransformationResult> CACHE_IDX = ThreadCache.obtainIndex(TransformationResult.class, 2);
 
-    public static <I, O> TransformationResult<I, O> createErrorResult(
-            int errorCode, String errorDescription) {
+    public static <I, O> TransformationResult<I, O> createErrorResult(int errorCode, String errorDescription) {
         return create(Status.ERROR, null, null, errorCode, errorDescription);
     }
 
-    public static <I, O> TransformationResult<I, O> createCompletedResult(
-            O message, I externalRemainder) {
+    public static <I, O> TransformationResult<I, O> createCompletedResult(O message, I externalRemainder) {
         return create(Status.COMPLETE, message, externalRemainder, 0, null);
     }
 
-    public static <I, O> TransformationResult<I, O> createIncompletedResult(
-            I externalRemainder) {
+    public static <I, O> TransformationResult<I, O> createIncompletedResult(I externalRemainder) {
         return create(Status.INCOMPLETE, null, externalRemainder, 0, null);
     }
 
     @SuppressWarnings("unchecked")
-    private static <I, O> TransformationResult<I, O> create(Status status,
-            O message, I externalRemainder, int errorCode, String errorDescription) {
-        
+    private static <I, O> TransformationResult<I, O> create(Status status, O message, I externalRemainder, int errorCode, String errorDescription) {
+
         final TransformationResult<I, O> result = ThreadCache.takeFromCache(CACHE_IDX);
         if (result != null) {
             result.setStatus(status);
@@ -51,12 +46,11 @@ public class TransformationResult<I, O> implements Cacheable {
             result.setExternalRemainder(externalRemainder);
             result.setErrorCode(errorCode);
             result.setErrorDescription(errorDescription);
-            
+
             return result;
         }
 
-        return new TransformationResult<I, O>(status, message, externalRemainder,
-                errorCode, errorDescription);
+        return new TransformationResult<>(status, message, externalRemainder, errorCode, errorDescription);
     }
 
     public enum Status {
@@ -93,8 +87,7 @@ public class TransformationResult<I, O> implements Cacheable {
         this.errorDescription = errorDescription;
     }
 
-    protected TransformationResult(Status status, O message, I externalRemainder,
-            int errorCode, String errorDescription) {
+    protected TransformationResult(Status status, O message, I externalRemainder, int errorCode, String errorDescription) {
         this.status = status;
         this.message = message;
         this.externalRemainder = externalRemainder;
@@ -158,9 +151,8 @@ public class TransformationResult<I, O> implements Cacheable {
     }
 
     /**
-     * If implementation uses {@link org.glassfish.grizzly.utils.ObjectPool} to store
-     * and reuse {@link TransformationResult} instances - this method will be
-     * called before {@link TransformationResult} will be offered to pool.
+     * If implementation uses {@link org.glassfish.grizzly.utils.ObjectPool} to store and reuse {@link TransformationResult}
+     * instances - this method will be called before {@link TransformationResult} will be offered to pool.
      */
     public void reset() {
         message = null;

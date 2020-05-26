@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,8 @@
 
 package org.glassfish.grizzly.osgi.httpservice.util;
 
-import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.service.log.LogService;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * Logger Utility.
@@ -35,8 +35,9 @@ public class Logger {
     private void log(final int logLevel, final String msg) {
         LogService log = (LogService) logTracker.getService();
         if (log == null) {
-            if (logLevel < LogService.LOG_WARNING)
+            if (logLevel < LogService.LOG_WARNING) {
                 System.out.println(msg);
+            }
         } else {
             log.log(logLevel, msg);
         }

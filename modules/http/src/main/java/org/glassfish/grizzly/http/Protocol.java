@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -26,17 +26,13 @@ import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * Predefined HTTP protocol versions
- * 
+ *
  * @author Alexey Stashok
  */
 public enum Protocol {
-    HTTP_0_9 (0, 9),
-    HTTP_1_0 (1, 0),
-    HTTP_1_1 (1, 1),
-    HTTP_2_0 (2, 0);
+    HTTP_0_9(0, 9), HTTP_1_0(1, 0), HTTP_1_1(1, 1), HTTP_2_0(2, 0);
 
-    public static Protocol valueOf(final byte[] protocolBytes,
-            final int offset, final int len) {
+    public static Protocol valueOf(final byte[] protocolBytes, final int offset, final int len) {
         if (len == 0) {
             return Protocol.HTTP_0_9;
         } else if (equals(HTTP_1_1, protocolBytes, offset, len)) {
@@ -48,13 +44,11 @@ public enum Protocol {
         } else if (equals(HTTP_0_9, protocolBytes, offset, len)) {
             return Protocol.HTTP_0_9;
         }
-        
-        throw new IllegalStateException("Unknown protocol " +
-                new String(protocolBytes, offset, len, Charsets.ASCII_CHARSET));
+
+        throw new IllegalStateException("Unknown protocol " + new String(protocolBytes, offset, len, Charsets.ASCII_CHARSET));
     }
 
-    public static Protocol valueOf(final Buffer protocolBuffer,
-                                   final int offset, final int len) {
+    public static Protocol valueOf(final Buffer protocolBuffer, final int offset, final int len) {
         if (len == 0) {
             return Protocol.HTTP_0_9;
         } else if (equals(HTTP_1_1, protocolBuffer, offset, len)) {
@@ -67,8 +61,7 @@ public enum Protocol {
             return Protocol.HTTP_0_9;
         }
 
-        throw new IllegalStateException("Unknown protocol " +
-                protocolBuffer.toStringContent(Charsets.ASCII_CHARSET, offset, len));
+        throw new IllegalStateException("Unknown protocol " + protocolBuffer.toStringContent(Charsets.ASCII_CHARSET, offset, len));
     }
 
     public static Protocol valueOf(final DataChunk protocolC) {
@@ -83,31 +76,23 @@ public enum Protocol {
         } else if (protocolC.equals(Protocol.HTTP_0_9.getProtocolBytes())) {
             return Protocol.HTTP_0_9;
         }
-        
+
         throw new IllegalStateException("Unknown protocol " + protocolC.toString());
-    }    
-
-    private static boolean equals(final Protocol protocol,
-            final byte[] protocolBytes,
-            final int offset, final int len) {
-        
-        final byte[] knownProtocolBytes = protocol.getProtocolBytes();
-        
-        return ByteChunk.equals(knownProtocolBytes, 0, knownProtocolBytes.length,
-                protocolBytes, offset, len);
     }
 
-    private static boolean equals(final Protocol protocol,
-                                  final Buffer protocolBuffer,
-                                  final int offset,
-                                  final int len) {
-
+    private static boolean equals(final Protocol protocol, final byte[] protocolBytes, final int offset, final int len) {
 
         final byte[] knownProtocolBytes = protocol.getProtocolBytes();
-        return BufferChunk.equals(knownProtocolBytes, 0, knownProtocolBytes.length,
-                protocolBuffer, offset, len);
+
+        return ByteChunk.equals(knownProtocolBytes, 0, knownProtocolBytes.length, protocolBytes, offset, len);
     }
-    
+
+    private static boolean equals(final Protocol protocol, final Buffer protocolBuffer, final int offset, final int len) {
+
+        final byte[] knownProtocolBytes = protocol.getProtocolBytes();
+        return BufferChunk.equals(knownProtocolBytes, 0, knownProtocolBytes.length, protocolBuffer, offset, len);
+    }
+
     private final String protocolString;
     private final int majorVersion;
     private final int minorVersion;
@@ -117,14 +102,14 @@ public enum Protocol {
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
         this.protocolString = "HTTP/" + majorVersion + '.' + minorVersion;
-        
+
         byte[] protocolBytes0;
         try {
             protocolBytes0 = protocolString.getBytes("US-ASCII");
         } catch (UnsupportedEncodingException ignored) {
             protocolBytes0 = protocolString.getBytes(Charsets.ASCII_CHARSET);
         }
-        
+
         this.protocolBytes = protocolBytes0;
     }
 
@@ -145,13 +130,10 @@ public enum Protocol {
     }
 
     public boolean equals(final String s) {
-        return s != null &&
-                ByteChunk.equals(protocolBytes, 0, protocolBytes.length, s);
+        return s != null && ByteChunk.equals(protocolBytes, 0, protocolBytes.length, s);
     }
-    
+
     public boolean equals(final DataChunk protocolC) {
-        return protocolC != null &&
-                !protocolC.isNull() &&
-                protocolC.equals(protocolBytes);
+        return protocolC != null && !protocolC.isNull() && protocolC.equals(protocolBytes);
     }
 }

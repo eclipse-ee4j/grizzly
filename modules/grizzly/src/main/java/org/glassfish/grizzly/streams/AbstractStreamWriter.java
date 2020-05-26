@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,11 @@
 
 package org.glassfish.grizzly.streams;
 
-import org.glassfish.grizzly.Transformer;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -27,44 +29,38 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
 import org.glassfish.grizzly.TransformationResult.Status;
+import org.glassfish.grizzly.Transformer;
 import org.glassfish.grizzly.impl.ReadyFutureImpl;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 import org.glassfish.grizzly.memory.Buffers;
 
 /**
- * Write the primitive Java type to the current ByteBuffer.  If it doesn't
- * fit, call the BufferHandler, and write to the result, which becomes the
- * new current ByteBuffer.  Arrays will be written across multiple ByteBuffers
- * if necessary, but all primitives will be written to a single ByteBuffer.
- * 
+ * Write the primitive Java type to the current ByteBuffer. If it doesn't fit, call the BufferHandler, and write to the
+ * result, which becomes the new current ByteBuffer. Arrays will be written across multiple ByteBuffers if necessary,
+ * but all primitives will be written to a single ByteBuffer.
+ *
  * @author Ken Cavanaugh
  */
 public abstract class AbstractStreamWriter implements StreamWriter {
     protected static final Logger logger = Grizzly.logger(AbstractStreamWriter.class);
-    
+
     protected static final Integer ZERO = 0;
-    protected static final GrizzlyFuture<Integer> ZERO_READY_FUTURE =
-            ReadyFutureImpl.create(ZERO);
-    
+    protected static final GrizzlyFuture<Integer> ZERO_READY_FUTURE = ReadyFutureImpl.create(ZERO);
+
     private final Connection connection;
 
     private long timeoutMillis = 30000;
-    
+
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
     protected final boolean isOutputBuffered;
     protected final Output output;
 
-    /** Create a new ByteBufferWriter.  An instance maintains a current buffer
-     * for use in writing.  Whenever the current buffer is insufficient to hold
-     * the required data, the BufferHandler is called, and the result of the
-     * handler is the new current buffer. The handler is responsible for
-     * the disposition of the contents of the old buffer.
+    /**
+     * Create a new ByteBufferWriter. An instance maintains a current buffer for use in writing. Whenever the current buffer
+     * is insufficient to hold the required data, the BufferHandler is called, and the result of the handler is the new
+     * current buffer. The handler is responsible for the disposition of the contents of the old buffer.
      */
-    protected AbstractStreamWriter(final Connection connection,
-            Output streamOutput) {
+    protected AbstractStreamWriter(final Connection connection, Output streamOutput) {
         this.connection = connection;
         this.output = streamOutput;
         this.isOutputBuffered = streamOutput.isBuffered();
@@ -82,8 +78,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      * Cause the overflow handler to be called even if buffer is not full.
      */
     @Override
-    public GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler)
-            throws IOException {
+    public GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler) throws IOException {
         return output.flush(completionHandler);
     }
 
@@ -107,8 +102,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      * {@inheritDoc}
      */
     @Override
-    public GrizzlyFuture<Integer> close(
-            CompletionHandler<Integer> completionHandler) throws IOException {
+    public GrizzlyFuture<Integer> close(CompletionHandler<Integer> completionHandler) throws IOException {
         if (!isClosed.getAndSet(true)) {
             return output.close(completionHandler);
         }
@@ -150,8 +144,8 @@ public abstract class AbstractStreamWriter implements StreamWriter {
             output.ensureBufferCapacity(2);
             output.getBuffer().putChar(data);
         } else {
-            output.write((byte) ((data >>> 8) & 0xFF));
-            output.write((byte) ((data) & 0xFF));
+            output.write((byte) (data >>> 8 & 0xFF));
+            output.write((byte) (data & 0xFF));
         }
     }
 
@@ -164,8 +158,8 @@ public abstract class AbstractStreamWriter implements StreamWriter {
             output.ensureBufferCapacity(2);
             output.getBuffer().putShort(data);
         } else {
-            output.write((byte) ((data >>> 8) & 0xFF));
-            output.write((byte) ((data) & 0xFF));
+            output.write((byte) (data >>> 8 & 0xFF));
+            output.write((byte) (data & 0xFF));
         }
     }
 
@@ -175,10 +169,10 @@ public abstract class AbstractStreamWriter implements StreamWriter {
             output.ensureBufferCapacity(4);
             output.getBuffer().putInt(data);
         } else {
-            output.write((byte) ((data >>> 24) & 0xFF));
-            output.write((byte) ((data >>> 16) & 0xFF));
-            output.write((byte) ((data >>> 8) & 0xFF));
-            output.write((byte) ((data) & 0xFF));
+            output.write((byte) (data >>> 24 & 0xFF));
+            output.write((byte) (data >>> 16 & 0xFF));
+            output.write((byte) (data >>> 8 & 0xFF));
+            output.write((byte) (data & 0xFF));
         }
     }
 
@@ -191,14 +185,14 @@ public abstract class AbstractStreamWriter implements StreamWriter {
             output.ensureBufferCapacity(8);
             output.getBuffer().putLong(data);
         } else {
-            output.write((byte) ((data >>> 56) & 0xFF));
-            output.write((byte) ((data >>> 48) & 0xFF));
-            output.write((byte) ((data >>> 40) & 0xFF));
-            output.write((byte) ((data >>> 32) & 0xFF));
-            output.write((byte) ((data >>> 24) & 0xFF));
-            output.write((byte) ((data >>> 16) & 0xFF));
-            output.write((byte) ((data >>> 8) & 0xFF));
-            output.write((byte) ((data) & 0xFF));
+            output.write((byte) (data >>> 56 & 0xFF));
+            output.write((byte) (data >>> 48 & 0xFF));
+            output.write((byte) (data >>> 40 & 0xFF));
+            output.write((byte) (data >>> 32 & 0xFF));
+            output.write((byte) (data >>> 24 & 0xFF));
+            output.write((byte) (data >>> 16 & 0xFF));
+            output.write((byte) (data >>> 8 & 0xFF));
+            output.write((byte) (data & 0xFF));
         }
     }
 
@@ -223,7 +217,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeBooleanArray(final boolean[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             output.write((byte) (data[i] ? 1 : 0));
         }
     }
@@ -241,19 +235,16 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeByteArray(byte[] data, int offset, int length) throws IOException {
-        final Buffer buffer = Buffers.wrap(connection.getMemoryManager(),
-                data, offset, length);
+        final Buffer buffer = Buffers.wrap(connection.getMemoryManager(), data, offset, length);
         output.write(buffer);
     }
-
-
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void writeCharArray(final char[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeChar(data[i]);
         }
     }
@@ -263,7 +254,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeShortArray(final short[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeShort(data[i]);
         }
     }
@@ -273,7 +264,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeIntArray(final int[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeInt(data[i]);
         }
 
@@ -284,7 +275,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeLongArray(final long[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeLong(data[i]);
         }
     }
@@ -294,7 +285,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeFloatArray(final float[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeFloat(data[i]);
         }
     }
@@ -304,7 +295,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      */
     @Override
     public void writeDoubleArray(final double[] data) throws IOException {
-        for(int i=0; i<data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             writeDouble(data[i]);
         }
     }
@@ -313,8 +304,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      * {@inheritDoc}
      */
     @Override
-    public <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder,
-            E object) throws IOException {
+    public <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder, E object) throws IOException {
         return encode(encoder, object, null);
     }
 
@@ -322,13 +312,10 @@ public abstract class AbstractStreamWriter implements StreamWriter {
      * {@inheritDoc}
      */
     @Override
-    public <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder,
-            E object, CompletionHandler<Stream> completionHandler)
-            throws IOException {
+    public <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder, E object, CompletionHandler<Stream> completionHandler) throws IOException {
         Exception exception = null;
 
-        final TransformationResult<E, Buffer> result =
-                encoder.transform(connection, object);
+        final TransformationResult<E, Buffer> result = encoder.transform(connection, object);
 
         final Status status = result.getStatus();
         if (status == Status.COMPLETE) {
@@ -342,8 +329,7 @@ public abstract class AbstractStreamWriter implements StreamWriter {
         }
 
         if (exception == null) {
-            exception = new TransformationException(result.getErrorCode() + ": " +
-                result.getErrorDescription());
+            exception = new TransformationException(result.getErrorCode() + ": " + result.getErrorDescription());
         }
 
         return ReadyFutureImpl.create(exception);
@@ -373,15 +359,14 @@ public abstract class AbstractStreamWriter implements StreamWriter {
         timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, timeunit);
     }
 
-    public static class DisposeBufferCompletionHandler
-            implements CompletionHandler {
+    public static class DisposeBufferCompletionHandler implements CompletionHandler {
 
         private final Buffer buffer;
 
         public DisposeBufferCompletionHandler(Buffer buffer) {
             this.buffer = buffer;
         }
-        
+
         @Override
         public void cancelled() {
             disposeBuffer();
@@ -406,4 +391,3 @@ public abstract class AbstractStreamWriter implements StreamWriter {
         }
     }
 }
-

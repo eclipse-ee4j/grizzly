@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,13 +16,14 @@
 
 package org.glassfish.grizzly.utils;
 
-import org.glassfish.grizzly.attributes.AttributeStorage;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
+import org.glassfish.grizzly.attributes.AttributeStorage;
 
 /**
  * String decoder, which decodes {@link Buffer} to {@link String}
@@ -60,9 +61,7 @@ public class StringEncoder extends AbstractTransformer<String, Buffer> {
     }
 
     @Override
-    protected TransformationResult<String, Buffer> transformImpl(
-            final AttributeStorage storage, String input)
-            throws TransformationException {
+    protected TransformationResult<String, Buffer> transformImpl(final AttributeStorage storage, String input) throws TransformationException {
 
         if (input == null) {
             throw new TransformationException("Input could not be null");
@@ -73,15 +72,13 @@ public class StringEncoder extends AbstractTransformer<String, Buffer> {
             if (stringTerminator != null) {
                 input = input + stringTerminator;
             }
-            
+
             byteRepresentation = input.getBytes(charset.name());
-        } catch(final UnsupportedEncodingException e) {
-            throw new TransformationException("Charset " +
-                    charset.name() + " is not supported", e);
+        } catch (final UnsupportedEncodingException e) {
+            throw new TransformationException("Charset " + charset.name() + " is not supported", e);
         }
 
-        final Buffer output =
-                obtainMemoryManager(storage).allocate(byteRepresentation.length + 4);
+        final Buffer output = obtainMemoryManager(storage).allocate(byteRepresentation.length + 4);
 
         if (stringTerminator == null) {
             output.putInt(byteRepresentation.length);
@@ -96,8 +93,7 @@ public class StringEncoder extends AbstractTransformer<String, Buffer> {
     }
 
     @Override
-    public boolean hasInputRemaining(final AttributeStorage storage,
-                                     final String input) {
+    public boolean hasInputRemaining(final AttributeStorage storage, final String input) {
         return input != null;
     }
 

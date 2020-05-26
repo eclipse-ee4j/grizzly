@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,7 +22,7 @@ import java.util.Set;
 
 /**
  * Content-Disposition representation.
- * 
+ *
  * @author Alexey Stashok
  */
 public class ContentDisposition {
@@ -31,8 +31,7 @@ public class ContentDisposition {
     private boolean isParamsParsed;
 
     protected String dispositionType;
-    protected final Map<String, ParamValue> dispositionParams =
-            new HashMap<String, ParamValue>();
+    protected final Map<String, ParamValue> dispositionParams = new HashMap<>();
 
     protected ContentDisposition(final String disposition) {
         this.disposition = disposition;
@@ -67,7 +66,7 @@ public class ContentDisposition {
         }
 
         final ParamValue v = dispositionParams.get(paramName);
-        return ((v != null) ? v.get() : null);
+        return v != null ? v.get() : null;
     }
 
     public String getDispositionParamUnquoted(String paramName) {
@@ -76,7 +75,7 @@ public class ContentDisposition {
             parseParams();
         }
         final ParamValue v = dispositionParams.get(paramName);
-        return ((v != null) ? v.getUnquoted() : null);
+        return v != null ? v.getUnquoted() : null;
     }
 
     @Override
@@ -99,7 +98,7 @@ public class ContentDisposition {
         }
 
         final ContentDisposition other = (ContentDisposition) obj;
-        if ((this.disposition == null) ? (other.disposition != null) : !this.disposition.equals(other.disposition)) {
+        if (this.disposition == null ? other.disposition != null : !this.disposition.equals(other.disposition)) {
             return false;
         }
         return true;
@@ -131,8 +130,7 @@ public class ContentDisposition {
                 throw new IllegalStateException("Can't locate '=' symbol");
             }
 
-            final String name = disposition.substring(nameStart,
-                    findLastNonSpace(eq - 1, nameStart) + 1);
+            final String name = disposition.substring(nameStart, findLastNonSpace(eq - 1, nameStart) + 1);
 
             final int valueStart = skipSpaces(eq + 1);
 
@@ -143,7 +141,7 @@ public class ContentDisposition {
 
             final char q = disposition.charAt(valueStart);
 
-            boolean isQuot = (q == '"' || q == '\'');
+            boolean isQuot = q == '"' || q == '\'';
 
             final String value;
             int semicolonN;
@@ -159,12 +157,11 @@ public class ContentDisposition {
                 value = disposition.substring(valueStart, nextQuot + 1);
                 semicolonN = skipToSemicolon(nextQuot + 1);
             } else {
-            
+
                 // skip to ';'
                 semicolonN = skipToSemicolon(valueStart + 1);
 
-                value = disposition.substring(valueStart,
-                        findLastNonSpace(semicolonN - 1, valueStart) + 1);
+                value = disposition.substring(valueStart, findLastNonSpace(semicolonN - 1, valueStart) + 1);
 
             }
 
@@ -238,9 +235,9 @@ public class ContentDisposition {
         }
 
         public String getUnquoted() {
-            if (unquoted == null)  {
+            if (unquoted == null) {
                 if (isQuoted(initial)) {
-                    unquoted = initial.substring(1, initial.length() -1);
+                    unquoted = initial.substring(1, initial.length() - 1);
                 } else {
                     unquoted = initial;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,20 +20,19 @@ import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 
 /**
- * The server-side SNI config resolver, which could be used to customize
- * {@link SSLEngineConfigurator} based on the SNI host name information sent
- * from client.
- * 
+ * The server-side SNI config resolver, which could be used to customize {@link SSLEngineConfigurator} based on the SNI
+ * host name information sent from client.
+ *
  * @author Alexey Stashok
  */
 public interface SNIServerConfigResolver {
 
     /**
-     * Returns {@link SNIConfig} for the new {@link Connection}, <code>null</code>
-     * value means use default {@link SNIFilter#getServerSSLEngineConfigurator()}.
-     * 
+     * Returns {@link SNIConfig} for the new {@link Connection}, <code>null</code> value means use default
+     * {@link SNIFilter#getServerSSLEngineConfigurator()}.
+     *
      * The {@link SNIConfig} could be created like:
-     * 
+     *
      * <pre>
      * {@code
      *      SNIConfig.serverConfigBuilder()
@@ -41,13 +40,13 @@ public interface SNIServerConfigResolver {
      *               .build();
      * }
      * </pre>
-     * 
+     *
      * @param connection
      * @param hostname the SNI host name sent by a client
-     * 
-     * @return {@link SNIConfig} for the new {@link Connection}, <code>null</code>
-     * value means use default {@link SNIFilter#getServerSSLEngineConfigurator()}
+     *
+     * @return {@link SNIConfig} for the new {@link Connection}, <code>null</code> value means use default
+     * {@link SNIFilter#getServerSSLEngineConfigurator()}
      */
     SNIConfig resolve(Connection connection, String hostname);
-    
+
 }

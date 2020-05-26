@@ -34,12 +34,12 @@ import org.glassfish.grizzly.utils.IdleTimeoutFilter;
 
 /**
  * Test {@link IdleTimeoutFilter}
- * 
+ *
  * @author Alexey Stashok
  */
 public class IdleConnectionFilterTest extends GrizzlyTestCase {
     public static final int PORT = PORT();
-    
+
     static int PORT() {
         try {
             int port = 7782 + SecureRandom.getInstanceStrong().nextInt(1000);
@@ -56,36 +56,34 @@ public class IdleConnectionFilterTest extends GrizzlyTestCase {
         final CountDownLatch latch = new CountDownLatch(1);
         final DelayedExecutor timeoutExecutor = IdleTimeoutFilter.createDefaultIdleDelayedExecutor();
         timeoutExecutor.start();
-        IdleTimeoutFilter idleTimeoutFilter =
-                new IdleTimeoutFilter(timeoutExecutor, 2, TimeUnit.SECONDS);
+        IdleTimeoutFilter idleTimeoutFilter = new IdleTimeoutFilter(timeoutExecutor, 2, TimeUnit.SECONDS);
 
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
         filterChainBuilder.add(new TransportFilter());
         filterChainBuilder.add(idleTimeoutFilter);
         filterChainBuilder.add(new BaseFilter() {
-                private volatile Connection acceptedConnection;
-                @Override
-                public NextAction handleAccept(FilterChainContext ctx)
-                        throws IOException {
-                    acceptedConnection = ctx.getConnection();
-                    return ctx.getInvokeAction();
+            private volatile Connection acceptedConnection;
+
+            @Override
+            public NextAction handleAccept(FilterChainContext ctx) throws IOException {
+                acceptedConnection = ctx.getConnection();
+                return ctx.getInvokeAction();
+            }
+
+            @Override
+            public NextAction handleClose(FilterChainContext ctx) throws IOException {
+                if (ctx.getConnection().equals(acceptedConnection)) {
+                    latch.countDown();
                 }
 
-                @Override
-                public NextAction handleClose(FilterChainContext ctx)
-                        throws IOException {
-                    if (ctx.getConnection().equals(acceptedConnection)) {
-                        latch.countDown();
-                    }
+                return ctx.getInvokeAction();
+            }
 
-                    return ctx.getInvokeAction();
-                }
-
-            });
+        });
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
-        
+
         try {
             Thread.sleep(500);
             transport.bind(PORT);
@@ -113,8 +111,7 @@ public class IdleConnectionFilterTest extends GrizzlyTestCase {
 
         final DelayedExecutor timeoutExecutor = IdleTimeoutFilter.createDefaultIdleDelayedExecutor();
         timeoutExecutor.start();
-        IdleTimeoutFilter idleTimeoutFilter =
-                new IdleTimeoutFilter(timeoutExecutor, 2, TimeUnit.SECONDS);
+        IdleTimeoutFilter idleTimeoutFilter = new IdleTimeoutFilter(timeoutExecutor, 2, TimeUnit.SECONDS);
 
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
         filterChainBuilder.add(new TransportFilter());
@@ -123,15 +120,13 @@ public class IdleConnectionFilterTest extends GrizzlyTestCase {
             private volatile Connection connectedConnection;
 
             @Override
-            public NextAction handleConnect(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
                 connectedConnection = ctx.getConnection();
                 return ctx.getInvokeAction();
             }
 
             @Override
-            public NextAction handleClose(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleClose(FilterChainContext ctx) throws IOException {
                 if (ctx.getConnection().equals(connectedConnection)) {
                     latch.countDown();
                 }
@@ -139,10 +134,10 @@ public class IdleConnectionFilterTest extends GrizzlyTestCase {
                 return ctx.getInvokeAction();
             }
         });
-        
+
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
-        
+
         try {
             transport.bind(PORT);
 
@@ -162,43 +157,41 @@ public class IdleConnectionFilterTest extends GrizzlyTestCase {
             transport.shutdownNow();
         }
     }
-    
+
     public void testInfiniteIdleTimeout() throws Exception {
         Connection connection = null;
 
         final CountDownLatch latch = new CountDownLatch(1);
         final DelayedExecutor timeoutExecutor = IdleTimeoutFilter.createDefaultIdleDelayedExecutor();
         timeoutExecutor.start();
-        IdleTimeoutFilter idleTimeoutFilter =
-                new IdleTimeoutFilter(timeoutExecutor, -1, TimeUnit.SECONDS);
+        IdleTimeoutFilter idleTimeoutFilter = new IdleTimeoutFilter(timeoutExecutor, -1, TimeUnit.SECONDS);
 
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
         filterChainBuilder.add(new TransportFilter());
         filterChainBuilder.add(idleTimeoutFilter);
         filterChainBuilder.add(new BaseFilter() {
-                private volatile Connection acceptedConnection;
-                @Override
-                public NextAction handleAccept(FilterChainContext ctx)
-                        throws IOException {
-                    acceptedConnection = ctx.getConnection();
-                    return ctx.getInvokeAction();
+            private volatile Connection acceptedConnection;
+
+            @Override
+            public NextAction handleAccept(FilterChainContext ctx) throws IOException {
+                acceptedConnection = ctx.getConnection();
+                return ctx.getInvokeAction();
+            }
+
+            @Override
+            public NextAction handleClose(FilterChainContext ctx) throws IOException {
+                if (ctx.getConnection().equals(acceptedConnection)) {
+                    latch.countDown();
                 }
 
-                @Override
-                public NextAction handleClose(FilterChainContext ctx)
-                        throws IOException {
-                    if (ctx.getConnection().equals(acceptedConnection)) {
-                        latch.countDown();
-                    }
+                return ctx.getInvokeAction();
+            }
 
-                    return ctx.getInvokeAction();
-                }
-
-            });
+        });
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
-        
+
         try {
             transport.bind(PORT);
             transport.start();

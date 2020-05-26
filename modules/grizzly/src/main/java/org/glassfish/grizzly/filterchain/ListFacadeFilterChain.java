@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,15 +22,14 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * {@link FilterChain} facade, which implements all the {@link List} related
- * methods.
+ * {@link FilterChain} facade, which implements all the {@link List} related methods.
  *
  * @see FilterChain
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class ListFacadeFilterChain extends AbstractFilterChain {
-    
+
     /**
      * The list of Filters this chain will invoke.
      */
@@ -39,7 +38,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
     public ListFacadeFilterChain(final List<Filter> filtersImpl) {
         this.filters = filtersImpl;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -53,29 +52,29 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
 
         return false;
     }
-        
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void add(int index, Filter filter){
+    public void add(int index, Filter filter) {
         filters.add(index, filter);
         filter.onAdded(this);
         notifyChangedExcept(filter);
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
     public boolean addAll(Collection<? extends Filter> c) {
-        for(Filter filter : c) {
+        for (Filter filter : c) {
             filters.add(filter);
             filter.onAdded(this);
         }
 
         notifyChangedExcept(null);
-        
+
         return true;
     }
 
@@ -85,8 +84,8 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
     @Override
     public boolean addAll(int index, Collection<? extends Filter> c) {
         int i = 0;
-        for(Filter filter : c) {
-            filters.add(index + (i++), filter);
+        for (Filter filter : c) {
+            filters.add(index + i++, filter);
             filter.onAdded(this);
         }
 
@@ -105,14 +104,14 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
             if (oldFilter != null) {
                 oldFilter.onRemoved(this);
             }
-            
+
             filter.onAdded(this);
             notifyChangedExcept(filter);
         }
 
         return oldFilter;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -128,7 +127,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
     public int indexOf(final Object object) {
         return filters.indexOf(object);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -141,7 +140,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings({""})
+    @SuppressWarnings({ "" })
     public boolean contains(Object filter) {
         return filters.contains(filter);
     }
@@ -193,7 +192,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
 
         return false;
     }
-           
+
     /**
      * {@inheritDoc}
      */
@@ -240,7 +239,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
     public void clear() {
         final Object[] localFilters = filters.toArray();
         filters.clear();
-        
+
         for (Object filter : localFilters) {
             ((Filter) filter).onRemoved(this);
         }
@@ -271,7 +270,7 @@ public abstract class ListFacadeFilterChain extends AbstractFilterChain {
     }
 
     protected void notifyChangedExcept(Filter filter) {
-        for(Filter currentFilter : filters) {
+        for (Filter currentFilter : filters) {
             if (currentFilter != filter) {
                 currentFilter.onFilterChainChanged(this);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,20 +16,20 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.io.IOException;
+import java.util.Properties;
+
+import org.glassfish.grizzly.comet.CometAddOn;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
+import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
-
-import java.io.IOException;
-import java.util.Properties;
-import org.glassfish.grizzly.comet.CometAddOn;
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.http.server.NetworkListener;
-import org.glassfish.grizzly.websockets.WebSocketAddOn;
 
 /**
  * OSGi HttpService Activator.
@@ -64,34 +64,27 @@ public class Activator implements BundleActivator {
         if (bundleContext.getProperty(ORG_OSGI_SERVICE_HTTPS_PORT) != null) {
             logger.warn("HTTPS not supported yet.");
         }
-        boolean cometEnabled = readProperty(bundleContext,
-                GRIZZLY_COMET_SUPPORT, false);
-        boolean websocketsEnabled = readProperty(bundleContext,
-                GRIZZLY_WEBSOCKETS_SUPPORT, false);
-        
+        boolean cometEnabled = readProperty(bundleContext, GRIZZLY_COMET_SUPPORT, false);
+        boolean websocketsEnabled = readProperty(bundleContext, GRIZZLY_WEBSOCKETS_SUPPORT, false);
+
         startGrizzly(port, cometEnabled, websocketsEnabled);
         serviceFactory = new HttpServiceFactory(httpServer, logger, bundleContext.getBundle());
 
         // register our HttpService/HttpServiceExtension implementation so that
-        // it may be looked up by the OSGi runtime.  We do it once per interface
+        // it may be looked up by the OSGi runtime. We do it once per interface
         // type so it can be looked up by either.
-        httpServiceRegistration = bundleContext.registerService(
-                HttpService.class.getName(), serviceFactory,
-                new Properties());
-        extServiceRegistration =
-                bundleContext.registerService(HttpServiceExtension.class.getName(),
-                                              serviceFactory,
-                                              new Properties());
+        httpServiceRegistration = bundleContext.registerService(HttpService.class.getName(), serviceFactory, new Properties());
+        extServiceRegistration = bundleContext.registerService(HttpServiceExtension.class.getName(), serviceFactory, new Properties());
     }
 
     /**
-     * Reads property from {@link BundleContext}.
-     * If property not present or invalid value for type <code>T</code> return <code>defValue</code>.
+     * Reads property from {@link BundleContext}. If property not present or invalid value for type <code>T</code> return
+     * <code>defValue</code>.
      *
-     * @param ctx      Bundle context to query.
-     * @param name     Property name to query for.
+     * @param ctx Bundle context to query.
+     * @param name Property name to query for.
      * @param defValue Default value if property not present or invalid value for type <code>T</code>.
-     * @param <T>      Property type.
+     * @param <T> Property type.
      * @return Property value or default as described above.
      */
     private <T> T readProperty(BundleContext ctx, String name, T defValue) {
@@ -99,17 +92,16 @@ public class Activator implements BundleActivator {
         if (value != null) {
             if (defValue instanceof Integer) {
                 try {
-                    //noinspection unchecked,RedundantCast
+                    // noinspection unchecked,RedundantCast
                     return (T) (Integer) Integer.parseInt(value);
                 } catch (NumberFormatException e) {
-                    logger.info("Couldn't parse '" + name + "' property, going to use default (" + defValue + "). " + e
-                                    .getMessage());
+                    logger.info("Couldn't parse '" + name + "' property, going to use default (" + defValue + "). " + e.getMessage());
                 }
             } else if (defValue instanceof Boolean) {
-                //noinspection unchecked,RedundantCast
+                // noinspection unchecked,RedundantCast
                 return (T) (Boolean) Boolean.parseBoolean(value);
             }
-            //noinspection unchecked
+            // noinspection unchecked
             return (T) value;
         }
         return defValue;
@@ -123,12 +115,10 @@ public class Activator implements BundleActivator {
      * @param cometEnabled If websockets should be enabled.
      * @throws IOException Couldn't start the {@link HttpServer}.
      */
-    private void startGrizzly(int port, boolean cometEnabled,
-            boolean websocketsEnabled) throws IOException {
+    private void startGrizzly(int port, boolean cometEnabled, boolean websocketsEnabled) throws IOException {
         httpServer = new HttpServer();
-        NetworkListener networkListener = new NetworkListener("osgi-listener",
-                "0.0.0.0", port);
-        
+        NetworkListener networkListener = new NetworkListener("osgi-listener", "0.0.0.0", port);
+
         logger.info("HttpServer will listen on " + port);
         if (cometEnabled) {
             logger.info("Enabling Comet.");
@@ -138,9 +128,9 @@ public class Activator implements BundleActivator {
             logger.info("Enabling WebSockets.");
             networkListener.registerAddOn(new WebSocketAddOn());
         }
-        
+
         httpServer.addListener(networkListener);
-        
+
         httpServer.start();
     }
 

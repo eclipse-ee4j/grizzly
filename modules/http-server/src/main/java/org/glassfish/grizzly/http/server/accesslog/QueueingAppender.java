@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,9 +27,8 @@ import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.HttpServer;
 
 /**
- * An {@link AccessLogAppender appender} enqueueing log entries into a
- * {@link LinkedBlockingQueue} and using a secondary, separate {@link Thread}
- * to forward them to a configured nested {@link AccessLogAppender appender}.
+ * An {@link AccessLogAppender appender} enqueueing log entries into a {@link LinkedBlockingQueue} and using a
+ * secondary, separate {@link Thread} to forward them to a configured nested {@link AccessLogAppender appender}.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  * @author <a href="http://www.usrz.com/">USRZ.com</a>
@@ -39,19 +38,20 @@ public class QueueingAppender implements AccessLogAppender {
     private static final Logger LOGGER = Grizzly.logger(HttpServer.class);
 
     /* Our queue */
-    private final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
+    private final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
     /* Where to forward stuff to */
     private final AccessLogAppender appender;
     /* The thread doing the despooling */
     private final Thread thread;
 
     /**
-     * Create a new {@link QueueingAppender} instance enqueueing log entries
-     * into a {@link LinkedBlockingQueue} and dequeueing them using a secondary
-     * separate {@link Thread}.
+     * Create a new {@link QueueingAppender} instance enqueueing log entries into a {@link LinkedBlockingQueue} and
+     * dequeueing them using a secondary separate {@link Thread}.
      */
     public QueueingAppender(AccessLogAppender appender) {
-        if (appender == null) throw new NullPointerException("Null appender");
+        if (appender == null) {
+            throw new NullPointerException("Null appender");
+        }
         this.appender = appender;
 
         thread = new Thread(new Dequeuer());
@@ -61,12 +61,13 @@ public class QueueingAppender implements AccessLogAppender {
     }
 
     @Override
-    public void append(String accessLogEntry)
-    throws IOException {
-        if (thread.isAlive()) try {
-            queue.put(accessLogEntry);
-        } catch (InterruptedException exception) {
-            LOGGER.log(FINE, "Interrupted adding log entry to the queue", exception);
+    public void append(String accessLogEntry) throws IOException {
+        if (thread.isAlive()) {
+            try {
+                queue.put(accessLogEntry);
+            } catch (InterruptedException exception) {
+                LOGGER.log(FINE, "Interrupted adding log entry to the queue", exception);
+            }
         }
     }
 
@@ -83,20 +84,24 @@ public class QueueingAppender implements AccessLogAppender {
     }
 
     /* ====================================================================== */
-    /* OUR DE-QUEUER                                                          */
+    /* OUR DE-QUEUER */
     /* ====================================================================== */
 
     private final class Dequeuer implements Runnable {
         @Override
         public void run() {
-            while (true) try {
-                final String accessLogEntry = queue.take();
-                if (accessLogEntry != null) appender.append(accessLogEntry);
-            } catch (InterruptedException exception) {
-                LOGGER.log(FINE, "Interrupted waiting for log entry to be queued, exiting!", exception);
-                return;
-            } catch (Throwable throwable) {
-                LOGGER.log(WARNING, "Exception caught appending ququed log entry", throwable);
+            while (true) {
+                try {
+                    final String accessLogEntry = queue.take();
+                    if (accessLogEntry != null) {
+                        appender.append(accessLogEntry);
+                    }
+                } catch (InterruptedException exception) {
+                    LOGGER.log(FINE, "Interrupted waiting for log entry to be queued, exiting!", exception);
+                    return;
+                } catch (Throwable throwable) {
+                    LOGGER.log(WARNING, "Exception caught appending ququed log entry", throwable);
+                }
             }
         }
     }

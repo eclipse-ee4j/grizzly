@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -11,6 +11,7 @@
 package org.glassfish.grizzly.samples.portunif.addservice;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -18,18 +19,17 @@ import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * The ADD-service message parser/serializer, which is responsible for parsing
- * {@link AddRequestMessage} and serializing {@link AddResponseMessage}.
+ * The ADD-service message parser/serializer, which is responsible for parsing {@link AddRequestMessage} and serializing
+ * {@link AddResponseMessage}.
  *
  * @author Alexey Stashok
  */
 public class AddServerMessageFilter extends BaseFilter {
     private final static int MESSAGE_MAGIC_SIZE = 3;
-    private final static int MESSAGE_SIZE = MESSAGE_MAGIC_SIZE + 8;  // BODY = VALUE1(INT) + VALUE2(INT) = 8
+    private final static int MESSAGE_SIZE = MESSAGE_MAGIC_SIZE + 8; // BODY = VALUE1(INT) + VALUE2(INT) = 8
 
     /**
-     * Handle just read operation, when some message has come and ready to be
-     * processed.
+     * Handle just read operation, when some message has come and ready to be processed.
      *
      * @param ctx Context of {@link FilterChainContext} processing
      * @return the next action
@@ -51,18 +51,16 @@ public class AddServerMessageFilter extends BaseFilter {
         final int value2 = input.getInt(MESSAGE_MAGIC_SIZE + 4);
 
         // Construct AddRequestMessage, based on the value1, value2
-        final AddRequestMessage addRequestMessage =
-                new AddRequestMessage(value1, value2);
+        final AddRequestMessage addRequestMessage = new AddRequestMessage(value1, value2);
         // set the AddRequestMessage on context
         ctx.setMessage(addRequestMessage);
 
         // Split the remainder, if any
-        final Buffer remainder = input.remaining() > MESSAGE_SIZE ?
-            input.split(MESSAGE_SIZE) : null;
+        final Buffer remainder = input.remaining() > MESSAGE_SIZE ? input.split(MESSAGE_SIZE) : null;
 
         // Try to dispose the parsed chunk
         input.tryDispose();
-        
+
         // continue filter chain execution
         return ctx.getInvokeAction(remainder);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,14 +22,19 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.glassfish.grizzly.*;
+
+import org.glassfish.grizzly.CloseReason;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.Processor;
+import org.glassfish.grizzly.ProcessorSelector;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.nio.RegisterChannelResult;
 import org.glassfish.grizzly.utils.Futures;
 
 /**
- * Server {@link org.glassfish.grizzly.Connection} implementation
- * for the {@link UDPNIOTransport}
+ * Server {@link org.glassfish.grizzly.Connection} implementation for the {@link UDPNIOTransport}
  *
  * @author Alexey Stashok
  */
@@ -60,36 +65,27 @@ public class UDPNIOServerConnection extends UDPNIOConnection {
 
     public void register() throws IOException {
 
-        final FutureImpl<RegisterChannelResult> future =
-                Futures.createSafeFuture();
+        final FutureImpl<RegisterChannelResult> future = Futures.createSafeFuture();
 
-        transport.getNIOChannelDistributor().registerServiceChannelAsync(
-                channel,
-                SelectionKey.OP_READ, this,
-                Futures.toCompletionHandler(future,
-                ((UDPNIOTransport) transport).registerChannelCompletionHandler
-                ));
+        transport.getNIOChannelDistributor().registerServiceChannelAsync(channel, SelectionKey.OP_READ, this,
+                Futures.toCompletionHandler(future, ((UDPNIOTransport) transport).registerChannelCompletionHandler));
 
         try {
             future.get(10, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new IOException("Error registering server channel key", e);
         }
-        
+
         notifyReady();
     }
-    
+
     @Override
-    protected void closeGracefully0(
-            final CompletionHandler<Closeable> completionHandler,
-            final CloseReason closeReason) {
+    protected void closeGracefully0(final CompletionHandler<Closeable> completionHandler, final CloseReason closeReason) {
         terminate0(completionHandler, closeReason);
     }
 
-
     @Override
-    protected void terminate0(final CompletionHandler<Closeable> completionHandler,
-            final CloseReason closeReason) {
+    protected void terminate0(final CompletionHandler<Closeable> completionHandler, final CloseReason closeReason) {
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine("UDPNIOServerConnection might be only closed by calling unbind().");
         }
@@ -98,9 +94,8 @@ public class UDPNIOServerConnection extends UDPNIOConnection {
             completionHandler.completed(this);
         }
     }
-    
-    public void unbind(
-            final CompletionHandler<Closeable> completionHandler) {
+
+    public void unbind(final CompletionHandler<Closeable> completionHandler) {
         super.terminate0(completionHandler, CloseReason.LOCALLY_CLOSED_REASON);
     }
 
@@ -109,6 +104,5 @@ public class UDPNIOServerConnection extends UDPNIOConnection {
         transport.unbind(this);
         super.preClose();
     }
-
 
 }

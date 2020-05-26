@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -11,18 +11,19 @@
 package org.glassfish.grizzly.samples.echo;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
 /**
  * Client filter is responsible for redirecting server response to the standard output
+ * 
  * @author Alexey Stashok
  */
 public class ClientFilter extends BaseFilter {
     /**
-     * Handle just read operation, when some message has come and ready to be
-     * processed.
+     * Handle just read operation, when some message has come and ready to be processed.
      *
      * @param ctx Context of {@link FilterChainContext} processing
      * @return the next action

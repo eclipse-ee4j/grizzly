@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,9 +28,8 @@ import org.glassfish.grizzly.Connection;
 public interface KeepAliveProbe {
 
     /**
-     * Method will be called, when new keep-alive HTTP connection is getting established.
-     * This method is getting invoked, when 1st HTTP request processing completes,
-     * but the Connection will be kept alive to process next HTTP request.
+     * Method will be called, when new keep-alive HTTP connection is getting established. This method is getting invoked,
+     * when 1st HTTP request processing completes, but the Connection will be kept alive to process next HTTP request.
      *
      * @param connection {@link Connection}, the event belongs to.
      */
@@ -45,8 +44,8 @@ public interface KeepAliveProbe {
     void onHitEvent(Connection connection, int requestNumber);
 
     /**
-     * Method will be called, when the Connection could be used in the keep alive mode,
-     * but due to KeepAlive config limitations it will be closed.
+     * Method will be called, when the Connection could be used in the keep alive mode, but due to KeepAlive config
+     * limitations it will be closed.
      *
      * @param connection {@link Connection}, the event belongs to.
      */
@@ -59,19 +58,16 @@ public interface KeepAliveProbe {
      */
     void onTimeoutEvent(Connection connection);
 
-
     // ---------------------------------------------------------- Nested Classes
 
-
     /**
-     * {@link KeepAliveProbe} adapter that provides no-op implementations for
-     * all interface methods allowing easy extension by the developer.
+     * {@link KeepAliveProbe} adapter that provides no-op implementations for all interface methods allowing easy extension
+     * by the developer.
      *
      * @since 2.1.9
      */
     @SuppressWarnings("UnusedDeclaration")
     class Adapter implements KeepAliveProbe {
-
 
         // ----------------------------------------- Methods from KeepAliveProbe
 
@@ -79,25 +75,29 @@ public interface KeepAliveProbe {
          * {@inheritDoc}
          */
         @Override
-        public void onConnectionAcceptEvent(Connection connection) {}
+        public void onConnectionAcceptEvent(Connection connection) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onHitEvent(Connection connection, int requestNumber) {}
+        public void onHitEvent(Connection connection, int requestNumber) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onRefuseEvent(Connection connection) {}
+        public void onRefuseEvent(Connection connection) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onTimeoutEvent(Connection connection) {}
+        public void onTimeoutEvent(Connection connection) {
+        }
 
     } // END Adapter
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,30 +17,31 @@
 package org.glassfish.grizzly;
 
 import java.io.IOException;
-import java.util.Properties;
-import org.glassfish.grizzly.attributes.AttributeBuilder;
 import java.io.InputStream;
+import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.glassfish.grizzly.attributes.AttributeBuilder;
+
 /**
  * Class contains information about Grizzly framework.
- * 
+ *
  * @author Charlie Hunt
  * @author Hubert Iwaniuk
  */
 public class Grizzly {
     private static final Pattern versionPattern = Pattern.compile("((\\d+)\\.(\\d+)(\\.\\d+)*){1}(?:-(.+))?");
-    
+
     public static final AttributeBuilder DEFAULT_ATTRIBUTE_BUILDER = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
-    
+
     private static final String dotedVersion;
     private static final int major;
     private static final int minor;
 
     private static boolean isTrackingThreadCache;
-    
+
     public static Logger logger(Class clazz) {
         return Logger.getLogger(clazz.getName());
     }
@@ -91,25 +92,25 @@ public class Grizzly {
 
     /**
      * Get Grizzly framework major version
-     * 
+     *
      * @return Grizzly framework major version
      */
     public static int getMajorVersion() {
         return major;
     }
-    
+
     /**
      * Get Grizzly framework minor version
-     * 
+     *
      * @return Grizzly framework minor version
      */
-    public static int getMinorVersion(){
+    public static int getMinorVersion() {
         return minor;
     }
-    
+
     /**
      * Checks if current Grizzly framework version equals to one passed
-     * 
+     *
      * @param major Grizzly framework major version
      * @param minor Grizzly framework minor version
      * @return true, if versions are equal; false otherwise

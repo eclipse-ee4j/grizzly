@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,19 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static org.glassfish.grizzly.http.server.NetworkListener.DEFAULT_NETWORK_HOST;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -33,23 +40,16 @@ import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.glassfish.grizzly.utils.DelayFilter;
-import org.junit.Test;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static org.glassfish.grizzly.http.server.NetworkListener.DEFAULT_NETWORK_HOST;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.Futures;
+import org.junit.Test;
 
 @SuppressWarnings("unchecked")
 public class ParametersTest {
@@ -65,26 +65,23 @@ public class ParametersTest {
         final String body = generatePostBody(1024 * 3);
         final String[][] paramParts = getParts(body);
         final FutureImpl<Boolean> resultFuture = Futures.createSafeFuture();
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @Override
-                    public void service(Request request, Response response) throws Exception {
-                        for (int i = 0, len = paramParts.length; i < len; i++) {
-                            final String value = request.getParameter(paramParts[i][0]);
-                            try {
-                                assertNotNull("value is null", value);
-                                assertEquals(paramParts[i][1], value);
-                                resultFuture.result(Boolean.TRUE);
-                            } catch (Throwable t) {
-                                resultFuture.failure(t);
-                            }
-                        }
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                for (int i = 0, len = paramParts.length; i < len; i++) {
+                    final String value = request.getParameter(paramParts[i][0]);
+                    try {
+                        assertNotNull("value is null", value);
+                        assertEquals(paramParts[i][1], value);
+                        resultFuture.result(Boolean.TRUE);
+                    } catch (Throwable t) {
+                        resultFuture.failure(t);
                     }
                 }
-                , "/*");
+            }
+        }, "/*");
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
@@ -98,13 +95,8 @@ public class ParametersTest {
             TCPNIOConnectorHandler handler = TCPNIOConnectorHandler.builder(clientTransport).build();
             GrizzlyFuture<Connection> future = handler.connect("localhost", PORT);
             final Buffer bodyBuffer = Buffers.wrap(clientTransport.getMemoryManager(), body);
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .chunked(true)
-                    .method(Method.POST)
-                    .uri("/")
-                    .header(Header.Host, "localhost:" + PORT)
-                    .contentType("application/x-www-form-urlencoded; charset=ISO-8859-1")
-                    .protocol(Protocol.HTTP_1_1).build();
+            HttpRequestPacket request = HttpRequestPacket.builder().chunked(true).method(Method.POST).uri("/").header(Header.Host, "localhost:" + PORT)
+                    .contentType("application/x-www-form-urlencoded; charset=ISO-8859-1").protocol(Protocol.HTTP_1_1).build();
             HttpContent content = HttpContent.builder(request).content(bodyBuffer).last(true).build();
             Connection c = future.get(10, TimeUnit.SECONDS);
             c.write(content);
@@ -125,29 +117,26 @@ public class ParametersTest {
         final String body = generatePostBody(1024 * 3);
         final String[][] paramParts = getParts(body);
         final FutureImpl<Boolean> resultFuture = Futures.createSafeFuture();
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @Override
-                    public void service(Request request, Response response) throws Exception {
-                        // !!!! Override character encoding
-                        request.setCharacterEncoding("UTF-8");
-                        for (int i = 0, len = paramParts.length; i < len; i++) {
-                            final String value = request.getParameter(paramParts[i][0]);
-                            try {
-                                assertEquals(request.getCharacterEncoding(), "UTF-8");
-                                assertNotNull("value is null", value);
-                                assertEquals(paramParts[i][1], value);
-                                resultFuture.result(Boolean.TRUE);
-                            } catch (Throwable t) {
-                                resultFuture.failure(t);
-                            }
-                        }
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                // !!!! Override character encoding
+                request.setCharacterEncoding("UTF-8");
+                for (int i = 0, len = paramParts.length; i < len; i++) {
+                    final String value = request.getParameter(paramParts[i][0]);
+                    try {
+                        assertEquals(request.getCharacterEncoding(), "UTF-8");
+                        assertNotNull("value is null", value);
+                        assertEquals(paramParts[i][1], value);
+                        resultFuture.result(Boolean.TRUE);
+                    } catch (Throwable t) {
+                        resultFuture.failure(t);
                     }
                 }
-                , "/*");
+            }
+        }, "/*");
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
@@ -159,13 +148,8 @@ public class ParametersTest {
             TCPNIOConnectorHandler handler = TCPNIOConnectorHandler.builder(clientTransport).build();
             GrizzlyFuture<Connection> future = handler.connect("localhost", PORT);
             final Buffer bodyBuffer = Buffers.wrap(clientTransport.getMemoryManager(), body);
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .chunked(true)
-                    .method(Method.POST)
-                    .uri("/")
-                    .header(Header.Host, "localhost:" + PORT)
-                    .contentType("application/x-www-form-urlencoded; charset=ISO-8859-1")
-                    .protocol(Protocol.HTTP_1_1).build();
+            HttpRequestPacket request = HttpRequestPacket.builder().chunked(true).method(Method.POST).uri("/").header(Header.Host, "localhost:" + PORT)
+                    .contentType("application/x-www-form-urlencoded; charset=ISO-8859-1").protocol(Protocol.HTTP_1_1).build();
             HttpContent content = HttpContent.builder(request).content(bodyBuffer).last(true).build();
             Connection c = future.get(10, TimeUnit.SECONDS);
             c.write(content);
@@ -175,34 +159,31 @@ public class ParametersTest {
             clientTransport.shutdownNow();
         }
     }
-    
+
     /**
-     * Test customized query string encoding
-     * https://java.net/jira/browse/GRIZZLY-1794
+     * Test customized query string encoding https://java.net/jira/browse/GRIZZLY-1794
      */
     @Test
     public void testQueryStringCharsetEncoding() throws Exception {
         final HttpServer server = createServer();
         final FutureImpl<Boolean> resultFuture = Futures.createSafeFuture();
         server.getServerConfiguration().setDefaultQueryEncoding(Charsets.UTF8_CHARSET);
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @Override
-                    public void service(Request request, Response response) throws Exception {
-                        try {
-                            assertEquals("msg=Hello\\World+With+SpecChars+§*)$!±@-_=;`:\\,~|", request.getQueryString());
-                            resultFuture.result(Boolean.TRUE);
-                        } catch (Throwable t) {
-                            resultFuture.failure(t);
-                        }
-                    }
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                try {
+                    assertEquals("msg=Hello\\World+With+SpecChars+§*)$!±@-_=;`:\\,~|", request.getQueryString());
+                    resultFuture.result(Boolean.TRUE);
+                } catch (Throwable t) {
+                    resultFuture.failure(t);
                 }
-                , "/*");
+            }
+        }, "/*");
 
         Socket socket = null;
         try {
             server.start();
-            
+
             // Low level approach with sockets is used, because common Java HTTP clients are using java.net.URI,
             // which fails when unencoded curly bracket is part of the URI
             socket = new Socket("localhost", PORT);
@@ -214,7 +195,9 @@ public class ParametersTest {
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            while (br.readLine() != null);
+            while (br.readLine() != null) {
+                ;
+            }
             pw.close();
             br.close();
 
@@ -227,7 +210,7 @@ public class ParametersTest {
             }
         }
     }
-    
+
     // -------------------------------------------------------- Private Methods
 
     private static HttpServer createServer() {
@@ -247,7 +230,6 @@ public class ParametersTest {
         }
         return parts;
     }
-
 
     private static String generatePostBody(final int len) {
         Random r = new Random();

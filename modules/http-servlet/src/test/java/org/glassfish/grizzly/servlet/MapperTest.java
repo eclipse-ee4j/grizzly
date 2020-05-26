@@ -20,12 +20,13 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.HttpHandlerChain;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Test {@link HttpHandlerChain} use of the {@link MapperTest}
@@ -42,11 +43,9 @@ public class MapperTest extends HttpServerAbstractTest {
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
-            String[] aliases = new String[]{"/aaa/bbb", "/aaa/ccc"};
-            final String[] mappings = {
-                    "Mapping{matchValue='aaa/bbb', pattern='/aaa/bbb', servletName='', mappingMatch=EXACT}",
-                    "Mapping{matchValue='aaa/ccc', pattern='/aaa/ccc', servletName='', mappingMatch=EXACT}"
-            };
+            String[] aliases = new String[] { "/aaa/bbb", "/aaa/ccc" };
+            final String[] mappings = { "Mapping{matchValue='aaa/bbb', pattern='/aaa/bbb', servletName='', mappingMatch=EXACT}",
+                    "Mapping{matchValue='aaa/ccc', pattern='/aaa/ccc', servletName='', mappingMatch=EXACT}" };
             for (String alias : aliases) {
                 addServlet(ctx, alias);
             }
@@ -54,8 +53,7 @@ public class MapperTest extends HttpServerAbstractTest {
             for (int i = 0, len = aliases.length; i < len; i++) {
                 final String alias = aliases[i];
                 HttpURLConnection conn = getConnection(alias, PORT);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
+                assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
                 assertEquals(alias, readResponse(conn));
                 assertEquals(alias, conn.getHeaderField("servlet-path"));
                 assertNull(alias, conn.getHeaderField("path-info"));
@@ -64,15 +62,14 @@ public class MapperTest extends HttpServerAbstractTest {
         } finally {
             stopHttpServer();
         }
-   }
-
+    }
 
     public void testOverlappingMapping2() throws IOException {
         System.out.println("testOverlappingMapping2");
         try {
             startHttpServer(PORT);
 
-            String[] alias = new String[]{"*.jsp", "/jsp/*"};
+            String[] alias = new String[] { "*.jsp", "/jsp/*" };
 
             WebappContext ctx = new WebappContext("Test");
             addServlet(ctx, "*.jsp");
@@ -88,8 +85,7 @@ public class MapperTest extends HttpServerAbstractTest {
         } finally {
             stopHttpServer();
         }
-   }
-
+    }
 
     public void testRootStarMapping() throws IOException {
         System.out.println("testRootMapping");
@@ -97,11 +93,10 @@ public class MapperTest extends HttpServerAbstractTest {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
             String alias = "/*";
-            addServlet(ctx, alias);   // overrides the static resource handler
+            addServlet(ctx, alias); // overrides the static resource handler
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection("/index.html", PORT);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
             assertEquals("", conn.getHeaderField("servlet-path"));
             assertEquals("/index.html", conn.getHeaderField("path-info"));
@@ -112,24 +107,23 @@ public class MapperTest extends HttpServerAbstractTest {
     }
 
     public void testRootStarMapping2() throws IOException {
-            System.out.println("testRootMapping");
-            try {
-                startHttpServer(PORT);
-                WebappContext ctx = new WebappContext("Test");
-                String alias = "/*";
-                addServlet(ctx, alias);   // overrides the static resource handler
-                ctx.deploy(httpServer);
-                HttpURLConnection conn = getConnection("/foo/index.html", PORT);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
-                assertEquals(alias, readResponse(conn));
-                assertEquals("", conn.getHeaderField("servlet-path"));
-                assertEquals("/foo/index.html", conn.getHeaderField("path-info"));
-                assertEquals("Mapping{matchValue='foo/index.html', pattern='/*', servletName='', mappingMatch=PATH}", conn.getHeaderField("http-servlet-mapping"));
-            } finally {
-                stopHttpServer();
-            }
+        System.out.println("testRootMapping");
+        try {
+            startHttpServer(PORT);
+            WebappContext ctx = new WebappContext("Test");
+            String alias = "/*";
+            addServlet(ctx, alias); // overrides the static resource handler
+            ctx.deploy(httpServer);
+            HttpURLConnection conn = getConnection("/foo/index.html", PORT);
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
+            assertEquals(alias, readResponse(conn));
+            assertEquals("", conn.getHeaderField("servlet-path"));
+            assertEquals("/foo/index.html", conn.getHeaderField("path-info"));
+            assertEquals("Mapping{matchValue='foo/index.html', pattern='/*', servletName='', mappingMatch=PATH}", conn.getHeaderField("http-servlet-mapping"));
+        } finally {
+            stopHttpServer();
         }
+    }
 
     public void testRootMapping() throws IOException {
         System.out.println("testRootMapping");
@@ -137,11 +131,10 @@ public class MapperTest extends HttpServerAbstractTest {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
             String alias = "/";
-            addServlet(ctx, alias);   // overrides the static resource handler
+            addServlet(ctx, alias); // overrides the static resource handler
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection("/", PORT);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
             assertEquals("/", conn.getHeaderField("servlet-path"));
             assertEquals(null, conn.getHeaderField("path-info"));
@@ -157,15 +150,16 @@ public class MapperTest extends HttpServerAbstractTest {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
             String alias = "/";
-            addServlet(ctx, alias);   // overrides the static resource handler
+            addServlet(ctx, alias); // overrides the static resource handler
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection("/foo/index.html", PORT);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
             assertEquals("/foo/index.html", conn.getHeaderField("servlet-path"));
             assertEquals(null, conn.getHeaderField("path-info"));
-        assertEquals("Mapping{matchValue='foo/index.html', pattern='/', servletName='', mappingMatch=DEFAULT}", conn.getHeaderField("http-servlet-mapping"));} finally {
+            assertEquals("Mapping{matchValue='foo/index.html', pattern='/', servletName='', mappingMatch=DEFAULT}",
+                    conn.getHeaderField("http-servlet-mapping"));
+        } finally {
             stopHttpServer();
         }
     }
@@ -179,12 +173,12 @@ public class MapperTest extends HttpServerAbstractTest {
             addServlet(ctx, alias);
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection("/aaa.html", PORT);
-            assertEquals(HttpServletResponse.SC_NOT_FOUND,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_NOT_FOUND, getResponseCodeFromAlias(conn));
         } finally {
             stopHttpServer();
         }
     }
+
 //
 //    public void testComplexMapping() throws IOException {
 //        System.out.println("testComplexMapping");
@@ -210,8 +204,7 @@ public class MapperTest extends HttpServerAbstractTest {
             addServlet(ctx, alias);
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection("/index.html", PORT);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
             assertEquals("/index.html", conn.getHeaderField("servlet-path"));
             assertNull(conn.getHeaderField("path-info"));
@@ -221,7 +214,7 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-     public void testWrongMappingRootContext() throws IOException {
+    public void testWrongMappingRootContext() throws IOException {
         System.out.println("testWrongMappingRootContext");
         try {
             startHttpServer(PORT);
@@ -235,7 +228,6 @@ public class MapperTest extends HttpServerAbstractTest {
             stopHttpServer();
         }
     }
-
 
     public void testDefaultServletOverride() throws Exception {
         try {
@@ -272,18 +264,14 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private static void addServlet(final WebappContext ctx, final String alias) {
         final ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
 
             @Override
-            protected void doGet(
-                    HttpServletRequest req, HttpServletResponse resp)
-                    throws IOException {
-                LOGGER.log(Level.INFO, "{0} received request {1}", new Object[]{alias, req.getRequestURI()});
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                LOGGER.log(Level.INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.setHeader("Path-Info", req.getPathInfo());
                 resp.setHeader("Servlet-Path", req.getServletPath());

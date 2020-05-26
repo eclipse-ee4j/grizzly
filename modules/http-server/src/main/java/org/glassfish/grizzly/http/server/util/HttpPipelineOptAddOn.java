@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.http.server.util;
 
 import java.io.IOException;
 import java.util.Arrays;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -38,17 +39,17 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.memory.CompositeBuffer;
 
 /**
- * The plugin, that optimizes processing of pipelined HTTP requests by
- * buffering HTTP responses and then writing them as one operation.
- * 
- * Please note, this addon is not thread-safe, so it can't be used with HTTP
- * requests, that require asynchronous processing.
- * 
+ * The plugin, that optimizes processing of pipelined HTTP requests by buffering HTTP responses and then writing them as
+ * one operation.
+ *
+ * Please note, this addon is not thread-safe, so it can't be used with HTTP requests, that require asynchronous
+ * processing.
+ *
  * @author Alexey Stashok
  */
 public class HttpPipelineOptAddOn implements AddOn {
     private static final int DEFAULT_MAX_BUFFER_SIZE = 16384;
-    
+
     /**
      * max number of response bytes to buffer before flush
      */
@@ -60,29 +61,25 @@ public class HttpPipelineOptAddOn implements AddOn {
     public HttpPipelineOptAddOn() {
         this(DEFAULT_MAX_BUFFER_SIZE);
     }
-    
+
     /**
      * Constructs <tt>HttpPipelineOptAddOn</tt>.
-     * 
+     *
      * @param maxBufferSize the max number of response bytes to buffer before flush
      */
     public HttpPipelineOptAddOn(final int maxBufferSize) {
         this.maxBufferSize = maxBufferSize;
     }
-    
+
     @Override
-    public void setup(final NetworkListener networkListener,
-            final FilterChainBuilder builder) {
+    public void setup(final NetworkListener networkListener, final FilterChainBuilder builder) {
         final int tfIdx = builder.indexOfType(TransportFilter.class);
-        builder.add(tfIdx + 1,
-                new PlugFilter(maxBufferSize,
-                        networkListener.getTransport().getAttributeBuilder()));
+        builder.add(tfIdx + 1, new PlugFilter(maxBufferSize, networkListener.getTransport().getAttributeBuilder()));
     }
-    
+
     /**
-     * The filter, that works as a plug in the FilterChain, and buffers output
-     * data before passing it down to a transport filter, which will write
-     * the data to network.
+     * The filter, that works as a plug in the FilterChain, and buffers output data before passing it down to a transport
+     * filter, which will write the data to network.
      */
     private static class PlugFilter extends BaseFilter {
 
@@ -117,16 +114,13 @@ public class HttpPipelineOptAddOn implements AddOn {
                 // check if the message could be appended
                 if (!msg.isExternal()) {
                     final Buffer buf = (Buffer) msg;
-                    
+
                     // if there's MessageCloner - call it,
                     // because the caller is not aware of buffering and will expect
                     // some result (either buffer is written or queued),
                     // so we notify the caller, that the buffer is queued
                     final MessageCloner<Buffer> cloner = ctx.getTransportContext().getMessageCloner();
-                    plug.append(cloner == null
-                            ? buf
-                            : cloner.clone(ctx.getConnection(), buf),
-                            ctx.getTransportContext().getCompletionHandler());
+                    plug.append(cloner == null ? buf : cloner.clone(ctx.getConnection(), buf), ctx.getTransportContext().getCompletionHandler());
 
                     // if we buffered more than max - flush
                     if (plug.size() > maxBufferSize) {
@@ -142,11 +136,9 @@ public class HttpPipelineOptAddOn implements AddOn {
 
         public static class Plug extends IOEventLifeCycleListener.Adapter {
 
-            private static final ThreadCache.CachedTypeIndex<Plug> CACHE_IDX
-                    = ThreadCache.obtainIndex(Plug.class, 4);
+            private static final ThreadCache.CachedTypeIndex<Plug> CACHE_IDX = ThreadCache.obtainIndex(Plug.class, 4);
 
-            public static Plug create(final FilterChainContext ctx,
-                    final PlugFilter plugFilter) {
+            public static Plug create(final FilterChainContext ctx, final PlugFilter plugFilter) {
                 Plug plug = ThreadCache.takeFromCache(CACHE_IDX);
 
                 if (plug == null) {
@@ -160,8 +152,7 @@ public class HttpPipelineOptAddOn implements AddOn {
             // in the current thread
             private final MessageCloner<Buffer> cloner = new MessageCloner<Buffer>() {
                 @Override
-                public Buffer clone(final Connection connection,
-                        final Buffer originalMessage) {
+                public Buffer clone(final Connection connection, final Buffer originalMessage) {
                     isWrittenInThisThread = false;
                     return originalMessage;
                 }
@@ -188,13 +179,12 @@ public class HttpPipelineOptAddOn implements AddOn {
 
             /**
              * Appends buffer to the queue.
-             * 
+             *
              * @param msg
              * @param completionHandler
-             * @return 
+             * @return
              */
-            private boolean append(final Buffer msg,
-                    final CompletionHandler completionHandler) {
+            private boolean append(final Buffer msg, final CompletionHandler completionHandler) {
                 if (isPlugged) {
                     obtainCompositeBuffer().append(msg);
                     if (completionHandler != null) {
@@ -239,10 +229,9 @@ public class HttpPipelineOptAddOn implements AddOn {
             }
 
             /**
-             * Releases the plug, which means we have to flush all the data and
-             * remove the PlugFilter attr from the context.
-             * 
-             * @param context 
+             * Releases the plug, which means we have to flush all the data and remove the PlugFilter attr from the context.
+             *
+             * @param context
              */
             private void unplug(final Context context) {
                 if (isPlugged) {
@@ -286,7 +275,7 @@ public class HttpPipelineOptAddOn implements AddOn {
             }
 
             private int size() {
-                return (isPlugged && buffer != null) ? buffer.remaining() : 0;
+                return isPlugged && buffer != null ? buffer.remaining() : 0;
             }
         }
 

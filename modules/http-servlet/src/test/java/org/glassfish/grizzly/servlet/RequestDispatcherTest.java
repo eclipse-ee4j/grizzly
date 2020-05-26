@@ -16,15 +16,16 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
 
 /**
  * Request/NamedDispatcher Test
@@ -44,8 +45,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -59,8 +59,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             servlet1.addMapping("/servlet1");
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -86,8 +85,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -101,8 +99,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             servlet1.addMapping("/servlet1");
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -128,8 +125,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -143,8 +139,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             servlet1.addMapping("/servlet1");
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -171,8 +166,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -186,8 +180,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             servlet1.addMapping("/servlet1");
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -214,8 +207,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -231,8 +223,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
 
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -259,8 +250,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx = new WebappContext("Test", contextPath);
             ServletRegistration servlet1 = ctx.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet1");
 
@@ -276,8 +266,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
 
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet(HttpServletRequest request, HttpServletResponse response)
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
                     out.println("Hello, world! I am a servlet2");
                     out.close();
@@ -298,27 +287,26 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
     public void testCrossContextForward() throws IOException {
         System.out.println("testCrossContextForward");
         try {
-            newHttpServer( PORT );
+            newHttpServer(PORT);
             WebappContext ctx1 = new WebappContext("ctx1", "/webapp1");
-            ServletRegistration servlet1 = ctx1.addServlet("servlet1",new HttpServlet() {
+            ServletRegistration servlet1 = ctx1.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet1" );
+                    out.println("Hello, world! I am a servlet1");
 
                     ServletContext servletCtx1 = getServletContext();
-                    assertNotNull( servletCtx1 );
+                    assertNotNull(servletCtx1);
                     RequestDispatcher dispatcher = servletCtx1.getNamedDispatcher("servlet2");
-                    assertNull( dispatcher );
+                    assertNull(dispatcher);
 
                     // cross context
-                    ServletContext servletCtx2 = servletCtx1.getContext( "/webapp2" );
-                    assertNotNull( servletCtx2 );
+                    ServletContext servletCtx2 = servletCtx1.getContext("/webapp2");
+                    assertNotNull(servletCtx2);
                     // The pathname must begin with a "/"
-                    dispatcher = servletCtx2.getRequestDispatcher( "/servlet2" );
-                    assertNotNull( dispatcher );
-                    dispatcher.forward( request, response );
+                    dispatcher = servletCtx2.getRequestDispatcher("/servlet2");
+                    assertNotNull(dispatcher);
+                    dispatcher.forward(request, response);
                     out.close();
                 }
             });
@@ -327,10 +315,9 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             WebappContext ctx2 = new WebappContext("ctx2", "/webapp2");
             ServletRegistration servlet2 = ctx2.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet2" );
+                    out.println("Hello, world! I am a servlet2");
                     out.close();
                 }
             });
@@ -340,9 +327,9 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             ctx2.deploy(httpServer);
 
             httpServer.start();
-            HttpURLConnection conn = getConnection( "/webapp1/servlet1", PORT );
-            assertEquals( HttpServletResponse.SC_OK, getResponseCodeFromAlias( conn ) );
-            assertEquals( "Hello, world! I am a servlet2", readMultilineResponse( conn ).toString().trim() );
+            HttpURLConnection conn = getConnection("/webapp1/servlet1", PORT);
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
+            assertEquals("Hello, world! I am a servlet2", readMultilineResponse(conn).toString().trim());
         } finally {
             stopHttpServer();
         }
@@ -353,19 +340,18 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
         // named dispatcher include(servlet3) -> cross context, dispatcher include by ServletContext's API(servlet4)
         System.out.println("testComplexDispatch");
         try {
-            newHttpServer( PORT );
+            newHttpServer(PORT);
             WebappContext ctx1 = new WebappContext("ctx1", "/webapp1");
             // webapp1(servlet1, servlet2, servlet3)
-            ServletRegistration servlet1 = ctx1.addServlet("servlet1",new HttpServlet() {
+            ServletRegistration servlet1 = ctx1.addServlet("servlet1", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet1" );
+                    out.println("Hello, world! I am a servlet1");
 
-                    RequestDispatcher dispatcher = request.getRequestDispatcher( "servlet2" );
-                    assertNotNull( dispatcher );
-                    dispatcher.forward( request, response );
+                    RequestDispatcher dispatcher = request.getRequestDispatcher("servlet2");
+                    assertNotNull(dispatcher);
+                    dispatcher.forward(request, response);
                     out.close();
                 }
             });
@@ -373,34 +359,32 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
 
             ServletRegistration servlet2 = ctx1.addServlet("servlet2", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet2" );
+                    out.println("Hello, world! I am a servlet2");
 
                     ServletContext servletCtx = getServletContext();
-                    assertNotNull( servletCtx );
-                    RequestDispatcher dispatcher = servletCtx.getNamedDispatcher( "servlet3" );
-                    assertNotNull( dispatcher );
-                    dispatcher.include( request, response );
+                    assertNotNull(servletCtx);
+                    RequestDispatcher dispatcher = servletCtx.getNamedDispatcher("servlet3");
+                    assertNotNull(dispatcher);
+                    dispatcher.include(request, response);
                     out.close();
                 }
             });
             servlet2.addMapping("/servlet2");
 
-            ServletRegistration servlet3 = ctx1.addServlet("servlet3",new HttpServlet() {
+            ServletRegistration servlet3 = ctx1.addServlet("servlet3", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet3" );
+                    out.println("Hello, world! I am a servlet3");
 
                     ServletContext servletCtx1 = getServletContext();
-                    assertNotNull( servletCtx1 );
-                    ServletContext servletCtx2 = servletCtx1.getContext( "/webapp2" );
-                    assertNotNull( servletCtx2 );
-                    RequestDispatcher dispatcher = servletCtx2.getRequestDispatcher( "/servlet4" );
-                    dispatcher.include( request, response );
+                    assertNotNull(servletCtx1);
+                    ServletContext servletCtx2 = servletCtx1.getContext("/webapp2");
+                    assertNotNull(servletCtx2);
+                    RequestDispatcher dispatcher = servletCtx2.getRequestDispatcher("/servlet4");
+                    dispatcher.include(request, response);
                     out.close();
                 }
             });
@@ -408,12 +392,11 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
 
             // webapp2(servlet4)
             WebappContext ctx2 = new WebappContext("ctx2", "/webapp2");
-            ServletRegistration servlet4 = ctx2.addServlet("servlet4",new HttpServlet() {
+            ServletRegistration servlet4 = ctx2.addServlet("servlet4", new HttpServlet() {
                 @Override
-                public void doGet( HttpServletRequest request, HttpServletResponse response )
-                        throws ServletException, IOException {
+                public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                     PrintWriter out = response.getWriter();
-                    out.println( "Hello, world! I am a servlet4" );
+                    out.println("Hello, world! I am a servlet4");
                     out.close();
                 }
             });
@@ -423,10 +406,10 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
             ctx2.deploy(httpServer);
 
             httpServer.start();
-            HttpURLConnection conn = getConnection( "/webapp1/servlet1", PORT );
-            assertEquals( HttpServletResponse.SC_OK, getResponseCodeFromAlias( conn ) );
-            assertEquals( "Hello, world! I am a servlet2\nHello, world! I am a servlet3\nHello, world! I am a servlet4",
-                          readMultilineResponse( conn ).toString().trim() );
+            HttpURLConnection conn = getConnection("/webapp1/servlet1", PORT);
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
+            assertEquals("Hello, world! I am a servlet2\nHello, world! I am a servlet3\nHello, world! I am a servlet4",
+                    readMultilineResponse(conn).toString().trim());
         } finally {
             stopHttpServer();
         }

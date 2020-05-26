@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,27 +21,23 @@ import java.net.SocketAddress;
 import java.util.concurrent.Future;
 
 /**
- * Socket based client side connector.
- * <tt>SocketConnectorHandler</tt> is responsible for creating and initializing
- * {@link Connection}, and optionally connect is to a specific local/remote
- * address.
- * 
+ * Socket based client side connector. <tt>SocketConnectorHandler</tt> is responsible for creating and initializing
+ * {@link Connection}, and optionally connect is to a specific local/remote address.
+ *
  * @author Alexey Stashok
  */
 public interface SocketConnectorHandler extends ConnectorHandler<SocketAddress> {
 
-
     int DEFAULT_CONNECTION_TIMEOUT = 30000;
 
     /**
-     * Creates, initializes and connects socket to the specific remote host
-     * and port and returns {@link Connection}, representing socket.
-     * 
+     * Creates, initializes and connects socket to the specific remote host and port and returns {@link Connection},
+     * representing socket.
+     *
      * @param host remote host to connect to.
      * @param port remote port to connect to.
-     * @return {@link Future} of connect operation, which could be used to get
-     * resulting {@link Connection}.
-     * 
+     * @return {@link Future} of connect operation, which could be used to get resulting {@link Connection}.
+     *
      * @throws java.io.IOException not actually thrown
      */
     Future<Connection> connect(String host, int port) throws IOException;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -13,6 +13,7 @@ package org.glassfish.grizzly.samples.httpmultipart;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -20,10 +21,9 @@ import org.glassfish.grizzly.http.server.ServerConfiguration;
 
 /**
  * HTTP upload server, which instantiates two Grizzly {@link org.glassfish.grizzly.http.server.HttpHandler}s:
- * {@link FormHttpHandler} on URL http://localhost:18080/,
- * {@link UploaderHttpHandler} on URIL http://localhost:18080/upload.
- * First one is responsible to serve simple HTML upload form and the second one
- * takes care of actual file/data uploading.
+ * {@link FormHttpHandler} on URL http://localhost:18080/, {@link UploaderHttpHandler} on URIL
+ * http://localhost:18080/upload. First one is responsible to serve simple HTML upload form and the second one takes
+ * care of actual file/data uploading.
  *
  * @author Alexey Stashok
  */
@@ -34,7 +34,7 @@ public class UploadServer {
 
     public static void main(String[] args) {
         // create a HttpServer
-        final HttpServer server = new HttpServer();        
+        final HttpServer server = new HttpServer();
         final ServerConfiguration config = server.getServerConfiguration();
 
         // Map the path / to the FormHttpHandler
@@ -43,8 +43,7 @@ public class UploadServer {
         config.addHttpHandler(new UploaderHttpHandler(), "/upload");
 
         // Create HTTP network listener on host "0.0.0.0" and port 18080.
-        final NetworkListener listener = new NetworkListener("Grizzly",
-                NetworkListener.DEFAULT_NETWORK_HOST, PORT);
+        final NetworkListener listener = new NetworkListener("Grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
 
         server.addListener(listener);
 

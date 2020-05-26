@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,15 +16,14 @@
 
 package org.glassfish.grizzly.http.io;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.OutputSink;
 
-import java.io.IOException;
-
 /**
- * Adds the ability for binary based {@link org.glassfish.grizzly.OutputSink}s to write a
- * {@link Buffer} instead of having to convert to those types supported by
- * {@link java.io.OutputStream}.
+ * Adds the ability for binary based {@link org.glassfish.grizzly.OutputSink}s to write a {@link Buffer} instead of
+ * having to convert to those types supported by {@link java.io.OutputStream}.
  *
  * @since 2.0
  */
@@ -36,5 +35,5 @@ public interface BinaryNIOOutputSink extends OutputSink {
      * @param buffer the {@link org.glassfish.grizzly.Buffer to write}
      */
     void write(final Buffer buffer) throws IOException;
-    
+
 }

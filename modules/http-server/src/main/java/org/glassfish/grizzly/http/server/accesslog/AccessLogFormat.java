@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,10 +21,11 @@ import java.util.Date;
 import org.glassfish.grizzly.http.server.Response;
 
 /**
- * An interface defining a component capable of formatting {@link Response}s
- * into printable <em>access log entries</em>.
+ * An interface defining a component capable of formatting {@link Response}s into printable <em>access log entries</em>.
  *
- * <p>Implementations of this class <b>must</b> be thread-safe.</p>
+ * <p>
+ * Implementations of this class <b>must</b> be thread-safe.
+ * </p>
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  * @author <a href="http://www.usrz.com/">USRZ.com</a>
@@ -32,13 +33,12 @@ import org.glassfish.grizzly.http.server.Response;
 public interface AccessLogFormat {
 
     /**
-     * Format the data contained in the specified {@link Response} and return
-     * a {@link String} which can be appended to an access log file.
+     * Format the data contained in the specified {@link Response} and return a {@link String} which can be appended to an
+     * access log file.
      *
      * @param response The {@link Response} holding the data to format.
      * @param timeStamp The {@link Date} at which the request was originated.
-     * @param responseNanos The time, in nanoseconds, the {@link Response}
-     *                      took to complete.
+     * @param responseNanos The time, in nanoseconds, the {@link Response} took to complete.
      */
     String format(Response response, Date timeStamp, long responseNanos);
 

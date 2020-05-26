@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,8 +29,8 @@ public interface WebSocket {
      */
     int NORMAL_CLOSURE = 1000;
     /**
-     * Indicates that an endpoint is "going away", such as a server going down, or a browser having navigated away from
-     * a page.
+     * Indicates that an endpoint is "going away", such as a server going down, or a browser having navigated away from a
+     * page.
      */
     int END_POINT_GOING_DOWN = 1001;
     /**
@@ -47,14 +47,14 @@ public interface WebSocket {
      */
     int MESSAGE_TOO_LARGE = 1004;
     /**
-     * a reserved value and MUST NOT be set as a status code in a Close control frame by an endpoint.  It is designated
-     * for use in applications expecting a status code to indicate that no status code was actually present.
+     * a reserved value and MUST NOT be set as a status code in a Close control frame by an endpoint. It is designated for
+     * use in applications expecting a status code to indicate that no status code was actually present.
      */
     int NO_STATUS_CODE = 1005;
     /**
-     * a reserved value and MUST NOT be set as a status code in a Close control frame by an endpoint.  It is designated
-     * for use in applications expecting a status code to indicate that the connection was closed abnormally, e.g.
-     * without sending or receiving a Close control frame.
+     * a reserved value and MUST NOT be set as a status code in a Close control frame by an endpoint. It is designated for
+     * use in applications expecting a status code to indicate that the connection was closed abnormally, e.g. without
+     * sending or receiving a Close control frame.
      */
     int ABNORMAL_CLOSE = 1006;
 
@@ -85,7 +85,7 @@ public interface WebSocket {
      * @param data
      */
     void broadcast(final Iterable<? extends WebSocket> recipients, String data);
-    
+
     /**
      * <p>
      * Broadcasts the data to the remote end-point set.
@@ -95,7 +95,7 @@ public interface WebSocket {
      * @param data
      */
     void broadcast(final Iterable<? extends WebSocket> recipients, byte[] data);
-    
+
     /**
      * <p>
      * Broadcasts the data fragment to the remote end-point set.
@@ -104,9 +104,8 @@ public interface WebSocket {
      * @param recipients
      * @param data
      */
-    void broadcastFragment(final Iterable<? extends WebSocket> recipients,
-            String data, boolean last);
-    
+    void broadcastFragment(final Iterable<? extends WebSocket> recipients, String data, boolean last);
+
     /**
      * <p>
      * Broadcasts the data fragment to the remote end-point set.
@@ -115,15 +114,13 @@ public interface WebSocket {
      * @param recipients
      * @param data
      */
-    void broadcastFragment(final Iterable<? extends WebSocket> recipients,
-            byte[] data, boolean last);
+    void broadcastFragment(final Iterable<? extends WebSocket> recipients, byte[] data, boolean last);
 
     /**
      * Sends a <code>ping</code> frame with the specified payload (if any).
      * </p>
      *
-     * @param data optional payload.  Note that payload length is restricted
-     *  to 125 bytes or less.
+     * @param data optional payload. Note that payload length is restricted to 125 bytes or less.
      *
      * @return {@link GrizzlyFuture} which could be used to control/check the sending completion state.
      *
@@ -136,16 +133,16 @@ public interface WebSocket {
      * Sends a <code>ping</code> frame with the specified payload (if any).
      * </p>
      *
-     * <p>It may seem odd to send a pong frame, however, RFC-6455 states:</p>
-     *
      * <p>
-     *     "A Pong frame MAY be sent unsolicited.  This serves as a
-     *     unidirectional heartbeat.  A response to an unsolicited Pong frame is
-     *     not expected."
+     * It may seem odd to send a pong frame, however, RFC-6455 states:
      * </p>
      *
-     * @param data optional payload.  Note that payload length is restricted
-     *  to 125 bytes or less.
+     * <p>
+     * "A Pong frame MAY be sent unsolicited. This serves as a unidirectional heartbeat. A response to an unsolicited Pong
+     * frame is not expected."
+     * </p>
+     *
+     * @param data optional payload. Note that payload length is restricted to 125 bytes or less.
      *
      * @return {@link GrizzlyFuture} which could be used to control/check the sending completion state.
      *
@@ -157,10 +154,10 @@ public interface WebSocket {
      * <p>
      * Sends a fragment of a complete message.
      * </p>
-     * 
+     *
      * @param last boolean indicating if this message fragment is the last.
      * @param fragment the textual fragment to send.
-     *                 
+     * 
      * @return {@link GrizzlyFuture} which could be used to control/check the sending completion state.
      */
     GrizzlyFuture<DataFrame> stream(boolean last, String fragment);
@@ -174,7 +171,7 @@ public interface WebSocket {
      * @param fragment the binary fragment to send.
      * @param off the offset within the fragment to send.
      * @param len the number of bytes of the fragment to send.
-     *            
+     * 
      * @return {@link GrizzlyFuture} which could be used to control/check the sending completion state.
      */
     GrizzlyFuture<DataFrame> stream(boolean last, byte[] fragment, int off, int len);
@@ -197,8 +194,7 @@ public interface WebSocket {
 
     /**
      * <p>
-     * Closes this {@link WebSocket} using the specified status code and
-     * reason.
+     * Closes this {@link WebSocket} using the specified status code and reason.
      * </p>
      *
      * @param code the closing status code.
@@ -210,16 +206,14 @@ public interface WebSocket {
      * <p>
      * Convenience method to determine if this {@link WebSocket} is connected.
      * </p>
-     * 
-     * @return <code>true</code> if the {@link WebSocket} is connected, otherwise
-     *  <code>false</code>
+     *
+     * @return <code>true</code> if the {@link WebSocket} is connected, otherwise <code>false</code>
      */
     boolean isConnected();
 
     /**
      * <p>
-     * This callback will be invoked when the opening handshake between both
-     * endpoints has been completed.
+     * This callback will be invoked when the opening handshake between both endpoints has been completed.
      * </p>
      */
     void onConnect();
@@ -244,84 +238,74 @@ public interface WebSocket {
 
     /**
      * <p>
-     * This callback will be invoked when a fragmented textual message has
-     * been received.
+     * This callback will be invoked when a fragmented textual message has been received.
      * </p>
      *
-     * @param last flag indicating whether or not the payload received is the
-     *  final fragment of a message.
+     * @param last flag indicating whether or not the payload received is the final fragment of a message.
      * @param payload the text received from the remote end-point.
      */
     void onFragment(boolean last, String payload);
 
     /**
      * <p>
-     * This callback will be invoked when a fragmented binary message has
-     * been received.
+     * This callback will be invoked when a fragmented binary message has been received.
      * </p>
      *
-     * @param last flag indicating whether or not the payload received is the
-     *  final fragment of a message.
+     * @param last flag indicating whether or not the payload received is the final fragment of a message.
      * @param payload the binary data received from the remote end-point.
      */
     void onFragment(boolean last, byte[] payload);
 
     /**
      * <p>
-     * This callback will be invoked when the remote end-point sent a closing 
-     * frame.
+     * This callback will be invoked when the remote end-point sent a closing frame.
      * </p>
-     * 
+     *
      * @param frame the close frame from the remote end-point.
-     *              
-     * @see DataFrame             
+     * 
+     * @see DataFrame
      */
     void onClose(DataFrame frame);
 
     /**
      * <p>
-     * This callback will be invoked when the remote end-point has sent a ping
-     * frame.
+     * This callback will be invoked when the remote end-point has sent a ping frame.
      * </p>
      *
      * @param frame the ping frame from the remote end-point.
-     * 
-     * @see DataFrame             
+     *
+     * @see DataFrame
      */
     void onPing(DataFrame frame);
 
     /**
      * <p>
-     * This callback will be invoked when the remote end-point has sent a pong
-     * frame.
+     * This callback will be invoked when the remote end-point has sent a pong frame.
      * </p>
      *
      * @param frame the pong frame from the remote end-point.
-     * 
+     *
      * @see DataFrame
      */
     void onPong(DataFrame frame);
 
     /**
      * Adds a {@link WebSocketListener} to be notified of events of interest.
-     * 
+     *
      * @param listener the {@link WebSocketListener} to add.
-     *                 
-     * @return <code>true</code> if the listener was added, otherwise 
-     *  <code>false</code>
-     *  
+     * 
+     * @return <code>true</code> if the listener was added, otherwise <code>false</code>
+     * 
      * @see WebSocketListener
      */
     boolean add(WebSocketListener listener);
 
     /**
-     * Removes the specified {@link WebSocketListener} as a target of event
-     * notification.
+     * Removes the specified {@link WebSocketListener} as a target of event notification.
      *
      * @param listener the {@link WebSocketListener} to remote.
      *
-     * @return <code>true</code> if the listener was removed, otherwise
-     *  <code>false</code>
+     * @return <code>true</code> if the listener was removed, otherwise <code>false</code>
      *
      * @see WebSocketListener
      */

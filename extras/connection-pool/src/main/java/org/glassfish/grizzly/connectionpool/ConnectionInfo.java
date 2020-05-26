@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,7 +20,7 @@ import org.glassfish.grizzly.Connection;
 
 /**
  * Pooled {@link Connection} information, that might be used for monitoring reasons.
- * 
+ *
  * @param <E>
  * @author Alexey Stashok
  */
@@ -28,43 +28,41 @@ public final class ConnectionInfo<E> {
     final Connection connection;
     final Link<ConnectionInfo<E>> readyStateLink;
     final SingleEndpointPool<E> endpointPool;
-    
+
     long ttlTimeout; // the place holder for TTL time stamp
-    
+
     private final long pooledTimeStamp;
 
     ConnectionInfo(final Connection connection, final SingleEndpointPool<E> endpointPool) {
         this.connection = connection;
         this.endpointPool = endpointPool;
-        this.readyStateLink = new Link<ConnectionInfo<E>>(this);
+        this.readyStateLink = new Link<>(this);
         pooledTimeStamp = System.currentTimeMillis();
     }
 
     /**
-     * @return <tt>true</tt> if the {@link Connection} is in ready state,
-     * waiting for a user to pull it out from the pool. Returns <tt>false</tt>
-     * if the {@link Connection} is currently busy.
+     * @return <tt>true</tt> if the {@link Connection} is in ready state, waiting for a user to pull it out from the pool.
+     * Returns <tt>false</tt> if the {@link Connection} is currently busy.
      */
     public boolean isReady() {
-        synchronized(endpointPool.poolSync) {
+        synchronized (endpointPool.poolSync) {
             return readyStateLink.isAttached();
         }
     }
-    
+
     /**
-     * @return the timestamp (in milliseconds) when this {@link Connection} was
-     * returned to the pool and its state switched to ready, or <tt>-1</tt> if
-     * the {@link Connection} is currently in busy state.
+     * @return the timestamp (in milliseconds) when this {@link Connection} was returned to the pool and its state switched
+     * to ready, or <tt>-1</tt> if the {@link Connection} is currently in busy state.
      */
     public long getReadyTimeStamp() {
-        synchronized(endpointPool.poolSync) {
+        synchronized (endpointPool.poolSync) {
             return readyStateLink.getAttachmentTimeStamp();
         }
     }
-    
+
     /**
-     * @return the timestamp (in milliseconds) when this {@link Connection} was
-     * added to the pool: either created directly by pool or attached.
+     * @return the timestamp (in milliseconds) when this {@link Connection} was added to the pool: either created directly
+     * by pool or attached.
      */
     public long getPooledTimeStamp() {
         return pooledTimeStamp;
@@ -72,11 +70,7 @@ public final class ConnectionInfo<E> {
 
     @Override
     public String toString() {
-        return "ConnectionInfo{"
-                    + "connection=" + connection
-                    + ", readyStateLink=" + readyStateLink
-                    + ", endpointPool=" + endpointPool
-                    + ", pooledTimeStamp=" + pooledTimeStamp
-                    + "} " + super.toString();
+        return "ConnectionInfo{" + "connection=" + connection + ", readyStateLink=" + readyStateLink + ", endpointPool=" + endpointPool + ", pooledTimeStamp="
+                + pooledTimeStamp + "} " + super.toString();
     }
 }

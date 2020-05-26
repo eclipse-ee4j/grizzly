@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,16 +16,16 @@
 
 package org.glassfish.grizzly.utils;
 
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.impl.FutureImpl;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.impl.FutureImpl;
 
 public final class ClientCheckFilter extends BaseFilter {
     private final FutureImpl<Boolean> future;
@@ -35,6 +35,7 @@ public final class ClientCheckFilter extends BaseFilter {
     private final int[] packetsCounter = new int[10];
 
     private final AtomicInteger counter = new AtomicInteger();
+
     public ClientCheckFilter(FutureImpl<Boolean> future, int packetsNumber, int size) {
         this.future = future;
         this.packetsNumber = packetsNumber;

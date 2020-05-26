@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,26 +16,6 @@
 
 package org.glassfish.grizzly.http;
 
-import org.glassfish.grizzly.WriteHandler;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.StandaloneProcessor;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainBuilder;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
-import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.NIOConnection;
-import org.glassfish.grizzly.nio.transport.TCPNIOConnection;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-import org.glassfish.grizzly.streams.StreamWriter;
-import org.glassfish.grizzly.utils.ChunkingFilter;
-import org.glassfish.grizzly.utils.Pair;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -46,17 +26,38 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.TestCase;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.StandaloneProcessor;
+import org.glassfish.grizzly.WriteHandler;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.nio.NIOConnection;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.streams.StreamWriter;
+import org.glassfish.grizzly.utils.ChunkingFilter;
+import org.glassfish.grizzly.utils.Pair;
+
+import junit.framework.TestCase;
 
 /**
  * Testing HTTP response parsing
- * 
+ *
  * @author Alexey Stashok
  */
 public class HttpResponseParseTest extends TestCase {
     private static final Logger logger = Grizzly.logger(HttpResponseParseTest.class);
-    
+
     public static final int PORT = 19001;
 
     public void testHeaderlessResponseLine() throws Exception {
@@ -64,32 +65,28 @@ public class HttpResponseParseTest extends TestCase {
     }
 
     public void testSimpleHeaders() throws Exception {
-        Map<String, Pair<String, String>> headers =
-                new HashMap<String, Pair<String, String>>();
-        headers.put("Header1", new Pair<String,String>("localhost", "localhost"));
-        headers.put("Content-length", new Pair<String,String>("2345", "2345"));
+        Map<String, Pair<String, String>> headers = new HashMap<>();
+        headers.put("Header1", new Pair<>("localhost", "localhost"));
+        headers.put("Content-length", new Pair<>("2345", "2345"));
         doHttpResponseTest("HTTP/1.0", 200, "ALL RIGHT", headers, "\r\n");
     }
 
     public void testMultiLineHeaders() throws Exception {
-        Map<String, Pair<String, String>> headers =
-                new HashMap<String, Pair<String, String>>();
-        headers.put("Header1", new Pair<String, String>("localhost", "localhost"));
-        headers.put("Multi-line", new Pair<String, String>("first\r\n          second\r\n       third", "first seconds third"));
-        headers.put("Content-length", new Pair<String, String>("2345", "2345"));
+        Map<String, Pair<String, String>> headers = new HashMap<>();
+        headers.put("Header1", new Pair<>("localhost", "localhost"));
+        headers.put("Multi-line", new Pair<>("first\r\n          second\r\n       third", "first seconds third"));
+        headers.put("Content-length", new Pair<>("2345", "2345"));
         doHttpResponseTest("HTTP/1.0", 200, "DONE", headers, "\r\n");
     }
-    
 
     public void testHeadersN() throws Exception {
-        Map<String, Pair<String, String>> headers =
-                new HashMap<String, Pair<String, String>>();
-        headers.put("Header1", new Pair<String, String>("localhost", "localhost"));
-        headers.put("Multi-line", new Pair<String, String>("first\n          second\n       third", "first seconds third"));
-        headers.put("Content-length", new Pair<String, String>("2345", "2345"));
+        Map<String, Pair<String, String>> headers = new HashMap<>();
+        headers.put("Header1", new Pair<>("localhost", "localhost"));
+        headers.put("Multi-line", new Pair<>("first\n          second\n       third", "first seconds third"));
+        headers.put("Content-length", new Pair<>("2345", "2345"));
         doHttpResponseTest("HTTP/1.0", 200, "DONE", headers, "\n");
     }
-    
+
     public void testDecoder100continueThen200() {
         try {
             doTestDecoder("HTTP/1.1 100 Continue\n\nHTTP/1.1 200 OK\n\n", 4096);
@@ -146,12 +143,12 @@ public class HttpResponseParseTest extends TestCase {
         }
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     private HttpPacket doTestDecoder(String response, int limit) {
 
         MemoryManager mm = MemoryManager.DEFAULT_MEMORY_MANAGER;
         Buffer input = Buffers.wrap(mm, response);
-        
+
         HttpClientFilter filter = new HttpClientFilter(limit);
         FilterChainContext ctx = FilterChainContext.create(new StandaloneConnection());
         ctx.setMessage(input);
@@ -164,10 +161,8 @@ public class HttpResponseParseTest extends TestCase {
         }
     }
 
-    private void doHttpResponseTest(String protocol, int code,
-            String phrase, Map<String, Pair<String, String>> headers, String eol)
-            throws Exception {
-        
+    private void doHttpResponseTest(String protocol, int code, String phrase, Map<String, Pair<String, String>> headers, String eol) throws Exception {
+
         final FutureImpl<Boolean> parseResult = SafeFutureImpl.create();
 
         Connection<SocketAddress> connection = null;
@@ -177,18 +172,17 @@ public class HttpResponseParseTest extends TestCase {
         filterChainBuilder.add(new TransportFilter());
         filterChainBuilder.add(new ChunkingFilter(2));
         filterChainBuilder.add(new HttpClientFilter());
-        filterChainBuilder.add(new HTTPResponseCheckFilter(parseResult,
-                protocol, code, phrase, Collections.<String, Pair<String, String>>emptyMap()));
+        filterChainBuilder.add(new HTTPResponseCheckFilter(parseResult, protocol, code, phrase, Collections.<String, Pair<String, String>>emptyMap()));
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
-        
+
         try {
             transport.bind(PORT);
             transport.start();
 
             Future<Connection> future = transport.connect("localhost", PORT);
-            connection = (TCPNIOConnection) future.get(10, TimeUnit.SECONDS);
+            connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
 
             connection.configureStandalone(true);
@@ -204,9 +198,9 @@ public class HttpResponseParseTest extends TestCase {
             sb.append(eol);
 
             byte[] message = sb.toString().getBytes();
-            
+
             writer = StandaloneProcessor.INSTANCE.getStreamWriter(connection);
-            
+
             writer.writeByteArray(message);
             Future<Integer> writeFuture = writer.flush();
 
@@ -230,9 +224,7 @@ public class HttpResponseParseTest extends TestCase {
         private final String phrase;
         private final Map<String, Pair<String, String>> headers;
 
-        public HTTPResponseCheckFilter(FutureImpl<Boolean> parseResult, String protocol,
-                int code, String phrase,
-                Map<String, Pair<String, String>> headers) {
+        public HTTPResponseCheckFilter(FutureImpl<Boolean> parseResult, String protocol, int code, String phrase, Map<String, Pair<String, String>> headers) {
             this.parseResult = parseResult;
             this.protocol = protocol;
             this.code = code;
@@ -241,19 +233,17 @@ public class HttpResponseParseTest extends TestCase {
         }
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
             HttpContent httpContent = ctx.getMessage();
             HttpResponsePacket httpResponse = (HttpResponsePacket) httpContent.getHttpHeader();
-            
+
             try {
                 assertEquals(protocol, httpResponse.getProtocol().getProtocolString());
                 assertEquals(code, httpResponse.getStatus());
                 assertEquals(phrase, httpResponse.getReasonPhrase());
 
-                for(Entry<String, Pair<String, String>> entry : headers.entrySet()) {
-                    assertEquals(entry.getValue().getSecond(),
-                            httpResponse.getHeader(entry.getKey()));
+                for (Entry<String, Pair<String, String>> entry : headers.entrySet()) {
+                    assertEquals(entry.getValue().getSecond(), httpResponse.getHeader(entry.getKey()));
                 }
 
                 parseResult.result(Boolean.TRUE);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Context;
@@ -41,58 +42,48 @@ import org.glassfish.grizzly.utils.ArraySet;
 
 /**
  * Port unification filter.
- * 
+ *
  * @author Alexey Stashok
  */
 public class PUFilter extends BaseFilter {
     private static final Logger LOGGER = Grizzly.logger(PUFilter.class);
 
-    private final SuspendedContextCopyListener suspendedContextCopyListener =
-            new SuspendedContextCopyListener();
-    
-    private final BackChannelFilter backChannelFilter =
-            new BackChannelFilter(this);
-    private final ArraySet<PUProtocol> protocols =
-            new ArraySet<PUProtocol>(PUProtocol.class);
-    
+    private final SuspendedContextCopyListener suspendedContextCopyListener = new SuspendedContextCopyListener();
+
+    private final BackChannelFilter backChannelFilter = new BackChannelFilter(this);
+    private final ArraySet<PUProtocol> protocols = new ArraySet<>(PUProtocol.class);
+
     final Attribute<PUContext> puContextAttribute;
     final Attribute<FilterChainContext> suspendedContextAttribute;
 
     private final boolean isCloseUnrecognizedConnection;
-    
+
     public PUFilter() {
         this(true);
     }
 
     /**
      * Constructs PUFilter.
-     * 
-     * @param isCloseUnrecognizedConnection <tt>true</tt> if a {@link Connection}
-     * whose protocol is not recognized will be automatically closed,
-     * or <tt>false</tt> if normal {@link FilterChain} processing will be
-     * continued for such {@link Connection}, so a {@link Filter} next to
-     * <tt>PUFilter</tt> may implement custom logic to process unrecognized connection.
-     */    
+     *
+     * @param isCloseUnrecognizedConnection <tt>true</tt> if a {@link Connection} whose protocol is not recognized will be
+     * automatically closed, or <tt>false</tt> if normal {@link FilterChain} processing will be continued for such
+     * {@link Connection}, so a {@link Filter} next to <tt>PUFilter</tt> may implement custom logic to process unrecognized
+     * connection.
+     */
     public PUFilter(final boolean isCloseUnrecognizedConnection) {
         this.isCloseUnrecognizedConnection = isCloseUnrecognizedConnection;
-        puContextAttribute =
-                Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-                        PUFilter.class.getName() + '-' + hashCode() + ".puContext");
-        suspendedContextAttribute =
-                Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-                        PUFilter.class.getName() + '-' + hashCode() + ".suspendedContext");
+        puContextAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(PUFilter.class.getName() + '-' + hashCode() + ".puContext");
+        suspendedContextAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(PUFilter.class.getName() + '-' + hashCode() + ".suspendedContext");
     }
 
     /**
-     * Registers new {@link ProtocolFinder} - {@link FilterChain} pair, which
-     * defines the protocol.
-     * 
+     * Registers new {@link ProtocolFinder} - {@link FilterChain} pair, which defines the protocol.
+     *
      * @param protocolFinder {@link ProtocolFinder}
      * @param filterChain {@link FilterChain}
      * @return {@link PUProtocol}, which wraps passed {@link ProtocolFinder} and {@link FilterChain}.
      */
-    public PUProtocol register(final ProtocolFinder protocolFinder,
-            final FilterChain filterChain) {
+    public PUProtocol register(final ProtocolFinder protocolFinder, final FilterChain filterChain) {
 
         final PUProtocol puProtocol = new PUProtocol(protocolFinder, filterChain);
         register(puProtocol);
@@ -133,12 +124,10 @@ public class PUFilter extends BaseFilter {
     }
 
     /**
-     * Get the back channel {@link Filter} implementation, which should connect the
-     * custom protocol {@link FilterChain} with the main {@link FilterChain}.
-     * Usually developers shouldn't use this method, if they build custom protocol
-     * chains using {@link #getPUFilterChainBuilder()}, otherwise they have to
-     * make sure there custom protocol {@link FilterChain} contains back channel
-     * {@link Filter} (usually first Filter in the custom protocol filter chain).
+     * Get the back channel {@link Filter} implementation, which should connect the custom protocol {@link FilterChain} with
+     * the main {@link FilterChain}. Usually developers shouldn't use this method, if they build custom protocol chains
+     * using {@link #getPUFilterChainBuilder()}, otherwise they have to make sure there custom protocol {@link FilterChain}
+     * contains back channel {@link Filter} (usually first Filter in the custom protocol filter chain).
      *
      *
      * @return back channel {@link Filter}.
@@ -148,9 +137,8 @@ public class PUFilter extends BaseFilter {
     }
 
     /**
-     * Returns the {@link FilterChainBuilder}, developers may use to build there
-     * custom protocol filter chain.
-     * The returned {@link FilterChainBuilder} may have some {@link Filter}s pre-added.
+     * Returns the {@link FilterChainBuilder}, developers may use to build there custom protocol filter chain. The returned
+     * {@link FilterChainBuilder} may have some {@link Filter}s pre-added.
      *
      * @return {@link FilterChainBuilder}.
      */
@@ -161,16 +149,14 @@ public class PUFilter extends BaseFilter {
     }
 
     /**
-     * Returns <tt>true</tt> if a {@link Connection} whose protocol is not recognized
-     * will be automatically closed, or <tt>false</tt> if normal
-     * {@link FilterChain} processing will be continued for such {@link Connection},
-     * so a {@link Filter} next to <tt>PUFilter</tt> may implement custom logic
-     * to process unrecognized connection.
+     * Returns <tt>true</tt> if a {@link Connection} whose protocol is not recognized will be automatically closed, or
+     * <tt>false</tt> if normal {@link FilterChain} processing will be continued for such {@link Connection}, so a
+     * {@link Filter} next to <tt>PUFilter</tt> may implement custom logic to process unrecognized connection.
      */
     public boolean isCloseUnrecognizedConnection() {
         return isCloseUnrecognizedConnection;
     }
-    
+
     @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
@@ -189,20 +175,19 @@ public class PUFilter extends BaseFilter {
             findProtocol(puContext, ctx);
             protocol = puContext.protocol;
         }
-        
+
         if (protocol != null) {
             if (!puContext.isSticky) {
                 // if not sticky - next request may belong to another protocol
                 // so reset puContext
                 puContext.reset();
             }
-            
-            final FilterChainContext filterChainContext =
-                    obtainChildFilterChainContext(protocol, connection, ctx);
-            
+
+            final FilterChainContext filterChainContext = obtainChildFilterChainContext(protocol, connection, ctx);
+
             filterChainContext.addCopyListener(suspendedContextCopyListener);
             suspendedContextAttribute.set(filterChainContext, ctx);
-            
+
             final NextAction suspendAction = ctx.getSuspendAction();
             ctx.suspend();
             ProcessorExecutor.execute(filterChainContext.getInternalContext());
@@ -217,7 +202,7 @@ public class PUFilter extends BaseFilter {
                 connection.closeSilently();
                 return ctx.getStopAction();
             }
-            
+
             return ctx.getInvokeAction();
         }
 
@@ -226,14 +211,10 @@ public class PUFilter extends BaseFilter {
         return ctx.getStopAction(ctx.getMessage());
     }
 
-    private FilterChainContext obtainChildFilterChainContext(
-            final PUProtocol protocol,
-            final Connection connection,
-            final FilterChainContext ctx) {
-        
-        final FilterChain filterChain = protocol.getFilterChain();        
-        final FilterChainContext filterChainContext =
-                filterChain.obtainFilterChainContext(connection);
+    private FilterChainContext obtainChildFilterChainContext(final PUProtocol protocol, final Connection connection, final FilterChainContext ctx) {
+
+        final FilterChain filterChain = protocol.getFilterChain();
+        final FilterChainContext filterChainContext = filterChain.obtainFilterChainContext(connection);
         final Context context = filterChainContext.getInternalContext();
         context.setIoEvent(IOEvent.READ);
         context.addLifeCycleListener(new InternalProcessingHandler(ctx));
@@ -243,8 +224,7 @@ public class PUFilter extends BaseFilter {
     }
 
     @Override
-    public NextAction handleEvent(final FilterChainContext ctx,
-            final FilterChainEvent event) throws IOException {
+    public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
 
         // if upstream event - pass it to the puFilter
         if (isUpstream(ctx)) {
@@ -262,9 +242,9 @@ public class PUFilter extends BaseFilter {
                 suspendedContextAttribute.set(context, ctx);
                 ctx.suspend();
                 final NextAction suspendAction = ctx.getSuspendAction();
-                
+
                 context.notifyUpstream(event, new InternalCompletionHandler(ctx));
-                
+
                 return suspendAction;
             }
         }
@@ -277,8 +257,7 @@ public class PUFilter extends BaseFilter {
         return super.handleClose(ctx);
     }
 
-    protected void findProtocol(final PUContext puContext,
-                                final FilterChainContext ctx) {
+    protected void findProtocol(final PUContext puContext, final FilterChainContext ctx) {
         final PUProtocol[] protocolArray = protocols.getArray();
 
         for (int i = 0; i < protocolArray.length; i++) {
@@ -287,20 +266,17 @@ public class PUFilter extends BaseFilter {
                 continue;
             }
             try {
-                final ProtocolFinder.Result result =
-                        protocol.getProtocolFinder().find(puContext, ctx);
+                final ProtocolFinder.Result result = protocol.getProtocolFinder().find(puContext, ctx);
 
                 switch (result) {
-                    case FOUND:
-                        puContext.protocol = protocol;
-                        return;
-                    case NOT_FOUND:
-                        puContext.skippedProtocolFinders ^= 1 << i;
+                case FOUND:
+                    puContext.protocol = protocol;
+                    return;
+                case NOT_FOUND:
+                    puContext.skippedProtocolFinders ^= 1 << i;
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING,
-                        "ProtocolFinder " + protocol.getProtocolFinder() +
-                        " reported error", e);
+                LOGGER.log(Level.WARNING, "ProtocolFinder " + protocol.getProtocolFinder() + " reported error", e);
             }
         }
     }
@@ -309,37 +285,32 @@ public class PUFilter extends BaseFilter {
         return context.getStartIdx() < context.getEndIdx();
     }
 
-
     private class InternalProcessingHandler extends IOEventLifeCycleListener.Adapter {
         private final FilterChainContext parentContext;
-        
+
         private InternalProcessingHandler(final FilterChainContext parentContext) {
             this.parentContext = parentContext;
         }
-        
+
         @Override
         public void onReregister(final Context context) throws IOException {
-            final FilterChainContext suspendedContext =
-                    suspendedContextAttribute.get(context);
+            final FilterChainContext suspendedContext = suspendedContextAttribute.get(context);
 
             assert suspendedContext != null;
             suspendedContext.resume(suspendedContext.getForkAction());
         }
 
         @Override
-        public void onComplete(final Context context, final Object data)
-                throws IOException {
-            final FilterChainContext suspendedContext =
-                    suspendedContextAttribute.remove(context);
+        public void onComplete(final Context context, final Object data) throws IOException {
+            final FilterChainContext suspendedContext = suspendedContextAttribute.remove(context);
 
             assert suspendedContext != null;
-            
+
             suspendedContext.resume(suspendedContext.getStopAction());
         }
     }
 
-    private static class InternalCompletionHandler implements
-            CompletionHandler<FilterChainContext> {
+    private static class InternalCompletionHandler implements CompletionHandler<FilterChainContext> {
 
         private final FilterChainContext suspendedContext;
 
@@ -367,17 +338,15 @@ public class PUFilter extends BaseFilter {
         }
 
     }
-    
+
     private class SuspendedContextCopyListener implements CopyListener {
 
         @Override
-        public void onCopy(final FilterChainContext srcContext,
-                final FilterChainContext copiedContext) {
-            final FilterChainContext suspendedContextCopy =
-                    suspendedContextAttribute.get(srcContext).copy();
+        public void onCopy(final FilterChainContext srcContext, final FilterChainContext copiedContext) {
+            final FilterChainContext suspendedContextCopy = suspendedContextAttribute.get(srcContext).copy();
             suspendedContextAttribute.set(copiedContext, suspendedContextCopy);
             copiedContext.addCopyListener(this);
         }
-        
+
     }
 }

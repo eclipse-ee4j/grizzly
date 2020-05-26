@@ -17,31 +17,30 @@
 
 package org.glassfish.grizzly.servlet;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.util.Locale;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+
 /**
- * Wrapper around a <code>jakarta.servlet.http.HttpServletResponse</code>
- * that transforms an application response object (which might be the original
- * one passed to a servlet.
+ * Wrapper around a <code>jakarta.servlet.http.HttpServletResponse</code> that transforms an application response object
+ * (which might be the original one passed to a servlet.
  *
  * @author Bongjae Chang
  */
 public class DispatchedHttpServletResponse extends HttpServletResponseWrapper {
 
     /**
-     * Is this wrapped response the subject of an <code>include()</code>
-     * call?
+     * Is this wrapped response the subject of an <code>include()</code> call?
      */
     private boolean included = false;
 
-    public DispatchedHttpServletResponse( HttpServletResponse response, boolean included ) {
-        super( response );
+    public DispatchedHttpServletResponse(HttpServletResponse response, boolean included) {
+        super(response);
         this.included = included;
-        setResponse( response );
+        setResponse(response);
     }
 
     /**
@@ -49,135 +48,151 @@ public class DispatchedHttpServletResponse extends HttpServletResponseWrapper {
      *
      * @param response The new wrapped response
      */
-    private void setResponse( HttpServletResponse response ) {
-        super.setResponse( response );
+    private void setResponse(HttpServletResponse response) {
+        super.setResponse(response);
     }
 
     @Override
-    public void setContentLength( int len ) {
-        if( included )
+    public void setContentLength(int len) {
+        if (included) {
             return;
-        super.setContentLength( len );
+        }
+        super.setContentLength(len);
     }
 
     @Override
-    public void setContentType( String type ) {
-        if( included )
+    public void setContentType(String type) {
+        if (included) {
             return;
-        super.setContentType( type );
+        }
+        super.setContentType(type);
     }
 
     @Override
-    public void setBufferSize( int size ) {
-        if( included )
+    public void setBufferSize(int size) {
+        if (included) {
             return;
-        super.setBufferSize( size );
+        }
+        super.setBufferSize(size);
     }
 
     @Override
     public void reset() {
-        if( included )
+        if (included) {
             return;
+        }
         super.reset();
     }
 
     @Override
-    public void setLocale( Locale loc ) {
-        if( included )
+    public void setLocale(Locale loc) {
+        if (included) {
             return;
-        super.setLocale( loc );
+        }
+        super.setLocale(loc);
     }
 
     @Override
-    public void addCookie( Cookie cookie ) {
-        if( included )
+    public void addCookie(Cookie cookie) {
+        if (included) {
             return;
-        super.addCookie( cookie );
+        }
+        super.addCookie(cookie);
     }
 
     @Override
-    public void sendError( int sc, String msg )
-            throws IOException {
-        if( included )
+    public void sendError(int sc, String msg) throws IOException {
+        if (included) {
             return;
-        super.sendError( sc, msg );
+        }
+        super.sendError(sc, msg);
     }
 
     @Override
-    public void sendError( int sc )
-            throws IOException {
-        if( included )
+    public void sendError(int sc) throws IOException {
+        if (included) {
             return;
-        super.sendError( sc );
-    }
-
-    public void sendRedirect( String location )
-            throws IOException {
-        if( included )
-            return;
-        super.sendRedirect( location );
+        }
+        super.sendError(sc);
     }
 
     @Override
-    public void setDateHeader( String name, long date ) {
-        if( included )
+    public void sendRedirect(String location) throws IOException {
+        if (included) {
             return;
-        super.setDateHeader( name, date );
+        }
+        super.sendRedirect(location);
     }
 
     @Override
-    public void addDateHeader( String name, long date ) {
-        if( included )
+    public void setDateHeader(String name, long date) {
+        if (included) {
             return;
-        super.addDateHeader( name, date );
+        }
+        super.setDateHeader(name, date);
     }
 
     @Override
-    public void setHeader( String name, String value ) {
-        if( included )
+    public void addDateHeader(String name, long date) {
+        if (included) {
             return;
-        super.setHeader( name, value );
+        }
+        super.addDateHeader(name, date);
     }
 
     @Override
-    public void addHeader( String name, String value ) {
-        if( included )
+    public void setHeader(String name, String value) {
+        if (included) {
             return;
-        super.addHeader( name, value );
+        }
+        super.setHeader(name, value);
     }
 
     @Override
-    public void setIntHeader( String name, int value ) {
-        if( included )
+    public void addHeader(String name, String value) {
+        if (included) {
             return;
-        super.setIntHeader( name, value );
+        }
+        super.addHeader(name, value);
     }
 
     @Override
-    public void addIntHeader( String name, int value ) {
-        if( included )
+    public void setIntHeader(String name, int value) {
+        if (included) {
             return;
-        super.addIntHeader( name, value );
+        }
+        super.setIntHeader(name, value);
     }
 
     @Override
-    public void setStatus( int sc ) {
-        if( included )
+    public void addIntHeader(String name, int value) {
+        if (included) {
             return;
-        super.setStatus( sc );
+        }
+        super.addIntHeader(name, value);
     }
 
     @Override
-    public void setStatus( int sc, String sm ) {
-        if( included )
+    public void setStatus(int sc) {
+        if (included) {
             return;
-        super.setStatus( sc, sm );
+        }
+        super.setStatus(sc);
     }
 
     @Override
-    public void setCharacterEncoding( String charEnc ) {
-        if( included )
+    public void setStatus(int sc, String sm) {
+        if (included) {
             return;
-        super.setCharacterEncoding( charEnc );
+        }
+        super.setStatus(sc, sm);
+    }
+
+    @Override
+    public void setCharacterEncoding(String charEnc) {
+        if (included) {
+            return;
+        }
+        super.setCharacterEncoding(charEnc);
     }
 }

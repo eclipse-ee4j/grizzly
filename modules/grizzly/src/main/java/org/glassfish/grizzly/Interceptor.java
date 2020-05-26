@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,7 +18,7 @@ package org.glassfish.grizzly;
 
 /**
  * Handler, which is used to finer control {@link Readable}.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface Interceptor<R> {
@@ -26,18 +26,16 @@ public interface Interceptor<R> {
     int COMPLETED = 1;
     int INCOMPLETED = 2;
     int RESET = 4;
-    
+
     /**
-     * Callback method is called by {@link Readable}, so it is possible to
-     * customize reading process. Mostly {@link Interceptor} is used to control
-     * asynchronous reads.
-     * 
+     * Callback method is called by {@link Readable}, so it is possible to customize reading process. Mostly
+     * {@link Interceptor} is used to control asynchronous reads.
+     *
      * @param event type of intercepted event.
      * @param context read operation context.
      * @param result last read operation result.
      *
-     * @return the implementation specific code to instruct {@link Readable}
-     * how it should continue reading operation.
+     * @return the implementation specific code to instruct {@link Readable} how it should continue reading operation.
      */
     int intercept(int event, Object context, R result);
 }

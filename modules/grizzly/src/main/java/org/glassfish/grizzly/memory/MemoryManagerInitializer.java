@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,35 +16,29 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.glassfish.grizzly.Grizzly;
+import static org.glassfish.grizzly.memory.DefaultMemoryManagerFactory.DMMF_PROP_NAME;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.glassfish.grizzly.memory.DefaultMemoryManagerFactory.DMMF_PROP_NAME;
+import org.glassfish.grizzly.Grizzly;
 
 class MemoryManagerInitializer {
 
-    private static final String DMM_PROP_NAME =
-            "org.glassfish.grizzly.DEFAULT_MEMORY_MANAGER";
+    private static final String DMM_PROP_NAME = "org.glassfish.grizzly.DEFAULT_MEMORY_MANAGER";
 
-    private static final Logger LOGGER =
-            Grizzly.logger(MemoryManagerInitializer.class);
-
+    private static final Logger LOGGER = Grizzly.logger(MemoryManagerInitializer.class);
 
     // ------------------------------------------------- Package-Private Methods
-
 
     static MemoryManager initManager() {
 
         final MemoryManager mm = initMemoryManagerViaFactory();
-        return (mm != null) ? mm : initMemoryManagerFallback();
+        return mm != null ? mm : initMemoryManagerFallback();
 
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     @SuppressWarnings("unchecked")
     private static MemoryManager initMemoryManagerViaFactory() {
@@ -62,7 +56,7 @@ class MemoryManagerInitializer {
     private static MemoryManager initMemoryManagerFallback() {
         final String className = System.getProperty(DMM_PROP_NAME);
         final MemoryManager mm = newInstance(className);
-        return (mm != null) ? mm : new HeapMemoryManager();
+        return mm != null ? mm : new HeapMemoryManager();
     }
 
     @SuppressWarnings("unchecked")
@@ -71,16 +65,11 @@ class MemoryManagerInitializer {
             return null;
         }
         try {
-            Class clazz =
-                    Class.forName(className,
-                                  true,
-                                  MemoryManager.class.getClassLoader());
+            Class clazz = Class.forName(className, true, MemoryManager.class.getClassLoader());
             return (T) clazz.newInstance();
         } catch (Exception e) {
             if (LOGGER.isLoggable(Level.SEVERE)) {
-                LOGGER.log(Level.SEVERE,
-                           "Unable to load or create a new instance of Class {0}.  Cause: {1}",
-                           new Object[]{className, e.getMessage()});
+                LOGGER.log(Level.SEVERE, "Unable to load or create a new instance of Class {0}.  Cause: {1}", new Object[] { className, e.getMessage() });
             }
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, e.toString(), e);

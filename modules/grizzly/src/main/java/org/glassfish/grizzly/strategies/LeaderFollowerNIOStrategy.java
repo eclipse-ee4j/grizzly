@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,8 +28,8 @@ import org.glassfish.grizzly.nio.NIOConnection;
 import org.glassfish.grizzly.nio.SelectorRunner;
 
 /**
- * {@link org.glassfish.grizzly.IOStrategy}, which executes {@link org.glassfish.grizzly.Processor}s in a current threads, and
- * resumes selector thread logic in separate thread.
+ * {@link org.glassfish.grizzly.IOStrategy}, which executes {@link org.glassfish.grizzly.Processor}s in a current
+ * threads, and resumes selector thread logic in separate thread.
  *
  * @author Alexey Stashok
  */
@@ -39,15 +39,12 @@ public final class LeaderFollowerNIOStrategy extends AbstractIOStrategy {
 
     private static final Logger logger = Grizzly.logger(LeaderFollowerNIOStrategy.class);
 
-
     // ------------------------------------------------------------ Constructors
 
-
-    private LeaderFollowerNIOStrategy() { }
-
+    private LeaderFollowerNIOStrategy() {
+    }
 
     // ---------------------------------------------------------- Public Methods
-
 
     public static LeaderFollowerNIOStrategy getInstance() {
 
@@ -55,12 +52,10 @@ public final class LeaderFollowerNIOStrategy extends AbstractIOStrategy {
 
     }
 
-
     // ------------------------------------------------- Methods from IOStrategy
 
     @Override
-    public boolean executeIoEvent(final Connection connection,
-            final IOEvent ioEvent, final boolean isIoEventEnabled) throws IOException {
+    public boolean executeIoEvent(final Connection connection, final IOEvent ioEvent, final boolean isIoEventEnabled) throws IOException {
 
         final NIOConnection nioConnection = (NIOConnection) connection;
         IOEventLifeCycleListener listener = null;
@@ -68,7 +63,7 @@ public final class LeaderFollowerNIOStrategy extends AbstractIOStrategy {
             if (isIoEventEnabled) {
                 connection.disableIOEvent(ioEvent);
             }
-            
+
             listener = ENABLE_INTEREST_LIFECYCLE_LISTENER;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -68,15 +68,12 @@ public class HeapBuffer implements Buffer {
 
     protected ByteBuffer byteBuffer;
 
-
     // ------------------------------------------------------------ Constructors
 
     protected HeapBuffer() {
     }
 
-    protected HeapBuffer(final byte[] heap,
-                         final int offset,
-                         final int cap) {
+    protected HeapBuffer(final byte[] heap, final int offset, final int cap) {
         this.heap = heap;
         this.offset = offset;
         this.cap = cap;
@@ -99,7 +96,7 @@ public class HeapBuffer implements Buffer {
         checkDispose();
         flip();
     }
-    
+
     @Override
     public void shrink() {
         checkDispose();
@@ -128,7 +125,7 @@ public class HeapBuffer implements Buffer {
     @Override
     public void dispose() {
         prepareDispose();
-        
+
         byteBuffer = null;
         heap = null;
         pos = 0;
@@ -169,7 +166,9 @@ public class HeapBuffer implements Buffer {
     public final HeapBuffer position(final int newPosition) {
         checkDispose();
         pos = newPosition;
-        if (mark > pos) mark = -1;
+        if (mark > pos) {
+            mark = -1;
+        }
         return this;
     }
 
@@ -183,7 +182,9 @@ public class HeapBuffer implements Buffer {
     public final HeapBuffer limit(final int newLimit) {
         checkDispose();
         lim = newLimit;
-        if (mark > lim) mark = -1;
+        if (mark > lim) {
+            mark = -1;
+        }
         return this;
     }
 
@@ -196,8 +197,9 @@ public class HeapBuffer implements Buffer {
     @Override
     public final HeapBuffer reset() {
         int m = mark;
-        if (m < 0)
+        if (m < 0) {
             throw new InvalidMarkException();
+        }
         pos = m;
         return this;
     }
@@ -227,12 +229,12 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public final int remaining() {
-        return (lim - pos);
+        return lim - pos;
     }
 
     @Override
     public final boolean hasRemaining() {
-        return (pos < lim);
+        return pos < lim;
     }
 
     @Override
@@ -251,19 +253,19 @@ public class HeapBuffer implements Buffer {
     @Override
     public Buffer split(final int splitPosition) {
         checkDispose();
-        
+
         if (splitPosition < 0 || splitPosition > cap) {
             throw new IllegalArgumentException("Invalid splitPosition value, should be 0 <= splitPosition <= capacity");
         }
 
-        if (mark >= splitPosition) mark = -1;
-        
+        if (mark >= splitPosition) {
+            mark = -1;
+        }
+
         final int oldPosition = pos;
         final int oldLimit = lim;
 
-        final HeapBuffer ret = createHeapBuffer(
-                               splitPosition,
-                               cap - splitPosition);
+        final HeapBuffer ret = createHeapBuffer(splitPosition, cap - splitPosition);
 
         cap = splitPosition;
 
@@ -296,13 +298,11 @@ public class HeapBuffer implements Buffer {
         return createHeapBuffer(position, limit - position);
     }
 
-
     @Override
     public HeapBuffer duplicate() {
         checkDispose();
 
-        final HeapBuffer duplicate =
-                createHeapBuffer(0, cap);
+        final HeapBuffer duplicate = createHeapBuffer(0, cap);
         duplicate.position(pos);
         duplicate.limit(lim);
         return duplicate;
@@ -311,7 +311,7 @@ public class HeapBuffer implements Buffer {
     @Override
     public HeapBuffer asReadOnlyBuffer() {
         checkDispose();
-        
+
         onShareHeap();
         final HeapBuffer b = new ReadOnlyHeapBuffer(heap, offset, cap);
         b.pos = pos;
@@ -363,7 +363,7 @@ public class HeapBuffer implements Buffer {
         if (remaining() < length) {
             throw new BufferUnderflowException();
         }
-        System.arraycopy(heap, (this.offset + pos), dst, offset, length);
+        System.arraycopy(heap, this.offset + pos, dst, offset, length);
         pos += length;
         return this;
     }
@@ -391,17 +391,16 @@ public class HeapBuffer implements Buffer {
         Buffers.setPositionLimit(src, oldPos, oldLim);
         pos = thisPos + length;
 
-
         return this;
     }
 
     @Override
     public Buffer get(final ByteBuffer dst) {
         final int length = dst.remaining();
-        
+
         dst.put(heap, offset + pos, length);
         pos += length;
-        
+
         return this;
     }
 
@@ -420,14 +419,14 @@ public class HeapBuffer implements Buffer {
 
         return this;
     }
-    
+
     @Override
     public Buffer put(final ByteBuffer src) {
         final int length = src.remaining();
-        
+
         src.get(heap, offset + pos, length);
         pos += length;
-        
+
         return this;
     }
 
@@ -451,11 +450,9 @@ public class HeapBuffer implements Buffer {
         return wrap(heap, 0, heap.length);
     }
 
-
     public static HeapBuffer wrap(byte[] heap, int off, int len) {
         return new HeapBuffer(heap, off, len);
     }
-
 
     @Override
     public HeapBuffer put(byte[] src) {
@@ -505,7 +502,7 @@ public class HeapBuffer implements Buffer {
     @Override
     public HeapBuffer order(ByteOrder bo) {
         order = bo;
-        bigEndian = (order == ByteOrder.BIG_ENDIAN);
+        bigEndian = order == ByteOrder.BIG_ENDIAN;
         return this;
     }
 
@@ -521,7 +518,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public char getChar(int index) {
-        if (index < 0 || index >= (lim - 1)) {
+        if (index < 0 || index >= lim - 1) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getChar(heap, offset + index, bigEndian);
@@ -540,7 +537,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putChar(int index, char value) {
-        if (index < 0 || index >= (lim - 1)) {
+        if (index < 0 || index >= lim - 1) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putChar(heap, offset + index, value, bigEndian);
@@ -559,7 +556,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public short getShort(int index) {
-        if (index < 0 || index >= (lim - 1)) {
+        if (index < 0 || index >= lim - 1) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getShort(heap, offset + index, bigEndian);
@@ -577,7 +574,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putShort(int index, short value) {
-        if (index < 0 || index >= (lim - 1)) {
+        if (index < 0 || index >= lim - 1) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putShort(heap, offset + index, value, bigEndian);
@@ -596,7 +593,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public int getInt(int index) {
-        if (index < 0 || index >= (lim - 3)) {
+        if (index < 0 || index >= lim - 3) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getInt(heap, offset + index, bigEndian);
@@ -614,7 +611,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putInt(int index, int value) {
-        if (index < 0 || index >= (lim - 3)) {
+        if (index < 0 || index >= lim - 3) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putInt(heap, offset + index, value, bigEndian);
@@ -633,7 +630,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public long getLong(int index) {
-        if (index < 0 || index >= (lim - 7)) {
+        if (index < 0 || index >= lim - 7) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getLong(heap, offset + index, bigEndian);
@@ -651,7 +648,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putLong(int index, long value) {
-        if (index < 0 || index >= (lim - 7)) {
+        if (index < 0 || index >= lim - 7) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putLong(heap, offset + index, value, bigEndian);
@@ -670,7 +667,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public float getFloat(int index) {
-        if (index < 0 || index >= (lim - 3)) {
+        if (index < 0 || index >= lim - 3) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getFloat(heap, offset + index, bigEndian);
@@ -688,7 +685,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putFloat(int index, float value) {
-        if (index < 0 || index >= (lim - 3)) {
+        if (index < 0 || index >= lim - 3) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putFloat(heap, offset + index, value, bigEndian);
@@ -707,7 +704,7 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public double getDouble(int index) {
-        if (index < 0 || index >= (lim - 7)) {
+        if (index < 0 || index >= lim - 7) {
             throw new IndexOutOfBoundsException();
         }
         return Bits.getDouble(heap, offset + index, bigEndian);
@@ -725,16 +722,16 @@ public class HeapBuffer implements Buffer {
 
     @Override
     public HeapBuffer putDouble(int index, double value) {
-        if (index < 0 || index >= (lim - 7)) {
+        if (index < 0 || index >= lim - 7) {
             throw new IndexOutOfBoundsException();
         }
         Bits.putDouble(heap, offset + index, value, bigEndian);
         return this;
     }
-    
+
     @Override
     public int hashCode() {
-        int result = (allowBufferDispose ? 1 : 0);
+        int result = allowBufferDispose ? 1 : 0;
         result = 31 * result + (disposeStackTrace != null ? disposeStackTrace.hashCode() : 0);
         result = 31 * result + (heap != null ? Arrays.hashCode(heap) : 0);
         result = 31 * result + offset;
@@ -776,10 +773,12 @@ public class HeapBuffer implements Buffer {
         for (int i = this.position(), j = o.position(); i < n; i++, j++) {
             byte v1 = this.get(i);
             byte v2 = o.get(j);
-            if (v1 == v2)
+            if (v1 == v2) {
                 continue;
-            if (v1 < v2)
+            }
+            if (v1 < v2) {
                 return -1;
+            }
             return +1;
         }
 
@@ -788,16 +787,13 @@ public class HeapBuffer implements Buffer {
 
     protected void checkDispose() {
         if (heap == null) {
-            throw new IllegalStateException(
-                    "HeapBuffer has already been disposed",
-                    disposeStackTrace);
+            throw new IllegalStateException("HeapBuffer has already been disposed", disposeStackTrace);
         }
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("HeapBuffer (" +
-                System.identityHashCode(this) + ") ");
+        final StringBuilder sb = new StringBuilder("HeapBuffer (" + System.identityHashCode(this) + ") ");
         sb.append("[pos=");
         sb.append(pos);
         sb.append(" lim=");
@@ -819,8 +815,7 @@ public class HeapBuffer implements Buffer {
     }
 
     @Override
-    public String toStringContent(Charset charset, final int position,
-            final int limit) {
+    public String toStringContent(Charset charset, final int position, final int limit) {
         checkDispose();
         if (charset == null) {
             charset = Charset.defaultCharset();
@@ -835,7 +830,7 @@ public class HeapBuffer implements Buffer {
             oldPosition = byteBuffer.position();
             oldLimit = byteBuffer.limit();
         }
-        
+
         final ByteBuffer bb = toByteBuffer0(position, limit, false);
 
         try {
@@ -886,8 +881,7 @@ public class HeapBuffer implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final ByteBufferArray toByteBufferArray(final int position,
-                                                   final int limit) {
+    public final ByteBufferArray toByteBufferArray(final int position, final int limit) {
         return toByteBufferArray(ByteBufferArray.create(), position, limit);
     }
 
@@ -904,8 +898,7 @@ public class HeapBuffer implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final ByteBufferArray toByteBufferArray(final ByteBufferArray array,
-            final int position, final int limit) {
+    public final ByteBufferArray toByteBufferArray(final ByteBufferArray array, final int position, final int limit) {
 
         array.add(toByteBuffer(position, limit));
 
@@ -927,8 +920,7 @@ public class HeapBuffer implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final BufferArray toBufferArray(final int position,
-                                                   final int limit) {
+    public final BufferArray toBufferArray(final int position, final int limit) {
         return toBufferArray(BufferArray.create(), position, limit);
     }
 
@@ -945,8 +937,7 @@ public class HeapBuffer implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final BufferArray toBufferArray(final BufferArray array,
-            final int position, final int limit) {
+    public final BufferArray toBufferArray(final BufferArray array, final int position, final int limit) {
 
         final int oldPos = pos;
         final int oldLim = lim;
@@ -988,46 +979,39 @@ public class HeapBuffer implements Buffer {
 
     // ------------------------------------------------------- Protected Methods
 
-
     protected void onShareHeap() {
     }
 
     /**
      * Create a new {@link HeapBuffer} based on the current heap.
-     * 
+     *
      * @param offs relative offset, the absolute value will calculated as (this.offset + offs)
      * @param capacity
      * @return
      */
     protected HeapBuffer createHeapBuffer(final int offs, final int capacity) {
         onShareHeap();
-        
-        return new HeapBuffer(
-                heap,
-                offs + offset,
-                capacity);
+
+        return new HeapBuffer(heap, offs + offset, capacity);
     }
 
-    protected ByteBuffer toByteBuffer0(final int pos,
-                                       final int lim,
-                                       final boolean slice) {
+    protected ByteBuffer toByteBuffer0(final int pos, final int lim, final boolean slice) {
         if (byteBuffer == null) {
             byteBuffer = ByteBuffer.wrap(heap);
         }
 
         Buffers.setPositionLimit(byteBuffer, offset + pos, offset + lim);
 
-        return ((slice) ? byteBuffer.slice() : byteBuffer);
+        return slice ? byteBuffer.slice() : byteBuffer;
 
     }
-
 
     // ---------------------------------------------------------- Nested Classes
 
     private static class DebugLogic {
         static void doDebug(HeapBuffer heapBuffer) {
             heapBuffer.clear();
-            while(heapBuffer.hasRemaining()) {
+            while (heapBuffer.hasRemaining()) {
                 heapBuffer.put((byte) 0xFF);
             }
             heapBuffer.flip();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -38,7 +38,7 @@ public final class FixedLengthTransferEncoding implements TransferEncoding {
     public boolean wantDecode(HttpHeader httpPacket) {
         final long contentLength = httpPacket.getContentLength();
 
-        return (contentLength != -1);
+        return contentLength != -1;
     }
 
     /**
@@ -48,34 +48,26 @@ public final class FixedLengthTransferEncoding implements TransferEncoding {
     public boolean wantEncode(HttpHeader httpPacket) {
         final long contentLength = httpPacket.getContentLength();
 
-        return (contentLength != -1);
+        return contentLength != -1;
     }
 
     @Override
-    public void prepareSerialize(FilterChainContext ctx,
-                                 HttpHeader httpHeader,
-                                 HttpContent httpContent) {
-        final int defaultContentLength = httpContent != null ?
-            httpContent.getContent().remaining() : -1;
-        
+    public void prepareSerialize(FilterChainContext ctx, HttpHeader httpHeader, HttpContent httpContent) {
+        final int defaultContentLength = httpContent != null ? httpContent.getContent().remaining() : -1;
+
         httpHeader.makeContentLengthHeader(defaultContentLength);
     }
-
 
     /**
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings({"UnusedDeclaration"})
-    public ParsingResult parsePacket(FilterChainContext ctx,
-                                     HttpHeader httpPacket,
-                                     Buffer input) {
+    @SuppressWarnings({ "UnusedDeclaration" })
+    public ParsingResult parsePacket(FilterChainContext ctx, HttpHeader httpPacket, Buffer input) {
 
         final HttpPacketParsing httpPacketParsing = (HttpPacketParsing) httpPacket;
         // Get HTTP content parsing state
-        final ContentParsingState contentParsingState =
-                httpPacketParsing.getContentParsingState();
-
+        final ContentParsingState contentParsingState = httpPacketParsing.getContentParsingState();
 
         if (contentParsingState.chunkRemainder == -1) {
             // if we have just parsed a HTTP message header
@@ -90,18 +82,16 @@ public final class FixedLengthTransferEncoding implements TransferEncoding {
 
         if (available > thisPacketRemaining) {
             // if input Buffer has part of the next HTTP message - slice it
-            remainder = input.slice(
-                    (int) (input.position() + thisPacketRemaining), input.limit());
+            remainder = input.slice((int) (input.position() + thisPacketRemaining), input.limit());
             input.limit((int) (input.position() + thisPacketRemaining));
         }
 
         // recalc. the HTTP message remaining bytes
         contentParsingState.chunkRemainder -= input.remaining();
 
-        final boolean isLast = (contentParsingState.chunkRemainder == 0);
+        final boolean isLast = contentParsingState.chunkRemainder == 0;
 
-        return ParsingResult.create(httpPacket.httpContentBuilder().content(input)
-                .last(isLast).build(), remainder);
+        return ParsingResult.create(httpPacket.httpContentBuilder().content(input).last(isLast).build(), remainder);
     }
 
     /**

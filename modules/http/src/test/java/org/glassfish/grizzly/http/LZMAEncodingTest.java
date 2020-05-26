@@ -16,28 +16,9 @@
 
 package org.glassfish.grizzly.http;
 
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.compression.lzma.LZMAEncoder;
-import org.glassfish.grizzly.compression.lzma.impl.Encoder;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChain;
-import org.glassfish.grizzly.filterchain.FilterChainBuilder;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.utils.Charsets;
-import org.glassfish.grizzly.http.util.DataChunk;
-import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
-import org.glassfish.grizzly.memory.Buffers;
-import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-import org.glassfish.grizzly.utils.ChunkingFilter;
-import org.junit.Test;
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -50,14 +31,33 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.compression.lzma.LZMAEncoder;
+import org.glassfish.grizzly.compression.lzma.impl.Encoder;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.util.DataChunk;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.utils.Charsets;
+import org.glassfish.grizzly.utils.ChunkingFilter;
+import org.junit.Test;
 
 public class LZMAEncodingTest {
 
     public static final int PORT = PORT();
-    
+
     static int PORT() {
         try {
             int port = 19200 + SecureRandom.getInstanceStrong().nextInt(1000);
@@ -72,8 +72,7 @@ public class LZMAEncodingTest {
 
     @Test
     public void testLZMAResponse() throws Throwable {
-        LZMAContentEncoding LZMAServerContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAServerContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -90,8 +89,7 @@ public class LZMAEncodingTest {
             }
         });
 
-        LZMAContentEncoding LZMAClientContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAClientContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -104,13 +102,8 @@ public class LZMAEncodingTest {
         });
 
         for (int i = 1; i <= 10; i++) {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method("GET")
-                    .header("Host", "localhost:" + PORT)
-                    .uri("/path")
-                    .header("accept-encoding", "lzma")
-                    .protocol(Protocol.HTTP_1_1)
-                    .build();
+            HttpRequestPacket request = HttpRequestPacket.builder().method("GET").header("Host", "localhost:" + PORT).uri("/path")
+                    .header("accept-encoding", "lzma").protocol(Protocol.HTTP_1_1).build();
 
             ExpectedResult result = new ExpectedResult();
             result.setProtocol("HTTP/1.1");
@@ -120,7 +113,7 @@ public class LZMAEncodingTest {
             final MemoryManager mm = MemoryManager.DEFAULT_MEMORY_MANAGER;
             result.setContent(Buffers.wrap(mm, "Echo: <nothing>"));
             try {
-               doTest(request, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
+                doTest(request, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
             } catch (Throwable t) {
                 System.out.println("Failed on loop count: " + i);
                 throw t;
@@ -130,8 +123,7 @@ public class LZMAEncodingTest {
 
     @Test
     public void testLZMARequest() throws Throwable {
-        LZMAContentEncoding LZMAServerContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAServerContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -143,8 +135,7 @@ public class LZMAEncodingTest {
             }
         });
 
-        LZMAContentEncoding LZMAClientContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAClientContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -162,19 +153,10 @@ public class LZMAEncodingTest {
         Buffer LZMApedContent = lzmaCompress(reqString, mm);
 
         for (int i = 1; i <= 10; i++) {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method("POST")
-                    .header("Host", "localhost:" + PORT)
-                    .uri("/path")
-                    .protocol(Protocol.HTTP_1_1)
-                    .header("content-encoding", "lzma")
-                    .contentLength(LZMApedContent.remaining())
-                    .build();
+            HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                    .header("content-encoding", "lzma").contentLength(LZMApedContent.remaining()).build();
 
-            HttpContent reqHttpContent = HttpContent.builder(request)
-                    .last(true)
-                    .content(LZMApedContent.duplicate())
-                    .build();
+            HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(LZMApedContent.duplicate()).build();
 
             ExpectedResult result = new ExpectedResult();
             result.setProtocol("HTTP/1.1");
@@ -183,7 +165,7 @@ public class LZMAEncodingTest {
             result.setContent(Buffers.wrap(mm, "Echo: " + reqString));
 
             try {
-               doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
+                doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
             } catch (Throwable t) {
                 System.out.println("Failed on loop count: " + i);
                 throw t;
@@ -193,8 +175,7 @@ public class LZMAEncodingTest {
 
     @Test
     public void testLZMARequestResponse() throws Throwable {
-        LZMAContentEncoding LZMAServerContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAServerContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -211,8 +192,7 @@ public class LZMAEncodingTest {
             }
         });
 
-        LZMAContentEncoding LZMAClientContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAClientContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -231,20 +211,10 @@ public class LZMAEncodingTest {
         Buffer LZMApedContent = lzmaCompress(reqString, mm);
 
         for (int i = 1; i <= 10; i++) {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method("POST")
-                    .header("Host", "localhost:" + PORT)
-                    .uri("/path")
-                    .protocol(Protocol.HTTP_1_1)
-                    .header("accept-encoding", "lzma")
-                    .header("content-encoding", "lzma")
-                    .contentLength(LZMApedContent.remaining())
-                    .build();
+            HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                    .header("accept-encoding", "lzma").header("content-encoding", "lzma").contentLength(LZMApedContent.remaining()).build();
 
-            HttpContent reqHttpContent = HttpContent.builder(request)
-                    .last(true)
-                    .content(LZMApedContent.duplicate())
-                    .build();
+            HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(LZMApedContent.duplicate()).build();
 
             ExpectedResult result = new ExpectedResult();
             result.setProtocol("HTTP/1.1");
@@ -253,7 +223,7 @@ public class LZMAEncodingTest {
             result.setContent(Buffers.wrap(mm, "Echo: " + reqString));
 
             try {
-               doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
+                doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
             } catch (Throwable t) {
                 System.out.println("Failed on loop count: " + i);
                 throw t;
@@ -263,8 +233,7 @@ public class LZMAEncodingTest {
 
     @Test
     public void testLZMARequestResponseChunkedXferEncoding() throws Throwable {
-        LZMAContentEncoding LZMAServerContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAServerContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -281,8 +250,7 @@ public class LZMAEncodingTest {
             }
         });
 
-        LZMAContentEncoding LZMAClientContentEncoding =
-                new LZMAContentEncoding(new EncodingFilter() {
+        LZMAContentEncoding LZMAClientContentEncoding = new LZMAContentEncoding(new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -301,20 +269,10 @@ public class LZMAEncodingTest {
         Buffer LZMApedContent = lzmaCompress(reqString, mm);
 
         for (int i = 1; i <= 10; i++) {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method("POST")
-                    .header("Host", "localhost:" + PORT)
-                    .uri("/path")
-                    .protocol(Protocol.HTTP_1_1)
-                    .header("accept-encoding", "lzma")
-                    .header("content-encoding", "lzma")
-                    .chunked(true)
-                    .build();
+            HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                    .header("accept-encoding", "lzma").header("content-encoding", "lzma").chunked(true).build();
 
-            HttpContent reqHttpContent = HttpContent.builder(request)
-                    .last(true)
-                    .content(LZMApedContent.duplicate())
-                    .build();
+            HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(LZMApedContent.duplicate()).build();
 
             ExpectedResult result = new ExpectedResult();
             result.setProtocol("HTTP/1.1");
@@ -323,16 +281,15 @@ public class LZMAEncodingTest {
             result.setContent(Buffers.wrap(mm, "Echo: " + reqString));
 
             try {
-               doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
+                doTest(reqHttpContent, result, LZMAServerContentEncoding, LZMAClientContentEncoding, i);
             } catch (Throwable t) {
                 System.out.println("Failed on loop count: " + i);
                 throw t;
             }
         }
     }
-    
-    // --------------------------------------------------------- Private Methods
 
+    // --------------------------------------------------------- Private Methods
 
     private void reportThreadErrors() throws Throwable {
         Throwable t = exception.getResult();
@@ -341,12 +298,8 @@ public class LZMAEncodingTest {
         }
     }
 
-    private void doTest(HttpPacket request,
-                        ExpectedResult expectedResults,
-                        ContentEncoding serverContentEncoding,
-                        ContentEncoding clientContentEncoding,
-                        int networkChunkSize)
-    throws Throwable {
+    private void doTest(HttpPacket request, ExpectedResult expectedResults, ContentEncoding serverContentEncoding, ContentEncoding clientContentEncoding,
+            int networkChunkSize) throws Throwable {
 
         final FutureImpl<Boolean> testResult = SafeFutureImpl.create();
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
@@ -381,9 +334,7 @@ public class LZMAEncodingTest {
             }
             clientFilterChainBuilder.add(httpClientFilter);
 
-            clientFilterChainBuilder.add(new ClientFilter(request,
-                                                          testResult,
-                                                          expectedResults));
+            clientFilterChainBuilder.add(new ClientFilter(request, testResult, expectedResults));
             ctransport.setProcessor(clientFilterChainBuilder.build());
 
             ctransport.start();
@@ -406,7 +357,6 @@ public class LZMAEncodingTest {
         }
     }
 
-
     private class ClientFilter extends BaseFilter {
         private final Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -416,10 +366,7 @@ public class LZMAEncodingTest {
 
         // -------------------------------------------------------- Constructors
 
-
-        public ClientFilter(HttpPacket request,
-                            FutureImpl<Boolean> testResult,
-                            ExpectedResult expectedResults) {
+        public ClientFilter(HttpPacket request, FutureImpl<Boolean> testResult, ExpectedResult expectedResults) {
 
             this.request = request;
             this.testResult = testResult;
@@ -427,16 +374,12 @@ public class LZMAEncodingTest {
 
         }
 
-
         // ------------------------------------------------ Methods from Filters
 
-
         @Override
-        public NextAction handleConnect(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleConnect(FilterChainContext ctx) throws IOException {
             if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "Connected... Sending the request: {0}",
-                        request);
+                logger.log(Level.FINE, "Connected... Sending the request: {0}", request);
             }
 
             ctx.write(request);
@@ -444,52 +387,42 @@ public class LZMAEncodingTest {
             return ctx.getStopAction();
         }
 
-
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             final HttpContent httpContent = ctx.getMessage();
 
             logger.log(Level.FINE, "Got HTTP response chunk; last: {0}", httpContent.isLast());
 
-
             if (httpContent.isLast()) {
                 try {
-                    HttpResponsePacket response =
-                            (HttpResponsePacket) httpContent.getHttpHeader();
+                    HttpResponsePacket response = (HttpResponsePacket) httpContent.getHttpHeader();
                     if (expectedResult.getStatusCode() != -1) {
-                        assertEquals(expectedResult.getStatusCode(),
-                                     response.getStatus());
+                        assertEquals(expectedResult.getStatusCode(), response.getStatus());
                     }
                     if (expectedResult.getProtocol() != null) {
-                        assertEquals(expectedResult.getProtocol(),
-                                     response.getProtocol().getProtocolString());
+                        assertEquals(expectedResult.getProtocol(), response.getProtocol().getProtocolString());
                     }
                     if (expectedResult.getStatusMessage() != null) {
-                        assertEquals(expectedResult.getStatusMessage().toLowerCase(),
-                                     response.getReasonPhrase().toLowerCase());
+                        assertEquals(expectedResult.getStatusMessage().toLowerCase(), response.getReasonPhrase().toLowerCase());
                     }
                     if (!expectedResult.getExpectedHeaders().isEmpty()) {
-                        for (Map.Entry<String,String> entry : expectedResult.getExpectedHeaders().entrySet()) {
+                        for (Map.Entry<String, String> entry : expectedResult.getExpectedHeaders().entrySet()) {
                             if (entry.getKey().charAt(0) != '!') {
-                                assertTrue("Missing header: " + entry.getKey(),
-                                           response.containsHeader(entry.getKey()));
-                                assertEquals(entry.getValue().toLowerCase(),
-                                             response.getHeader(entry.getKey()).toLowerCase());
+                                assertTrue("Missing header: " + entry.getKey(), response.containsHeader(entry.getKey()));
+                                assertEquals(entry.getValue().toLowerCase(), response.getHeader(entry.getKey()).toLowerCase());
                             } else {
                                 assertFalse("Header should not be present: " + entry.getKey().substring(1),
-                                           response.containsHeader(entry.getKey().substring(1)));
+                                        response.containsHeader(entry.getKey().substring(1)));
                             }
                         }
                     }
 
                     if (expectedResult.getContent() != null) {
-                        assertEquals("Unexpected content",
-                                     expectedResult.getContent().toStringContent(Charsets.UTF8_CHARSET),
-                                     httpContent.getContent().toStringContent(Charsets.UTF8_CHARSET));
+                        assertEquals("Unexpected content", expectedResult.getContent().toStringContent(Charsets.UTF8_CHARSET),
+                                httpContent.getContent().toStringContent(Charsets.UTF8_CHARSET));
                     }
-                    
+
                     testResult.result(Boolean.TRUE);
                 } catch (Throwable t) {
                     testResult.result(Boolean.FALSE);
@@ -501,13 +434,11 @@ public class LZMAEncodingTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             return ctx.getStopAction();
         }
 
     }
-
 
     private static final class SimpleResponseFilter extends BaseFilter {
         @Override
@@ -523,16 +454,10 @@ public class LZMAEncodingTest {
 
                 final Buffer requestContent = httpContent.getContent();
 
-                final StringBuilder sb = new StringBuilder("Echo: ")
-                        .append(requestContent.hasRemaining() ?
-                            requestContent.toStringContent() :
-                            "<nothing>");
+                final StringBuilder sb = new StringBuilder("Echo: ").append(requestContent.hasRemaining() ? requestContent.toStringContent() : "<nothing>");
                 final MemoryManager mm = ctx.getMemoryManager();
 
-                final HttpContent responseContent = HttpContent.builder(response)
-                        .last(true)
-                        .content(Buffers.wrap(mm, sb.toString()))
-                        .build();
+                final HttpContent responseContent = HttpContent.builder(response).last(true).content(Buffers.wrap(mm, sb.toString())).build();
 
                 ctx.write(responseContent);
                 return ctx.getStopAction();
@@ -544,7 +469,7 @@ public class LZMAEncodingTest {
 
     private String generateBigString(int size) {
         final Random r = new Random();
-        
+
         StringBuilder sb = new StringBuilder(size);
         for (int i = 0; i < size; i++) {
             sb.append((char) ('A' + r.nextInt('Z' - 'A')));
@@ -579,8 +504,7 @@ public class LZMAEncodingTest {
     private static final class ExpectedResult {
 
         private int statusCode = -1;
-        private final Map<String,String> expectedHeaders =
-                new HashMap<String,String>();
+        private final Map<String, String> expectedHeaders = new HashMap<>();
         private String protocol;
         private String statusMessage;
         private Buffer content;

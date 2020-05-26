@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,21 @@
 
 package org.glassfish.grizzly.http.util;
 
-import org.glassfish.grizzly.http.Cookie;
-import org.glassfish.grizzly.Buffer;
+import static org.glassfish.grizzly.http.util.CookieUtils.ALWAYS_ADD_EXPIRES;
+import static org.glassfish.grizzly.http.util.CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE;
+import static org.glassfish.grizzly.http.util.CookieUtils.OLD_COOKIE_FORMAT;
+import static org.glassfish.grizzly.http.util.CookieUtils.RFC_6265_SUPPORT_ENABLED;
+import static org.glassfish.grizzly.http.util.CookieUtils.ancientDate;
+import static org.glassfish.grizzly.http.util.CookieUtils.containsCTL;
+import static org.glassfish.grizzly.http.util.CookieUtils.isToken;
+import static org.glassfish.grizzly.http.util.CookieUtils.isToken2;
+import static org.glassfish.grizzly.http.util.CookieUtils.tspecials2NoSlash;
+
 import java.nio.BufferOverflowException;
 import java.util.Date;
-import static org.glassfish.grizzly.http.util.CookieUtils.*;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.http.Cookie;
 
 /**
  * The set of Cookie utility methods for cookie serialization.
@@ -30,45 +40,23 @@ import static org.glassfish.grizzly.http.util.CookieUtils.*;
  */
 public class CookieSerializerUtils {
 
-
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(StringBuilder buf,
-            Cookie cookie) {
-        serializeServerCookie(buf,
-                              COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                              RFC_6265_SUPPORT_ENABLED,
-                              ALWAYS_ADD_EXPIRES,
-                              cookie);
+    public static void serializeServerCookie(StringBuilder buf, Cookie cookie) {
+        serializeServerCookie(buf, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, RFC_6265_SUPPORT_ENABLED, ALWAYS_ADD_EXPIRES, cookie);
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(final StringBuilder buf,
-            final boolean versionOneStrictCompliance,
-            final boolean rfc6265Support,
-            final boolean alwaysAddExpires,
-            final Cookie cookie) {
-        
-        serializeServerCookie(buf, versionOneStrictCompliance, rfc6265Support,
-                alwaysAddExpires, cookie.getName(), cookie.getValue(),
-                cookie.getVersion(), cookie.getPath(), cookie.getDomain(),
-                cookie.getComment(), cookie.getMaxAge(), cookie.isSecure(),
-                cookie.isHttpOnly());
+    public static void serializeServerCookie(final StringBuilder buf, final boolean versionOneStrictCompliance, final boolean rfc6265Support,
+            final boolean alwaysAddExpires, final Cookie cookie) {
+
+        serializeServerCookie(buf, versionOneStrictCompliance, rfc6265Support, alwaysAddExpires, cookie.getName(), cookie.getValue(), cookie.getVersion(),
+                cookie.getPath(), cookie.getDomain(), cookie.getComment(), cookie.getMaxAge(), cookie.isSecure(), cookie.isHttpOnly());
     }
-    
+
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(final StringBuilder buf,
-            final boolean versionOneStrictCompliance,
-            final boolean rfc6265Support,
-            final boolean alwaysAddExpires,
-            final String name,
-            final String value,
-            int version,
-            String path,
-            final String domain,
-            final String comment,
-            final int maxAge,
-            final boolean isSecure,
-            final boolean isHttpOnly) {
+    public static void serializeServerCookie(final StringBuilder buf, final boolean versionOneStrictCompliance, final boolean rfc6265Support,
+            final boolean alwaysAddExpires, final String name, final String value, int version, String path, final String domain, final String comment,
+            final int maxAge, final boolean isSecure, final boolean isHttpOnly) {
         // Servlet implementation checks name
         buf.append(name);
         buf.append('=');
@@ -110,9 +98,7 @@ public class CookieSerializerUtils {
                 if (maxAge == 0) {
                     buf.append(ancientDate);
                 } else {
-                    buf.append(OLD_COOKIE_FORMAT.get().format(
-                            new Date(System.currentTimeMillis()
-                            + maxAge * 1000L)));
+                    buf.append(OLD_COOKIE_FORMAT.get().format(new Date(System.currentTimeMillis() + maxAge * 1000L)));
                 }
 
             }
@@ -146,36 +132,19 @@ public class CookieSerializerUtils {
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(Buffer buf,
-            Cookie cookie) {
-        serializeServerCookie(buf,
-                COOKIE_VERSION_ONE_STRICT_COMPLIANCE, ALWAYS_ADD_EXPIRES,
-                cookie);
+    public static void serializeServerCookie(Buffer buf, Cookie cookie) {
+        serializeServerCookie(buf, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, ALWAYS_ADD_EXPIRES, cookie);
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(Buffer buf,
-            boolean versionOneStrictCompliance,
-            boolean alwaysAddExpires,
-            Cookie cookie) {
-        serializeServerCookie(buf, versionOneStrictCompliance, alwaysAddExpires,
-                cookie.getName(), cookie.getValue(), cookie.getVersion(),
-                cookie.getPath(), cookie.getDomain(), cookie.getComment(),
-                cookie.getMaxAge(), cookie.isSecure(), cookie.isHttpOnly());
+    public static void serializeServerCookie(Buffer buf, boolean versionOneStrictCompliance, boolean alwaysAddExpires, Cookie cookie) {
+        serializeServerCookie(buf, versionOneStrictCompliance, alwaysAddExpires, cookie.getName(), cookie.getValue(), cookie.getVersion(), cookie.getPath(),
+                cookie.getDomain(), cookie.getComment(), cookie.getMaxAge(), cookie.isSecure(), cookie.isHttpOnly());
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeServerCookie(final Buffer buf,
-            final boolean versionOneStrictCompliance,
-            final boolean alwaysAddExpires,
-            final String name,
-            final String value,
-            int version,
-            String path,
-            final String domain,
-            final String comment,
-            final int maxAge,
-            final boolean isSecure,
+    public static void serializeServerCookie(final Buffer buf, final boolean versionOneStrictCompliance, final boolean alwaysAddExpires, final String name,
+            final String value, int version, String path, final String domain, final String comment, final int maxAge, final boolean isSecure,
             final boolean isHttpOnly) {
 
         // Servlet implementation checks name
@@ -219,10 +188,7 @@ public class CookieSerializerUtils {
                 if (maxAge == 0) {
                     put(buf, ancientDate);
                 } else {
-                    put(buf,
-                    OLD_COOKIE_FORMAT.get().format(
-                            new Date(System.currentTimeMillis()
-                            + maxAge * 1000L)));
+                    put(buf, OLD_COOKIE_FORMAT.get().format(new Date(System.currentTimeMillis() + maxAge * 1000L)));
                 }
 
             }
@@ -256,19 +222,12 @@ public class CookieSerializerUtils {
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeClientCookies(StringBuilder buf,
-            Cookie... cookies) {
-        serializeClientCookies(buf,
-                               COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                               RFC_6265_SUPPORT_ENABLED,
-                               cookies);
+    public static void serializeClientCookies(StringBuilder buf, Cookie... cookies) {
+        serializeClientCookies(buf, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, RFC_6265_SUPPORT_ENABLED, cookies);
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeClientCookies(StringBuilder buf,
-            boolean versionOneStrictCompliance,
-            boolean rfc6265Support,
-            Cookie... cookies) {
+    public static void serializeClientCookies(StringBuilder buf, boolean versionOneStrictCompliance, boolean rfc6265Support, Cookie... cookies) {
 
         if (cookies.length == 0) {
             return;
@@ -319,15 +278,12 @@ public class CookieSerializerUtils {
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeClientCookies(Buffer buf,
-            Cookie... cookies) {
+    public static void serializeClientCookies(Buffer buf, Cookie... cookies) {
         serializeClientCookies(buf, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, cookies);
     }
 
     // TODO RFC2965 fields also need to be passed
-    public static void serializeClientCookies(Buffer buf,
-            boolean versionOneStrictCompliance,
-            Cookie... cookies) {
+    public static void serializeClientCookies(Buffer buf, boolean versionOneStrictCompliance, Cookie... cookies) {
 
         if (cookies.length == 0) {
             return;
@@ -376,29 +332,24 @@ public class CookieSerializerUtils {
             }
         }
     }
-    
+
     /**
      * Quotes values using rules that vary depending on Cookie version.
+     * 
      * @param version
      * @param buf
      * @param value
      */
-    public static int maybeQuote2(int version, StringBuilder buf, String value,
-            boolean versionOneStrictCompliance,
-            boolean rfc6265Enabled) {
-        return maybeQuote2(version, buf, value, false, versionOneStrictCompliance,
-                           rfc6265Enabled);
+    public static int maybeQuote2(int version, StringBuilder buf, String value, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
+        return maybeQuote2(version, buf, value, false, versionOneStrictCompliance, rfc6265Enabled);
     }
 
-    public static int maybeQuote2(int version, StringBuilder buf, String value,
-            boolean allowVersionSwitch, boolean versionOneStrictCompliance,
+    public static int maybeQuote2(int version, StringBuilder buf, String value, boolean allowVersionSwitch, boolean versionOneStrictCompliance,
             boolean rfc6265Enabled) {
-        return maybeQuote2(version, buf, value, null, allowVersionSwitch,
-                           versionOneStrictCompliance, rfc6265Enabled);
+        return maybeQuote2(version, buf, value, null, allowVersionSwitch, versionOneStrictCompliance, rfc6265Enabled);
     }
 
-    public static int maybeQuote2(int version, StringBuilder buf, String value,
-            String literals, boolean allowVersionSwitch, boolean versionOneStrictCompliance,
+    public static int maybeQuote2(int version, StringBuilder buf, String value, String literals, boolean allowVersionSwitch, boolean versionOneStrictCompliance,
             boolean rfc6265Enabled) {
         if (value == null || value.length() == 0) {
             buf.append("\"\"");
@@ -431,25 +382,22 @@ public class CookieSerializerUtils {
         return version;
     }
 
-
     /**
      * Quotes values using rules that vary depending on Cookie version.
+     * 
      * @param version
      * @param buf
      * @param value
      */
-    public static int maybeQuote2(int version, Buffer buf, String value,
-            boolean versionOneStrictCompliance) {
+    public static int maybeQuote2(int version, Buffer buf, String value, boolean versionOneStrictCompliance) {
         return maybeQuote2(version, buf, value, false, versionOneStrictCompliance);
     }
 
-    public static int maybeQuote2(int version, Buffer buf, String value,
-            boolean allowVersionSwitch, boolean versionOneStrictCompliance) {
+    public static int maybeQuote2(int version, Buffer buf, String value, boolean allowVersionSwitch, boolean versionOneStrictCompliance) {
         return maybeQuote2(version, buf, value, null, allowVersionSwitch, versionOneStrictCompliance);
     }
 
-    public static int maybeQuote2(int version, Buffer buf, String value,
-            String literals, boolean allowVersionSwitch, boolean versionOneStrictCompliance) {
+    public static int maybeQuote2(int version, Buffer buf, String value, String literals, boolean allowVersionSwitch, boolean versionOneStrictCompliance) {
         if (value == null || value.length() == 0) {
             put(buf, "\"\"");
         } else if (containsCTL(value, version)) {
@@ -496,7 +444,7 @@ public class CookieSerializerUtils {
             char c = s.charAt(i);
             if (c == '\\') {
                 b.append(c);
-                //ignore the character after an escape, just append it
+                // ignore the character after an escape, just append it
                 if (++i >= endIndex) {
                     throw new IllegalArgumentException("Invalid escape character in cookie value.");
                 }
@@ -510,13 +458,11 @@ public class CookieSerializerUtils {
 
         return b.toString();
     }
-    
+
     public static boolean alreadyQuoted(String value) {
-        return !(value == null || value.length() == 0)
-                  && (value.charAt(0) == '\"'
-                  && value.charAt(value.length() - 1) == '\"');
+        return !(value == null || value.length() == 0) && value.charAt(0) == '\"' && value.charAt(value.length() - 1) == '\"';
     }
-    
+
     static void put(Buffer dstBuffer, int c) {
         dstBuffer.put((byte) c);
     }
@@ -527,7 +473,7 @@ public class CookieSerializerUtils {
 
     static void put(Buffer dstBuffer, String s) {
         final int size = s.length();
-        
+
         if (dstBuffer.remaining() < size) {
             throw new BufferOverflowException();
         }

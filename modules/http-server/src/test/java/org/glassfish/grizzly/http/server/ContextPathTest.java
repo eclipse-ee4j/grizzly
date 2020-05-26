@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,12 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
 import org.glassfish.grizzly.filterchain.BaseFilter;
@@ -38,12 +41,10 @@ import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
 
 /**
  * Testing {@link HttpHandler} context-path
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
@@ -71,19 +72,10 @@ public class ContextPathTest {
 
         }, "/context-path");
 
-        final HttpRequestPacket request1 = HttpRequestPacket.builder()
-                .method("GET")
-                .uri("/pom.xml")
-                .protocol("HTTP/1.1")
-                .header("Host", "localhost")
-                .build();
+        final HttpRequestPacket request1 = HttpRequestPacket.builder().method("GET").uri("/pom.xml").protocol("HTTP/1.1").header("Host", "localhost").build();
 
-        final HttpRequestPacket request2 = HttpRequestPacket.builder()
-                .method("GET")
-                .uri("/context-path/pom.xml")
-                .protocol("HTTP/1.1")
-                .header("Host", "localhost")
-                .build();
+        final HttpRequestPacket request2 = HttpRequestPacket.builder().method("GET").uri("/context-path/pom.xml").protocol("HTTP/1.1")
+                .header("Host", "localhost").build();
 
         final Future<HttpContent> responseFuture1 = send("localhost", PORT, request1);
         final HttpContent response1 = responseFuture1.get(10, TimeUnit.SECONDS);
@@ -97,10 +89,7 @@ public class ContextPathTest {
 
     private void configureHttpServer() throws Exception {
         httpServer = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                NetworkListener.DEFAULT_NETWORK_HOST,
-                PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
 
         httpServer.addListener(listener);
     }
@@ -119,9 +108,7 @@ public class ContextPathTest {
         builder.add(new HttpClientFilter());
         builder.add(new HttpMessageFilter(future));
 
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(builder.build())
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(builder.build())
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect(host, port);

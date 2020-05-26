@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
@@ -30,59 +31,47 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
 /**
- * The Filter is responsible for tracking {@link Connection} activity and closing
- * {@link Connection} ones it becomes idle for certain amount of time.
- * Unlike {@link IdleTimeoutFilter}, this Filter assumes {@link Connection}
- * is idle, even if some event is being executed on it, so it really requires
- * some action to be executed on {@link Connection} to reset the timeout.
- * 
+ * The Filter is responsible for tracking {@link Connection} activity and closing {@link Connection} ones it becomes
+ * idle for certain amount of time. Unlike {@link IdleTimeoutFilter}, this Filter assumes {@link Connection} is idle,
+ * even if some event is being executed on it, so it really requires some action to be executed on {@link Connection} to
+ * reset the timeout.
+ *
  * @see IdleTimeoutFilter
- * 
+ *
  * @author Alexey Stashok
  */
 public class ActivityCheckFilter extends BaseFilter {
     private static final Logger LOGGER = Grizzly.logger(ActivityCheckFilter.class);
-    
-    public static final String ACTIVE_ATTRIBUTE_NAME = "connection-active-attribute";
-    private static final Attribute<ActiveRecord> IDLE_ATTR =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-            ACTIVE_ATTRIBUTE_NAME, new NullaryFunction<ActiveRecord>() {
 
-        @Override
-        public ActiveRecord evaluate() {
-            return new ActiveRecord();
-        }
-    });
-    
+    public static final String ACTIVE_ATTRIBUTE_NAME = "connection-active-attribute";
+    private static final Attribute<ActiveRecord> IDLE_ATTR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(ACTIVE_ATTRIBUTE_NAME,
+            new NullaryFunction<ActiveRecord>() {
+
+                @Override
+                public ActiveRecord evaluate() {
+                    return new ActiveRecord();
+                }
+            });
+
     private final long timeoutMillis;
     private final DelayedExecutor.DelayQueue<Connection> queue;
 
     // ------------------------------------------------------------ Constructors
 
-
-    public ActivityCheckFilter(final DelayedExecutor executor,
-                             final long timeout,
-                             final TimeUnit timeoutUnit) {
+    public ActivityCheckFilter(final DelayedExecutor executor, final long timeout, final TimeUnit timeoutUnit) {
 
         this(executor, timeout, timeoutUnit, null);
 
     }
 
+    public ActivityCheckFilter(final DelayedExecutor executor, final long timeout, final TimeUnit timeoutUnit, final TimeoutHandler handler) {
 
-    public ActivityCheckFilter(final DelayedExecutor executor,
-                             final long timeout,
-                             final TimeUnit timeoutUnit,
-                             final TimeoutHandler handler) {
-
-        this(executor, new DefaultWorker(handler), timeout,  timeoutUnit);
+        this(executor, new DefaultWorker(handler), timeout, timeoutUnit);
 
     }
 
-
-    protected ActivityCheckFilter(final DelayedExecutor executor,
-                                final DelayedExecutor.Worker<Connection> worker,
-                                final long timeout,
-                                final TimeUnit timeoutUnit) {
+    protected ActivityCheckFilter(final DelayedExecutor executor, final DelayedExecutor.Worker<Connection> worker, final long timeout,
+            final TimeUnit timeoutUnit) {
 
         if (executor == null) {
             throw new IllegalArgumentException("executor cannot be null");
@@ -94,10 +83,7 @@ public class ActivityCheckFilter extends BaseFilter {
 
     }
 
-
     // ----------------------------------------------------- Methods from Filter
-
-
 
     @Override
     public NextAction handleAccept(final FilterChainContext ctx) throws IOException {
@@ -114,7 +100,7 @@ public class ActivityCheckFilter extends BaseFilter {
 //        queueAction(ctx);
         return ctx.getInvokeAction();
     }
-    
+
     @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
         IDLE_ATTR.get(ctx.getConnection()).timeoutMillis = System.currentTimeMillis() + timeoutMillis;
@@ -133,19 +119,17 @@ public class ActivityCheckFilter extends BaseFilter {
         return ctx.getInvokeAction();
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public static DelayedExecutor createDefaultIdleDelayedExecutor() {
 
         return createDefaultIdleDelayedExecutor(1000, TimeUnit.MILLISECONDS);
 
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    public static DelayedExecutor createDefaultIdleDelayedExecutor(final long checkInterval,
-                                                                   final TimeUnit checkIntervalUnit) {
+    @SuppressWarnings({ "UnusedDeclaration" })
+    public static DelayedExecutor createDefaultIdleDelayedExecutor(final long checkInterval, final TimeUnit checkIntervalUnit) {
 
         final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
@@ -157,24 +141,16 @@ public class ActivityCheckFilter extends BaseFilter {
                 return newThread;
             }
         });
-        return new DelayedExecutor(executor,
-                                   ((checkInterval > 0)
-                                       ? checkInterval
-                                       : 1000L),
-                                   ((checkIntervalUnit != null)
-                                       ? checkIntervalUnit
-                                       : TimeUnit.MILLISECONDS));
+        return new DelayedExecutor(executor, checkInterval > 0 ? checkInterval : 1000L, checkIntervalUnit != null ? checkIntervalUnit : TimeUnit.MILLISECONDS);
 
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public long getTimeout(TimeUnit timeunit) {
         return timeunit.convert(timeoutMillis, TimeUnit.MILLISECONDS);
     }
 
-
     // ----------------------------------------------------------- Inner Classes
-
 
     public interface TimeoutHandler {
 
@@ -182,9 +158,7 @@ public class ActivityCheckFilter extends BaseFilter {
 
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class Resolver implements DelayedExecutor.Resolver<Connection> {
 
@@ -200,8 +174,7 @@ public class ActivityCheckFilter extends BaseFilter {
         }
 
         @Override
-        public void setTimeoutMillis(final Connection connection,
-                final long timeoutMillis) {
+        public void setTimeoutMillis(final Connection connection, final long timeoutMillis) {
             IDLE_ATTR.get(connection).timeoutMillis = timeoutMillis;
         }
 
@@ -217,16 +190,13 @@ public class ActivityCheckFilter extends BaseFilter {
 
         private final TimeoutHandler handler;
 
-
         // -------------------------------------------------------- Constructors
-
 
         DefaultWorker(final TimeoutHandler handler) {
 
             this.handler = handler;
 
         }
-
 
         // --------------------------------- Methods from DelayedExecutor.Worker
 
@@ -242,6 +212,5 @@ public class ActivityCheckFilter extends BaseFilter {
         }
 
     } // END DefaultWorker
-
 
 }

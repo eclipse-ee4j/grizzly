@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly;
 
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,6 +29,7 @@ import java.security.MessageDigest;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -38,16 +42,11 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public class FileTransferTest {
-    
+
     private static final int PORT = 3773;
 
-    
     // ------------------------------------------------------------ Test Methods
-
 
     @Test
     public void testSimpleFileTransfer() throws Exception {
@@ -121,7 +120,7 @@ public class FileTransferTest {
         } catch (Exception e) {
             fail("Unexpected exception type: " + e);
         }
-        
+
         File f = new File("foo");
         try {
             new FileTransfer(f, 0, 1);
@@ -130,7 +129,7 @@ public class FileTransferTest {
         } catch (Exception e) {
             fail("Unexpected exception type: " + e);
         }
-        
+
         f = new File(System.getProperty("java.io.tmpdir"));
         try {
             new FileTransfer(f, 0, 1);
@@ -142,13 +141,13 @@ public class FileTransferTest {
 
         f = File.createTempFile("grizzly-test-", ".tmp");
         new FileOutputStream(f).write(1);
-        
+
         if (f.setReadable(false) && !f.canRead()) { // skip this check if setReadable returned false
             try {
                 new FileTransfer(f, 0, 1);
                 fail("Expected IllegalArgumentException to be thrown, f.setReadable(false); FileTransfer(f, 0, 1)");
             } catch (IllegalArgumentException iae) {
-                //noinspection ResultOfMethodCallIgnored
+                // noinspection ResultOfMethodCallIgnored
                 f.setReadable(true);
             } catch (Exception e) {
                 fail("Unexpected exception type: " + e);
@@ -178,12 +177,12 @@ public class FileTransferTest {
         } catch (Exception e) {
             fail("Unexpected exception type: " + e);
         }
-    } 
-    
+    }
+
     // --------------------------------------------------------- Private Methods
-    
+
     private static BigInteger getMDSum(final File f) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("MD5");  
+        MessageDigest digest = MessageDigest.getInstance("MD5");
         byte[] b = new byte[8192];
         FileInputStream in = new FileInputStream(f);
         int len;
@@ -192,8 +191,7 @@ public class FileTransferTest {
         }
         return new BigInteger(digest.digest());
     }
-    
-    
+
     private static File generateTempFile(final int size) throws IOException {
         final File f = File.createTempFile("grizzly-temp-" + size, ".tmp");
         Random r = new Random();
@@ -203,7 +201,7 @@ public class FileTransferTest {
         int total = 0;
         int remaining = size;
         while (total < size) {
-            int len = ((remaining > 8192) ? 8192 : remaining);
+            int len = remaining > 8192 ? 8192 : remaining;
             out.write(data, 0, len);
             total += len;
             remaining -= len;

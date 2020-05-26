@@ -25,9 +25,9 @@ import jakarta.ws.rs.Produces;
 public class MyResource {
 
     // TODO: update the class to suit your needs
-    
+
     // The Java method will process HTTP GET requests
-    @GET 
+    @GET
     // The Java method will produce content identified by the MIME Media
     // type "text/plain"
     @Produces("text/plain")

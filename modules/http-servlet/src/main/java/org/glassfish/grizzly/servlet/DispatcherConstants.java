@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,8 @@
 package org.glassfish.grizzly.servlet;
 
 /**
- * Constants based on Servlet3.0 spec.
- * This class will be able to be replaced by Servlet3.0 API
- * such as <code>jakarta.servlet.RequestDispatcher</code> and <code>jakarta.servlet.DispatcherType</code>
+ * Constants based on Servlet3.0 spec. This class will be able to be replaced by Servlet3.0 API such as
+ * <code>jakarta.servlet.RequestDispatcher</code> and <code>jakarta.servlet.DispatcherType</code>
  *
  * @author Bongjae Chang
  */

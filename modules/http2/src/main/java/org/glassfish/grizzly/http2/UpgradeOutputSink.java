@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http2;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.WriteHandler;
@@ -26,9 +27,8 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.http.HttpPacket;
 
 /**
- * The {@link StreamOutputSink} implementation, which is used when upgrading
- * HTTP -> HTTP/2 connections.
- * 
+ * The {@link StreamOutputSink} implementation, which is used when upgrading HTTP -> HTTP/2 connections.
+ *
  * @author Alexey Stashok
  */
 public class UpgradeOutputSink implements StreamOutputSink {
@@ -38,7 +38,7 @@ public class UpgradeOutputSink implements StreamOutputSink {
     public UpgradeOutputSink(Http2Session connection) {
         this.connection = connection;
     }
-    
+
     @Override
     public boolean canWrite() {
         return connection.getConnection().canWrite();
@@ -54,10 +54,8 @@ public class UpgradeOutputSink implements StreamOutputSink {
     }
 
     @Override
-    public void writeDownStream(HttpPacket httpPacket,
-                                FilterChainContext ctx,
-                                CompletionHandler<WriteResult> completionHandler,
-                                MessageCloner<Buffer> messageCloner) throws IOException {
+    public void writeDownStream(HttpPacket httpPacket, FilterChainContext ctx, CompletionHandler<WriteResult> completionHandler,
+            MessageCloner<Buffer> messageCloner) throws IOException {
         throw new UnsupportedOperationException("Not supported");
     }
 
@@ -82,10 +80,10 @@ public class UpgradeOutputSink implements StreamOutputSink {
             if (isClosed) {
                 return;
             }
-            
+
             isClosed = true;
         }
-        
+
         termination.doTask();
     }
 

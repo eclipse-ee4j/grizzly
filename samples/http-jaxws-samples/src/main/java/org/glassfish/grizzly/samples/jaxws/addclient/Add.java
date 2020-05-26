@@ -14,12 +14,13 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlType;
 
-
 /**
- * <p>Java class for add complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
+ * Java class for add complex type.
+ *
+ * <p>
+ * The following schema fragment specifies the expected content contained within this class.
+ *
  * <pre>
  * &lt;complexType name="add">
  *   &lt;complexContent>
@@ -32,14 +33,11 @@ import jakarta.xml.bind.annotation.XmlType;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
+ *
+ *
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "add", propOrder = {
-    "value1",
-    "value2"
-})
+@XmlType(name = "add", propOrder = { "value1", "value2" })
 public class Add {
 
     protected int value1;
@@ -47,7 +45,7 @@ public class Add {
 
     /**
      * Gets the value of the value1 property.
-     * 
+     *
      */
     public int getValue1() {
         return value1;
@@ -55,7 +53,7 @@ public class Add {
 
     /**
      * Sets the value of the value1 property.
-     * 
+     *
      */
     public void setValue1(int value) {
         this.value1 = value;
@@ -63,7 +61,7 @@ public class Add {
 
     /**
      * Gets the value of the value2 property.
-     * 
+     *
      */
     public int getValue2() {
         return value2;
@@ -71,7 +69,7 @@ public class Add {
 
     /**
      * Sets the value of the value2 property.
-     * 
+     *
      */
     public void setValue2(int value) {
         this.value2 = value;

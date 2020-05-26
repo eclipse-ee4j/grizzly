@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,11 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
-import java.io.IOException;
 
 /**
  *
@@ -33,7 +34,7 @@ public interface Output {
     boolean isBuffered();
 
     void ensureBufferCapacity(int size) throws IOException;
-    
+
     /**
      * Return the <tt>Input</tt>'s {@link Buffer}.
      *
@@ -42,15 +43,12 @@ public interface Output {
     Buffer getBuffer();
 
     /**
-     * Make sure that all data that has been written is
-     * flushed from the stream to its destination.
+     * Make sure that all data that has been written is flushed from the stream to its destination.
      */
-    GrizzlyFuture<Integer> flush(
-            CompletionHandler<Integer> completionHandler) throws IOException;
+    GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler) throws IOException;
 
     /**
      * Close the {@link StreamWriter} and make sure all data was flushed.
      */
-    GrizzlyFuture<Integer> close(
-            CompletionHandler<Integer> completionHandler) throws IOException;
+    GrizzlyFuture<Integer> close(CompletionHandler<Integer> completionHandler) throws IOException;
 }

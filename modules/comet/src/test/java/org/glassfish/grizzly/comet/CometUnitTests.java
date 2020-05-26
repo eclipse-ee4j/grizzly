@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,7 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CometUnitTests /*extends TestCase*/ {
+public class CometUnitTests /* extends TestCase */ {
     private static final int PORT = 19100;
     private SocketAddress connectadr;
     private final int socketreusedelayMilliSec = 40;
@@ -37,11 +37,8 @@ public class CometUnitTests /*extends TestCase*/ {
     private static volatile boolean testisdone;
     private final String context = "/cometTextn";
     private final byte joinMessage = 126;
-    private final byte[] connectString =
-        ("POST /index.html/comet HTTP/1.1\r\n" +
-            "Content-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n" +
-            "Host: localhost\r\n" +
-            "Content-Length: 0\r\n\r\n").getBytes();
+    private final byte[] connectString = ("POST /index.html/comet HTTP/1.1\r\n" + "Content-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
+            + "Host: localhost\r\n" + "Content-Length: 0\r\n\r\n").getBytes();
 
     public CometUnitTests(String testName) {
 //        super(testName);
@@ -61,42 +58,37 @@ public class CometUnitTests /*extends TestCase*/ {
     protected void init(boolean useconcurrentcomethandler) throws Exception {
         connectadr = new InetSocketAddress("localhost", PORT);
         RuntimeMXBean rmx = ManagementFactory.getRuntimeMXBean();
-        System.out.println("JVM: " + rmx.getVmVendor() + " " + rmx.getVmName() + " " + rmx.getVmVersion() + " params: " + rmx
-                .getInputArguments());
+        System.out.println("JVM: " + rmx.getVmVendor() + " " + rmx.getVmName() + " " + rmx.getVmVersion() + " params: " + rmx.getInputArguments());
     }
 
     public void testSlug() {
 
     }
 
-    /* public void testLongPollingSocketReuse() throws Exception{
-        doActualLogic(true,false,40,20);
-    }*/
-    /*  public void testLongPollingNewSocket() throws Exception{
-         doActualLogic(false,false,6500,64);
-    }*/
+    /*
+     * public void testLongPollingSocketReuse() throws Exception{ doActualLogic(true,false,40,20); }
+     */
+    /*
+     * public void testLongPollingNewSocket() throws Exception{ doActualLogic(false,false,6500,64); }
+     */
 
 //    public void testStreaming1() throws Throwable {
-        //doActualLogic(false,true,15,1,false);
+    // doActualLogic(false,true,15,1,false);
 //    }
-    /* public void testStreaming2() throws Throwable{
-        doActualLogic(false,true,21,4, false);
-    }
+    /*
+     * public void testStreaming2() throws Throwable{ doActualLogic(false,true,21,4, false); }
+     * 
+     * public void testStreaming3() throws Throwable{ doActualLogic(false,true,21,64, false); }
+     */
+    /*
+     * public void testStreaming5() throws Throwable{ doActualLogic(false,true, 15, 256); }
+     */
 
-    public void testStreaming3() throws Throwable{
-        doActualLogic(false,true,21,64, false);
-    }*/
-    /* public void testStreaming5() throws Throwable{
-        doActualLogic(false,true, 15, 256);
-    }*/
-
-    protected void doActualLogic(final boolean reuse, final boolean streaming,
-        int secondsPerTest, int threadCount, boolean spreadNotify) throws InterruptedException,
-        IOException {
-        System.out.println((streaming ? "STREAMING" : "LONG POLLING")
-                + ": " + (reuse ? "SOCKET REUSE" : "NEW SOCKET")
-                + ", client threads: " + threadCount + ", spreadNotifyToManyThreads: " + spreadNotify);
-        //int cpus = Runtime.getRuntime().availableProcessors();
+    protected void doActualLogic(final boolean reuse, final boolean streaming, int secondsPerTest, int threadCount, boolean spreadNotify)
+            throws InterruptedException, IOException {
+        System.out.println((streaming ? "STREAMING" : "LONG POLLING") + ": " + (reuse ? "SOCKET REUSE" : "NEW SOCKET") + ", client threads: " + threadCount
+                + ", spreadNotifyToManyThreads: " + spreadNotify);
+        // int cpus = Runtime.getRuntime().availableProcessors();
 //        ((DefaultNotificationHandler) CometTestAdapter.cometContext.notificationHandler).
 //            setSpreadNotifyToManyToThreads(spreadNotify);
         testisdone = false;
@@ -113,7 +105,7 @@ public class CometUnitTests /*extends TestCase*/ {
                         connectClient(reuse, streaming, first);
                     } catch (Exception ex) {
                         if (!testisdone && status) {
-                            status = false; //can happen a few times due to not hreadsafe. but itt ok
+                            status = false; // can happen a few times due to not hreadsafe. but itt ok
                             ex.printStackTrace();
                         }
                     } finally {
@@ -135,12 +127,9 @@ public class CometUnitTests /*extends TestCase*/ {
             if (delta > 4500) {
                 t1 = t2;
                 int currentTotalMsg = msgc.get();
-                System.out.println(
-                        "  K events/sec : " + (currentTotalMsg - oldTotal + 500) / delta
+                System.out.println("  K events/sec : " + (currentTotalMsg - oldTotal + 500) / delta
 //                            "  cometHandlers: " + CometTestAdapter.cometContext.handlers.size() +
-                                + "  work queue: " + size
-                                + "  broadcasts: " + broadcasts
-                );
+                        + "  work queue: " + size + "  broadcasts: " + broadcasts);
                 oldTotal = currentTotalMsg;
             }
             if (streaming) {
@@ -165,8 +154,7 @@ public class CometUnitTests /*extends TestCase*/ {
 
     private static final AtomicInteger msgc = new AtomicInteger();
 
-    protected void connectClient(boolean reuse, boolean streaming, boolean notifyBeforeRead)
-        throws Exception {
+    protected void connectClient(boolean reuse, boolean streaming, boolean notifyBeforeRead) throws Exception {
         InputStream in = null;
         OutputStream out = null;
         Socket socket = null;
@@ -190,13 +178,13 @@ public class CometUnitTests /*extends TestCase*/ {
                 if (!streaming) {
                     msgc.getAndIncrement();
                 } else {
-                    if (count++ == deltaAdd) { //lowers thread contention
+                    if (count++ == deltaAdd) { // lowers thread contention
                         msgc.getAndAdd(deltaAdd);
                         count = 0;
                     }
                 }
-                //{
-                //if (b==joinMessage){
+                // {
+                // if (b==joinMessage){
                 in.read();
                 in.read();
                 in.read();
@@ -214,7 +202,7 @@ public class CometUnitTests /*extends TestCase*/ {
                     in.read();
                     in.read();
                     _status = b == joinMessage;
-                    if (_status && count++ == deltaAdd) { //lowers thread contention
+                    if (_status && count++ == deltaAdd) { // lowers thread contention
                         msgc.getAndAdd(deltaAdd);
                         count = 0;
                     }
@@ -244,8 +232,8 @@ public class CometUnitTests /*extends TestCase*/ {
     private Socket newSocket(int timeout) throws Exception {
         Socket socket = new Socket();
         socket.setReuseAddress(true);
-        //socket.setReceiveBufferSize(2048);
-        //socket.setSendBufferSize(512);
+        // socket.setReceiveBufferSize(2048);
+        // socket.setSendBufferSize(512);
         socket.setSoLinger(false, 0);
         socket.setSoTimeout(timeout);
         socket.setTcpNoDelay(true);

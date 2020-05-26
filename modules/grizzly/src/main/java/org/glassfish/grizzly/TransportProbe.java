@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,8 +17,7 @@
 package org.glassfish.grizzly;
 
 /**
- * Monitoring probe providing callbacks that may be invoked by Grizzly
- * {@link Transport} implementations.
+ * Monitoring probe providing callbacks that may be invoked by Grizzly {@link Transport} implementations.
  *
  * @author Alexey Stashok
  *
@@ -96,7 +95,7 @@ public interface TransportProbe {
      * @param transport {@link Transport}, the event belongs to.
      */
     void onConfigChangeEvent(Transport transport);
-    
+
     /**
      * Method will be called, when error occurs on the {@link Transport}.
      *
@@ -105,81 +104,88 @@ public interface TransportProbe {
      */
     void onErrorEvent(Transport transport, Throwable error);
 
-
     // ---------------------------------------------------------- Nested Classes
 
     /**
-     * {@link TransportProbe} adapter that provides no-op implementations for
-     * all interface methods allowing easy extension by the developer.
+     * {@link TransportProbe} adapter that provides no-op implementations for all interface methods allowing easy extension
+     * by the developer.
      *
      * @since 2.1.9
      */
     @SuppressWarnings("UnusedDeclaration")
     class Adapter implements TransportProbe {
 
-
         // ----------------------------------------- Methods from TransportProbe
 
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onBeforeStartEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBeforeStartEvent(Transport transport) {}
+        public void onStartEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onStartEvent(Transport transport) {}
+        public void onBeforeStopEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBeforeStopEvent(Transport transport) {}
+        public void onStopEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onStopEvent(Transport transport) {}
+        public void onBeforePauseEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBeforePauseEvent(Transport transport) {}
+        public void onPauseEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onPauseEvent(Transport transport) {}
+        public void onBeforeResumeEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBeforeResumeEvent(Transport transport) {}
+        public void onResumeEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onResumeEvent(Transport transport) {}
+        public void onConfigChangeEvent(Transport transport) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onConfigChangeEvent(Transport transport) {}
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void onErrorEvent(Transport transport, Throwable error) {}
+        public void onErrorEvent(Transport transport, Throwable error) {
+        }
 
     } // END Adapter
 

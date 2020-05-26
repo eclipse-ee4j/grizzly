@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,13 +17,13 @@
 package org.glassfish.grizzly.http2;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http.HttpContent;
 
 /**
- * The {@link StreamInputBuffer} implementation, which is used when upgrading
- * HTTP -> HTTP/2 connections.
- * 
+ * The {@link StreamInputBuffer} implementation, which is used when upgrading HTTP -> HTTP/2 connections.
+ *
  * @author Alexey Stashok
  */
 class UpgradeInputBuffer implements StreamInputBuffer {
@@ -61,11 +61,11 @@ class UpgradeInputBuffer implements StreamInputBuffer {
             if (isClosed) {
                 return;
             }
-            
+
             isClosed = true;
             stream.onInputClosed();
         }
-        
+
         termination.doTask();
     }
 
@@ -73,5 +73,5 @@ class UpgradeInputBuffer implements StreamInputBuffer {
     public synchronized boolean isClosed() {
         return isClosed;
     }
-    
+
 }

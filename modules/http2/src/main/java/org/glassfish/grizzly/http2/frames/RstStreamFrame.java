@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,14 +18,14 @@ package org.glassfish.grizzly.http2.frames;
 
 import java.util.Collections;
 import java.util.Map;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 public class RstStreamFrame extends Http2Frame {
 
-    private static final ThreadCache.CachedTypeIndex<RstStreamFrame> CACHE_IDX =
-                       ThreadCache.obtainIndex(RstStreamFrame.class, 8);
+    private static final ThreadCache.CachedTypeIndex<RstStreamFrame> CACHE_IDX = ThreadCache.obtainIndex(RstStreamFrame.class, 8);
 
     public static final int TYPE = 3;
 
@@ -33,12 +33,10 @@ public class RstStreamFrame extends Http2Frame {
 
     // ------------------------------------------------------------ Constructors
 
-
-    private RstStreamFrame() { }
-
+    private RstStreamFrame() {
+    }
 
     // ---------------------------------------------------------- Public Methods
-
 
     static RstStreamFrame create() {
         RstStreamFrame frame = ThreadCache.takeFromCache(CACHE_IDX);
@@ -48,17 +46,16 @@ public class RstStreamFrame extends Http2Frame {
         return frame;
     }
 
-    public static Http2Frame fromBuffer(final int flags, final int streamId,
-            final Buffer frameBuffer) {
+    public static Http2Frame fromBuffer(final int flags, final int streamId, final Buffer frameBuffer) {
         RstStreamFrame frame = create();
         frame.setFlags(flags);
         frame.setStreamId(streamId);
         frame.setFrameBuffer(frameBuffer);
         frame.errorCode = ErrorCode.lookup(frameBuffer.getInt());
-        
+
         return frame;
     }
-    
+
     public static RstStreamFrameBuilder builder() {
         return new RstStreamFrameBuilder();
     }
@@ -70,10 +67,7 @@ public class RstStreamFrame extends Http2Frame {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("RstStreamFrame {")
-                .append(headerToString())
-                .append(", errorCode=").append(errorCode)
-                .append('}');
+        sb.append("RstStreamFrame {").append(headerToString()).append(", errorCode=").append(errorCode).append('}');
 
         return sb.toString();
     }
@@ -87,9 +81,8 @@ public class RstStreamFrame extends Http2Frame {
     protected Map<Integer, String> getFlagNamesMap() {
         return Collections.emptyMap();
     }
-    
-    // -------------------------------------------------- Methods from Cacheable
 
+    // -------------------------------------------------- Methods from Cacheable
 
     @Override
     public void recycle() {
@@ -101,7 +94,6 @@ public class RstStreamFrame extends Http2Frame {
         super.recycle();
         ThreadCache.putToCache(CACHE_IDX, this);
     }
-
 
     // -------------------------------------------------- Methods from Http2Frame
 
@@ -117,10 +109,9 @@ public class RstStreamFrame extends Http2Frame {
         serializeFrameHeader(buffer);
         buffer.putInt(errorCode.getCode());
         buffer.trim();
-        
+
         return buffer;
     }
-
 
     // ---------------------------------------------------------- Nested Classes
     public static class RstStreamFrameBuilder extends Http2FrameBuilder<RstStreamFrameBuilder> {
@@ -137,6 +128,7 @@ public class RstStreamFrame extends Http2Frame {
             return this;
         }
 
+        @Override
         public RstStreamFrame build() {
             final RstStreamFrame frame = RstStreamFrame.create();
             setHeaderValuesTo(frame);

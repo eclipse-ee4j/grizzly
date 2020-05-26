@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,12 +23,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@link ExecutorService} implementation, which function the similar way as
- * former Grizzly 1.x Pipeline based thread pools.
+ * {@link ExecutorService} implementation, which function the similar way as former Grizzly 1.x Pipeline based thread
+ * pools.
  *
- * The <tt>SyncThreadPool</tt> is synchronized similar way as Grizzly 1.x Pipeline,
- * which makes thread pool more accurate when deciding to create or not
- * additional worker threads.
+ * The <tt>SyncThreadPool</tt> is synchronized similar way as Grizzly 1.x Pipeline, which makes thread pool more
+ * accurate when deciding to create or not additional worker threads.
  *
  *
  * @author Alexey Stashok
@@ -39,7 +38,7 @@ public class SyncThreadPool extends AbstractThreadPool {
     protected int maxQueuedTasks = -1;
     private int currentPoolSize;
     private int activeThreadsCount;
-    
+
     /**
      *
      */
@@ -49,9 +48,7 @@ public class SyncThreadPool extends AbstractThreadPool {
             throw new IllegalArgumentException("keepAliveTime < 0");
         }
 
-        workQueue = config.getQueue() != null ?
-            config.getQueue() :
-            config.setQueue(new LinkedList<Runnable>()).getQueue();
+        workQueue = config.getQueue() != null ? config.getQueue() : config.setQueue(new LinkedList<Runnable>()).getQueue();
 
         this.maxQueuedTasks = config.getQueueLimit();
         final int corePoolSize = config.getCorePoolSize();
@@ -75,8 +72,7 @@ public class SyncThreadPool extends AbstractThreadPool {
 
             final int workQueueSize = workQueue.size() + 1;
 
-            if ((maxQueuedTasks < 0 || workQueueSize <= maxQueuedTasks)
-                    && workQueue.offer(task)) {
+            if ((maxQueuedTasks < 0 || workQueueSize <= maxQueuedTasks) && workQueue.offer(task)) {
                 onTaskQueued(task);
             } else {
                 onTaskQueueOverflow();
@@ -91,7 +87,7 @@ public class SyncThreadPool extends AbstractThreadPool {
             }
 
             if (currentPoolSize < config.getMaxPoolSize()) {
-                final boolean isCore = (currentPoolSize < config.getCorePoolSize());
+                final boolean isCore = currentPoolSize < config.getCorePoolSize();
                 startWorker(new SyncThreadWorker(isCore));
 
                 if (currentPoolSize == config.getMaxPoolSize()) {
@@ -113,7 +109,7 @@ public class SyncThreadPool extends AbstractThreadPool {
     @Override
     protected void onWorkerExit(Worker worker) {
         super.onWorkerExit(worker);
-        
+
         synchronized (stateLock) {
             currentPoolSize--;
             activeThreadsCount--;
@@ -132,8 +128,7 @@ public class SyncThreadPool extends AbstractThreadPool {
     @Override
     public String toString() {
         synchronized (stateLock) {
-            return super.toString()
-                    + ", max-queue-size=" + maxQueuedTasks;
+            return super.toString() + ", max-queue-size=" + maxQueuedTasks;
         }
     }
 
@@ -151,8 +146,7 @@ public class SyncThreadPool extends AbstractThreadPool {
                 activeThreadsCount--;
                 try {
 
-                    if (!running
-                            || (!core && currentPoolSize > config.getMaxPoolSize())) {
+                    if (!running || !core && currentPoolSize > config.getMaxPoolSize()) {
                         // if maxpoolsize becomes lower during runtime we kill of the
                         return null;
                     }
@@ -189,7 +183,7 @@ public class SyncThreadPool extends AbstractThreadPool {
                             return null;
                         } else if (hasKeepAlive) {
                             keepAliveMillis = endTime - System.currentTimeMillis();
-                            
+
                             if (keepAliveMillis < 20) {
                                 return null;
                             }

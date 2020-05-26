@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,44 +17,41 @@
 
 package org.glassfish.grizzly.http.util;
 
-import java.util.Date;
-
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.text.ParsePosition;
+import java.util.Date;
 
 /**
- * Fast date formatter that caches recently formatted date information
- * and uses it to avoid too-frequent calls to the underlying
- * formatter.  Note: breaks fieldPosition param of format(Date,
- * StringBuffer, FieldPosition).  If you care about the field
- * position, call the underlying DateFormat directly.
+ * Fast date formatter that caches recently formatted date information and uses it to avoid too-frequent calls to the
+ * underlying formatter. Note: breaks fieldPosition param of format(Date, StringBuffer, FieldPosition). If you care
+ * about the field position, call the underlying DateFormat directly.
  *
  * @author Stan Bailes
  * @author Alex Chaffee
  **/
 public class FastDateFormat extends DateFormat {
     private static final long serialVersionUID = -1L;
-    final DateFormat    df;
-    long          lastSec = -1;
-    final StringBuffer  sb      = new StringBuffer();
-    final transient FieldPosition fp      = new FieldPosition(DateFormat.MILLISECOND_FIELD);
+    final DateFormat df;
+    long lastSec = -1;
+    final StringBuffer sb = new StringBuffer();
+    final transient FieldPosition fp = new FieldPosition(DateFormat.MILLISECOND_FIELD);
 
     public FastDateFormat(DateFormat df) {
         this.df = df;
     }
 
+    @Override
     public Date parse(String text, ParsePosition pos) {
         return df.parse(text, pos);
     }
 
     /**
-     * Note: breaks functionality of fieldPosition param. Also:
-     * there's a bug in SimpleDateFormat with "S" and "SS", use "SSS"
-     * instead if you want a msec field.
+     * Note: breaks functionality of fieldPosition param. Also: there's a bug in SimpleDateFormat with "S" and "SS", use
+     * "SSS" instead if you want a msec field.
      **/
-    public StringBuffer format(Date date, StringBuffer toAppendTo,
-                               FieldPosition fieldPosition) {
+    @Override
+    public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition fieldPosition) {
         long dt = date.getTime();
         long ds = dt / 1000;
         if (ds != lastSec) {
@@ -63,18 +60,21 @@ public class FastDateFormat extends DateFormat {
             lastSec = ds;
         } else {
             // munge current msec into existing string
-            int ms = (int)(dt % 1000);
+            int ms = (int) (dt % 1000);
             int pos = fp.getEndIndex();
             int begin = fp.getBeginIndex();
             if (pos > 0) {
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
                 ms /= 10;
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
                 ms /= 10;
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
             }
         }
         toAppendTo.append(sb.toString());
@@ -82,12 +82,10 @@ public class FastDateFormat extends DateFormat {
     }
 
     /**
-     * Note: breaks functionality of fieldPosition param. Also:
-     * there's a bug in SimpleDateFormat with "S" and "SS", use "SSS"
-     * instead if you want a msec field.
+     * Note: breaks functionality of fieldPosition param. Also: there's a bug in SimpleDateFormat with "S" and "SS", use
+     * "SSS" instead if you want a msec field.
      **/
-    public StringBuilder format(Date date, StringBuilder toAppendTo,
-                               FieldPosition fieldPosition) {
+    public StringBuilder format(Date date, StringBuilder toAppendTo, FieldPosition fieldPosition) {
         long dt = date.getTime();
         long ds = dt / 1000;
         if (ds != lastSec) {
@@ -96,24 +94,27 @@ public class FastDateFormat extends DateFormat {
             lastSec = ds;
         } else {
             // munge current msec into existing string
-            int ms = (int)(dt % 1000);
+            int ms = (int) (dt % 1000);
             int pos = fp.getEndIndex();
             int begin = fp.getBeginIndex();
             if (pos > 0) {
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
                 ms /= 10;
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
                 ms /= 10;
-                if (pos > begin)
+                if (pos > begin) {
                     sb.setCharAt(--pos, Character.forDigit(ms % 10, 10));
+                }
             }
         }
         toAppendTo.append(sb.toString());
         return toAppendTo;
     }
-    
+
 //    public static void main(String[] args) {
 //        String format = "yyyy-MM-dd HH:mm:ss.SSS";
 //        if (args.length > 0)

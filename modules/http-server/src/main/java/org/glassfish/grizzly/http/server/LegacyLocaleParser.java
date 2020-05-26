@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,9 +20,7 @@ import java.util.Locale;
 
 class LegacyLocaleParser implements LocaleParser {
 
-
     // ------------------------------------------------ Methods from LocalParser
-
 
     @Override
     public Locale parseLocale(String source) {
@@ -55,13 +53,11 @@ class LegacyLocaleParser implements LocaleParser {
         return new Locale(language, country, variant);
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
     /*
-     * @return <code>true</code> if the given string is composed of
-     *  upper- or lowercase letters only, <code>false</code> otherwise.
+     * @return <code>true</code> if the given string is composed of upper- or lowercase letters only, <code>false</code>
+     * otherwise.
      */
     private static boolean isAlpha(String value) {
 
@@ -71,7 +67,7 @@ class LegacyLocaleParser implements LocaleParser {
 
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
+            if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z')) {
                 return false;
             }
         }

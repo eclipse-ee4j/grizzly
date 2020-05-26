@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.http2;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -25,10 +27,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
@@ -51,14 +49,15 @@ import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.CompositeBuffer;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     private static final int PORT = PORT();
-    
+
     static int PORT() {
         try {
             int port = 8004 + SecureRandom.getInstanceStrong().nextInt(1000);
@@ -73,7 +72,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     private final boolean isSecure;
     private final boolean priorKnowledge;
-    
+
     public HttpOutputStreamsTest(final boolean isSecure, final boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
@@ -86,16 +85,10 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     // --------------------------------------------------------- Character Tests
 
-
     @Test
     public void testCharacter001() throws Exception {
 
-        final String[] content = new String[] {
-              "abcdefg",
-              "hijk",
-              "lmnopqrs",
-              "tuvwxyz"
-        };
+        final String[] content = new String[] { "abcdefg", "hijk", "lmnopqrs", "tuvwxyz" };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -103,8 +96,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = content.length; i < len; i++) {
                     writer.write(content[i]);
@@ -115,17 +108,11 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter002() throws Exception {
 
-        final char[][] content = new char[][] {
-              "abcdefg".toCharArray(),
-              "hijk".toCharArray(),
-              "lmnopqrs".toCharArray(),
-              "tuvwxyz".toCharArray()
-        };
+        final char[][] content = new char[][] { "abcdefg".toCharArray(), "hijk".toCharArray(), "lmnopqrs".toCharArray(), "tuvwxyz".toCharArray() };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -133,8 +120,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = content.length; i < len; i++) {
                     writer.write(content[i]);
@@ -145,7 +132,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter003() throws Exception {
@@ -153,8 +139,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -163,8 +149,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
         s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -173,7 +159,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter004() throws Exception {
@@ -181,8 +166,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8194); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -191,8 +176,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
         s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -202,15 +187,14 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter005() throws Exception {
 
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     writer.write(sb.charAt(i));
@@ -221,7 +205,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter006() throws Exception {
@@ -229,8 +212,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8194); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     writer.write(sb.charAt(i));
@@ -241,7 +224,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter007() throws Exception {
@@ -250,8 +232,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -260,7 +242,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter008() throws Exception {
@@ -269,8 +250,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -279,7 +260,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter009() throws Exception {
@@ -288,8 +268,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -298,7 +278,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter010() throws Exception {
@@ -307,8 +286,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 3k chunks
                 int off = 0;
@@ -325,7 +304,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter011() throws Exception {
@@ -334,8 +312,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 3k chunks
                 int off = 0;
@@ -353,7 +331,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
         doTest(s, sb.toString());
     }
-
 
     @Test
     public void testCharacter012() throws Exception {
@@ -362,8 +339,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 9k chunks
                 int off = 0;
@@ -380,7 +357,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter013() throws Exception {
@@ -389,8 +365,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 9k chunks
                 int off = 0;
@@ -409,16 +385,10 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
     }
 
-
     @Test
     public void testCharacter014() throws Exception {
 
-        final String[] content = new String[] {
-              "abcdefg",
-              "hijk",
-              "lmnopqrs",
-              "tuvwxyz"
-        };
+        final String[] content = new String[] { "abcdefg", "hijk", "lmnopqrs", "tuvwxyz" };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -426,8 +396,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = content.length; i < len; i++) {
                     writer.write(content[i]);
@@ -438,17 +408,11 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter015() throws Exception {
 
-        final char[][] content = new char[][] {
-              "abcdefg".toCharArray(),
-              "hijk".toCharArray(),
-              "lmnopqrs".toCharArray(),
-              "tuvwxyz".toCharArray()
-        };
+        final char[][] content = new char[][] { "abcdefg".toCharArray(), "hijk".toCharArray(), "lmnopqrs".toCharArray(), "tuvwxyz".toCharArray() };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -456,8 +420,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = content.length; i < len; i++) {
                     writer.write(content[i]);
@@ -468,7 +432,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter016() throws Exception {
@@ -476,8 +439,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -486,8 +449,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
         s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -496,7 +459,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter017() throws Exception {
@@ -504,8 +466,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8194); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -514,8 +476,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
         s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -525,15 +487,14 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter018() throws Exception {
 
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     writer.write(sb.charAt(i));
@@ -544,7 +505,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter019() throws Exception {
@@ -552,8 +512,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8194); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     writer.write(sb.charAt(i));
@@ -564,7 +524,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter020() throws Exception {
@@ -573,8 +532,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -584,7 +543,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter021() throws Exception {
 
@@ -592,8 +550,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -602,7 +560,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testCharacter022() throws Exception {
@@ -611,8 +568,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -622,7 +579,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter023() throws Exception {
 
@@ -630,8 +586,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 3k chunks
                 int off = 0;
@@ -649,7 +605,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter024() throws Exception {
 
@@ -657,8 +612,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 3k chunks
                 int off = 0;
@@ -677,7 +632,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
     }
 
-
     @Test
     public void testCharacter025() throws Exception {
 
@@ -685,8 +639,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 9k chunks
                 int off = 0;
@@ -704,7 +658,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter026() throws Exception {
 
@@ -712,8 +665,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 // write in 9k chunks
                 int off = 0;
@@ -739,8 +692,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
         WriteStrategy s = new WriteStrategy() {
             @Override
-            public void doWrite(Response response)
-                    throws IOException {
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString());
             }
@@ -750,8 +702,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
         s = new WriteStrategy() {
             @Override
-            public void doWrite(Response response)
-                    throws IOException {
+            public void doWrite(Response response) throws IOException {
                 Writer writer = response.getWriter();
                 writer.write(sb.toString().toCharArray());
             }
@@ -763,16 +714,11 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     // ------------------------------------------------------------ Binary Tests
 
-
     @Test
     public void testBinary001() throws Exception {
 
-        final byte[][] content = new byte[][] {
-              "abcdefg".getBytes("UTF-8"),
-              "hijk".getBytes("UTF-8"),
-              "lmnopqrs".getBytes("UTF-8"),
-              "tuvwxyz".getBytes("UTF-8")
-        };
+        final byte[][] content = new byte[][] { "abcdefg".getBytes("UTF-8"), "hijk".getBytes("UTF-8"), "lmnopqrs".getBytes("UTF-8"),
+                "tuvwxyz".getBytes("UTF-8") };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -780,8 +726,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = content.length; i < len; i++) {
                     out.write(content[i]);
@@ -793,15 +739,14 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary002() throws Exception {
 
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     out.write(sb.charAt(i));
@@ -812,7 +757,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary003() throws Exception {
@@ -820,8 +764,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8192); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     out.write(sb.charAt(i));
@@ -832,7 +776,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary004() throws Exception {
@@ -841,8 +784,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 out.write(sb.toString().getBytes());
             }
@@ -851,7 +794,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary005() throws Exception {
@@ -860,8 +802,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 out.write(sb.toString().getBytes());
             }
@@ -871,7 +813,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary006() throws Exception {
 
@@ -879,8 +820,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 // write in 3k chunks
                 int off = 0;
@@ -898,7 +839,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary007() throws Exception {
 
@@ -906,8 +846,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 // write in 9k chunks
                 int off = 0;
@@ -928,12 +868,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
     @Test
     public void testBinary008() throws Exception {
 
-        final byte[][] content = new byte[][] {
-              "abcdefg".getBytes("UTF-8"),
-              "hijk".getBytes("UTF-8"),
-              "lmnopqrs".getBytes("UTF-8"),
-              "tuvwxyz".getBytes("UTF-8")
-        };
+        final byte[][] content = new byte[][] { "abcdefg".getBytes("UTF-8"), "hijk".getBytes("UTF-8"), "lmnopqrs".getBytes("UTF-8"),
+                "tuvwxyz".getBytes("UTF-8") };
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = content.length; i < len; i++) {
@@ -941,8 +877,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = content.length; i < len; i++) {
                     out.write(content[i]);
@@ -954,15 +890,14 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary009() throws Exception {
 
         final StringBuilder sb = buildBuffer(8192); // boundary
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     out.write(sb.charAt(i));
@@ -973,7 +908,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary010() throws Exception {
@@ -981,8 +915,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(8192); // boundary + 2
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 for (int i = 0, len = sb.length(); i < len; i++) {
                     out.write(sb.charAt(i));
@@ -993,7 +927,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary011() throws Exception {
@@ -1002,8 +935,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 out.write(sb.toString().getBytes());
             }
@@ -1012,7 +945,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         doTest(s, sb.toString());
 
     }
-
 
     @Test
     public void testBinary012() throws Exception {
@@ -1021,8 +953,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 out.write(sb.toString().getBytes());
             }
@@ -1032,7 +964,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary013() throws Exception {
 
@@ -1040,8 +971,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 // write in 3k chunks
                 int off = 0;
@@ -1066,8 +997,8 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         final StringBuilder sb = buildBuffer(len);
 
         WriteStrategy s = new WriteStrategy() {
-            @Override public void doWrite(Response response)
-                  throws IOException {
+            @Override
+            public void doWrite(Response response) throws IOException {
                 OutputStream out = response.getOutputStream();
                 // write in 9k chunks
                 int off = 0;
@@ -1085,9 +1016,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private StringBuilder buildBuffer(int len) {
         final StringBuilder sb = new StringBuilder(len);
@@ -1100,24 +1029,18 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         return sb;
     }
 
+    private void doTest(WriteStrategy strategy, String expectedResult) throws Exception {
 
-    private void doTest(WriteStrategy strategy,
-                        String expectedResult)
-    throws Exception {
+        final HttpServer server = createServer("/tmp", PORT, isSecure, HttpHandlerRegistration.of(new TestHttpHandler(strategy), "/*"));
 
-        final HttpServer server = createServer("/tmp", PORT, isSecure,
-                HttpHandlerRegistration.of(new TestHttpHandler(strategy), "/*"));
-        
-        
         final FutureImpl<String> parseResult = SafeFutureImpl.create();
         TCPNIOTransport ctransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             Thread.sleep(50);
             server.start();
 
-            FilterChain clientFilterChain = createClientFilterChainAsBuilder(
-                    isSecure, priorKnowledge, new ClientFilter(parseResult)).build();
-                                
+            FilterChain clientFilterChain = createClientFilterChainAsBuilder(isSecure, priorKnowledge, new ClientFilter(parseResult)).build();
+
             ctransport.setProcessor(clientFilterChain);
 
             ctransport.start();
@@ -1142,20 +1065,17 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
     }
 
-
     private interface WriteStrategy {
 
         void doWrite(Response response) throws IOException;
 
     }
 
-
     private static final class TestHttpHandler extends HttpHandler {
 
         private final WriteStrategy strategy;
 
         // -------------------------------------------------------- Constructors
-
 
         public TestHttpHandler(WriteStrategy strategy) {
             this.strategy = strategy;
@@ -1170,7 +1090,6 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -1181,9 +1100,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         // number of bytes downloaded
         private volatile int bytesDownloaded;
 
-
         // -------------------------------------------------------- Constructors
-
 
         public ClientFilter(FutureImpl<String> completeFuture) {
 
@@ -1191,9 +1108,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
 
         }
 
-
         // ------------------------------------------------ Methods from Filters
-
 
         @Override
         public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
@@ -1218,21 +1133,15 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
             // Build the HttpRequestPacket, which will be sent to a server
             // We construct HTTP request version 1.1 and specifying the URL of the
             // resource we want to download
-            final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET")
-                    .uri("/path").protocol(Protocol.HTTP_1_1)
+            final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
                     .header("Host", "localhost:" + PORT).build();
 
             // Write the request asynchronously
-            ctx.write(HttpContent.builder(httpRequest)
-                    .content(Buffers.EMPTY_BUFFER)
-                    .last(true)
-                    .build());
+            ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
         }
 
-
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
             try {
                 // Cast message to a HttpContent
                 final HttpContent httpContent = ctx.getMessage();
@@ -1267,8 +1176,7 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -1276,12 +1184,11 @@ public class HttpOutputStreamsTest extends AbstractHttp2Test {
         private void close() throws IOException {
 
             if (!completeFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 completeFuture.failure(new IOException("Connection was closed. Bytes downloaded: " + bytesDownloaded));
             }
 
         }
     }
-
 
 }

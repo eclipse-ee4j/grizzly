@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,27 +20,21 @@ package org.glassfish.grizzly.http.server.util;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
 /**
- * Extended implementation of <strong>LinkedHashMap</strong> that includes a
- * <code>locked</code> property.  This class can be used to safely expose
- * Catalina internal parameter map objects to user classes without having
- * to clone them in order to avoid modifications.  When first created, a
- * <code>ParameterMap</code> instance is not locked.
+ * Extended implementation of <strong>LinkedHashMap</strong> that includes a <code>locked</code> property. This class
+ * can be used to safely expose Catalina internal parameter map objects to user classes without having to clone them in
+ * order to avoid modifications. When first created, a <code>ParameterMap</code> instance is not locked.
  *
  * @author Craig R. McClanahan
  * @version $Revision: 1.4 $ $Date: 2007/06/18 17:41:35 $
  */
 
-
-public final class ParameterMap extends LinkedHashMap<String,String[]> {
+public final class ParameterMap extends LinkedHashMap<String, String[]> {
 
     // ----------------------------------------------------------- Constructors
 
-
     /**
-     * Construct a new, empty map with the default initial capacity and
-     * load factor.
+     * Construct a new, empty map with the default initial capacity and load factor.
      */
     public ParameterMap() {
 
@@ -48,10 +42,8 @@ public final class ParameterMap extends LinkedHashMap<String,String[]> {
 
     }
 
-
     /**
-     * Construct a new, empty map with the specified initial capacity and
-     * default load factor.
+     * Construct a new, empty map with the specified initial capacity and default load factor.
      *
      * @param initialCapacity The initial capacity of this map
      */
@@ -61,10 +53,8 @@ public final class ParameterMap extends LinkedHashMap<String,String[]> {
 
     }
 
-
     /**
-     * Construct a new, empty map with the specified initial capacity and
-     * load factor.
+     * Construct a new, empty map with the specified initial capacity and load factor.
      *
      * @param initialCapacity The initial capacity of this map
      * @param loadFactor The load factor of this map
@@ -75,37 +65,32 @@ public final class ParameterMap extends LinkedHashMap<String,String[]> {
 
     }
 
-
     /**
      * Construct a new map with the same mappings as the given map.
      *
      * @param map Map whose contents are duplicated in the new map
      */
-    public ParameterMap(Map<String,String[]> map) {
+    public ParameterMap(Map<String, String[]> map) {
 
         super(map);
 
     }
 
-
     // ------------------------------------------------------------- Properties
-
 
     /**
      * The current lock state of this parameter map.
      */
     private boolean locked = false;
 
-
     /**
      * Return the locked state of this parameter map.
      */
     public boolean isLocked() {
 
-        return (this.locked);
+        return this.locked;
 
     }
-
 
     /**
      * Set the locked state of this parameter map.
@@ -118,83 +103,80 @@ public final class ParameterMap extends LinkedHashMap<String,String[]> {
 
     }
 
-
     // --------------------------------------------------------- Public Methods
-
-
 
     /**
      * Remove all mappings from this map.
      *
      * @exception IllegalStateException if this map is currently locked
      */
+    @Override
     public void clear() {
 
-        if (locked)
+        if (locked) {
             throw new IllegalStateException("Illegal attempt to modify ParameterMap while locked.");
+        }
         super.clear();
 
     }
 
-
     /**
-     * Associate the specified value with the specified key in this map.  If
-     * the map previously contained a mapping for this key, the old value is
-     * replaced.
+     * Associate the specified value with the specified key in this map. If the map previously contained a mapping for this
+     * key, the old value is replaced.
      *
      * @param key Key with which the specified value is to be associated
      * @param value Value to be associated with the specified key
      *
-     * @return The previous value associated with the specified key, or
-     *  <code>null</code> if there was no mapping for key
+     * @return The previous value associated with the specified key, or <code>null</code> if there was no mapping for key
      *
      * @exception IllegalStateException if this map is currently locked
      */
+    @Override
     public String[] put(String key, String[] value) {
 
-        if (locked)
+        if (locked) {
             throw new IllegalStateException("Illegal attempt to modify ParameterMap while locked.");
-        return (super.put(key, value));
+        }
+        return super.put(key, value);
 
     }
 
-
     /**
-     * Copy all of the mappings from the specified map to this one.  These
-     * mappings replace any mappings that this map had for any of the keys
-     * currently in the specified Map.
+     * Copy all of the mappings from the specified map to this one. These mappings replace any mappings that this map had
+     * for any of the keys currently in the specified Map.
      *
      * @param map Mappings to be stored into this map
      *
      * @exception IllegalStateException if this map is currently locked
      */
-    @SuppressWarnings({"unchecked"})
+    @Override
+    @SuppressWarnings({ "unchecked" })
     public void putAll(Map map) {
 
-        if (locked)
+        if (locked) {
             throw new IllegalStateException("Illegal attempt to modify ParameterMap while locked.");
+        }
         super.putAll(map);
 
     }
-
 
     /**
      * Remove the mapping for this key from the map if present.
      *
      * @param key Key whose mapping is to be removed from the map
      *
-     * @return The previous value associated with the specified key, or
-     *  <code>null</code> if there was no mapping for that key
+     * @return The previous value associated with the specified key, or <code>null</code> if there was no mapping for that
+     * key
      *
      * @exception IllegalStateException if this map is currently locked
      */
     public Object remove(String key) {
 
-        if (locked)
+        if (locked) {
             throw new IllegalStateException("Illegal attempt to modify ParameterMap while locked.");
-        return (super.remove(key));
+        }
+        return super.remove(key);
 
     }
-
 
 }

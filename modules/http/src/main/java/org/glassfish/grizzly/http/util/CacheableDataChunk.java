@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,11 +20,11 @@ import org.glassfish.grizzly.ThreadCache;
 
 /**
  * {@link DataChunk} implementation, which could be cached in the thread cache.
+ * 
  * @author Alexey Stashok
  */
 public class CacheableDataChunk extends DataChunk {
-    private static final ThreadCache.CachedTypeIndex<CacheableDataChunk> CACHE_IDX =
-            ThreadCache.obtainIndex(CacheableDataChunk.class, 2);
+    private static final ThreadCache.CachedTypeIndex<CacheableDataChunk> CACHE_IDX = ThreadCache.obtainIndex(CacheableDataChunk.class, 2);
 
     public static CacheableDataChunk create() {
         final CacheableDataChunk dataChunk = ThreadCache.takeFromCache(CACHE_IDX);

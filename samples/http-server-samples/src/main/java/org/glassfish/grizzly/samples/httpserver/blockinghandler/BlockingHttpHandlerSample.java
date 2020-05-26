@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -9,6 +9,14 @@
  */
 
 package org.glassfish.grizzly.samples.httpserver.blockinghandler;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
@@ -30,44 +38,28 @@ import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HeaderValue;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-
 
 /**
  * <p>
- * This example demonstrates the use of a {@link HttpHandler} to echo
- * <code>HTTP</code> <code>POST</code> data sent by the client, back to the client.
+ * This example demonstrates the use of a {@link HttpHandler} to echo <code>HTTP</code> <code>POST</code> data sent by
+ * the client, back to the client.
  * </p>
  *
  * <p>
  * The is composed of two main parts (as nested classes of <code>BlockingHttpHandlerSample</code>)
  * <ul>
- *    <li>
- *       Client: This is a simple <code>HTTP</code> based on the Grizzly {@link HttpClientFilter}.
- *               The client uses a custom {@link org.glassfish.grizzly.filterchain.Filter} on top
- *               of the {@link HttpClientFilter} to send the <code>POST</code> and
- *               read, and ultimately display, the response from the server.
- *    </li>
- *    <li>
- *       BlockingEchoHandler: This {@link HttpHandler} is installed to the
- *                            {@link org.glassfish.grizzly.http.server.HttpServer} instance and associated
- *                            with the path <code>/echo</code>.  This {@link HttpHandler}
- *                            is fairly simple.  The handler uses the {@link java.io.Reader}
- *                            returned by {@link org.glassfish.grizzly.http.server.Request#getReader()} in blocking
- *                            mode.  As data is received, the same data is then immediately
- *                            written to the response.
- *    </li>
+ * <li>Client: This is a simple <code>HTTP</code> based on the Grizzly {@link HttpClientFilter}. The client uses a
+ * custom {@link org.glassfish.grizzly.filterchain.Filter} on top of the {@link HttpClientFilter} to send the
+ * <code>POST</code> and read, and ultimately display, the response from the server.</li>
+ * <li>BlockingEchoHandler: This {@link HttpHandler} is installed to the
+ * {@link org.glassfish.grizzly.http.server.HttpServer} instance and associated with the path <code>/echo</code>. This
+ * {@link HttpHandler} is fairly simple. The handler uses the {@link java.io.Reader} returned by
+ * {@link org.glassfish.grizzly.http.server.Request#getReader()} in blocking mode. As data is received, the same data is
+ * then immediately written to the response.</li>
  * </ul>
  * </p>
  *
@@ -75,7 +67,6 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 public class BlockingHttpHandlerSample {
 
     private static final Logger LOGGER = Grizzly.logger(BlockingHttpHandlerSample.class);
-
 
     public static void main(String[] args) {
 
@@ -98,9 +89,7 @@ public class BlockingHttpHandlerSample {
         }
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class Client {
 
@@ -120,10 +109,8 @@ public class BlockingHttpHandlerSample {
             // Add ClientFilter
             clientFilterChainBuilder.add(new ClientFilter(completeFuture));
 
-
             // Initialize Transport
-            final TCPNIOTransport transport =
-                    TCPNIOTransportBuilder.newInstance().build();
+            final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
             transport.setProcessor(clientFilterChainBuilder.build());
 
             try {
@@ -164,19 +151,12 @@ public class BlockingHttpHandlerSample {
             }
         }
 
-
         // ------------------------------------------------------ Nested Classes
 
         private static final class ClientFilter extends BaseFilter {
-            private static final HeaderValue HOST_HEADER_VALUE =
-                    HeaderValue.newHeaderValue(HOST + ':' + PORT).prepare();
+            private static final HeaderValue HOST_HEADER_VALUE = HeaderValue.newHeaderValue(HOST + ':' + PORT).prepare();
 
-            private static final String[] CONTENT = {
-                "contentA-",
-                "contentB-",
-                "contentC-",
-                "contentD"
-            };
+            private static final String[] CONTENT = { "contentA-", "contentB-", "contentC-", "contentD" };
 
             private final FutureImpl<String> future;
 
@@ -184,16 +164,13 @@ public class BlockingHttpHandlerSample {
 
             // ---------------------------------------------------- Constructors
 
-
             private ClientFilter(FutureImpl<String> future) {
-                this.future = future;                
+                this.future = future;
             }
-
 
             // ----------------------------------------- Methods from BaseFilter
 
-
-            @SuppressWarnings({"unchecked"})
+            @SuppressWarnings({ "unchecked" })
             @Override
             public NextAction handleConnect(FilterChainContext ctx) throws IOException {
                 System.out.println("\nClient connected!\n");
@@ -229,7 +206,6 @@ public class BlockingHttpHandlerSample {
 
             }
 
-
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
@@ -248,9 +224,7 @@ public class BlockingHttpHandlerSample {
 
             }
 
-
             // ------------------------------------------------- Private Methods
-
 
             private HttpRequestPacket.Builder createRequest() {
 
@@ -267,16 +241,12 @@ public class BlockingHttpHandlerSample {
 
     } // END Client
 
-
     /**
-     * This handler using blocking streams to read POST data and echo it back to the
-     * client.
+     * This handler using blocking streams to read POST data and echo it back to the client.
      */
     private static class BlockingEchoHandler extends HttpHandler {
 
-
         // -------------------------------------------- Methods from HttpHandler
-
 
         @Override
         public void service(Request request, Response response) throws Exception {
@@ -311,5 +281,5 @@ public class BlockingHttpHandlerSample {
         }
 
     } // END BlockingEchoHandler
-    
+
 }

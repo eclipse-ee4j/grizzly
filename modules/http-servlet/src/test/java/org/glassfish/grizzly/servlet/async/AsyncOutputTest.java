@@ -25,6 +25,15 @@ import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.servlet.FilterRegistration;
+import org.glassfish.grizzly.servlet.HttpServerAbstractTest;
+import org.glassfish.grizzly.servlet.ServletRegistration;
+import org.glassfish.grizzly.servlet.WebappContext;
+import org.glassfish.grizzly.utils.Futures;
+
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
@@ -35,31 +44,23 @@ import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.servlet.FilterRegistration;
-import org.glassfish.grizzly.servlet.HttpServerAbstractTest;
-import org.glassfish.grizzly.servlet.ServletRegistration;
-import org.glassfish.grizzly.servlet.WebappContext;
-import org.glassfish.grizzly.utils.Futures;
 
 /**
  * Basic Servlet 3.1 non-blocking output tests.
  */
 public class AsyncOutputTest extends HttpServerAbstractTest {
     private static final Logger LOGGER = Grizzly.logger(AsyncOutputTest.class);
-    
+
     public static final int PORT = 18890 + 18;
 
     public void testNonBlockingOutputByteByByte() throws Exception {
         System.out.println("testNonBlockingOutputByteByByte");
         try {
             final int MAX_TIME_MILLIS = 10 * 1000;
-            final FutureImpl<Boolean> blockFuture =
-                    Futures.createSafeFuture();
-            
+            final FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
+
             newHttpServer(PORT);
-            
+
             WebappContext ctx = new WebappContext("Test", "/contextPath");
             addServlet(ctx, "foobar", "/servletPath/*", new HttpServlet() {
 
@@ -67,7 +68,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                 protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
                     final AsyncContext asyncCtx = req.startAsync();
-                    
+
                     ServletOutputStream output = res.getOutputStream();
                     WriteListenerImpl writeListener = new WriteListenerImpl(asyncCtx);
                     output.setWriteListener(writeListener);
@@ -80,7 +81,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     boolean prevCanWrite;
                     final long startTimeMillis = System.currentTimeMillis();
 
-                    while ((prevCanWrite = output.isReady())) {
+                    while (prevCanWrite = output.isReady()) {
                         writeData(output);
                         count++;
 
@@ -89,23 +90,22 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                             return;
                         }
                     }
-                    
+
                     blockFuture.result(Boolean.TRUE);
-                    System.out.println("--> prevCanWriite = " + prevCanWrite
-                            + ", count = " + count);
+                    System.out.println("--> prevCanWriite = " + prevCanWrite + ", count = " + count);
                 }
-                
+
                 void writeData(ServletOutputStream output) throws IOException {
-                    output.write((byte)'a');
+                    output.write((byte) 'a');
                 }
-                
+
             });
-            
+
             ctx.deploy(httpServer);
             httpServer.start();
-            
+
             HttpURLConnection conn = createConnection("/contextPath/servletPath/pathInfo", PORT);
-            
+
             BufferedReader input = null;
             String line;
             boolean expected = false;
@@ -115,10 +115,10 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                 boolean first = true;
                 while ((line = input.readLine()) != null) {
                     expected = expected || line.endsWith("onWritePossible");
-                    System.out.println("\n " + (count++) + ": " + line.length());
+                    System.out.println("\n " + count++ + ": " + line.length());
                     int length = line.length();
                     int lengthToPrint = 20;
-                    int end = ((length > lengthToPrint) ? lengthToPrint : length);
+                    int end = length > lengthToPrint ? lengthToPrint : length;
                     System.out.print(line.substring(0, end) + "...");
                     if (length > 20) {
                         System.out.println(line.substring(length - 20));
@@ -135,24 +135,23 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     if (input != null) {
                         input.close();
                     }
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                 }
             }
 
-       } finally {
+        } finally {
             stopHttpServer();
         }
     }
-    
+
     public void testNonBlockingOutput() throws Exception {
         System.out.println("testNonBlockingOutput");
         try {
             final int MAX_TIME_MILLIS = 10 * 1000;
-            final FutureImpl<Boolean> blockFuture =
-                    Futures.createSafeFuture();
-            
+            final FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
+
             newHttpServer(PORT);
-            
+
             WebappContext ctx = new WebappContext("Test", "/contextPath");
             addServlet(ctx, "foobar", "/servletPath/*", new HttpServlet() {
 
@@ -173,7 +172,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     boolean prevCanWrite;
                     final long startTimeMillis = System.currentTimeMillis();
 
-                    while ((prevCanWrite = output.isReady())) {
+                    while (prevCanWrite = output.isReady()) {
                         writeData(output, count, 1024);
                         count++;
 
@@ -182,12 +181,11 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                             return;
                         }
                     }
-                    
+
                     blockFuture.result(Boolean.TRUE);
-                    System.out.println("--> prevCanWriite = " + prevCanWrite
-                            + ", count = " + count);
+                    System.out.println("--> prevCanWriite = " + prevCanWrite + ", count = " + count);
                 }
-                
+
                 void writeData(ServletOutputStream output, long count, int len) throws IOException {
 //                    System.out.println("--> calling writeData " + count);
                     char[] cs = String.valueOf(count).toCharArray();
@@ -198,14 +196,14 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     Arrays.fill(b, cs.length, len, (byte) 'a');
                     output.write(b);
                 }
-                
+
             });
-            
+
             ctx.deploy(httpServer);
             httpServer.start();
-            
+
             HttpURLConnection conn = createConnection("/contextPath/servletPath/pathInfo", PORT);
-            
+
             BufferedReader input = null;
             String line;
             boolean expected = false;
@@ -215,10 +213,10 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                 boolean first = true;
                 while ((line = input.readLine()) != null) {
                     expected = expected || line.endsWith("onWritePossible");
-                    System.out.println("\n " + (count++) + ": " + line.length());
+                    System.out.println("\n " + count++ + ": " + line.length());
                     int length = line.length();
                     int lengthToPrint = 20;
-                    int end = ((length > lengthToPrint) ? lengthToPrint : length);
+                    int end = length > lengthToPrint ? lengthToPrint : length;
                     System.out.print(line.substring(0, end) + "...");
                     if (length > 20) {
                         System.out.println(line.substring(length - 20));
@@ -235,41 +233,31 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     if (input != null) {
                         input.close();
                     }
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                 }
             }
 
-       } finally {
+        } finally {
             stopHttpServer();
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx,
-            final String name,
-            final String alias,
-            Servlet servlet
-            ) {
-        
+    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias, Servlet servlet) {
+
         final ServletRegistration reg = ctx.addServlet(name, servlet);
         reg.addMapping(alias);
 
         return reg;
     }
-    
-    private FilterRegistration addFilter(final WebappContext ctx,
-            final String name,
-            final String alias,
-            final Filter filter
-            ) {
-        
+
+    private FilterRegistration addFilter(final WebappContext ctx, final String name, final String alias, final Filter filter) {
+
         final FilterRegistration reg = ctx.addFilter(name, filter);
-        reg.addMappingForUrlPatterns(
-                EnumSet.of(DispatcherType.REQUEST),
-                alias);
+        reg.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), alias);
 
         return reg;
     }
-    
+
     static class WriteListenerImpl implements WriteListener {
         private final AsyncContext asyncCtx;
 
@@ -281,7 +269,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
         public void onWritePossible() {
             try {
                 final ServletOutputStream output = asyncCtx.getResponse().getOutputStream();
-                
+
                 String message = "onWritePossible";
                 System.out.println("--> " + message);
                 output.write(message.getBytes());

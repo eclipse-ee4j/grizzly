@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@
 package org.glassfish.grizzly.http.util;
 
 import java.nio.charset.Charset;
-import org.glassfish.grizzly.utils.Charsets;
 
+import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * Constants.
@@ -34,79 +34,66 @@ public final class Constants {
      */
     public static final byte CR = (byte) '\r';
 
-
     /**
      * LF.
      */
     public static final byte LF = (byte) '\n';
-
 
     /**
      * SP.
      */
     public static final byte SP = (byte) ' ';
 
-
     /**
      * HT.
      */
     public static final byte HT = (byte) '\t';
-
 
     /**
      * COMMA.
      */
     public static final byte COMMA = (byte) ',';
 
-
     /**
      * COLON.
      */
     public static final byte COLON = (byte) ':';
-
 
     /**
      * SEMI_COLON.
      */
     public static final byte SEMI_COLON = (byte) ';';
 
-
     /**
      * 'A'.
      */
     public static final byte A = (byte) 'A';
-
 
     /**
      * 'a'.
      */
     public static final byte a = (byte) 'a';
 
-
     /**
      * 'Z'.
      */
     public static final byte Z = (byte) 'Z';
-
 
     /**
      * '?'.
      */
     public static final byte QUESTION = (byte) '?';
 
-
     /**
      * Lower case offset.
      */
     public static final byte LC_OFFSET = A - a;
 
-
     // START SJSAS 6328909
     /**
      * The default response-type
      */
-    public final static String DEFAULT_RESPONSE_TYPE =
-            /*"text/html; charset=iso-8859-1"*/ null;
+    public final static String DEFAULT_RESPONSE_TYPE = /* "text/html; charset=iso-8859-1" */ null;
 
     public final static String CHUNKED_ENCODING = "chunked";
 
@@ -119,20 +106,15 @@ public final class Constants {
     public static final int DEFAULT_MAX_KEEP_ALIVE = 256;
 
     /**
-     * Default HTTP character encoding
-     * TODO Grizzly 2.0, by default, parsed the request URI using UTF-8.
-     * We should probably do so with query parameters
+     * Default HTTP character encoding TODO Grizzly 2.0, by default, parsed the request URI using UTF-8. We should probably
+     * do so with query parameters
      */
-    public static final String DEFAULT_HTTP_CHARACTER_ENCODING =
-            System.getProperty(
-                    Constants.class.getName() + ".default-character-encoding",
-                    "ISO-8859-1");
-    
+    public static final String DEFAULT_HTTP_CHARACTER_ENCODING = System.getProperty(Constants.class.getName() + ".default-character-encoding", "ISO-8859-1");
+
     /**
      * Default HTTP {@link Charset}
      */
-    public static final Charset DEFAULT_HTTP_CHARSET =
-            Charsets.lookupCharset(DEFAULT_HTTP_CHARACTER_ENCODING);
+    public static final Charset DEFAULT_HTTP_CHARSET = Charsets.lookupCharset(DEFAULT_HTTP_CHARACTER_ENCODING);
 
     public static final byte[] IDENTITY = "identity".getBytes(DEFAULT_HTTP_CHARSET);
 }

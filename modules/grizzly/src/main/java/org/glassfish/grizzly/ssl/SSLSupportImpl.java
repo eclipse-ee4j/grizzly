@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +17,17 @@
 
 package org.glassfish.grizzly.ssl;
 
-import org.glassfish.grizzly.Connection;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
+
+import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -36,29 +38,20 @@ public class SSLSupportImpl implements SSLSupport {
     private static final Logger logger = Grizzly.logger(SSLSupportImpl.class);
 
     /**
-     * A mapping table to determine the number of effective bits in the key
-     * when using a cipher suite containing the specified cipher name.  The
-     * underlying data came from the TLS Specification (RFC 2246), Appendix C.
+     * A mapping table to determine the number of effective bits in the key when using a cipher suite containing the
+     * specified cipher name. The underlying data came from the TLS Specification (RFC 2246), Appendix C.
      */
-    private static final CipherData ciphers[] = {
-            new CipherData("_WITH_NULL_", 0),
-            new CipherData("_WITH_IDEA_CBC_", 128),
-            new CipherData("_WITH_RC2_CBC_40_", 40),
-            new CipherData("_WITH_RC4_40_", 40),
-            new CipherData("_WITH_RC4_128_", 128),
-            new CipherData("_WITH_DES40_CBC_", 40),
-            new CipherData("_WITH_DES_CBC_", 56),
-            new CipherData("_WITH_3DES_EDE_CBC_", 168),
-            new CipherData("_WITH_AES_128_", 128),
-            new CipherData("_WITH_AES_256_", 256)
-    };
-    
+    private static final CipherData ciphers[] = { new CipherData("_WITH_NULL_", 0), new CipherData("_WITH_IDEA_CBC_", 128),
+            new CipherData("_WITH_RC2_CBC_40_", 40), new CipherData("_WITH_RC4_40_", 40), new CipherData("_WITH_RC4_128_", 128),
+            new CipherData("_WITH_DES40_CBC_", 40), new CipherData("_WITH_DES_CBC_", 56), new CipherData("_WITH_3DES_EDE_CBC_", 168),
+            new CipherData("_WITH_AES_128_", 128), new CipherData("_WITH_AES_256_", 256) };
+
     public static final String KEY_SIZE_KEY = "SSL_KEY_SIZE";
     private final SSLEngine engine;
     private volatile SSLSession session;
 
     public SSLSupportImpl(Connection connection) {
-        
+
         engine = SSLUtils.getSSLEngine(connection);
         if (engine == null) {
             throw new IllegalStateException("SSLEngine is null");
@@ -66,12 +59,11 @@ public class SSLSupportImpl implements SSLSupport {
         session = engine.getSession();
     }
 
-
     @Override
     public String getCipherSuite() throws IOException {
         // Look up the current SSLSession
-                /* SJSAS 6439313
-         * SSLSession session = ssl.getSession();
+        /*
+         * SJSAS 6439313 SSLSession session = ssl.getSession();
          */
         if (session == null) {
             return null;
@@ -84,8 +76,7 @@ public class SSLSupportImpl implements SSLSupport {
         return getPeerCertificateChain(false);
     }
 
-    protected java.security.cert.X509Certificate[] getX509Certificates(
-            SSLSession session) throws IOException {
+    protected java.security.cert.X509Certificate[] getX509Certificates(SSLSession session) throws IOException {
         X509Certificate jsseCerts[] = null;
         try {
             jsseCerts = session.getPeerCertificateChain();
@@ -97,15 +88,12 @@ public class SSLSupportImpl implements SSLSupport {
         if (jsseCerts == null) {
             jsseCerts = new X509Certificate[0];
         }
-        java.security.cert.X509Certificate[] x509Certs =
-                new java.security.cert.X509Certificate[jsseCerts.length];
+        java.security.cert.X509Certificate[] x509Certs = new java.security.cert.X509Certificate[jsseCerts.length];
         for (int i = 0; i < x509Certs.length; i++) {
             try {
                 byte buffer[] = jsseCerts[i].getEncoded();
-                CertificateFactory cf =
-                        CertificateFactory.getInstance("X.509");
-                ByteArrayInputStream stream =
-                        new ByteArrayInputStream(buffer);
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                ByteArrayInputStream stream = new ByteArrayInputStream(buffer);
                 x509Certs[i] = (java.security.cert.X509Certificate) cf.generateCertificate(stream);
                 if (logger.isLoggable(Level.FINE)) {
                     logger.log(Level.FINE, "Cert #" + i + " = " + x509Certs[i]);
@@ -123,11 +111,10 @@ public class SSLSupportImpl implements SSLSupport {
     }
 
     @Override
-    public Object[] getPeerCertificateChain(boolean force)
-            throws IOException {
+    public Object[] getPeerCertificateChain(boolean force) throws IOException {
         // Look up the current SSLSession
-        /* SJSAS 6439313
-        SSLSession session = ssl.getSession();
+        /*
+         * SJSAS 6439313 SSLSession session = ssl.getSession();
          */
         if (session == null) {
             return null;
@@ -146,12 +133,12 @@ public class SSLSupportImpl implements SSLSupport {
         if (jsseCerts.length <= 0 && force) {
             session.invalidate();
 //            handshaker.handshake(connection, engineConfigurator);
-            /* SJSAS 6439313
-            session = ssl.getSession();
+            /*
+             * SJSAS 6439313 session = ssl.getSession();
              */
             // START SJSAS 6439313
             session = engine.getSession();
-        // END SJSAS 6439313
+            // END SJSAS 6439313
         }
         return getX509Certificates(session);
     }
@@ -160,11 +147,10 @@ public class SSLSupportImpl implements SSLSupport {
      * Copied from <code>org.apache.catalina.valves.CertificateValve</code>
      */
     @Override
-    public Integer getKeySize()
-            throws IOException {
+    public Integer getKeySize() throws IOException {
         // Look up the current SSLSession
-        /* SJSAS 6439313
-        SSLSession session = ssl.getSession();
+        /*
+         * SJSAS 6439313 SSLSession session = ssl.getSession();
          */
         SSLSupport.CipherData c_aux[] = ciphers;
         if (session == null) {
@@ -190,8 +176,8 @@ public class SSLSupportImpl implements SSLSupport {
     @Override
     public String getSessionId() throws IOException {
         // Look up the current SSLSession
-                /* SJSAS 6439313
-         * SSLSession session = ssl.getSession();
+        /*
+         * SJSAS 6439313 SSLSession session = ssl.getSession();
          */
         if (session == null) {
             return null;
@@ -203,7 +189,7 @@ public class SSLSupportImpl implements SSLSupport {
         }
         StringBuilder buf = new StringBuilder("");
         for (int x = 0; x < ssl_session.length; x++) {
-            String digit = Integer.toHexString((int) ssl_session[x]);
+            String digit = Integer.toHexString(ssl_session[x]);
             if (digit.length() < 2) {
                 buf.append('0');
             }

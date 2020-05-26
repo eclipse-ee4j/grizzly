@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,27 +25,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.GenericCloseListener;
 import org.glassfish.grizzly.ReadHandler;
+import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.TimeoutHandler;
-import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.util.Header;
 
 /**
  * The main object used by {@link CometHandler} and Servlet to push information amongst suspended request/response. The
  * {@link CometContext} is always available for {@link CometHandler} and can be used to {@link #notify}, or share
  * information with other {@link CometHandler}. This is the equivalent of server push as the CometContext will invoke
- * all registered CometHandler ({@link #addCometHandler}) sequentially. <p/> <p>A CometContext can be considered as a
- * topic where CometHandler register for information. A CometContext can be shared amongst Servlet of the same
- * application, or globally across all deployed web applications. Normally, a CometContext is created using a topic's
- * name like:
- * <pre><code>
+ * all registered CometHandler ({@link #addCometHandler}) sequentially.
+ * <p/>
+ * <p>
+ * A CometContext can be considered as a topic where CometHandler register for information. A CometContext can be shared
+ * amongst Servlet of the same application, or globally across all deployed web applications. Normally, a CometContext
+ * is created using a topic's name like:
+ * 
+ * <pre>
+ * <code>
  * <p/>
  * CometEngine ce = CometEngine.getEngine();
  * CometContext cc = ce.registerContext("MyTopic");
@@ -56,36 +60,46 @@ import org.glassfish.grizzly.http.util.Header;
  * cc.notify("I'm pushing data to all registered CometHandler");
  * </code>
  * </pre>
- * <p/> <p> As soon as {@link #addCometHandler} is invoked, Grizzly will automatically <strong>suspend</strong> the
- * request/response (will not commit the response). A response can be <strong>resumed</strong> by invoking {@link
- * #resumeCometHandler}, which will automatically commit the response and remove the associated CometHandler from the
- * CometContext. <p/> <p>A CometContext uses a {@link NotificationHandler} to invoke, using the calling thread or a
- * Grizzly thread pool, all CometHandler than have been added using the {@link #addCometHandler}. A {@link
- * NotificationHandler} can be used to filter or transform the content that will eventually be pushed back to all
- * connected clients. You can also use a {@link NotificationHandler} to throttle push like invoking only a subset of the
- * CometHandler, etc. <p/> <p>Idle suspended connection can be timed out by configuring the {@link
- * #setExpirationDelay(long)}. The value needs to be in milliseconds. If there is no I/O operations and no invocation of
- * {@link #notify} during the expiration delay, Grizzly will resume all suspended connection. An application will have a
- * chance to send back data using the connection as Grizzly will invoke the {@link CometHandler#onInterrupt} before
- * resuming the connection. Note that setting the expiration delay to -1 disable the above mechanism, e.g. idle
- * connection will never get resumed by Grizzly. <p/> <p>Attributes can be added/removed the same way HttpServletSession
- * is doing. It is not recommended to use attributes if this {@link CometContext} is not shared amongst multiple context
- * path (uses HttpServletSession instead). </p>
+ * <p/>
+ * <p>
+ * As soon as {@link #addCometHandler} is invoked, Grizzly will automatically <strong>suspend</strong> the
+ * request/response (will not commit the response). A response can be <strong>resumed</strong> by invoking
+ * {@link #resumeCometHandler}, which will automatically commit the response and remove the associated CometHandler from
+ * the CometContext.
+ * <p/>
+ * <p>
+ * A CometContext uses a {@link NotificationHandler} to invoke, using the calling thread or a Grizzly thread pool, all
+ * CometHandler than have been added using the {@link #addCometHandler}. A {@link NotificationHandler} can be used to
+ * filter or transform the content that will eventually be pushed back to all connected clients. You can also use a
+ * {@link NotificationHandler} to throttle push like invoking only a subset of the CometHandler, etc.
+ * <p/>
+ * <p>
+ * Idle suspended connection can be timed out by configuring the {@link #setExpirationDelay(long)}. The value needs to
+ * be in milliseconds. If there is no I/O operations and no invocation of {@link #notify} during the expiration delay,
+ * Grizzly will resume all suspended connection. An application will have a chance to send back data using the
+ * connection as Grizzly will invoke the {@link CometHandler#onInterrupt} before resuming the connection. Note that
+ * setting the expiration delay to -1 disable the above mechanism, e.g. idle connection will never get resumed by
+ * Grizzly.
+ * <p/>
+ * <p>
+ * Attributes can be added/removed the same way HttpServletSession is doing. It is not recommended to use attributes if
+ * this {@link CometContext} is not shared amongst multiple context path (uses HttpServletSession instead).
+ * </p>
  */
 public class CometContext<E> {
     /**
      * Generic error message
      */
     protected final static String INVALID_COMET_HANDLER = "CometHandler cannot be null. "
-        + "This CometHandler was probably resumed and an invalid reference was made to it.";
+            + "This CometHandler was probably resumed and an invalid reference was made to it.";
     protected final static String ALREADY_REMOVED = "CometHandler already been removed or invalid.";
     private final static String COMET_NOT_ENABLED = "Make sure you have enabled Comet or make sure the thread"
-        + " invoking that method is the same as the Servlet.service() thread.";
+            + " invoking that method is the same as the Servlet.service() thread.";
     protected final static Logger LOGGER = Logger.getLogger(CometContext.class.getName());
-    private final Map<Object,Object> attributes;
-      
-    protected final static ThreadLocal<Request> REQUEST_LOCAL = new ThreadLocal<Request>();
-    
+    private final Map<Object, Object> attributes;
+
+    protected final static ThreadLocal<Request> REQUEST_LOCAL = new ThreadLocal<>();
+
     /**
      * The context path associated with this instance.
      */
@@ -107,12 +121,11 @@ public class CometContext<E> {
     private final CometEvent<CometContext> eventInitialize;
 
     /**
-     * true, if we want to enable mechanism, which detects closed connections,
-     * or false otherwise. The mentioned mechanism should be disabled if we
-     * expect client to use HTTP pipelining.
+     * true, if we want to enable mechanism, which detects closed connections, or false otherwise. The mentioned mechanism
+     * should be disabled if we expect client to use HTTP pipelining.
      */
     private boolean isDetectClosedConnections = true;
-    
+
     /**
      * Create a new instance
      *
@@ -121,10 +134,10 @@ public class CometContext<E> {
     public CometContext(String contextTopic) {
         topic = contextTopic;
         attributes = new ConcurrentHashMap<>();
-        handlers = new CopyOnWriteArrayList<CometHandler>();
-        eventInterrupt = new CometEvent<CometContext>(CometEvent.Type.INTERRUPT, this);
-        eventInitialize = new CometEvent<CometContext>(CometEvent.Type.INITIALIZE, this);
-        eventTerminate = new CometEvent<CometContext>(CometEvent.Type.TERMINATE, this, this);
+        handlers = new CopyOnWriteArrayList<>();
+        eventInterrupt = new CometEvent<>(CometEvent.Type.INTERRUPT, this);
+        eventInitialize = new CometEvent<>(CometEvent.Type.INITIALIZE, this);
+        eventTerminate = new CometEvent<>(CometEvent.Type.TERMINATE, this, this);
         initDefaultValues();
     }
 
@@ -142,13 +155,14 @@ public class CometContext<E> {
      *
      * @deprecated - use getTopic.
      */
+    @Deprecated
     public String getContextPath() {
         return getTopic();
     }
 
     /**
-     * Get the topic representing this instance with this instance. This is the value to uses when invoking {@link
-     * CometEngine#getCometContext}
+     * Get the topic representing this instance with this instance. This is the value to uses when invoking
+     * {@link CometEngine#getCometContext}
      *
      * @return topic the topic associated with this instance
      */
@@ -189,12 +203,12 @@ public class CometContext<E> {
     }
 
     /**
-     * Add a {@link CometHandler}. The underlying HttpServletResponse will not get committed until {@link
-     * CometContext#resumeCometHandler(CometHandler)} is invoked, unless the {@link
-     * CometContext#setExpirationDelay(long)} expires. If set to alreadySuspended is set to true, no  I/O operations are
-     * allowed inside the {@link CometHandler} as the underlying HttpServletResponse has not been suspended. Adding such
-     * {@link CometHandler} is useful only when no I/O operations on the HttpServletResponse are required. Examples
-     * include calling a remote EJB when a push operations happens, storing data inside a database, etc.
+     * Add a {@link CometHandler}. The underlying HttpServletResponse will not get committed until
+     * {@link CometContext#resumeCometHandler(CometHandler)} is invoked, unless the
+     * {@link CometContext#setExpirationDelay(long)} expires. If set to alreadySuspended is set to true, no I/O operations
+     * are allowed inside the {@link CometHandler} as the underlying HttpServletResponse has not been suspended. Adding such
+     * {@link CometHandler} is useful only when no I/O operations on the HttpServletResponse are required. Examples include
+     * calling a remote EJB when a push operations happens, storing data inside a database, etc.
      *
      * @param handler a new {@link CometHandler}
      *
@@ -210,7 +224,7 @@ public class CometContext<E> {
         final Request request = REQUEST_LOCAL.get();
         final Response response = request.getResponse();
         final Connection c = request.getContext().getConnection();
-        
+
         handler.setResponse(response);
         handler.setCometContext(this);
         try {
@@ -221,7 +235,7 @@ public class CometContext<E> {
             if (isDetectClosedConnections) {
                 // If Detect connection close mode is on - disable keep-alive for this connection
                 response.addHeader(Header.Connection, "close");
-                
+
                 // Initialize asynchronous reading to be notified when connection
                 // is getting closed by peer
                 response.getRequest().getInputBuffer().initiateAsyncronousDataReceiving();
@@ -231,7 +245,7 @@ public class CometContext<E> {
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-        
+
         return handler.hashCode();
     }
 
@@ -265,9 +279,9 @@ public class CometContext<E> {
     }
 
     /**
-     * Remove a {@link CometHandler}. If the continuation (connection) associated with this {@link CometHandler} no
-     * longer have {@link CometHandler} associated to it, it will be resumed by Grizzly by calling {@link
-     * CometContext#resumeCometHandler(CometHandler)}
+     * Remove a {@link CometHandler}. If the continuation (connection) associated with this {@link CometHandler} no longer
+     * have {@link CometHandler} associated to it, it will be resumed by Grizzly by calling
+     * {@link CometContext#resumeCometHandler(CometHandler)}
      *
      * @return <tt>true</tt> if the operation succeeded.
      */
@@ -276,8 +290,8 @@ public class CometContext<E> {
     }
 
     /**
-     * Remove a {@link CometHandler}. If the continuation (connection) associated with this {@link CometHandler} no
-     * longer have {@link CometHandler} associated to it, it will be resumed.
+     * Remove a {@link CometHandler}. If the continuation (connection) associated with this {@link CometHandler} no longer
+     * have {@link CometHandler} associated to it, it will be resumed.
      *
      * @param handler The CometHandler to remove.
      * @param resume True is the connection can be resumed if no CometHandler are associated with the underlying
@@ -294,12 +308,12 @@ public class CometContext<E> {
     }
 
     /**
-     * Resume the Comet request and remove it from the active {@link CometHandler} list. Once resumed, a CometHandler
-     * must never manipulate the HttpServletRequest or HttpServletResponse as those object will be recycled and may be
-     * re-used to serve another request.
+     * Resume the Comet request and remove it from the active {@link CometHandler} list. Once resumed, a CometHandler must
+     * never manipulate the HttpServletRequest or HttpServletResponse as those object will be recycled and may be re-used to
+     * serve another request.
      * <p/>
-     * If you cache them for later reuse by another thread there is a possibility to introduce corrupted responses next
-     * time a request is made.
+     * If you cache them for later reuse by another thread there is a possibility to introduce corrupted responses next time
+     * a request is made.
      *
      * @param handler The CometHandler to resume.
      *
@@ -325,9 +339,9 @@ public class CometContext<E> {
     }
 
     /**
-     * Interrupt logic in its own method, so it can be executed either async or sync.<br> cometHandler.onInterrupt is
-     * performed async due to its functionality is unknown, hence not safe to run in the performance critical selector
-     * thread.
+     * Interrupt logic in its own method, so it can be executed either async or sync.<br>
+     * cometHandler.onInterrupt is performed async due to its functionality is unknown, hence not safe to run in the
+     * performance critical selector thread.
      *
      * @param handler The {@link CometHandler} encapsulating the suspended connection.
      * @param finishExecution Finish the current execution.
@@ -343,8 +357,8 @@ public class CometContext<E> {
     }
 
     /**
-     * Return true if this {@link CometHandler} is still active, e.g. there is still a suspended connection associated
-     * with it.
+     * Return true if this {@link CometHandler} is still active, e.g. there is still a suspended connection associated with
+     * it.
      *
      * @return true
      */
@@ -353,8 +367,8 @@ public class CometContext<E> {
     }
 
     /**
-     * Notify all {@link CometHandler}. All {@link CometHandler#onEvent} will be invoked with a {@link CometEvent} of
-     * type NOTIFY.
+     * Notify all {@link CometHandler}. All {@link CometHandler#onEvent} will be invoked with a {@link CometEvent} of type
+     * NOTIFY.
      *
      * @param attachment An object shared amongst {@link CometHandler}.
      */
@@ -375,43 +389,48 @@ public class CometContext<E> {
     /**
      * Notify a single {@link CometHandler}. The {@link CometEvent#getType()} will determine which {@link CometHandler}
      * method will be invoked:
-     * <pre><code>
+     * 
+     * <pre>
+     * <code>
      * CometEvent.INTERRUPT -> {@link CometHandler#onInterrupt(CometEvent)}
      * CometEvent.Type.NOTIFY -> {@link CometHandler#onEvent(CometEvent)}
      * CometEvent.INITIALIZE -> {@link CometHandler#onInitialize(CometEvent)}
      * CometEvent.TERMINATE -> {@link CometHandler#onTerminate(CometEvent)}
      * CometEvent.READ -> {@link CometHandler#onEvent(CometEvent)}
-     * </code></pre>
+     * </code>
+     * </pre>
      *
      * @param attachment An object shared amongst {@link CometHandler}.
      * @param eventType The type of notification.
      * @param cometHandler {@link CometHandler} to notify.
      */
-    public void notify(E attachment, CometEvent.Type eventType, CometHandler cometHandler)
-        throws IOException {
+    public void notify(E attachment, CometEvent.Type eventType, CometHandler cometHandler) throws IOException {
         if (cometHandler == null) {
             throw new IllegalStateException(INVALID_COMET_HANDLER);
         }
-        CometEvent<E> event = new CometEvent<E>(eventType, this, attachment);
+        CometEvent<E> event = new CometEvent<>(eventType, this, attachment);
         notificationHandler.notify(event, cometHandler);
     }
 
     /**
-     * Notify all {@link CometHandler}. The {@link CometEvent#getType()} will determine which {@link CometHandler}
-     * method will be invoked:
-     * <pre><code>
+     * Notify all {@link CometHandler}. The {@link CometEvent#getType()} will determine which {@link CometHandler} method
+     * will be invoked:
+     * 
+     * <pre>
+     * <code>
      * CometEvent.Type.INTERRUPT -> {@link CometHandler#onInterrupt}
      * CometEvent.Type.NOTIFY -> {@link CometHandler#onEvent}
      * CometEvent.Type.INITIALIZE -> {@link CometHandler#onInitialize}
      * CometEvent.Type.TERMINATE -> {@link CometHandler#onTerminate}
      * CometEvent.Type.READ -> {@link CometHandler#onEvent}
-     * </code></pre>
+     * </code>
+     * </pre>
      *
      * @param attachment An object shared amongst {@link CometHandler}.
      * @param eventType The type of notification.
      */
     public void notify(E attachment, CometEvent.Type eventType) throws IOException {
-        notificationHandler.notify(new CometEvent<E>(eventType, this, attachment), handlers.iterator());
+        notificationHandler.notify(new CometEvent<>(eventType, this, attachment), handlers.iterator());
     }
 
     /**
@@ -468,26 +487,24 @@ public class CometContext<E> {
     }
 
     /**
-     * Enable/disable the mechanism, which detects closed connections and notifies
-     * user's handlers via
-     * {@link CometHandler#onInterrupt(org.glassfish.grizzly.comet.CometEvent)} method.
-     * If this feature is on - HTTP pipelining can not be used.
-     * 
+     * Enable/disable the mechanism, which detects closed connections and notifies user's handlers via
+     * {@link CometHandler#onInterrupt(org.glassfish.grizzly.comet.CometEvent)} method. If this feature is on - HTTP
+     * pipelining can not be used.
+     *
      * @param isDetectClosedConnections
      */
     public void setDetectClosedConnections(final boolean isDetectClosedConnections) {
         this.isDetectClosedConnections = isDetectClosedConnections;
     }
-    
+
     /**
-     * Returns <tt>true</tt> if connection terminate detection is on.
-     * If this feature is on - HTTP pipelining can not be used.
-     * The feature is enabled by default.
+     * Returns <tt>true</tt> if connection terminate detection is on. If this feature is on - HTTP pipelining can not be
+     * used. The feature is enabled by default.
      */
     public boolean isDetectClosedConnections() {
         return isDetectClosedConnections;
     }
-    
+
     private static void notifyOnAsyncRead(CometHandler handler) {
         try {
             handler.onEvent(new CometEvent(CometEvent.Type.READ));
@@ -496,8 +513,7 @@ public class CometContext<E> {
         }
     }
 
-    private class CometCompletionHandler implements CompletionHandler<Response>,
-            GenericCloseListener {
+    private class CometCompletionHandler implements CompletionHandler<Response>, GenericCloseListener {
         private final CometHandler handler;
 
         public CometCompletionHandler(CometHandler handler) {
@@ -531,8 +547,7 @@ public class CometContext<E> {
         }
 
         @Override
-        public void onClosed(final Closeable closeable, final CloseType type)
-                throws IOException {
+        public void onClosed(final Closeable closeable, final CloseType type) throws IOException {
             removeCometHandler(handler);
             closeable.removeCloseListener(this);
         }
@@ -556,15 +571,13 @@ public class CometContext<E> {
             return true;
         }
 
-
     }
 
     private static class CometInputHandler implements ReadHandler {
         final NIOInputStream nioInputStream;
         private final CometHandler handler;
 
-        public CometInputHandler(NIOInputStream nioInputStream,
-            CometHandler handler) {
+        public CometInputHandler(NIOInputStream nioInputStream, CometHandler handler) {
             this.nioInputStream = nioInputStream;
             this.handler = handler;
         }

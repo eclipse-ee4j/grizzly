@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,8 +24,7 @@ public class HeaderDecodingException extends RuntimeException {
     private final ErrorType errorType;
 
     enum ErrorType {
-        STREAM,
-        SESSION
+        STREAM, SESSION
     }
 
     /**
@@ -43,9 +42,7 @@ public class HeaderDecodingException extends RuntimeException {
      * @param errorCode the {@link ErrorCode} for this {@link HeaderDecodingException}
      * @param message the detail message for this {@link HeaderDecodingException}
      */
-    public HeaderDecodingException(final ErrorCode errorCode,
-                                   final ErrorType errorType,
-                                   final String message) {
+    public HeaderDecodingException(final ErrorCode errorCode, final ErrorType errorType, final String message) {
         super(message);
         this.errorCode = errorCode;
         this.errorType = errorType;
@@ -68,13 +65,11 @@ public class HeaderDecodingException extends RuntimeException {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(128);
-        sb.append(getClass().getName())
-                .append(" errorCode=").append(errorCode).append(" errorType=").append(errorType);
+        sb.append(getClass().getName()).append(" errorCode=").append(errorCode).append(" errorType=").append(errorType);
 
         String message = getLocalizedMessage();
 
-        return message != null ?
-                (sb.append(": ").append(message).toString()) : sb.toString();
+        return message != null ? sb.append(": ").append(message).toString() : sb.toString();
     }
-    
+
 }

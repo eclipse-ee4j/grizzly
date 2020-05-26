@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,28 +21,25 @@ import org.glassfish.grizzly.ThreadCache;
 
 /**
  * The entry key in the file cache map.
- * 
+ *
  * @author Alexey Stashok
  */
 public class FileCacheKey implements Cacheable {
 
-    private static final ThreadCache.CachedTypeIndex<FileCacheKey> CACHE_IDX =
-                    ThreadCache.obtainIndex(FileCacheKey.class, 16);
+    private static final ThreadCache.CachedTypeIndex<FileCacheKey> CACHE_IDX = ThreadCache.obtainIndex(FileCacheKey.class, 16);
 
     protected String host;
     protected String uri;
 
-
     // ------------------------------------------------------------ Constructors
 
-
-    protected FileCacheKey() { }
+    protected FileCacheKey() {
+    }
 
     protected FileCacheKey(final String host, final String uri) {
         this.host = host;
         this.uri = uri;
     }
-
 
     // -------------------------------------------------- Methods from Cacheable
 
@@ -53,13 +50,10 @@ public class FileCacheKey implements Cacheable {
         ThreadCache.putToCache(CACHE_IDX, this);
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
-
     public static FileCacheKey create(final String host, final String uri) {
-        final FileCacheKey key =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final FileCacheKey key = ThreadCache.takeFromCache(CACHE_IDX);
         if (key != null) {
             key.host = host;
             key.uri = uri;
@@ -76,19 +70,19 @@ public class FileCacheKey implements Cacheable {
         }
         if (getClass() != obj.getClass()) {
             return false;
-        }        
+        }
         final FileCacheKey other = (FileCacheKey) obj;
-        
+
         final String otherHost = other.host;
-        if ((this.host == null) ? (otherHost != null) : !this.host.equals(otherHost)) {
+        if (this.host == null ? otherHost != null : !this.host.equals(otherHost)) {
             return false;
         }
 
         final String otherUri = other.uri;
-        if ((this.uri == null) ? (otherUri != null) : !this.uri.equals(otherUri)) {
+        if (this.uri == null ? otherUri != null : !this.uri.equals(otherUri)) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -100,9 +94,7 @@ public class FileCacheKey implements Cacheable {
         return hash;
     }
 
-
     // ------------------------------------------------------- Protected Methods
-
 
     protected String getHost() {
         return host;

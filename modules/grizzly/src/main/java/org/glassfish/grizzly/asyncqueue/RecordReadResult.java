@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,17 +24,16 @@ import org.glassfish.grizzly.ReadResult;
  *
  * @param <K>
  * @param <L>
- * 
+ *
  * @author Alexey Stashok
  */
 public final class RecordReadResult<K, L> extends ReadResult<K, L> {
 
     @Override
-    protected void set(final Connection<L> connection, final K message,
-            final L srcAddress, final int readSize) {
+    protected void set(final Connection<L> connection, final K message, final L srcAddress, final int readSize) {
         super.set(connection, message, srcAddress, readSize);
     }
-    
+
     @Override
     public void recycle() {
         reset();

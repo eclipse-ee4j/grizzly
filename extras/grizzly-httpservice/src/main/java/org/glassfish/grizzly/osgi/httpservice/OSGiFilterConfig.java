@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,10 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.util.Map;
+
 import org.glassfish.grizzly.servlet.FilterConfigImpl;
 import org.glassfish.grizzly.servlet.WebappContext;
-
-import java.util.Map;
 
 final class OSGiFilterConfig extends FilterConfigImpl {
 

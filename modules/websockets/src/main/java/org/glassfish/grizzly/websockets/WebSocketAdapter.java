@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,27 +17,35 @@
 package org.glassfish.grizzly.websockets;
 
 public class WebSocketAdapter implements WebSocketListener {
+    @Override
     public void onClose(WebSocket socket, DataFrame frame) {
     }
 
+    @Override
     public void onConnect(WebSocket socket) {
     }
 
+    @Override
     public void onMessage(WebSocket socket, String text) {
     }
 
+    @Override
     public void onMessage(WebSocket socket, byte[] bytes) {
     }
 
+    @Override
     public void onPing(WebSocket socket, byte[] bytes) {
     }
 
+    @Override
     public void onPong(WebSocket socket, byte[] bytes) {
     }
 
+    @Override
     public void onFragment(WebSocket socket, String fragment, boolean last) {
     }
 
+    @Override
     public void onFragment(WebSocket socket, byte[] fragment, boolean last) {
     }
 }

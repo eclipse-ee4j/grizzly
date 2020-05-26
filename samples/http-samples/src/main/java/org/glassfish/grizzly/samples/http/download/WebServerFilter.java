@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.Grizzly;
@@ -33,9 +34,9 @@ import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * Simple Web server implementation, which locates requested resources in a
- * local filesystem and transfers it asynchronously to a client.
- * 
+ * Simple Web server implementation, which locates requested resources in a local filesystem and transfers it
+ * asynchronously to a client.
+ *
  * @author Alexey Stashok
  */
 public class WebServerFilter extends BaseFilter {
@@ -44,8 +45,8 @@ public class WebServerFilter extends BaseFilter {
 
     /**
      * Construct a WebServer
-     * @param rootFolder Root folder in a local filesystem, where server will look
-     *                   for resources
+     * 
+     * @param rootFolder Root folder in a local filesystem, where server will look for resources
      */
     public WebServerFilter(String rootFolder) {
         if (rootFolder != null) {
@@ -64,12 +65,10 @@ public class WebServerFilter extends BaseFilter {
     /**
      * The method is called once we have received some {@link HttpContent}.
      *
-     * Filter gets {@link HttpContent}, which represents a part or complete HTTP
-     * request. If it's just a chunk of a complete HTTP request - filter checks
-     * whether it's the last chunk, if not - swallows content and returns.
-     * If incoming {@link HttpContent} represents complete HTTP request or it is
-     * the last HTTP request - it initiates file download and sends the file
-     * asynchronously to the client.
+     * Filter gets {@link HttpContent}, which represents a part or complete HTTP request. If it's just a chunk of a complete
+     * HTTP request - filter checks whether it's the last chunk, if not - swallows content and returns. If incoming
+     * {@link HttpContent} represents complete HTTP request or it is the last HTTP request - it initiates file download and
+     * sends the file asynchronously to the client.
      *
      * @param ctx Request processing context
      *
@@ -77,8 +76,7 @@ public class WebServerFilter extends BaseFilter {
      * @throws IOException
      */
     @Override
-    public NextAction handleRead(FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
         // Get the incoming message as HttpContent
         final HttpContent httpContent = ctx.getMessage();
@@ -128,38 +126,32 @@ public class WebServerFilter extends BaseFilter {
      * @param ctx HttpRequestPacket processing context
      * @param request HttpRequestPacket
      * @param file local file
-     * 
+     *
      * @throws IOException
      */
-    private void downloadFile(FilterChainContext ctx,
-            HttpRequestPacket request, File file) throws IOException {
+    private void downloadFile(FilterChainContext ctx, HttpRequestPacket request, File file) throws IOException {
         // Create DownloadCompletionHandler, responsible for asynchronous
         // file transferring
-        final DownloadCompletionHandler downloadHandler =
-                new DownloadCompletionHandler(ctx, request, file);
+        final DownloadCompletionHandler downloadHandler = new DownloadCompletionHandler(ctx, request, file);
         // Start the download
         downloadHandler.start();
     }
 
     /**
      * Create a 404 HttpResponsePacket packet
+     * 
      * @param request original HttpRequestPacket
      *
      * @return 404 HttpContent
      */
-    private static HttpPacket create404(HttpRequestPacket request)
-            throws CharConversionException {
+    private static HttpPacket create404(HttpRequestPacket request) throws CharConversionException {
         // Build 404 HttpResponsePacket message headers
-        final HttpResponsePacket responseHeader = HttpResponsePacket.builder(request).
-                protocol(request.getProtocol()).status(404).
-                reasonPhrase("Not Found").build();
-        
+        final HttpResponsePacket responseHeader = HttpResponsePacket.builder(request).protocol(request.getProtocol()).status(404).reasonPhrase("Not Found")
+                .build();
+
         // Build 404 HttpContent on base of HttpResponsePacket message header
-        return responseHeader.httpContentBuilder().
-                    content(Buffers.wrap(null,
-                                         "Can not find file, corresponding to URI: "
-                                                 + request.getRequestURIRef().getDecodedURI())).
-                          build();
+        return responseHeader.httpContentBuilder()
+                .content(Buffers.wrap(null, "Can not find file, corresponding to URI: " + request.getRequestURIRef().getDecodedURI())).build();
     }
 
     /**
@@ -168,8 +160,7 @@ public class WebServerFilter extends BaseFilter {
      * @param request HttpRequestPacket message header
      * @return requested URL path
      */
-    private static String extractLocalURL(HttpRequestPacket request)
-            throws CharConversionException {
+    private static String extractLocalURL(HttpRequestPacket request) throws CharConversionException {
         // Get requested URL
         String url = request.getRequestURIRef().getDecodedURI();
 
@@ -188,11 +179,9 @@ public class WebServerFilter extends BaseFilter {
     }
 
     /**
-     * {@link org.glassfish.grizzly.CompletionHandler}, responsible for asynchronous file transferring
-     * via HTTP protocol.
+     * {@link org.glassfish.grizzly.CompletionHandler}, responsible for asynchronous file transferring via HTTP protocol.
      */
-    private static class DownloadCompletionHandler
-            extends EmptyCompletionHandler<WriteResult>{
+    private static class DownloadCompletionHandler extends EmptyCompletionHandler<WriteResult> {
 
         // MemoryManager, used to allocate Buffers
         private final MemoryManager memoryManager;
@@ -208,28 +197,25 @@ public class WebServerFilter extends BaseFilter {
 
         /**
          * Construct a DownloadCompletionHandler
-         * 
+         *
          * @param ctx Suspended HttpRequestPacket processing context
          * @param request HttpRequestPacket message header
          * @param file local file to be sent
          * @throws FileNotFoundException
          */
-        public DownloadCompletionHandler(FilterChainContext ctx,
-                HttpRequestPacket request, File file) throws FileNotFoundException {
-            
+        public DownloadCompletionHandler(FilterChainContext ctx, HttpRequestPacket request, File file) throws FileNotFoundException {
+
             // Open file input stream
             in = new FileInputStream(file);
             this.ctx = ctx;
             // Build HttpResponsePacket message header (send file using chunked HTTP messages).
-            response = HttpResponsePacket.builder(request).
-                protocol(request.getProtocol()).status(200).
-                reasonPhrase("OK").chunked(true).build();
+            response = HttpResponsePacket.builder(request).protocol(request.getProtocol()).status(200).reasonPhrase("OK").chunked(true).build();
             memoryManager = ctx.getMemoryManager();
         }
 
         /**
          * Start the file transferring
-         * 
+         *
          * @throws IOException
          */
         public void start() throws IOException {
@@ -238,12 +224,13 @@ public class WebServerFilter extends BaseFilter {
 
         /**
          * Send the next file chunk
+         * 
          * @throws IOException
          */
         public void sendFileChunk() throws IOException {
             // Allocate a new buffer
             final Buffer buffer = memoryManager.allocate(1024);
-            
+
             // prepare byte[] for InputStream.read(...)
             final byte[] bufferByteArray = buffer.array();
             final int offset = buffer.arrayOffset();
@@ -252,7 +239,7 @@ public class WebServerFilter extends BaseFilter {
             // Read file chunk from the file input stream
             int bytesRead = in.read(bufferByteArray, offset, length);
             final HttpContent content;
-            
+
             if (bytesRead == -1) {
                 // if the file was completely sent
                 // build the last HTTP chunk
@@ -273,6 +260,7 @@ public class WebServerFilter extends BaseFilter {
 
         /**
          * Method gets called, when file chunk was successfully sent.
+         * 
          * @param result the result
          */
         @Override
@@ -305,6 +293,7 @@ public class WebServerFilter extends BaseFilter {
 
         /**
          * The method will be called, if file transferring was failed.
+         * 
          * @param throwable the cause
          */
         @Override
@@ -316,11 +305,9 @@ public class WebServerFilter extends BaseFilter {
         }
 
         /**
-         * Returns <tt>true</tt>, if file transfer was completed, or
-         * <tt>false</tt> otherwise.
+         * Returns <tt>true</tt>, if file transfer was completed, or <tt>false</tt> otherwise.
          *
-         * @return <tt>true</tt>, if file transfer was completed, or
-         * <tt>false</tt> otherwise.
+         * @return <tt>true</tt>, if file transfer was completed, or <tt>false</tt> otherwise.
          */
         public boolean isDone() {
             return isDone;

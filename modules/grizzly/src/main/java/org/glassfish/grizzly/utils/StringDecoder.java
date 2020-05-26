@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,28 +16,29 @@
 
 package org.glassfish.grizzly.utils;
 
-import org.glassfish.grizzly.attributes.AttributeStorage;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
 import org.glassfish.grizzly.attributes.Attribute;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.glassfish.grizzly.attributes.AttributeStorage;
 
 /**
  * String decoder, which decodes {@link Buffer} to {@link String}
- * 
+ *
  * @author Alexey Stashok
  */
 public class StringDecoder extends AbstractTransformer<Buffer, String> {
     private static final Logger logger = Grizzly.logger(StringDecoder.class);
-    
+
     protected Charset charset;
-    
+
     protected final Attribute<Integer> lengthAttribute;
 
     protected byte[] stringTerminateBytes;
@@ -58,18 +59,16 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
 
     public StringDecoder(final Charset charset, final String stringTerminator) {
         this.charset = charset != null ? charset : Charset.defaultCharset();
-        
+
         if (stringTerminator != null) {
             try {
-                this.stringTerminateBytes = stringTerminator.getBytes(
-                        this.charset.name());
+                this.stringTerminateBytes = stringTerminator.getBytes(this.charset.name());
             } catch (final UnsupportedEncodingException ignored) {
                 // should never happen as we are getting charset name from Charset
             }
         }
 
-        lengthAttribute = attributeBuilder.createAttribute(
-                "StringDecoder.StringSize");
+        lengthAttribute = attributeBuilder.createAttribute("StringDecoder.StringSize");
     }
 
     @Override
@@ -78,9 +77,7 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
     }
 
     @Override
-    protected TransformationResult<Buffer, String> transformImpl(
-            final AttributeStorage storage, final Buffer input)
-            throws TransformationException {
+    protected TransformationResult<Buffer, String> transformImpl(final AttributeStorage storage, final Buffer input) throws TransformationException {
 
         if (input == null) {
             throw new TransformationException("Input could not be null");
@@ -88,20 +85,16 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
 
         final TransformationResult<Buffer, String> result;
 
-        result = stringTerminateBytes == null
-                ? parseWithLengthPrefix(storage, input)
-                : parseWithTerminatingSeq(storage, input);
+        result = stringTerminateBytes == null ? parseWithLengthPrefix(storage, input) : parseWithTerminatingSeq(storage, input);
 
         return result;
     }
 
-    protected TransformationResult<Buffer, String> parseWithLengthPrefix(
-            final AttributeStorage storage, final Buffer input) {
+    protected TransformationResult<Buffer, String> parseWithLengthPrefix(final AttributeStorage storage, final Buffer input) {
         Integer stringSize = lengthAttribute.get(storage);
 
         if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "StringDecoder decode stringSize={0} buffer={1} content={2}",
-                    new Object[]{stringSize, input, input.toStringContent()});
+            logger.log(Level.FINE, "StringDecoder decode stringSize={0} buffer={1} content={2}", new Object[] { stringSize, input, input.toStringContent() });
         }
 
         if (stringSize == null) {
@@ -112,7 +105,7 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
             stringSize = input.getInt();
             lengthAttribute.set(storage, stringSize);
         }
-        
+
         if (input.remaining() < stringSize) {
             return TransformationResult.createIncompletedResult(input);
         }
@@ -123,15 +116,13 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
         input.position(input.limit());
         input.limit(tmpLimit);
 
-        return TransformationResult.createCompletedResult(
-                stringMessage, input);
+        return TransformationResult.createCompletedResult(stringMessage, input);
     }
 
-    protected TransformationResult<Buffer, String> parseWithTerminatingSeq(
-            final AttributeStorage storage, final Buffer input) {
+    protected TransformationResult<Buffer, String> parseWithTerminatingSeq(final AttributeStorage storage, final Buffer input) {
         final int terminationBytesLength = stringTerminateBytes.length;
         int checkIndex = 0;
-        
+
         int termIndex = -1;
 
         final Integer offsetInt = lengthAttribute.get(storage);
@@ -157,17 +148,15 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
             final String stringMessage = input.toStringContent(charset);
             input.limit(tmpLimit);
             input.position(termIndex + terminationBytesLength);
-            return TransformationResult.createCompletedResult(
-                    stringMessage, input);
+            return TransformationResult.createCompletedResult(stringMessage, input);
         } else {
             offset = input.remaining() - terminationBytesLength;
             if (offset < 0) {
                 offset = 0;
             }
 
-            lengthAttribute.set(storage, offset);            
-            return TransformationResult.createIncompletedResult(
-                    input);
+            lengthAttribute.set(storage, offset);
+            return TransformationResult.createIncompletedResult(input);
         }
     }
 
@@ -178,8 +167,7 @@ public class StringDecoder extends AbstractTransformer<Buffer, String> {
     }
 
     @Override
-    public boolean hasInputRemaining(final AttributeStorage storage,
-                                     final Buffer input) {
+    public boolean hasInputRemaining(final AttributeStorage storage, final Buffer input) {
         return input != null && input.hasRemaining();
     }
 

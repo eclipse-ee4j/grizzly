@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -33,9 +33,7 @@ public class LZMAContentEncoding implements ContentEncoding {
 
     private final EncodingFilter encodingFilter;
 
-
     // ------------------------------------------------------------ Constructors
-
 
     public LZMAContentEncoding() {
         this(null);
@@ -63,7 +61,6 @@ public class LZMAContentEncoding implements ContentEncoding {
 
     // -------------------------------------------- Methods from ContentEncoding
 
-
     @Override
     public String getName() {
         return NAME;
@@ -73,7 +70,7 @@ public class LZMAContentEncoding implements ContentEncoding {
     public String[] getAliases() {
         return ALIASES.clone();
     }
-    
+
     public static String[] getLzmaAliases() {
         return ALIASES.clone();
     }
@@ -92,8 +89,7 @@ public class LZMAContentEncoding implements ContentEncoding {
     public ParsingResult decode(Connection connection, HttpContent httpContent) {
         final HttpHeader httpHeader = httpContent.getHttpHeader();
         final Buffer input = httpContent.getContent();
-        final TransformationResult<Buffer, Buffer> result =
-                decoder.transform(httpHeader, input);
+        final TransformationResult<Buffer, Buffer> result = decoder.transform(httpHeader, input);
 
         Buffer remainder = result.getExternalRemainder();
 
@@ -106,25 +102,22 @@ public class LZMAContentEncoding implements ContentEncoding {
 
         try {
             switch (result.getStatus()) {
-                case COMPLETE: {
-                    httpContent.setContent(result.getMessage());
-                    decoder.finish(httpHeader);
-                    return ParsingResult.create(httpContent, remainder);
-                }
+            case COMPLETE: {
+                httpContent.setContent(result.getMessage());
+                decoder.finish(httpHeader);
+                return ParsingResult.create(httpContent, remainder);
+            }
 
-                case INCOMPLETE: {
-                    return ParsingResult.create(null, remainder);
-                }
+            case INCOMPLETE: {
+                return ParsingResult.create(null, remainder);
+            }
 
-                case ERROR: {
-                    throw new IllegalStateException("LZMA decode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
+            case ERROR: {
+                throw new IllegalStateException("LZMA decode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
 
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();
@@ -141,34 +134,30 @@ public class LZMAContentEncoding implements ContentEncoding {
             return httpContent;
         }
 
-        final TransformationResult<Buffer, Buffer> result =
-                encoder.transform(httpContent.getHttpHeader(), input);
+        final TransformationResult<Buffer, Buffer> result = encoder.transform(httpContent.getHttpHeader(), input);
 
         input.tryDispose();
 
         try {
             switch (result.getStatus()) {
-                case COMPLETE:
-                    encoder.finish(httpHeader);
-                case INCOMPLETE: {
-                    Buffer encodedBuffer = result.getMessage();
-                    if (encodedBuffer != null) {
-                        httpContent.setContent(encodedBuffer);
-                        return httpContent;
-                    } else {
-                        return null;
-                    }
+            case COMPLETE:
+                encoder.finish(httpHeader);
+            case INCOMPLETE: {
+                Buffer encodedBuffer = result.getMessage();
+                if (encodedBuffer != null) {
+                    httpContent.setContent(encodedBuffer);
+                    return httpContent;
+                } else {
+                    return null;
                 }
+            }
 
-                case ERROR: {
-                    throw new IllegalStateException("LZMA encode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
+            case ERROR: {
+                throw new IllegalStateException("LZMA encode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
 
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();
@@ -176,23 +165,28 @@ public class LZMAContentEncoding implements ContentEncoding {
 
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         LZMAContentEncoding that = (LZMAContentEncoding) o;
 
-        if (decoder != null ? !decoder.equals(that.decoder) : that.decoder != null)
+        if (decoder != null ? !decoder.equals(that.decoder) : that.decoder != null) {
             return false;
-        if (encoder != null ? !encoder.equals(that.encoder) : that.encoder != null)
+        }
+        if (encoder != null ? !encoder.equals(that.encoder) : that.encoder != null) {
             return false;
-        if (encodingFilter != null ? !encodingFilter.equals(that.encodingFilter) : that.encodingFilter != null)
+        }
+        if (encodingFilter != null ? !encodingFilter.equals(that.encodingFilter) : that.encodingFilter != null) {
             return false;
+        }
 
         return true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,31 +31,58 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.glassfish.grizzly.*;
-import org.glassfish.grizzly.asyncqueue.*;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Context;
+import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.FileTransfer;
+import org.glassfish.grizzly.GracefulShutdownListener;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.GrizzlyFuture;
+import org.glassfish.grizzly.IOEvent;
+import org.glassfish.grizzly.IOEventLifeCycleListener;
+import org.glassfish.grizzly.PortRange;
+import org.glassfish.grizzly.Processor;
+import org.glassfish.grizzly.ProcessorExecutor;
+import org.glassfish.grizzly.ProcessorSelector;
+import org.glassfish.grizzly.ReadResult;
+import org.glassfish.grizzly.Reader;
+import org.glassfish.grizzly.StandaloneProcessor;
+import org.glassfish.grizzly.StandaloneProcessorSelector;
+import org.glassfish.grizzly.WriteResult;
+import org.glassfish.grizzly.Writer;
+import org.glassfish.grizzly.asyncqueue.AsyncQueueIO;
+import org.glassfish.grizzly.asyncqueue.AsyncQueueReader;
+import org.glassfish.grizzly.asyncqueue.AsyncQueueWriter;
+import org.glassfish.grizzly.asyncqueue.WritableMessage;
 import org.glassfish.grizzly.filterchain.Filter;
 import org.glassfish.grizzly.filterchain.FilterChainEnabledTransport;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.memory.ByteBufferArray;
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
-import org.glassfish.grizzly.nio.*;
+import org.glassfish.grizzly.nio.ChannelConfigurator;
+import org.glassfish.grizzly.nio.DirectByteBufferRecord;
+import org.glassfish.grizzly.nio.NIOConnection;
+import org.glassfish.grizzly.nio.NIOTransport;
+import org.glassfish.grizzly.nio.RegisterChannelResult;
+import org.glassfish.grizzly.nio.SelectorRunner;
 import org.glassfish.grizzly.nio.tmpselectors.TemporarySelectorIO;
 import org.glassfish.grizzly.utils.Futures;
 
 /**
  * UDP NIO transport implementation
- * 
+ *
  * @author Alexey Stashok
  */
-public final class UDPNIOTransport extends NIOTransport
-        implements FilterChainEnabledTransport {
+public final class UDPNIOTransport extends NIOTransport implements FilterChainEnabledTransport {
     /**
-     * Default {@link ChannelConfigurator} used to configure client and server side
-     * channels.
+     * Default {@link ChannelConfigurator} used to configure client and server side channels.
      */
-    public static final ChannelConfigurator DEFAULT_CHANNEL_CONFIGURATOR =
-            new DefaultChannelConfigurator();
+    public static final ChannelConfigurator DEFAULT_CHANNEL_CONFIGURATOR = new DefaultChannelConfigurator();
 
     static final Logger LOGGER = Grizzly.logger(UDPNIOTransport.class);
     private static final String DEFAULT_TRANSPORT_NAME = "UDPNIOTransport";
@@ -75,12 +102,9 @@ public final class UDPNIOTransport extends NIOTransport
     /**
      * Default {@link TCPNIOConnectorHandler}
      */
-    private final UDPNIOConnectorHandler connectorHandler =
-            new TransportConnectorHandler();
+    private final UDPNIOConnectorHandler connectorHandler = new TransportConnectorHandler();
 
-    private final UDPNIOBindingHandler bindingHandler =
-            new UDPNIOBindingHandler(this);
-
+    private final UDPNIOBindingHandler bindingHandler = new UDPNIOBindingHandler(this);
 
     public UDPNIOTransport() {
         this(DEFAULT_TRANSPORT_NAME);
@@ -94,18 +118,15 @@ public final class UDPNIOTransport extends NIOTransport
 
         registerChannelCompletionHandler = new RegisterChannelCompletionHandler();
 
-        asyncQueueIO = AsyncQueueIO.Factory.createImmutable(
-                new UDPNIOAsyncQueueReader(this),
-                new UDPNIOAsyncQueueWriter(this));
+        asyncQueueIO = AsyncQueueIO.Factory.createImmutable(new UDPNIOAsyncQueueReader(this), new UDPNIOAsyncQueueWriter(this));
 
         transportFilter = new UDPNIOTransportFilter(this);
-        serverConnections = new ConcurrentLinkedQueue<UDPNIOServerConnection>();
+        serverConnections = new ConcurrentLinkedQueue<>();
     }
 
     @Override
     protected TemporarySelectorIO createTemporarySelectorIO() {
-        return new TemporarySelectorIO(new UDPNIOTemporarySelectorReader(this),
-                                       new UDPNIOTemporarySelectorWriter(this));
+        return new TemporarySelectorIO(new UDPNIOTemporarySelectorReader(this), new UDPNIOTemporarySelectorWriter(this));
     }
 
     @Override
@@ -114,10 +135,7 @@ public final class UDPNIOTransport extends NIOTransport
             try {
                 serverConnection.register();
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING,
-                           LogMessages.WARNING_GRIZZLY_TRANSPORT_START_SERVER_CONNECTION_EXCEPTION(
-                                   serverConnection),
-                           e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TRANSPORT_START_SERVER_CONNECTION_EXCEPTION(serverConnection), e);
             }
         }
     }
@@ -127,7 +145,7 @@ public final class UDPNIOTransport extends NIOTransport
         final State state = getState().getState();
         if (state != State.STOPPING || state != State.STOPPED) {
             if (shutdownListeners == null) {
-                shutdownListeners = new HashSet<GracefulShutdownListener>();
+                shutdownListeners = new HashSet<>();
             }
             return shutdownListeners.add(shutdownListener);
         }
@@ -146,8 +164,7 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(String host, int port)
-            throws IOException {
+    public UDPNIOServerConnection bind(String host, int port) throws IOException {
         return bind(host, port, 50);
     }
 
@@ -155,8 +172,7 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(String host, int port, int backlog)
-            throws IOException {
+    public UDPNIOServerConnection bind(String host, int port, int backlog) throws IOException {
         return bind(new InetSocketAddress(host, port), backlog);
     }
 
@@ -164,8 +180,7 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(SocketAddress socketAddress)
-            throws IOException {
+    public UDPNIOServerConnection bind(SocketAddress socketAddress) throws IOException {
         return bind(socketAddress, 4096);
     }
 
@@ -173,8 +188,7 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(SocketAddress socketAddress, int backlog)
-            throws IOException {
+    public UDPNIOServerConnection bind(SocketAddress socketAddress, int backlog) throws IOException {
         return bindingHandler.bind(socketAddress, backlog);
     }
 
@@ -183,13 +197,11 @@ public final class UDPNIOTransport extends NIOTransport
         return bindingHandler.bindToInherited();
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(final String host,
-            final PortRange portRange, final int backlog) throws IOException {
+    public UDPNIOServerConnection bind(final String host, final PortRange portRange, final int backlog) throws IOException {
 
         return (UDPNIOServerConnection) bindingHandler.bind(host, portRange, backlog);
     }
@@ -198,8 +210,7 @@ public final class UDPNIOTransport extends NIOTransport
      * {@inheritDoc}
      */
     @Override
-    public UDPNIOServerConnection bind(final String host,
-            final PortRange portRange, final boolean randomStartPort, final int backlog) throws IOException {
+    public UDPNIOServerConnection bind(final String host, final PortRange portRange, final boolean randomStartPort, final int backlog) throws IOException {
 
         return (UDPNIOServerConnection) bindingHandler.bind(host, portRange, randomStartPort, backlog);
     }
@@ -212,20 +223,15 @@ public final class UDPNIOTransport extends NIOTransport
         final Lock lock = state.getStateLocker().writeLock();
         lock.lock();
         try {
-            //noinspection SuspiciousMethodCalls
-            if (connection != null
-                    && serverConnections.remove(connection)) {
-                final FutureImpl<Closeable> future =
-                        Futures.createSafeFuture();
-                ((UDPNIOServerConnection) connection).unbind(
-                        Futures.toCompletionHandler(future));
+            // noinspection SuspiciousMethodCalls
+            if (connection != null && serverConnections.remove(connection)) {
+                final FutureImpl<Closeable> future = Futures.createSafeFuture();
+                ((UDPNIOServerConnection) connection).unbind(Futures.toCompletionHandler(future));
                 try {
                     future.get(1000, TimeUnit.MILLISECONDS);
                     future.recycle(false);
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING,
-                            LogMessages.WARNING_GRIZZLY_TRANSPORT_UNBINDING_CONNECTION_EXCEPTION(connection),
-                            e);
+                    LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TRANSPORT_UNBINDING_CONNECTION_EXCEPTION(connection), e);
                 }
             }
         } finally {
@@ -243,9 +249,7 @@ public final class UDPNIOTransport extends NIOTransport
                     unbind(serverConnection);
                 } catch (Exception e) {
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE,
-                                "Exception occurred when closing server connection: "
-                                + serverConnection, e);
+                        LOGGER.log(Level.FINE, "Exception occurred when closing server connection: " + serverConnection, e);
                     }
                 }
             }
@@ -267,29 +271,26 @@ public final class UDPNIOTransport extends NIOTransport
     }
 
     /**
-     * Creates, initializes and connects socket to the specific remote host
-     * and port and returns {@link Connection}, representing socket.
+     * Creates, initializes and connects socket to the specific remote host and port and returns {@link Connection},
+     * representing socket.
      *
      * @param host remote host to connect to.
      * @param port remote port to connect to.
-     * @return {@link GrizzlyFuture} of connect operation, which could be used to get
-     * resulting {@link Connection}.
+     * @return {@link GrizzlyFuture} of connect operation, which could be used to get resulting {@link Connection}.
      *
      * @throws java.io.IOException
      */
     @Override
-    public GrizzlyFuture<Connection> connect(String host, int port)
-            throws IOException {
+    public GrizzlyFuture<Connection> connect(String host, int port) throws IOException {
         return connectorHandler.connect(host, port);
     }
 
     /**
-     * Creates, initializes and connects socket to the specific
-     * {@link SocketAddress} and returns {@link Connection}, representing socket.
+     * Creates, initializes and connects socket to the specific {@link SocketAddress} and returns {@link Connection},
+     * representing socket.
      *
      * @param remoteAddress remote address to connect to.
-     * @return {@link GrizzlyFuture} of connect operation, which could be used to get
-     * resulting {@link Connection}.
+     * @return {@link GrizzlyFuture} of connect operation, which could be used to get resulting {@link Connection}.
      *
      * @throws java.io.IOException
      */
@@ -299,61 +300,52 @@ public final class UDPNIOTransport extends NIOTransport
     }
 
     /**
-     * Creates, initializes and connects socket to the specific
-     * {@link SocketAddress} and returns {@link Connection}, representing socket.
+     * Creates, initializes and connects socket to the specific {@link SocketAddress} and returns {@link Connection},
+     * representing socket.
      *
      * @param remoteAddress remote address to connect to.
      * @param completionHandler {@link CompletionHandler}.
      */
     @Override
-    public void connect(SocketAddress remoteAddress,
-            CompletionHandler<Connection> completionHandler) {
+    public void connect(SocketAddress remoteAddress, CompletionHandler<Connection> completionHandler) {
         connectorHandler.connect(remoteAddress, completionHandler);
     }
 
     /**
-     * Creates, initializes socket, binds it to the specific local and remote
-     * {@link SocketAddress} and returns {@link Connection}, representing socket.
+     * Creates, initializes socket, binds it to the specific local and remote {@link SocketAddress} and returns
+     * {@link Connection}, representing socket.
      *
      * @param remoteAddress remote address to connect to.
      * @param localAddress local address to bind socket to.
-     * @return {@link GrizzlyFuture} of connect operation, which could be used to get
-     * resulting {@link Connection}.
+     * @return {@link GrizzlyFuture} of connect operation, which could be used to get resulting {@link Connection}.
      */
     @Override
-    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress,
-            SocketAddress localAddress) {
+    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress, SocketAddress localAddress) {
         return connectorHandler.connect(remoteAddress, localAddress);
     }
 
     /**
-     * Creates, initializes socket, binds it to the specific local and remote
-     * {@link SocketAddress} and returns {@link Connection}, representing socket.
+     * Creates, initializes socket, binds it to the specific local and remote {@link SocketAddress} and returns
+     * {@link Connection}, representing socket.
      *
      * @param remoteAddress remote address to connect to.
      * @param localAddress local address to bind socket to.
      * @param completionHandler {@link CompletionHandler}.
      */
     @Override
-    public void connect(SocketAddress remoteAddress,
-            SocketAddress localAddress,
-            CompletionHandler<Connection> completionHandler) {
-        connectorHandler.connect(remoteAddress, localAddress,
-                completionHandler);
+    public void connect(SocketAddress remoteAddress, SocketAddress localAddress, CompletionHandler<Connection> completionHandler) {
+        connectorHandler.connect(remoteAddress, localAddress, completionHandler);
     }
 
     @Override
-    protected void closeConnection(final Connection connection)
-            throws IOException {
-        final SelectableChannel nioChannel =
-                ((NIOConnection) connection).getChannel();
+    protected void closeConnection(final Connection connection) throws IOException {
+        final SelectableChannel nioChannel = ((NIOConnection) connection).getChannel();
 
         if (nioChannel != null) {
             try {
                 nioChannel.close();
             } catch (IOException e) {
-                LOGGER.log(Level.FINE,
-                        "UDPNIOTransport.closeChannel exception", e);
+                LOGGER.log(Level.FINE, "UDPNIOTransport.closeChannel exception", e);
             }
         }
 
@@ -401,14 +393,11 @@ public final class UDPNIOTransport extends NIOTransport
     }
 
     @Override
-    public void fireIOEvent(final IOEvent ioEvent,
-            final Connection connection,
-            final IOEventLifeCycleListener listener) {
+    public void fireIOEvent(final IOEvent ioEvent, final Connection connection, final IOEventLifeCycleListener listener) {
 
         final Processor conProcessor = connection.obtainProcessor(ioEvent);
 
-        ProcessorExecutor.execute(Context.create(connection,
-                    conProcessor, ioEvent, listener));
+        ProcessorExecutor.execute(Context.create(connection, conProcessor, ioEvent, listener));
     }
 
     /**
@@ -451,8 +440,7 @@ public final class UDPNIOTransport extends NIOTransport
         }
     }
 
-    private int readConnected(final UDPNIOConnection connection, Buffer buffer,
-            final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
+    private int readConnected(final UDPNIOConnection connection, Buffer buffer, final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
         final int read;
 
         final int oldPos = buffer.position();
@@ -467,16 +455,15 @@ public final class UDPNIOTransport extends NIOTransport
             array.restore();
             array.recycle();
         } else {
-            read = ((DatagramChannel) connection.getChannel()).read(
-                    buffer.toByteBuffer());
+            read = ((DatagramChannel) connection.getChannel()).read(buffer.toByteBuffer());
         }
 
-        final boolean hasRead = (read > 0);
+        final boolean hasRead = read > 0;
 
         if (hasRead) {
             buffer.position(oldPos + read);
         }
-        
+
         if (hasRead && currentResult != null) {
             currentResult.setMessage(buffer);
             currentResult.setReadSize(currentResult.getReadSize() + read);
@@ -486,21 +473,16 @@ public final class UDPNIOTransport extends NIOTransport
         return read;
     }
 
-    private int readNonConnected(final UDPNIOConnection connection, Buffer buffer,
-            final ReadResult<Buffer, SocketAddress> currentResult)
-            throws IOException {
+    private int readNonConnected(final UDPNIOConnection connection, Buffer buffer, final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
         final SocketAddress peerAddress;
 
         final int read;
 
-        final DirectByteBufferRecord ioRecord =
-                        DirectByteBufferRecord.get();
+        final DirectByteBufferRecord ioRecord = DirectByteBufferRecord.get();
         try {
-            final ByteBuffer directByteBuffer =
-                    ioRecord.allocate(buffer.limit());
+            final ByteBuffer directByteBuffer = ioRecord.allocate(buffer.limit());
             final int initialBufferPos = directByteBuffer.position();
-            peerAddress = ((DatagramChannel) connection.getChannel()).receive(
-                    directByteBuffer);
+            peerAddress = ((DatagramChannel) connection.getChannel()).receive(directByteBuffer);
             read = directByteBuffer.position() - initialBufferPos;
             if (read > 0) {
                 directByteBuffer.flip();
@@ -510,7 +492,7 @@ public final class UDPNIOTransport extends NIOTransport
             ioRecord.release();
         }
 
-        final boolean hasRead = (read > 0);
+        final boolean hasRead = read > 0;
 
         if (hasRead && currentResult != null) {
             currentResult.setMessage(buffer);
@@ -521,27 +503,22 @@ public final class UDPNIOTransport extends NIOTransport
         return read;
     }
 
-    public int read(final UDPNIOConnection connection, final Buffer buffer)
-            throws IOException {
+    public int read(final UDPNIOConnection connection, final Buffer buffer) throws IOException {
         return read(connection, buffer, null);
     }
 
-    public int read(final UDPNIOConnection connection, Buffer buffer,
-            final ReadResult<Buffer, SocketAddress> currentResult)
-            throws IOException {
+    public int read(final UDPNIOConnection connection, Buffer buffer, final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
 
         int read = 0;
 
-        final boolean isAllocate = (buffer == null && currentResult != null);
+        final boolean isAllocate = buffer == null && currentResult != null;
 
         if (isAllocate) {
             buffer = memoryManager.allocateAtLeast(connection.getReadBufferSize());
         }
 
         try {
-            read = connection.isConnected()
-                    ? readConnected(connection, buffer, currentResult)
-                    : readNonConnected(connection, buffer, currentResult);
+            read = connection.isConnected() ? readConnected(connection, buffer, currentResult) : readNonConnected(connection, buffer, currentResult);
 
             connection.onRead(buffer, read);
         } catch (Exception e) {
@@ -559,15 +536,12 @@ public final class UDPNIOTransport extends NIOTransport
         return read;
     }
 
-    public long write(final UDPNIOConnection connection,
-            final SocketAddress dstAddress, final WritableMessage message)
-            throws IOException {
+    public long write(final UDPNIOConnection connection, final SocketAddress dstAddress, final WritableMessage message) throws IOException {
         return write(connection, dstAddress, message, null);
     }
 
-    public long write(final UDPNIOConnection connection, final SocketAddress dstAddress,
-            final WritableMessage message, final WriteResult<WritableMessage, SocketAddress> currentResult)
-            throws IOException {
+    public long write(final UDPNIOConnection connection, final SocketAddress dstAddress, final WritableMessage message,
+            final WriteResult<WritableMessage, SocketAddress> currentResult) throws IOException {
 
         final long written;
         if (message instanceof Buffer) {
@@ -575,8 +549,7 @@ public final class UDPNIOTransport extends NIOTransport
             final int oldPos = buffer.position();
 
             if (dstAddress != null) {
-                written = ((DatagramChannel) connection.getChannel()).send(
-                        buffer.toByteBuffer(), dstAddress);
+                written = ((DatagramChannel) connection.getChannel()).send(buffer.toByteBuffer(), dstAddress);
             } else {
 
                 if (buffer.isComposite()) {
@@ -589,8 +562,7 @@ public final class UDPNIOTransport extends NIOTransport
                     array.restore();
                     array.recycle();
                 } else {
-                    written = ((DatagramChannel) connection.getChannel()).write(
-                            buffer.toByteBuffer());
+                    written = ((DatagramChannel) connection.getChannel()).write(buffer.toByteBuffer());
                 }
             }
 
@@ -607,8 +579,7 @@ public final class UDPNIOTransport extends NIOTransport
 
         if (currentResult != null) {
             currentResult.setMessage(message);
-            currentResult.setWrittenSize(currentResult.getWrittenSize()
-                    + written);
+            currentResult.setWrittenSize(currentResult.getWrittenSize() + written);
             currentResult.setDstAddressHolder(connection.peerSocketAddressHolder);
         }
 
@@ -620,7 +591,7 @@ public final class UDPNIOTransport extends NIOTransport
         final ChannelConfigurator cc = channelConfigurator;
         return cc != null ? cc : DEFAULT_CHANNEL_CONFIGURATOR;
     }
-    
+
     UDPNIOConnection obtainNIOConnection(DatagramChannel channel) {
         UDPNIOConnection connection = new UDPNIOConnection(this, channel);
         configureNIOConnection(connection);
@@ -635,27 +606,21 @@ public final class UDPNIOTransport extends NIOTransport
         return connection;
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
     protected Object createJmxManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.nio.transport.jmx.UDPNIOTransport", this,
-                UDPNIOTransport.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.nio.transport.jmx.UDPNIOTransport", this, UDPNIOTransport.class);
     }
 
-    protected class RegisterChannelCompletionHandler
-            extends EmptyCompletionHandler<RegisterChannelResult> {
+    protected class RegisterChannelCompletionHandler extends EmptyCompletionHandler<RegisterChannelResult> {
 
         @Override
         public void completed(final RegisterChannelResult result) {
             final SelectionKey selectionKey = result.getSelectionKey();
 
-            final UDPNIOConnection connection =
-                    (UDPNIOConnection) getSelectionKeyHandler().
-                    getConnectionForKey(selectionKey);
+            final UDPNIOConnection connection = (UDPNIOConnection) getSelectionKeyHandler().getConnectionForKey(selectionKey);
 
             if (connection != null) {
                 final SelectorRunner selectorRunner = result.getSelectorRunner();
@@ -684,45 +649,39 @@ public final class UDPNIOTransport extends NIOTransport
             return UDPNIOTransport.this.getProcessorSelector();
         }
     }
-    
+
     private static class DefaultChannelConfigurator implements ChannelConfigurator {
         @Override
-        public void preConfigure(NIOTransport transport,
-                SelectableChannel channel) throws IOException {
-            
+        public void preConfigure(NIOTransport transport, SelectableChannel channel) throws IOException {
+
             final UDPNIOTransport udpNioTransport = (UDPNIOTransport) transport;
             final DatagramChannel datagramChannel = (DatagramChannel) channel;
             final DatagramSocket datagramSocket = datagramChannel.socket();
-            
+
             datagramChannel.configureBlocking(false);
 
             try {
                 datagramSocket.setReuseAddress(udpNioTransport.isReuseAddress());
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_SOCKET_REUSEADDRESS_EXCEPTION(udpNioTransport.isReuseAddress()), e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_SOCKET_REUSEADDRESS_EXCEPTION(udpNioTransport.isReuseAddress()), e);
             }
         }
 
         @Override
-        public void postConfigure(final NIOTransport transport,
-                final SelectableChannel channel) throws IOException {
+        public void postConfigure(final NIOTransport transport, final SelectableChannel channel) throws IOException {
 
             final UDPNIOTransport udpNioTransport = (UDPNIOTransport) transport;
             final DatagramChannel datagramChannel = (DatagramChannel) channel;
             final DatagramSocket datagramSocket = datagramChannel.socket();
 
             final boolean isConnected = datagramChannel.isConnected();
-            
-            final int soTimeout = isConnected
-                    ? udpNioTransport.getClientSocketSoTimeout()
-                    : udpNioTransport.getServerSocketSoTimeout();
-            
+
+            final int soTimeout = isConnected ? udpNioTransport.getClientSocketSoTimeout() : udpNioTransport.getServerSocketSoTimeout();
+
             try {
                 datagramSocket.setSoTimeout(soTimeout);
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_SOCKET_TIMEOUT_EXCEPTION(soTimeout), e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_SOCKET_TIMEOUT_EXCEPTION(soTimeout), e);
             }
         }
     }

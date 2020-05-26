@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -37,12 +37,10 @@ public class HeadersDecoder {
     private Buffer inBuffer;
 
     // @TODO Implement maxHeaderSize limitation handling
-    public HeadersDecoder(final MemoryManager memoryManager,
-                          final int maxHeaderSize,
-                          final int maxHeaderTableSize) {
+    public HeadersDecoder(final MemoryManager memoryManager, final int maxHeaderSize, final int maxHeaderTableSize) {
         this.memoryManager = memoryManager;
         this.maxHeaderSize = maxHeaderSize;
-        this.hpackDecoder =  new Decoder(maxHeaderTableSize);
+        this.hpackDecoder = new Decoder(maxHeaderTableSize);
     }
 
     public boolean append(final Buffer buffer) {
@@ -53,11 +51,11 @@ public class HeadersDecoder {
         }
         return false;
     }
-    
+
     public void decode(final DecodingCallback callback) {
         if (inBuffer != null) {
             hpackDecoder.decode(inBuffer, !isProcessingHeaders(), callback);
-            
+
             inBuffer.tryDispose();
             inBuffer = null;
         }
@@ -70,8 +68,7 @@ public class HeadersDecoder {
         return firstHeaderFrameLocal;
     }
 
-    public void setFirstHeaderFrame(
-            final HeaderBlockHead firstHeaderFrame) {
+    public void setFirstHeaderFrame(final HeaderBlockHead firstHeaderFrame) {
         this.firstHeaderFrame = firstHeaderFrame;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.http2.frames;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.memory.CompositeBuffer;
@@ -25,17 +26,15 @@ import org.glassfish.grizzly.memory.MemoryManager;
 
 public class DataFrame extends Http2Frame {
 
-    private static final ThreadCache.CachedTypeIndex<DataFrame> CACHE_IDX =
-                    ThreadCache.obtainIndex(DataFrame.class, 8);
-    
+    private static final ThreadCache.CachedTypeIndex<DataFrame> CACHE_IDX = ThreadCache.obtainIndex(DataFrame.class, 8);
+
     public static final int TYPE = 0;
-    
+
     public static final byte END_STREAM = 0x1;
     public static final byte PADDED = 0x8;
 
-    static final Map<Integer, String> FLAG_NAMES_MAP =
-            new HashMap<>(4);
-    
+    static final Map<Integer, String> FLAG_NAMES_MAP = new HashMap<>(4);
+
     static {
         FLAG_NAMES_MAP.put((int) END_STREAM, "END_STREAM");
         FLAG_NAMES_MAP.put((int) PADDED, "PADDED");
@@ -46,7 +45,8 @@ public class DataFrame extends Http2Frame {
 
     // ------------------------------------------------------------ Constructors
 
-    private DataFrame() { }
+    private DataFrame() {
+    }
 
     // ---------------------------------------------------------- Public Methods
 
@@ -58,13 +58,11 @@ public class DataFrame extends Http2Frame {
         return frame;
     }
 
-    public static DataFrame fromBuffer(final int flags,
-                                       final int streamId,
-                                       final Buffer buffer) {
+    public static DataFrame fromBuffer(final int flags, final int streamId, final Buffer buffer) {
         final DataFrame frame = create();
         frame.setFlags(flags);
         frame.setStreamId(streamId);
-        
+
         if (frame.isFlagSet(PADDED)) {
             frame.padLength = buffer.get() & 0xFF;
         }
@@ -72,7 +70,7 @@ public class DataFrame extends Http2Frame {
         // split the Buffer so data Buffer won't be disposed on frame recycle
         frame.data = buffer.split(buffer.position());
         frame.setFrameBuffer(buffer);
-        
+
         frame.onPayloadUpdated();
 
         return frame;
@@ -84,7 +82,7 @@ public class DataFrame extends Http2Frame {
 
     /**
      * Remove DataFrame padding (if it was applied).
-     * 
+     *
      * @return this DataFrame instance
      */
     public DataFrame normalize() {
@@ -92,13 +90,13 @@ public class DataFrame extends Http2Frame {
             clearFlag(PADDED);
             data.limit(data.limit() - padLength);
             padLength = 0;
-            
+
             onPayloadUpdated();
         }
-        
+
         return this;
     }
-    
+
     public Buffer getData() {
         return data;
     }
@@ -110,7 +108,7 @@ public class DataFrame extends Http2Frame {
     public boolean isEndStream() {
         return isFlagSet(END_STREAM);
     }
-    
+
     public boolean isPadded() {
         return isFlagSet(PADDED);
     }
@@ -118,10 +116,7 @@ public class DataFrame extends Http2Frame {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("DataFrame {")
-                .append(headerToString())
-                .append(", data=").append(data)
-                .append('}');
+        sb.append("DataFrame {").append(headerToString()).append(", data=").append(data).append('}');
         return sb.toString();
     }
 
@@ -129,23 +124,21 @@ public class DataFrame extends Http2Frame {
     protected int calcLength() {
         return data.remaining() + (isPadded() ? 1 : 0);
     }
-    
-    // -------------------------------------------------- Methods from Cacheable
 
+    // -------------------------------------------------- Methods from Cacheable
 
     @Override
     public void recycle() {
         if (DONT_RECYCLE) {
             return;
         }
-        
+
         padLength = 0;
         data = null;
-        
+
         super.recycle();
         ThreadCache.putToCache(CACHE_IDX, this);
     }
-
 
     // -------------------------------------------------- Methods from Http2Frame
 
@@ -159,8 +152,7 @@ public class DataFrame extends Http2Frame {
 
         final boolean isPadded = isFlagSet(PADDED);
         final int extraHeaderLen = isPadded ? 1 : 0;
-        final Buffer buffer = memoryManager.allocate(
-                FRAME_HEADER_SIZE + extraHeaderLen);
+        final Buffer buffer = memoryManager.allocate(FRAME_HEADER_SIZE + extraHeaderLen);
 
         serializeFrameHeader(buffer);
 
@@ -169,12 +161,11 @@ public class DataFrame extends Http2Frame {
         }
 
         buffer.trim();
-        final CompositeBuffer cb = CompositeBuffer.newBuffer(
-                memoryManager, buffer, data);
-        
+        final CompositeBuffer cb = CompositeBuffer.newBuffer(memoryManager, buffer, data);
+
         cb.allowBufferDispose(true);
         cb.allowInternalBuffersDispose(true);
-        
+
         return cb;
     }
 
@@ -191,7 +182,6 @@ public class DataFrame extends Http2Frame {
 
         // -------------------------------------------------------- Constructors
 
-
         protected DataFrameBuilder() {
         }
 
@@ -199,10 +189,10 @@ public class DataFrame extends Http2Frame {
 
         public DataFrameBuilder data(final Buffer data) {
             this.data = data;
-            
+
             return this;
         }
-        
+
         public DataFrameBuilder endStream(boolean endStream) {
             if (endStream) {
                 setFlag(HeadersFrame.END_STREAM);
@@ -221,18 +211,17 @@ public class DataFrame extends Http2Frame {
             this.padLength = padLength;
         }
 
+        @Override
         public DataFrame build() {
             final DataFrame frame = DataFrame.create();
             setHeaderValuesTo(frame);
             frame.data = data;
             frame.padLength = padLength;
-            
+
             return frame;
         }
 
-
         // --------------------------------------- Methods from Http2FrameBuilder
-
 
         @Override
         protected DataFrameBuilder getThis() {

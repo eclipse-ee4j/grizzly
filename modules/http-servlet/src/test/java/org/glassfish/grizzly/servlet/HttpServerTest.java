@@ -26,9 +26,19 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
+
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.ssl.SSLContextConfigurator;
+import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -39,14 +49,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.http.server.HttpHandler;
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.ssl.SSLContextConfigurator;
-import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
-
 /**
  * {@link HttpServer} tests.
  *
@@ -55,7 +57,7 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
  */
 public class HttpServerTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18890+10;
+    public static final int PORT = 18890 + 10;
     private static final Logger logger = Grizzly.logger(HttpServerTest.class);
 
     public void testAddHttpHandlerAfterStart() throws IOException {
@@ -69,8 +71,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             addServlet(ctx, alias);
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection(alias, port);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
         } finally {
             stopHttpServer();
@@ -82,7 +83,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
         try {
             final int port = PORT + 2;
             startHttpServer(port);
-            String[] aliases = new String[]{"/1", "/2", "/3"};
+            String[] aliases = new String[] { "/1", "/2", "/3" };
             WebappContext ctx = new WebappContext("Test");
             for (String alias : aliases) {
                 addServlet(ctx, alias);
@@ -90,8 +91,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             ctx.deploy(httpServer);
             for (String alias : aliases) {
                 HttpURLConnection conn = getConnection(alias, port);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
+                assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
                 assertEquals(alias, readResponse(conn));
             }
         } finally {
@@ -105,16 +105,15 @@ public class HttpServerTest extends HttpServerAbstractTest {
             final int port = PORT + 3;
             startHttpServer(port);
             WebappContext ctx = new WebappContext("Test");
-            String[] aliases = new String[]{"/1", "/2", "/2/1", "/1/2/3/4/5"};
+            String[] aliases = new String[] { "/1", "/2", "/2/1", "/1/2/3/4/5" };
             for (String alias : aliases) {
                 addServlet(ctx, alias);
             }
             ctx.deploy(httpServer);
             for (String alias : aliases) {
                 HttpURLConnection conn = getConnection(alias, port);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
-                if (alias.startsWith(readResponse(conn))){
+                assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
+                if (alias.startsWith(readResponse(conn))) {
                     assertTrue(true);
                 } else {
                     assertFalse(false);
@@ -190,8 +189,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
      * @throws URISyntaxException Could not find keystore file.
      * @throws GeneralSecurityException Security failure.
      */
-    public void testStartSecureWithConfiguration()
-            throws IOException, URISyntaxException, GeneralSecurityException {
+    public void testStartSecureWithConfiguration() throws IOException, URISyntaxException, GeneralSecurityException {
         System.out.println("testStartSecureWithConfiguration");
         URL resource = getClass().getClassLoader().getResource("test-keystore.jks");
 
@@ -206,8 +204,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
         httpServer = HttpServer.createSimpleServer(".", port);
 
         httpServer.getListener("grizzly").setSecure(true);
-        httpServer.getListener("grizzly").setSSLEngineConfig(
-                new SSLEngineConfigurator(sslContextConfig.createSSLContext(), false, false, false));
+        httpServer.getListener("grizzly").setSSLEngineConfig(new SSLEngineConfigurator(sslContextConfig.createSSLContext(), false, false, false));
 
 //        gws.setSSLConfig(cfg);
         final String encMsg = "Secured.";
@@ -239,8 +236,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
                 sslClientContextConfig.setTrustStoreFile(new File(uri).getAbsolutePath());
                 sslClientContextConfig.setTrustStorePass("changeit");
 
-                HttpsURLConnection.setDefaultSSLSocketFactory(
-                        sslClientContextConfig.createSSLContext().getSocketFactory());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sslClientContextConfig.createSSLContext().getSocketFactory());
             } else {
                 fail("Couldn't find truststore");
             }
@@ -251,8 +247,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
                     return true;
                 }
             });
-            HttpURLConnection conn =
-                    (HttpURLConnection) new URL("https", "localhost", port, "/sec").openConnection();
+            HttpURLConnection conn = (HttpURLConnection) new URL("https", "localhost", port, "/sec").openConnection();
             assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(encMsg, readResponse(conn));
         } finally {
@@ -269,9 +264,9 @@ public class HttpServerTest extends HttpServerAbstractTest {
 
         final int port = PORT + 8;
         httpServer = HttpServer.createSimpleServer(".", port);
-        final boolean init[] = new boolean[]{false};
-        final boolean filter[] = new boolean[]{false};
-        final boolean destroy[] = new boolean[]{false};
+        final boolean init[] = new boolean[] { false };
+        final boolean filter[] = new boolean[] { false };
+        final boolean destroy[] = new boolean[] { false };
         WebappContext ctx = new WebappContext("Test");
 
         // Overload the test by not adding a Servlet to the webapp.
@@ -285,9 +280,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             }
 
             @Override
-            public void doFilter(
-                final ServletRequest request, final ServletResponse response,
-                final FilterChain chain) throws IOException, ServletException {
+            public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
                 filter[0] = true;
                 chain.doFilter(request, response);
             }
@@ -301,9 +294,8 @@ public class HttpServerTest extends HttpServerAbstractTest {
         ctx.deploy(httpServer);
 
         httpServer.start();
-        HttpURLConnection conn =
-                    (HttpURLConnection) new URL("http", "localhost", port, "/foo").openConnection();
-            assertEquals(HttpServletResponse.SC_NOT_FOUND, getResponseCodeFromAlias(conn));
+        HttpURLConnection conn = (HttpURLConnection) new URL("http", "localhost", port, "/foo").openConnection();
+        assertEquals(HttpServletResponse.SC_NOT_FOUND, getResponseCodeFromAlias(conn));
         ctx.undeploy();
         httpServer.shutdownNow();
         assertTrue(init[0]);
@@ -315,9 +307,9 @@ public class HttpServerTest extends HttpServerAbstractTest {
 
         final int port = PORT + 8;
         httpServer = HttpServer.createSimpleServer(".", port);
-        final boolean init[] = new boolean[]{false};
-        final boolean filter[] = new boolean[]{false};
-        final boolean destroy[] = new boolean[]{false};
+        final boolean init[] = new boolean[] { false };
+        final boolean filter[] = new boolean[] { false };
+        final boolean destroy[] = new boolean[] { false };
         WebappContext ctx = new WebappContext("Test");
 
         addServlet(ctx, "/test");
@@ -330,9 +322,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             }
 
             @Override
-            public void doFilter(
-                    final ServletRequest request, final ServletResponse response,
-                    final FilterChain chain) throws IOException, ServletException {
+            public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
                 filter[0] = true;
                 chain.doFilter(request, response);
             }
@@ -346,8 +336,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
         ctx.deploy(httpServer);
 
         httpServer.start();
-        HttpURLConnection conn =
-                (HttpURLConnection) new URL("http", "localhost", port, "/test").openConnection();
+        HttpURLConnection conn = (HttpURLConnection) new URL("http", "localhost", port, "/test").openConnection();
         assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
         ctx.undeploy();
         httpServer.shutdownNow();
@@ -367,7 +356,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             final int port = PORT + 9;
             httpServer = HttpServer.createSimpleServer(".", port);
             WebappContext ctx = new WebappContext("Test");
-            String[] aliases = new String[]{"/1"};
+            String[] aliases = new String[] { "/1" };
             for (String alias : aliases) {
                 addServlet(ctx, alias);
             }
@@ -375,8 +364,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             httpServer.start();
             for (String alias : aliases) {
                 HttpURLConnection conn = getConnection(alias, port);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
+                assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
                 assertEquals(alias, readResponse(conn));
             }
             String context = "/ctx2";
@@ -386,8 +374,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             ctx2.deploy(httpServer);
 
             HttpURLConnection conn = getConnection(context + alias, port);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
         } finally {
             stopHttpServer();
@@ -400,7 +387,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             final int port = PORT + 10;
             httpServer = HttpServer.createSimpleServer(".", port);
             WebappContext ctx = new WebappContext("Test");
-            String[] aliases = new String[]{"/1", "/2", "/3"};
+            String[] aliases = new String[] { "/1", "/2", "/3" };
             for (String alias : aliases) {
                 addServlet(ctx, alias);
             }
@@ -408,8 +395,7 @@ public class HttpServerTest extends HttpServerAbstractTest {
             httpServer.start();
             for (String alias : aliases) {
                 HttpURLConnection conn = getConnection(alias, port);
-                assertEquals(HttpServletResponse.SC_OK,
-                        getResponseCodeFromAlias(conn));
+                assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
                 assertEquals(alias, readResponse(conn));
             }
             String context = "/ctx2";
@@ -419,21 +405,19 @@ public class HttpServerTest extends HttpServerAbstractTest {
             ctx2.deploy(httpServer);
 
             HttpURLConnection conn = getConnection(context + alias, port);
-            assertEquals(HttpServletResponse.SC_OK,
-                    getResponseCodeFromAlias(conn));
+            assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
             assertEquals(alias, readResponse(conn));
         } finally {
             stopHttpServer();
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx,
-                                           final String alias) {
+    private ServletRegistration addServlet(final WebappContext ctx, final String alias) {
         ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
 
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                logger.log(Level.INFO, "{0} received request {1}", new Object[]{alias, req.getRequestURI()});
+                logger.log(Level.INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().write(alias);
             }

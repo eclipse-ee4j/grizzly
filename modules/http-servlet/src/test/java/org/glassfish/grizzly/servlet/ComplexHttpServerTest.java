@@ -20,12 +20,13 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.HttpServer;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * {@link HttpServer} tests.
@@ -43,13 +44,9 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
      *
      * examples :
      *
-     * context = /test
-     * servletPath = /servlet1
-     * mapping = *.1
-     * mapping = /1
+     * context = /test servletPath = /servlet1 mapping = *.1 mapping = /1
      *
-     * URL = http://localhost:port/test/servlet1/test.1
-     * URL = http://localhost:port/test/servlet1/1
+     * URL = http://localhost:port/test/servlet1/test.1 URL = http://localhost:port/test/servlet1/1
      *
      * @throws IOException Error.
      */
@@ -60,7 +57,6 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
             String[] aliases = new String[] { "/1", "/2", "/3", "*.a" };
             String context = "/test";
             WebappContext ctx = new WebappContext("Test", context);
-
 
             for (String alias : aliases) {
                 addServlet(ctx, alias);
@@ -73,7 +69,7 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
                 assertEquals(context + aliases[i], readResponse(conn));
             }
 
-            //special test
+            // special test
             String url = context + "/test.a";
             HttpURLConnection conn = getConnection(url, PORT);
             assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
@@ -84,14 +80,13 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx,
-                                           final String alias) {
+    private ServletRegistration addServlet(final WebappContext ctx, final String alias) {
 
         ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
 
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                logger.log(Level.INFO, "{0} received request {1}", new Object[]{alias, req.getRequestURI()});
+                logger.log(Level.INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().write(req.getRequestURI());
             }

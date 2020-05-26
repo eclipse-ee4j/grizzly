@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019 Oracle and/or its affiliates and others.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -40,8 +40,7 @@ public class Http2OutputQueueRecord extends AsyncQueueRecord<WriteResult> {
 
     private final boolean isZeroSizeData;
 
-    Http2OutputQueueRecord(final int streamId, final Buffer buffer,
-            final CompletionHandler<WriteResult> completionHandler, final boolean isLast) {
+    Http2OutputQueueRecord(final int streamId, final Buffer buffer, final CompletionHandler<WriteResult> completionHandler, final boolean isLast) {
         super(null, null, null);
 
         this.streamId = streamId;
