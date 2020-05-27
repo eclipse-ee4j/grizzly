@@ -34,7 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class RequestDispatcherTest extends HttpServerAbstractTest {
 
-    private static final int PORT = 18890 + 12;
+    private static final int PORT = PORT();
 
     public void testForward() throws IOException {
         System.out.println("testForward");
@@ -56,6 +56,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
                     out.close();
                 }
             });
+            
             servlet1.addMapping("/servlet1");
             ServletRegistration servlet2 = ctx.addServlet("servlet2", new HttpServlet() {
                 @Override
@@ -78,6 +79,7 @@ public class RequestDispatcherTest extends HttpServerAbstractTest {
 
     public void testForwardRootContext() throws IOException {
         System.out.println("testForwardRootContext");
+        
         try {
             newHttpServer(PORT);
 

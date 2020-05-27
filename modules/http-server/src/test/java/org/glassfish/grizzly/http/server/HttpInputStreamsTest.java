@@ -16,6 +16,7 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -26,10 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.CharBuffer;
+import java.security.SecureRandom;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,10 +65,19 @@ import org.junit.Test;
  * Test cases to validate the behaviors of {@link org.glassfish.grizzly.http.io.NIOInputStream} and
  * {@link org.glassfish.grizzly.http.io.NIOReader}.
  */
-@SuppressWarnings("Duplicates")
 public class HttpInputStreamsTest {
 
-    private static final int PORT = 8003;
+    private static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 8003 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     // ----------------------------------------------------- Binary Test Methods
 
@@ -990,6 +1000,7 @@ public class HttpInputStreamsTest {
         sconfig.addHttpHandler(new SimpleResponseHttpHandler(reader, testResultQueue), "/*");
 
         try {
+            Thread.sleep(5);
             server.start();
             runClient(new RequestBuilder() {
                 @Override
@@ -1221,6 +1232,7 @@ public class HttpInputStreamsTest {
         sconfig.addHttpHandler(new SimpleResponseHttpHandler(strategy, testResultQueue), "/*");
 
         try {
+            Thread.sleep(5);
             server.start();
             runClient(requestBuilder, testResultQueue, chunkSize, count);
         } finally {
@@ -1241,10 +1253,10 @@ public class HttpInputStreamsTest {
             ctransport.start();
 
             Future<Connection> connectFuture = ctransport.connect("localhost", PORT);
-            connection = connectFuture.get(30, TimeUnit.SECONDS);
+            connection = connectFuture.get(30, SECONDS);
             for (int i = 0; i < count; i++) {
                 connection.write(requestBuilder.build());
-                final Future<Boolean> result = testResultQueue.poll(30, TimeUnit.SECONDS);
+                final Future<Boolean> result = testResultQueue.poll(30, SECONDS);
                 if (result == null) {
                     throw new TimeoutException();
                 }

@@ -59,7 +59,7 @@ import org.junit.Test;
  * @author Alexey Stashok
  */
 public class SingleEndPointPoolTest {
-    private static int PORT = 18333;
+    private static int PORT = PORT();
 
     static int PORT() {
         try {

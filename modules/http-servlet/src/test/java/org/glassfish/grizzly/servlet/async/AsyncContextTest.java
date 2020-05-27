@@ -54,7 +54,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AsyncContextTest extends HttpServerAbstractTest {
     private static final Logger LOGGER = Grizzly.logger(AsyncContextTest.class);
 
-    public static final int PORT = 18890 + 15;
+    public static final int PORT = PORT();
 
     public void testAsyncContextComplete() throws IOException {
         System.out.println("testAsyncContextComplete");

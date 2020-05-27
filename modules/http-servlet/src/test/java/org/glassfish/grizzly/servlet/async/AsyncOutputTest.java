@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.servlet.async;
 
+import static jakarta.servlet.DispatcherType.REQUEST;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,7 +37,6 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.utils.Futures;
 
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
@@ -49,15 +50,16 @@ import jakarta.servlet.http.HttpServletResponse;
  * Basic Servlet 3.1 non-blocking output tests.
  */
 public class AsyncOutputTest extends HttpServerAbstractTest {
-    private static final Logger LOGGER = Grizzly.logger(AsyncOutputTest.class);
+    private static Logger LOGGER = Grizzly.logger(AsyncOutputTest.class);
 
-    public static final int PORT = 18890 + 18;
+    public static int PORT = PORT();
 
     public void testNonBlockingOutputByteByByte() throws Exception {
         System.out.println("testNonBlockingOutputByteByByte");
+        
         try {
-            final int MAX_TIME_MILLIS = 10 * 1000;
-            final FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
+            int MAX_TIME_MILLIS = 10 * 1000;
+            FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
 
             newHttpServer(PORT);
 
@@ -67,7 +69,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                 @Override
                 protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-                    final AsyncContext asyncCtx = req.startAsync();
+                    AsyncContext asyncCtx = req.startAsync();
 
                     ServletOutputStream output = res.getOutputStream();
                     WriteListenerImpl writeListener = new WriteListenerImpl(asyncCtx);
@@ -79,7 +81,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     long count = 0;
                     System.out.println("--> Begin for loop");
                     boolean prevCanWrite;
-                    final long startTimeMillis = System.currentTimeMillis();
+                    long startTimeMillis = System.currentTimeMillis();
 
                     while (prevCanWrite = output.isReady()) {
                         writeData(output);
@@ -147,8 +149,8 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
     public void testNonBlockingOutput() throws Exception {
         System.out.println("testNonBlockingOutput");
         try {
-            final int MAX_TIME_MILLIS = 10 * 1000;
-            final FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
+            int MAX_TIME_MILLIS = 10 * 1000;
+            FutureImpl<Boolean> blockFuture = Futures.createSafeFuture();
 
             newHttpServer(PORT);
 
@@ -158,7 +160,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                 @Override
                 protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-                    final AsyncContext asyncCtx = req.startAsync();
+                    AsyncContext asyncCtx = req.startAsync();
 
                     ServletOutputStream output = res.getOutputStream();
                     WriteListenerImpl writeListener = new WriteListenerImpl(asyncCtx);
@@ -170,7 +172,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
                     long count = 0;
                     System.out.println("--> Begin for loop");
                     boolean prevCanWrite;
-                    final long startTimeMillis = System.currentTimeMillis();
+                    long startTimeMillis = System.currentTimeMillis();
 
                     while (prevCanWrite = output.isReady()) {
                         writeData(output, count, 1024);
@@ -242,24 +244,24 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias, Servlet servlet) {
+    private ServletRegistration addServlet(WebappContext ctx, String name, String alias, Servlet servlet) {
 
-        final ServletRegistration reg = ctx.addServlet(name, servlet);
+        ServletRegistration reg = ctx.addServlet(name, servlet);
         reg.addMapping(alias);
 
         return reg;
     }
 
-    private FilterRegistration addFilter(final WebappContext ctx, final String name, final String alias, final Filter filter) {
+    private FilterRegistration addFilter(WebappContext ctx, String name, String alias, Filter filter) {
 
-        final FilterRegistration reg = ctx.addFilter(name, filter);
-        reg.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), alias);
+        FilterRegistration reg = ctx.addFilter(name, filter);
+        reg.addMappingForUrlPatterns(EnumSet.of(REQUEST), alias);
 
         return reg;
     }
 
     static class WriteListenerImpl implements WriteListener {
-        private final AsyncContext asyncCtx;
+        private AsyncContext asyncCtx;
 
         private WriteListenerImpl(AsyncContext asyncCtx) {
             this.asyncCtx = asyncCtx;
@@ -268,7 +270,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
         @Override
         public void onWritePossible() {
             try {
-                final ServletOutputStream output = asyncCtx.getResponse().getOutputStream();
+                ServletOutputStream output = asyncCtx.getResponse().getOutputStream();
 
                 String message = "onWritePossible";
                 System.out.println("--> " + message);
@@ -280,7 +282,7 @@ public class AsyncOutputTest extends HttpServerAbstractTest {
         }
 
         @Override
-        public void onError(final Throwable t) {
+        public void onError(Throwable t) {
             LOGGER.log(Level.WARNING, "Unexpected error", t);
             asyncCtx.complete();
         }

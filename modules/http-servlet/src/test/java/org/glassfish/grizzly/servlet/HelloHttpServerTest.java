@@ -16,13 +16,15 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static java.util.logging.Level.INFO;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.logging.Level;
+import java.security.SecureRandom;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Grizzly;
@@ -43,11 +45,22 @@ import junit.framework.TestCase;
  */
 public class HelloHttpServerTest extends TestCase {
 
-    public static final int PORT = 18890 + 11;
+    public static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 18890 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
     private static final Logger logger = Grizzly.logger(HelloHttpServerTest.class);
     private HttpServer httpServer;
 
-    public void testNPERegression() throws IOException {
+    public void testNPERegression() throws Exception {
         System.out.println("testNPERegression");
         try {
             createHttpServer(PORT);
@@ -56,6 +69,7 @@ public class HelloHttpServerTest extends TestCase {
             ServletRegistration servlet = ctx.addServlet("TestServet", HelloServlet.class);
             servlet.addMapping(aliases);
             ctx.deploy(httpServer);
+            Thread.sleep(10);
             httpServer.start();
 
             String context = "/";
@@ -72,7 +86,7 @@ public class HelloHttpServerTest extends TestCase {
         }
     }
 
-    public void testMultiPath() throws IOException {
+    public void testMultiPath() throws Exception {
         System.out.println("testMultiPath");
         try {
             createHttpServer(PORT);
@@ -83,6 +97,7 @@ public class HelloHttpServerTest extends TestCase {
             servlet.setLoadOnStartup(1);
             servlet.addMapping(aliases);
             ctx.deploy(httpServer);
+            Thread.sleep(10);
             httpServer.start();
 
             String context = "/";
@@ -132,7 +147,7 @@ public class HelloHttpServerTest extends TestCase {
         String line;
 
         while ((line = reader.readLine()) != null) {
-            logger.log(Level.INFO, "received line {0}", line);
+            logger.log(INFO, "received line {0}", line);
             sb.append(line).append("\n");
         }
 
@@ -140,7 +155,7 @@ public class HelloHttpServerTest extends TestCase {
     }
 
     private HttpURLConnection getConnection(String path) throws IOException {
-        logger.log(Level.INFO, "sending request to {0}", path);
+        logger.log(INFO, "sending request to {0}", path);
         URL url = new URL("http", "localhost", PORT, path);
         HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
         urlConn.connect();

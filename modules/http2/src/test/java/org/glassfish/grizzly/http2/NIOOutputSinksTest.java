@@ -16,15 +16,19 @@
 
 package org.glassfish.grizzly.http2;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.logging.Level.SEVERE;
+import static org.glassfish.grizzly.http.Protocol.HTTP_1_1;
+import static org.glassfish.grizzly.memory.Buffers.EMPTY_BUFFER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -46,7 +50,6 @@ import org.glassfish.grizzly.http.HttpHeader;
 import org.glassfish.grizzly.http.HttpPacket;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
-import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.io.NIOWriter;
 import org.glassfish.grizzly.http.server.AddOn;
@@ -57,23 +60,31 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
-import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-@SuppressWarnings("Duplicates")
 @RunWith(Parameterized.class)
 public class NIOOutputSinksTest extends AbstractHttp2Test {
-    private static final Logger LOGGER = Grizzly.logger(NIOOutputSinksTest.class);
-    private static final int PORT = 9339;
+    private static Logger LOGGER = Grizzly.logger(NIOOutputSinksTest.class);
+    private static int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 9339 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-    private final boolean isSecure;
-    private final boolean priorKnowledge;
+    private boolean isSecure;
+    private boolean priorKnowledge;
 
-    public NIOOutputSinksTest(final boolean isSecure, final boolean priorKnowledge) {
+    public NIOOutputSinksTest(boolean isSecure, boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
     }
@@ -85,10 +96,10 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testBinaryOutputSink() throws Exception {
-        final int singleMessageSize = 256000;
-        final int maxWindowSize = singleMessageSize * 2;
+        int singleMessageSize = 256000;
+        int maxWindowSize = singleMessageSize * 2;
 
-        final FutureImpl<Integer> parseResult = SafeFutureImpl.create();
+        FutureImpl<Integer> parseResult = SafeFutureImpl.create();
 
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure, priorKnowledge);
         filterChainBuilder.add(new BaseFilter() {
@@ -96,17 +107,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             private int bytesRead;
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
-                if (c != null) { // we're going over TLS
-                    c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
-                        @Override
-                        public void ready(Http2Session http2Session) {
-                            sendRequest(ctx);
-                            ctx.resume(ctx.getStopAction());
-                        }
+                Http2Session http2Session = Http2Session.get(ctx.getConnection());
+                if (http2Session != null) { // we're going over TLS
+                    http2Session.getHttp2State().addReadyListener(session -> {
+                        sendRequest(ctx);
+                        ctx.resume(ctx.getStopAction());
                     });
+                    
                     return ctx.getSuspendAction();
                 } else {
                     sendRequest(ctx);
@@ -114,22 +123,27 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket httpRequest = 
+                    HttpRequestPacket.builder()
+                                     .method("GET")
+                                     .uri("/path")
+                                     .protocol(HTTP_1_1)
+                                     .header("Host", "localhost:" + PORT)
+                                     .build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 HttpContent message = ctx.getMessage();
                 Buffer b = message.getContent();
-                final int remaining = b.remaining();
+                int remaining = b.remaining();
 
                 if (b.hasRemaining()) {
                     try {
@@ -148,23 +162,23 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
 
-        final FilterChain clientChain = filterChainBuilder.build();
+        FilterChain clientChain = filterChainBuilder.build();
         setInitialHttp2WindowSize(clientChain, maxWindowSize);
 
         clientTransport.setProcessor(clientChain);
-        final AtomicInteger writeCounter = new AtomicInteger();
-        final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
+        AtomicInteger writeCounter = new AtomicInteger();
+        AtomicBoolean callbackInvoked = new AtomicBoolean(false);
 
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
 
                 clientTransport.pause();
                 response.setContentType("text/plain");
-                final NIOOutputStream out = response.getNIOOutputStream();
+                NIOOutputStream out = response.getNIOOutputStream();
 
                 while (out.canWrite()) {
                     byte[] b = new byte[singleMessageSize];
@@ -211,10 +225,11 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         http2Addon.getConfiguration().setInitialWindowSize(maxWindowSize);
 
         try {
+            Thread.sleep(5);
             server.start();
 
             clientTransport.start();
@@ -222,8 +237,8 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                int length = parseResult.get(30, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                int length = parseResult.get(30, SECONDS);
                 assertEquals(writeCounter.get(), length);
                 assertTrue(callbackInvoked.get());
             } finally {
@@ -245,20 +260,20 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testBlockingBinaryOutputSink() throws Exception {
-        final int bufferSize = 4096;
-        final int maxWindowSize = bufferSize * 3 / 4;
-        final int bytesToSend = bufferSize * 1024 * 4;
+        int bufferSize = 4096;
+        int maxWindowSize = bufferSize * 3 / 4;
+        int bytesToSend = bufferSize * 1024 * 4;
 
-        final FutureImpl<Integer> parseResult = SafeFutureImpl.create();
+        FutureImpl<Integer> parseResult = SafeFutureImpl.create();
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
 
             private int bytesRead;
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
                     c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
                         @Override
@@ -274,22 +289,22 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(HTTP_1_1)
                         .header("Host", "localhost:" + PORT).build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 HttpContent message = ctx.getMessage();
                 Buffer b = message.getContent();
-                final int remaining = b.remaining();
+                int remaining = b.remaining();
 
                 if (b.hasRemaining()) {
                     try {
@@ -308,20 +323,20 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
-        final FilterChain clientChain = filterChainBuilder.build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        FilterChain clientChain = filterChainBuilder.build();
         setInitialHttp2WindowSize(clientChain, maxWindowSize);
 
         clientTransport.setProcessor(clientChain);
 
-        final AtomicInteger writeCounter = new AtomicInteger();
+        AtomicInteger writeCounter = new AtomicInteger();
 
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
-                final NIOOutputStream out = response.getNIOOutputStream();
+                NIOOutputStream out = response.getNIOOutputStream();
 
                 int sent = 0;
 
@@ -334,16 +349,17 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                         writeCounter.addAndGet(bufferSize);
                     }
                 } catch (Throwable e) {
-                    LOGGER.log(Level.SEVERE, "Unexpected error", e);
+                    LOGGER.log(SEVERE, "Unexpected error", e);
                     parseResult.failure(new IllegalStateException("Error", e));
                 }
             }
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         http2Addon.getConfiguration().setInitialWindowSize(maxWindowSize);
 
         try {
+            Thread.sleep(5);
             server.start();
 
             clientTransport.start();
@@ -351,8 +367,8 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                int length = parseResult.get(60, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                int length = parseResult.get(60, SECONDS);
                 assertEquals("Received " + length + " bytes", bytesToSend, length);
             } finally {
                 LOGGER.log(Level.INFO, "Written {0}", writeCounter);
@@ -373,10 +389,10 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testCharacterOutputSink() throws Exception {
-        final int singleMessageSize = 256000;
-        final int maxWindowSize = singleMessageSize * 2;
+        int singleMessageSize = 256000;
+        int maxWindowSize = singleMessageSize * 2;
 
-        final FutureImpl<Integer> parseResult = SafeFutureImpl.create();
+        FutureImpl<Integer> parseResult = SafeFutureImpl.create();
 
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
@@ -384,17 +400,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             private int bytesRead;
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
-                    c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
-                        @Override
-                        public void ready(Http2Session http2Session) {
-                            sendRequest(ctx);
-                            ctx.resume(ctx.getStopAction());
-                        }
+                    c.getHttp2State().addReadyListener(session -> {
+                        sendRequest(ctx);
+                        ctx.resume(ctx.getStopAction());
                     });
+                    
                     return ctx.getSuspendAction();
                 } else {
                     sendRequest(ctx);
@@ -402,22 +416,27 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket httpRequest = 
+                    HttpRequestPacket.builder()
+                                     .method("GET")
+                                     .uri("/path")
+                                     .protocol(HTTP_1_1)
+                                     .header("Host", "localhost:" + PORT)
+                                     .build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 HttpContent message = ctx.getMessage();
                 Buffer b = message.getContent();
-                final int remaining = b.remaining();
+                int remaining = b.remaining();
 
                 if (b.hasRemaining()) {
                     try {
@@ -436,22 +455,22 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
-        final FilterChain clientChain = filterChainBuilder.build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        FilterChain clientChain = filterChainBuilder.build();
         setInitialHttp2WindowSize(clientChain, maxWindowSize);
 
         clientTransport.setProcessor(clientChain);
 
-        final AtomicInteger writeCounter = new AtomicInteger();
-        final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
-        final HttpHandler httpHandler = new HttpHandler() {
+        AtomicInteger writeCounter = new AtomicInteger();
+        AtomicBoolean callbackInvoked = new AtomicBoolean(false);
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 clientTransport.pause();
 
                 response.setContentType("text/plain");
-                final NIOWriter out = response.getNIOWriter();
+                NIOWriter out = response.getNIOWriter();
 
                 while (out.canWrite()) {
                     char[] data = new char[singleMessageSize];
@@ -467,7 +486,7 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 clientTransport.resume();
             }
 
-            private void notifyCanWrite(final NIOWriter out, final Response response) {
+            private void notifyCanWrite(NIOWriter out, Response response) {
 
                 out.notifyCanWrite(new WriteHandler() {
 
@@ -500,10 +519,11 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         http2Addon.getConfiguration().setInitialWindowSize(maxWindowSize);
 
         try {
+            Thread.sleep(5);
             server.start();
 
             clientTransport.start();
@@ -511,8 +531,8 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                int length = parseResult.get(30, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                int length = parseResult.get(30, SECONDS);
                 assertEquals(writeCounter.get(), length);
                 assertTrue(callbackInvoked.get());
             } finally {
@@ -535,28 +555,26 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
     @Test
     public void testBlockingCharacterOutputSink() throws Exception {
 
-        final int bufferSize = 4096;
-        final int maxWindowSize = bufferSize * 3 / 4;
-        final int bytesToSend = bufferSize * 1024 * 4;
+        int bufferSize = 4096;
+        int maxWindowSize = bufferSize * 3 / 4;
+        int bytesToSend = bufferSize * 1024 * 4;
 
-        final FutureImpl<Integer> parseResult = SafeFutureImpl.create();
+        FutureImpl<Integer> parseResult = SafeFutureImpl.create();
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
 
             private int bytesRead;
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
-                    c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
-                        @Override
-                        public void ready(Http2Session http2Session) {
-                            sendRequest(ctx);
-                            ctx.resume(ctx.getStopAction());
-                        }
+                    c.getHttp2State().addReadyListener(session -> {
+                        sendRequest(ctx);
+                        ctx.resume(ctx.getStopAction());
                     });
+                    
                     return ctx.getSuspendAction();
                 } else {
                     sendRequest(ctx);
@@ -564,22 +582,27 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket httpRequest = 
+                    HttpRequestPacket.builder()
+                                     .method("GET")
+                                     .uri("/path")
+                                     .protocol(HTTP_1_1)
+                                     .header("Host", "localhost:" + PORT)
+                                     .build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 HttpContent message = ctx.getMessage();
                 Buffer b = message.getContent();
-                final int remaining = b.remaining();
+                int remaining = b.remaining();
 
                 if (b.hasRemaining()) {
                     try {
@@ -598,19 +621,19 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
-        final FilterChain clientChain = filterChainBuilder.build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        FilterChain clientChain = filterChainBuilder.build();
         setInitialHttp2WindowSize(clientChain, maxWindowSize);
 
         clientTransport.setProcessor(clientChain);
 
-        final AtomicInteger writeCounter = new AtomicInteger();
-        final HttpHandler httpHandler = new HttpHandler() {
+        AtomicInteger writeCounter = new AtomicInteger();
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
-                final NIOWriter out = response.getNIOWriter();
+                NIOWriter out = response.getNIOWriter();
 
                 int sent = 0;
 
@@ -624,10 +647,11 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         http2Addon.getConfiguration().setInitialWindowSize(maxWindowSize);
 
         try {
+            Thread.sleep(5);
             server.start();
 
             clientTransport.start();
@@ -635,8 +659,8 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                int length = parseResult.get(60, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                int length = parseResult.get(60, SECONDS);
                 assertEquals("Received " + length + " bytes", bytesToSend, length);
             } finally {
                 LOGGER.log(Level.INFO, "Written {0}", writeCounter);
@@ -657,15 +681,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testWriteExceptionPropagation() throws Exception {
-        final int size = 1024;
+        int size = 1024;
 
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
                     c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
                         @Override
@@ -681,15 +705,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(HTTP_1_1)
                         .header("Host", "localhost:" + PORT).build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
@@ -698,19 +722,19 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         clientTransport.setProcessor(filterChainBuilder.build());
 
-        final FutureImpl<Boolean> parseResult = SafeFutureImpl.create();
+        FutureImpl<Boolean> parseResult = SafeFutureImpl.create();
 
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
 
                 // clientTransport.pause();
                 response.setContentType("text/plain");
-                final NIOWriter out = response.getNIOWriter();
+                NIOWriter out = response.getNIOWriter();
 
                 char[] c = new char[size];
                 Arrays.fill(c, 'a');
@@ -739,20 +763,20 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
 
-        final NetworkListener listener = server.getListener("grizzly");
+        NetworkListener listener = server.getListener("grizzly");
         listener.registerAddOn(new AddOn() {
 
             @Override
             public void setup(NetworkListener networkListener, FilterChainBuilder builder) {
-                final int idx = builder.indexOfType(TransportFilter.class);
+                int idx = builder.indexOfType(TransportFilter.class);
                 builder.add(idx + 1, new BaseFilter() {
-                    final AtomicInteger counter = new AtomicInteger();
+                    AtomicInteger counter = new AtomicInteger();
 
                     @Override
                     public NextAction handleWrite(FilterChainContext ctx) throws IOException {
-                        final Buffer buffer = ctx.getMessage();
+                        Buffer buffer = ctx.getMessage();
                         if (counter.addAndGet(buffer.remaining()) > size * 8) {
                             throw new CustomIOException();
                         }
@@ -765,14 +789,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
         });
 
         try {
+            Thread.sleep(5);
             server.start();
             clientTransport.start();
 
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                boolean exceptionThrown = parseResult.get(10, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                boolean exceptionThrown = parseResult.get(10, SECONDS);
                 assertTrue("Unexpected Exception thrown.", exceptionThrown);
             } finally {
                 // Close the client connection
@@ -792,19 +817,19 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testOutputBufferDirectWrite() throws Exception {
-        final int bufferSize = 65536;
-        final int maxWindowSize = bufferSize * 10;
+        int bufferSize = 65536;
+        int maxWindowSize = bufferSize * 10;
 
-        final FutureImpl<String> parseResult = SafeFutureImpl.create();
+        FutureImpl<String> parseResult = SafeFutureImpl.create();
 
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
-            private final StringBuilder sb = new StringBuilder();
+            private StringBuilder sb = new StringBuilder();
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
                     c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
                         @Override
@@ -820,15 +845,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(HTTP_1_1)
                         .header("Host", "localhost:" + PORT).build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
@@ -847,26 +872,26 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
-        final FilterChain clientChain = filterChainBuilder.build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        FilterChain clientChain = filterChainBuilder.build();
         setInitialHttp2WindowSize(clientChain, maxWindowSize);
 
         clientTransport.setProcessor(clientChain);
 
-        final AtomicInteger writeCounter = new AtomicInteger();
-        final HttpHandler httpHandler = new HttpHandler() {
+        AtomicInteger writeCounter = new AtomicInteger();
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
 
                 clientTransport.pause();
                 response.setContentType("text/plain");
-                final NIOOutputStream out = response.getNIOOutputStream();
+                NIOOutputStream out = response.getNIOOutputStream();
 
                 // in order to enable direct writes - set the buffer size less than byte[] length
                 response.setBufferSize(bufferSize / 8);
 
-                final byte[] b = new byte[bufferSize];
+                byte[] b = new byte[bufferSize];
 
                 int i = 0;
                 while (out.canWrite()) {
@@ -880,10 +905,11 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         http2Addon.getConfiguration().setInitialWindowSize(maxWindowSize);
 
         try {
+            Thread.sleep(50);
             server.start();
 
             clientTransport.start();
@@ -891,8 +917,8 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                String resultStr = parseResult.get(10, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                String resultStr = parseResult.get(10, SECONDS);
                 assertEquals(writeCounter.get(), resultStr.length());
                 check1(resultStr, bufferSize);
 
@@ -916,14 +942,14 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
     @Test
     public void testWritePossibleReentrants() throws Exception {
 
-        final FutureImpl<HttpHeader> parseResult = SafeFutureImpl.create();
-        final FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
+        FutureImpl<HttpHeader> parseResult = SafeFutureImpl.create();
+        FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
                     c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
                         @Override
@@ -939,21 +965,21 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(HTTP_1_1)
                         .header("Host", "localhost:" + PORT).build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
-                final HttpPacket message = ctx.getMessage();
-                final HttpHeader header = message.isHeader() ? (HttpHeader) message : message.getHttpHeader();
+                HttpPacket message = ctx.getMessage();
+                HttpHeader header = message.isHeader() ? (HttpHeader) message : message.getHttpHeader();
 
                 parseResult.result(header);
 
@@ -961,15 +987,15 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final int maxAllowedReentrants = Writer.Reentrant.getMaxReentrants();
-        final AtomicInteger maxReentrantsNoticed = new AtomicInteger();
+        int maxAllowedReentrants = Writer.Reentrant.getMaxReentrants();
+        AtomicInteger maxReentrantsNoticed = new AtomicInteger();
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         clientTransport.setProcessor(filterChainBuilder.build());
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
 
             int reentrants = maxAllowedReentrants * 3;
-            final ThreadLocal<Integer> reentrantsCounter = new ThreadLocal<Integer>() {
+            ThreadLocal<Integer> reentrantsCounter = new ThreadLocal<Integer>() {
 
                 @Override
                 protected Integer initialValue() {
@@ -978,11 +1004,11 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             };
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.suspend();
 
                 // clientTransport.pause();
-                final NIOOutputStream outputStream = response.getNIOOutputStream();
+                NIOOutputStream outputStream = response.getNIOOutputStream();
                 reentrantsCounter.set(0);
 
                 try {
@@ -991,7 +1017,7 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                         @Override
                         public void onWritePossible() throws Exception {
                             if (reentrants-- >= 0) {
-                                final int reentrantNum = reentrantsCounter.get() + 1;
+                                int reentrantNum = reentrantsCounter.get() + 1;
 
                                 try {
                                     reentrantsCounter.set(reentrantNum);
@@ -1025,17 +1051,18 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
 
         try {
+            Thread.sleep(5);
             server.start();
             clientTransport.start();
 
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                final HttpHeader header = parseResult.get(10, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                HttpHeader header = parseResult.get(10, SECONDS);
                 assertEquals(200, ((HttpResponsePacket) header).getStatus());
 
                 assertTrue("maxReentrantNoticed=" + maxReentrantsNoticed + " maxAllowed=" + maxAllowedReentrants,
@@ -1058,18 +1085,18 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 
     @Test
     public void testWritePossibleNotification() throws Exception {
-        final int notificationsNum = 5;
-        final int size = 8192;
+        int notificationsNum = 5;
+        int size = 8192;
 
-        final FutureImpl<Integer> parseResult = SafeFutureImpl.create();
+        FutureImpl<Integer> parseResult = SafeFutureImpl.create();
         FilterChainBuilder filterChainBuilder = createClientFilterChainAsBuilder(isSecure);
         filterChainBuilder.add(new BaseFilter() {
             private int bytesRead;
 
             @Override
-            public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
+            public NextAction handleConnect(FilterChainContext ctx) throws IOException {
 
-                final Http2Session c = Http2Session.get(ctx.getConnection());
+                Http2Session c = Http2Session.get(ctx.getConnection());
                 if (c != null) { // we're going over TLS
                     c.getHttp2State().addReadyListener(new Http2State.ReadyListener() {
                         @Override
@@ -1085,22 +1112,22 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
                 }
             }
 
-            private void sendRequest(final FilterChainContext ctx) {
+            private void sendRequest(FilterChainContext ctx) {
                 // Build the HttpRequestPacket, which will be sent to a server
                 // We construct HTTP request version 1.1 and specifying the URL of the
                 // resource we want to download
-                final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri("/path").protocol(HTTP_1_1)
                         .header("Host", "localhost:" + PORT).build();
 
                 // Write the request asynchronously
-                ctx.write(HttpContent.builder(httpRequest).content(Buffers.EMPTY_BUFFER).last(true).build());
+                ctx.write(HttpContent.builder(httpRequest).content(EMPTY_BUFFER).last(true).build());
             }
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 HttpContent message = ctx.getMessage();
                 Buffer b = message.getContent();
-                final int remaining = b.remaining();
+                int remaining = b.remaining();
 
                 if (b.hasRemaining()) {
                     try {
@@ -1119,19 +1146,19 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         });
 
-        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         clientTransport.setProcessor(filterChainBuilder.build());
 
-        final AtomicInteger sentBytesCount = new AtomicInteger();
-        final AtomicInteger notificationsCount = new AtomicInteger();
+        AtomicInteger sentBytesCount = new AtomicInteger();
+        AtomicInteger notificationsCount = new AtomicInteger();
 
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request, final Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.suspend();
 
-                final NIOOutputStream outputStream = response.getNIOOutputStream();
+                NIOOutputStream outputStream = response.getNIOOutputStream();
                 outputStream.notifyCanWrite(new WriteHandler() {
 
                     @Override
@@ -1170,17 +1197,18 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
             }
         };
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
 
         try {
+            Thread.sleep(5);
             server.start();
             clientTransport.start();
 
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             Connection connection = null;
             try {
-                connection = connectFuture.get(10, TimeUnit.SECONDS);
-                final int responseContentLength = parseResult.get(10, TimeUnit.SECONDS);
+                connection = connectFuture.get(10, SECONDS);
+                int responseContentLength = parseResult.get(10, SECONDS);
 
                 assertEquals(notificationsNum, notificationsCount.get());
                 assertEquals(sentBytesCount.get(), responseContentLength);
@@ -1217,22 +1245,22 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
 //    }
 
     private static void check(String s, int offset, int lastCameSize, int bufferSize) {
-        final int start = s.length() - lastCameSize;
+        int start = s.length() - lastCameSize;
 
         for (int i = 0; i < lastCameSize; i++) {
-            final char c = s.charAt(start + i);
-            final char expect = (char) ('a' + (i + start + offset) % bufferSize % ('z' - 'a'));
+            char c = s.charAt(start + i);
+            char expect = (char) ('a' + (i + start + offset) % bufferSize % ('z' - 'a'));
             if (c != expect) {
                 throw new IllegalStateException("Result at [" + (i + start) + "] don't match. Expected=" + expect + " got=" + c);
             }
         }
     }
 
-    private void check1(final String resultStr, final int LENGTH) {
+    private void check1(String resultStr, int LENGTH) {
         for (int i = 0; i < resultStr.length() / LENGTH; i++) {
-            final char expect = (char) ('a' + i % ('z' - 'a'));
+            char expect = (char) ('a' + i % ('z' - 'a'));
             for (int j = 0; j < LENGTH; j++) {
-                final char charAt = resultStr.charAt(i * LENGTH + j);
+                char charAt = resultStr.charAt(i * LENGTH + j);
                 if (charAt != expect) {
                     throw new IllegalStateException("Result at [" + (i * LENGTH + j) + "] don't match. Expected=" + expect + " got=" + charAt);
                 }
@@ -1240,24 +1268,24 @@ public class NIOOutputSinksTest extends AbstractHttp2Test {
         }
     }
 
-    private HttpServer createWebServer(final HttpHandler httpHandler) {
-        final HttpServer httpServer = createServer(null, PORT, isSecure, HttpHandlerRegistration.of(httpHandler, "/path/*"));
+    private HttpServer createWebServer(HttpHandler httpHandler) {
+        HttpServer httpServer = createServer(null, PORT, isSecure, HttpHandlerRegistration.of(httpHandler, "/path/*"));
 
-        final NetworkListener listener = httpServer.getListener("grizzly");
+        NetworkListener listener = httpServer.getListener("grizzly");
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
 
         return httpServer;
 
     }
 
-    private void setInitialHttp2WindowSize(final FilterChain filterChain, final int windowSize) {
+    private void setInitialHttp2WindowSize(FilterChain filterChain, int windowSize) {
 
-        final int http2FilterIdx = filterChain.indexOfType(Http2BaseFilter.class);
-        final Http2BaseFilter http2Filter = (Http2BaseFilter) filterChain.get(http2FilterIdx);
+        int http2FilterIdx = filterChain.indexOfType(Http2BaseFilter.class);
+        Http2BaseFilter http2Filter = (Http2BaseFilter) filterChain.get(http2FilterIdx);
         http2Filter.getConfiguration().setInitialWindowSize(windowSize);
     }
 
-    private static final class CustomIOException extends IOException {
-        private static final long serialVersionUID = 1L;
+    private static class CustomIOException extends IOException {
+        private static long serialVersionUID = 1L;
     }
 }

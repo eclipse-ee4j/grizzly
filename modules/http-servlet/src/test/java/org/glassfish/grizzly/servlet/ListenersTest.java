@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class ListenersTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18088;
+    public static final int PORT = PORT();
 
     // ------------------------------------------------------------ Test Methods
 
@@ -40,6 +40,7 @@ public class ListenersTest extends HttpServerAbstractTest {
         ctx.addListener(RequestListener.class.getName());
         addServlet(ctx, "TestServlet", "/servletPath/*");
         ctx.deploy(httpServer);
+        Thread.sleep(10);
         httpServer.start();
         HttpURLConnection conn = getConnection("/contextPath/servletPath/pathInfo", PORT);
         conn.getResponseCode();

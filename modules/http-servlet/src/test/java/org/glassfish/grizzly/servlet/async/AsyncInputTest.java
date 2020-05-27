@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.servlet.async;
 
+import static jakarta.servlet.DispatcherType.REQUEST;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -33,7 +35,6 @@ import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
 
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.Servlet;
@@ -48,9 +49,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * Basic Servlet 3.1 non-blocking input tests.
  */
 public class AsyncInputTest extends HttpServerAbstractTest {
-    private static final Logger LOGGER = Grizzly.logger(AsyncInputTest.class);
+    private static Logger LOGGER = Grizzly.logger(AsyncInputTest.class);
 
-    public static final int PORT = 18890 + 17;
+    public static int PORT = PORT();
 
     public void testNonBlockingInput() throws IOException {
         System.out.println("testNonBlockingInput");
@@ -64,9 +65,9 @@ public class AsyncInputTest extends HttpServerAbstractTest {
                     ServletOutputStream output = res.getOutputStream();
                     ServletInputStream input = req.getInputStream();
 
-                    final AsyncContext asyncCtx = req.startAsync();
+                    AsyncContext asyncCtx = req.startAsync();
 
-                    final byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[1024];
 
                     ReadListener readListener = new ReadListenerImpl(asyncCtx, buffer);
                     input.setReadListener(readListener);
@@ -134,25 +135,23 @@ public class AsyncInputTest extends HttpServerAbstractTest {
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias, Servlet servlet) {
-
-        final ServletRegistration reg = ctx.addServlet(name, servlet);
+    private ServletRegistration addServlet(WebappContext ctx, String name, String alias, Servlet servlet) {
+        ServletRegistration reg = ctx.addServlet(name, servlet);
         reg.addMapping(alias);
 
         return reg;
     }
 
-    private FilterRegistration addFilter(final WebappContext ctx, final String name, final String alias, final Filter filter) {
-
-        final FilterRegistration reg = ctx.addFilter(name, filter);
-        reg.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), alias);
+    private FilterRegistration addFilter(WebappContext ctx, String name, String alias, Filter filter) {
+        FilterRegistration reg = ctx.addFilter(name, filter);
+        reg.addMappingForUrlPatterns(EnumSet.of(REQUEST), alias);
 
         return reg;
     }
 
     private static class ReadListenerImpl implements ReadListener {
-        private final AsyncContext asyncCtx;
-        private final byte[] buffer;
+        private AsyncContext asyncCtx;
+        private byte[] buffer;
 
         private ReadListenerImpl(AsyncContext asyncCtx, byte[] buffer) {
             this.asyncCtx = asyncCtx;

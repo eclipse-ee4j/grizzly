@@ -40,18 +40,18 @@
         <dependency>
             <groupId>com.sun.xml.ws</groupId>
             <artifactId>jaxws-rt</artifactId>
-            <version>3.0.0-M1</version>
+            <version>3.0.0-M3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.xml.ws</groupId>
             <artifactId>jakarta.xml.ws-api</artifactId>
-            <version>3.0.0-RC2</version>
+            <version>3.0.0-RC3</version>
         </dependency>
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-osgi</artifactId>
-            <version>3.0.0-M2</version>
+            <version>3.0.0-M3</version>
             <type>jar</type>
         </dependency>
         <dependency>

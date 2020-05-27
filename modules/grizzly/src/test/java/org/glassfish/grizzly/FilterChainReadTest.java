@@ -108,9 +108,8 @@ public class FilterChainReadTest extends TestCase {
         transport.setProcessor(filterChainBuilder.build());
 
         try {
-            Thread.sleep(400);
+            Thread.sleep(5);
             transport.bind(PORT);
-            Thread.sleep(400);
             transport.start();
 
             final BlockingQueue<String> resultQueue = new LinkedTransferQueue<>();
@@ -207,6 +206,7 @@ public class FilterChainReadTest extends TestCase {
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(5);
             transport.bind(PORT);
             transport.start();
 
@@ -304,6 +304,7 @@ public class FilterChainReadTest extends TestCase {
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(5);
             transport.bind(PORT);
             transport.start();
 

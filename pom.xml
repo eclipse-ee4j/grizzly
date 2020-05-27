@@ -117,10 +117,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit-version>4.12</junit-version>
+        <junit-version>4.13</junit-version>
         <maven-plugin.version>1.0.0</maven-plugin.version>
         <servlet-version>5.0.0-M1</servlet-version>
-        <felix-version>3.5.0</felix-version>
+        <felix-version>4.2.1</felix-version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
         <osgi.version>4.2.0</osgi.version>
@@ -136,11 +136,6 @@
                 <version>${gmbal.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-plugin-tools-api</artifactId>
-                <version>2.0</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>${felix-version}</version>
@@ -151,20 +146,25 @@
                 <version>${servlet-version}</version>
             </dependency>
             <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>3.0.0-RC2</version>
+            </dependency>
+            <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.core</artifactId>
-                <version>${osgi.version}</version>
+                <version>6.0.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.compendium</artifactId>
-                <version>${osgi.version}</version>
+                <version>5.0.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.osgi.foundation</artifactId>
-                <version>1.0.0</version>
+                <version>1.2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -218,7 +218,8 @@
             </plugin>
             
             <!-- Restricts the Java version to 1.8 -->
-            <plugin><inherited>true</inherited>
+            <plugin>
+                <inherited>true</inherited>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>

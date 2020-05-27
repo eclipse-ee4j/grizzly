@@ -35,7 +35,7 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class ServletCookieTest extends HttpServerAbstractTest {
 
-    private static final int PORT = 12345;
+    private static final int PORT = PORT();
     private static final String CONTEXT = "/test";
     private static final String SERVLETMAPPING = "/servlet";
     private static final String FIRST_COOKIE_NAME = "firstCookie";

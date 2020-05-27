@@ -16,9 +16,11 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static java.util.logging.Level.INFO;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.logging.Level;
+import java.security.SecureRandom;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Grizzly;
@@ -36,8 +38,9 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class ComplexHttpServerTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18890 + 10;
+    public static final int PORT = PORT();
     private static final Logger logger = Grizzly.logger(ComplexHttpServerTest.class);
+   
 
     /**
      * Want to test multiple servletMapping
@@ -50,7 +53,7 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
      *
      * @throws IOException Error.
      */
-    public void testComplexAliasMapping() throws IOException {
+    public void testComplexAliasMapping() throws Exception {
         System.out.println("testComplexAliasMapping");
         try {
             startHttpServer(PORT);
@@ -86,7 +89,7 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
 
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                logger.log(Level.INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
+                logger.log(INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().write(req.getRequestURI());
             }

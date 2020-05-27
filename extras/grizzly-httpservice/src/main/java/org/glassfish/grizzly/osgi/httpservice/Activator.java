@@ -17,7 +17,7 @@
 package org.glassfish.grizzly.osgi.httpservice;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.Hashtable;
 
 import org.glassfish.grizzly.comet.CometAddOn;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -38,24 +38,27 @@ import org.osgi.util.tracker.ServiceTracker;
  * @since Jan 20, 2009
  */
 public class Activator implements BundleActivator {
-
-    private ServiceTracker logTracker;
-    private ServiceRegistration httpServiceRegistration;
-    private ServiceRegistration extServiceRegistration;
-    private Logger logger;
-    private HttpServer httpServer;
+    
     private static final String ORG_OSGI_SERVICE_HTTP_PORT = "org.osgi.service.http.port";
     private static final String ORG_OSGI_SERVICE_HTTPS_PORT = "org.osgi.service.http.port.secure";
-    private HttpServiceFactory serviceFactory;
     private static final String GRIZZLY_COMET_SUPPORT = "org.glassfish.grizzly.cometSupport";
     private static final String GRIZZLY_WEBSOCKETS_SUPPORT = "org.glassfish.grizzly.websocketsSupport";
+
+    private ServiceTracker<?, ?> logTracker;
+    private Logger logger;
+    
+    private HttpServiceFactory serviceFactory;
+    private HttpServer httpServer;
+    
+    private ServiceRegistration<?> httpServiceRegistration;
+    private ServiceRegistration<?> extServiceRegistration;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-        logTracker = new ServiceTracker(bundleContext, LogService.class.getName(), null);
+        logTracker = new ServiceTracker<>(bundleContext, LogService.class.getName(), null);
         logTracker.open();
         logger = new Logger(logTracker);
         logger.info("Starting Grizzly OSGi HttpService");
@@ -64,17 +67,17 @@ public class Activator implements BundleActivator {
         if (bundleContext.getProperty(ORG_OSGI_SERVICE_HTTPS_PORT) != null) {
             logger.warn("HTTPS not supported yet.");
         }
+        
         boolean cometEnabled = readProperty(bundleContext, GRIZZLY_COMET_SUPPORT, false);
         boolean websocketsEnabled = readProperty(bundleContext, GRIZZLY_WEBSOCKETS_SUPPORT, false);
 
         startGrizzly(port, cometEnabled, websocketsEnabled);
         serviceFactory = new HttpServiceFactory(httpServer, logger, bundleContext.getBundle());
 
-        // register our HttpService/HttpServiceExtension implementation so that
-        // it may be looked up by the OSGi runtime. We do it once per interface
-        // type so it can be looked up by either.
-        httpServiceRegistration = bundleContext.registerService(HttpService.class.getName(), serviceFactory, new Properties());
-        extServiceRegistration = bundleContext.registerService(HttpServiceExtension.class.getName(), serviceFactory, new Properties());
+        // Register our HttpService/HttpServiceExtension implementation so that it may be looked up by the OSGi runtime. 
+        // We do it once per interface type so it can be looked up by either.
+        httpServiceRegistration = bundleContext.registerService(HttpService.class.getName(), serviceFactory, new Hashtable<>());
+        extServiceRegistration = bundleContext.registerService(HttpServiceExtension.class.getName(), serviceFactory, new Hashtable<>());
     }
 
     /**
@@ -87,23 +90,23 @@ public class Activator implements BundleActivator {
      * @param <T> Property type.
      * @return Property value or default as described above.
      */
+    @SuppressWarnings("unchecked")
     private <T> T readProperty(BundleContext ctx, String name, T defValue) {
         String value = ctx.getProperty(name);
         if (value != null) {
             if (defValue instanceof Integer) {
                 try {
-                    // noinspection unchecked,RedundantCast
                     return (T) (Integer) Integer.parseInt(value);
                 } catch (NumberFormatException e) {
                     logger.info("Couldn't parse '" + name + "' property, going to use default (" + defValue + "). " + e.getMessage());
                 }
             } else if (defValue instanceof Boolean) {
-                // noinspection unchecked,RedundantCast
                 return (T) (Boolean) Boolean.parseBoolean(value);
             }
-            // noinspection unchecked
+            
             return (T) value;
         }
+        
         return defValue;
     }
 
@@ -120,6 +123,7 @@ public class Activator implements BundleActivator {
         NetworkListener networkListener = new NetworkListener("osgi-listener", "0.0.0.0", port);
 
         logger.info("HttpServer will listen on " + port);
+        
         if (cometEnabled) {
             logger.info("Enabling Comet.");
             networkListener.registerAddOn(new CometAddOn());
@@ -130,7 +134,6 @@ public class Activator implements BundleActivator {
         }
 
         httpServer.addListener(networkListener);
-
         httpServer.start();
     }
 
@@ -140,6 +143,7 @@ public class Activator implements BundleActivator {
     @Override
     public void stop(final BundleContext bundleContext) throws Exception {
         logger.info("Stopping Grizzly OSGi HttpService");
+        
         serviceFactory.stop();
         if (httpServiceRegistration != null) {
             httpServiceRegistration.unregister();
@@ -147,6 +151,7 @@ public class Activator implements BundleActivator {
         if (extServiceRegistration != null) {
             extServiceRegistration.unregister();
         }
+        
         httpServer.shutdownNow();
         logTracker.close();
     }

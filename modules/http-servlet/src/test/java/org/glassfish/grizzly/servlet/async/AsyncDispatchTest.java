@@ -47,9 +47,9 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AsyncDispatchTest extends HttpServerAbstractTest {
     private static final Logger LOGGER = Grizzly.logger(AsyncDispatchTest.class);
 
-    public static final int PORT = 18890 + 16;
+    public static final int PORT = PORT();
 
-    public void testAsyncContextDispatchZeroArg() throws IOException {
+    public void testAsyncContextDispatchZeroArg() throws Exception {
         System.out.println("testAsyncContextDispatchZeroArg");
         try {
             newHttpServer(PORT);
@@ -79,6 +79,8 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                 }
             });
             ctx.deploy(httpServer);
+            
+            Thread.sleep(10);
             httpServer.start();
             HttpURLConnection conn = getConnection("/contextPath/servletPath/pathInfo", PORT);
             assertEquals(200, conn.getResponseCode());

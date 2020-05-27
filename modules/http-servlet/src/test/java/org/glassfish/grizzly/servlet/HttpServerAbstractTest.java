@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
 
 import org.glassfish.grizzly.http.server.HttpServer;
 
@@ -32,6 +33,17 @@ import junit.framework.TestCase;
  * @author Hubert Iwaniuk
  */
 public abstract class HttpServerAbstractTest extends TestCase {
+    
+    protected static int PORT() {
+        try {
+            int port = 18890 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
     protected HttpServer httpServer;
 
     protected String readResponse(HttpURLConnection conn) throws IOException {
@@ -66,8 +78,9 @@ public abstract class HttpServerAbstractTest extends TestCase {
         return urlConn.getResponseCode();
     }
 
-    protected void startHttpServer(int port) throws IOException {
+    protected void startHttpServer(int port) throws Exception {
         newHttpServer(port);
+        Thread.sleep(10);
         httpServer.start();
     }
 

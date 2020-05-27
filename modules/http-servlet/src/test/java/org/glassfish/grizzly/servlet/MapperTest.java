@@ -35,23 +35,26 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class MapperTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18080;
-    private static final Logger LOGGER = Grizzly.logger(MapperTest.class);
+    public static int PORT = PORT();
+    private static Logger LOGGER = Grizzly.logger(MapperTest.class);
 
-    public void testOverlappingMapping() throws IOException {
+    public void testOverlappingMapping() throws Exception {
         System.out.println("testOverlappingMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
             String[] aliases = new String[] { "/aaa/bbb", "/aaa/ccc" };
-            final String[] mappings = { "Mapping{matchValue='aaa/bbb', pattern='/aaa/bbb', servletName='', mappingMatch=EXACT}",
+            String[] mappings = { "Mapping{matchValue='aaa/bbb', pattern='/aaa/bbb', servletName='', mappingMatch=EXACT}",
                     "Mapping{matchValue='aaa/ccc', pattern='/aaa/ccc', servletName='', mappingMatch=EXACT}" };
+            
             for (String alias : aliases) {
                 addServlet(ctx, alias);
             }
+            
             ctx.deploy(httpServer);
             for (int i = 0, len = aliases.length; i < len; i++) {
-                final String alias = aliases[i];
+                String alias = aliases[i];
                 HttpURLConnection conn = getConnection(alias, PORT);
                 assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
                 assertEquals(alias, readResponse(conn));
@@ -64,8 +67,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testOverlappingMapping2() throws IOException {
+    public void testOverlappingMapping2() throws Exception {
         System.out.println("testOverlappingMapping2");
+        
         try {
             startHttpServer(PORT);
 
@@ -87,8 +91,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testRootStarMapping() throws IOException {
+    public void testRootStarMapping() throws Exception {
         System.out.println("testRootMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -106,8 +111,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testRootStarMapping2() throws IOException {
+    public void testRootStarMapping2() throws Exception {
         System.out.println("testRootMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -125,8 +131,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testRootMapping() throws IOException {
+    public void testRootMapping() throws Exception {
         System.out.println("testRootMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -144,8 +151,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testRootMapping2() throws IOException {
+    public void testRootMapping2() throws Exception {
         System.out.println("testRootMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -164,8 +172,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testWrongMapping() throws IOException {
+    public void testWrongMapping() throws Exception {
         System.out.println("testWrongMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -179,24 +188,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-//
-//    public void testComplexMapping() throws IOException {
-//        System.out.println("testComplexMapping");
-//        try {
-//            startHttpServer(PORT);
-//            String alias = "/a/b/c/*.html";
-//            addHttpHandler(alias);
-//            HttpURLConnection conn = getConnection("/a/b/c/index.html", PORT);
-//            assertEquals(HttpServletResponse.SC_OK,
-//                    getResponseCodeFromAlias(conn));
-//            assertEquals(alias, readResponse(conn));
-//        } finally {
-//            stopHttpServer();
-//        }
-//    }
-//
-    public void testWildcardMapping() throws IOException {
+    public void testWildcardMapping() throws Exception {
         System.out.println("testWildcardMapping");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -214,8 +208,9 @@ public class MapperTest extends HttpServerAbstractTest {
         }
     }
 
-    public void testWrongMappingRootContext() throws IOException {
+    public void testWrongMappingRootContext() throws Exception {
         System.out.println("testWrongMappingRootContext");
+        
         try {
             startHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test");
@@ -266,8 +261,8 @@ public class MapperTest extends HttpServerAbstractTest {
 
     // --------------------------------------------------------- Private Methods
 
-    private static void addServlet(final WebappContext ctx, final String alias) {
-        final ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
+    private static void addServlet(WebappContext ctx, String alias) {
+        ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
 
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
