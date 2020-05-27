@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,8 +80,8 @@ public class AjpConstants {
     public static final int SC_RESP_WWW_AUTHENTICATE = 0xA00B;
 
     // Integer codes for common (optional) request attribute names
-    public static final byte SC_A_CONTEXT = 1;  // XXX Unused
-    public static final byte SC_A_SERVLET_PATH = 2;  // XXX Unused
+    public static final byte SC_A_CONTEXT = 1; // XXX Unused
+    public static final byte SC_A_SERVLET_PATH = 2; // XXX Unused
     public static final byte SC_A_REMOTE_USER = 3;
     public static final byte SC_A_AUTH_TYPE = 4;
     public static final byte SC_A_QUERY_STRING = 5;
@@ -107,35 +107,9 @@ public class AjpConstants {
     /**
      * Translates integer codes to names of HTTP methods
      */
-    static final String[] methodTransArray = {
-        "OPTIONS",
-        "GET",
-        "HEAD",
-        "POST",
-        "PUT",
-        "DELETE",
-        "TRACE",
-        "PROPFIND",
-        "PROPPATCH",
-        "MKCOL",
-        "COPY",
-        "MOVE",
-        "LOCK",
-        "UNLOCK",
-        "ACL",
-        "REPORT",
-        "VERSION-CONTROL",
-        "CHECKIN",
-        "CHECKOUT",
-        "UNCHECKOUT",
-        "SEARCH",
-        "MKWORKSPACE",
-        "UPDATE",
-        "LABEL",
-        "MERGE",
-        "BASELINE-CONTROL",
-        "MKACTIVITY"
-    };
+    static final String[] methodTransArray = { "OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE",
+            "LOCK", "UNLOCK", "ACL", "REPORT", "VERSION-CONTROL", "CHECKIN", "CHECKOUT", "UNCHECKOUT", "SEARCH", "MKWORKSPACE", "UPDATE", "LABEL", "MERGE",
+            "BASELINE-CONTROL", "MKACTIVITY" };
 
     /**
      * Request Method is passed as a String
@@ -158,45 +132,29 @@ public class AjpConstants {
     public static final int SC_REQ_REFERER = 13;
     public static final int SC_REQ_USER_AGENT = 14;
     // AJP14 new header
-    public static final byte SC_A_SSL_KEY_SIZE = 11; // XXX ??? 
+    public static final byte SC_A_SSL_KEY_SIZE = 11; // XXX ???
 
     /**
      * Translates integer codes to request header names
      */
-    static final String[] headerTransArray = {
-        "accept",
-        "accept-charset",
-        "accept-encoding",
-        "accept-language",
-        "authorization",
-        "connection",
-        "content-type",
-        "content-length",
-        "cookie",
-        "cookie2",
-        "host",
-        "pragma",
-        "referer",
-        "user-agent"
-    };
-    // Ajp13 specific -  needs refactoring for the new model
+    static final String[] headerTransArray = { "accept", "accept-charset", "accept-encoding", "accept-language", "authorization", "connection", "content-type",
+            "content-length", "cookie", "cookie2", "host", "pragma", "referer", "user-agent" };
+    // Ajp13 specific - needs refactoring for the new model
     /**
      * Maximum Total byte size for a AJP packet defined in the spec
      */
     public static final int MAX_SPEC_PACKET_SIZE = 8192;
-    
+
     /**
      * Maximum Total byte size for a AJP packet
      */
-    public static final int MAX_PACKET_SIZE = Integer.getInteger(
-            AjpConstants.class.getName() + ".max-packet-size",
-            MAX_SPEC_PACKET_SIZE);
-    
+    public static final int MAX_PACKET_SIZE = Integer.getInteger(AjpConstants.class.getName() + ".max-packet-size", MAX_SPEC_PACKET_SIZE);
+
     /**
      * Size of basic packet header
      */
     public static final int H_SIZE = 4;
-    
+
     /**
      * Maximum size of data that can be sent in one packet
      */

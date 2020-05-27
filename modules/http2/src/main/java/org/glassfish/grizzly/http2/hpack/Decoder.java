@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,34 +16,35 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 import java.net.ProtocolException;
 
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
+import org.glassfish.grizzly.Buffer;
 
 /**
  * Decodes headers from their binary representation.
  *
- * <p>Typical lifecycle looks like this:
+ * <p>
+ * Typical lifecycle looks like this:
  *
- * <p> {@link #Decoder(int) new Decoder}
- * ({@link #setMaxCapacity(int) setMaxCapacity}?
+ * <p>
+ * {@link #Decoder(int) new Decoder} ({@link #setMaxCapacity(int) setMaxCapacity}?
  * {@link #decode(Buffer, boolean, DecodingCallback) decode})*
  *
- * <p> The design intentions behind Decoder were to facilitate flexible and
- * incremental style of processing.
+ * <p>
+ * The design intentions behind Decoder were to facilitate flexible and incremental style of processing.
  *
- * <p> {@code Decoder} does not require a complete header block in a single
- * {@code ByteBuffer}. The header block can be spread across many buffers of any
- * size and decoded one-by-one the way it makes most sense for the user. This
- * way also allows not to limit the size of the header block.
+ * <p>
+ * {@code Decoder} does not require a complete header block in a single {@code ByteBuffer}. The header block can be
+ * spread across many buffers of any size and decoded one-by-one the way it makes most sense for the user. This way also
+ * allows not to limit the size of the header block.
  *
- * <p> Headers are delivered to the {@linkplain DecodingCallback callback} as
- * soon as they become decoded. Using the callback also gives the user a freedom
- * to decide how headers are processed. The callback does not limit the number
- * of headers decoded during single decoding operation.
+ * <p>
+ * Headers are delivered to the {@linkplain DecodingCallback callback} as soon as they become decoded. Using the
+ * callback also gives the user a freedom to decide how headers are processed. The callback does not limit the number of
+ * headers decoded during single decoding operation.
  *
  */
 public final class Decoder {
@@ -92,19 +93,15 @@ public final class Decoder {
     private int capacity;
 
     /**
-     * Constructs a {@code Decoder} with the specified initial capacity of the
-     * header table.
+     * Constructs a {@code Decoder} with the specified initial capacity of the header table.
      *
-     * <p> The value has to be agreed between decoder and encoder out-of-band,
-     * e.g. by a protocol that uses HPACK (see <a
-     * href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table
-     * Size</a>).
+     * <p>
+     * The value has to be agreed between decoder and encoder out-of-band, e.g. by a protocol that uses HPACK (see
+     * <a href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table Size</a>).
      *
-     * @param capacity
-     *         a non-negative integer
+     * @param capacity a non-negative integer
      *
-     * @throws IllegalArgumentException
-     *         if capacity is negative
+     * @throws IllegalArgumentException if capacity is negative
      */
     public Decoder(int capacity) {
         setMaxCapacity(capacity);
@@ -118,16 +115,13 @@ public final class Decoder {
     /**
      * Sets a maximum capacity of the header table.
      *
-     * <p> The value has to be agreed between decoder and encoder out-of-band,
-     * e.g. by a protocol that uses HPACK (see <a
-     * href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table
-     * Size</a>).
+     * <p>
+     * The value has to be agreed between decoder and encoder out-of-band, e.g. by a protocol that uses HPACK (see
+     * <a href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table Size</a>).
      *
-     * @param capacity
-     *         a non-negative integer
+     * @param capacity a non-negative integer
      *
-     * @throws IllegalArgumentException
-     *         if capacity is negative
+     * @throws IllegalArgumentException if capacity is negative
      */
     public void setMaxCapacity(int capacity) {
         if (capacity < 0) {
@@ -140,58 +134,51 @@ public final class Decoder {
     /**
      * Decodes a header block from the given buffer to the given callback.
      *
-     * <p> Suppose a header block is represented by a sequence of {@code
-     * ByteBuffer}s in the form of {@code Iterator<ByteBuffer>}. And the
-     * consumer of decoded headers is represented by the callback. Then to
-     * decode the header block, the following approach might be used:
+     * <p>
+     * Suppose a header block is represented by a sequence of {@code
+     * ByteBuffer}s in the form of {@code Iterator<ByteBuffer>}. And the consumer of decoded headers is represented by the
+     * callback. Then to decode the header block, the following approach might be used:
      *
-     * <pre>{@code
+     * <pre>
+     * {@code
      * while (buffers.hasNext()) {
      *     ByteBuffer input = buffers.next();
      *     decoder.decode(input, callback, !buffers.hasNext());
      * }
-     * }</pre>
+     * }
+     * </pre>
      *
-     * <p> The decoder reads as much as possible of the header block from the
-     * given buffer, starting at the buffer's position, and increments its
-     * position to reflect the bytes read. The buffer's mark and limit will not
-     * be modified.
+     * <p>
+     * The decoder reads as much as possible of the header block from the given buffer, starting at the buffer's position,
+     * and increments its position to reflect the bytes read. The buffer's mark and limit will not be modified.
      *
-     * <p> Once the method is invoked with {@code endOfHeaderBlock == true}, the
-     * current header block is deemed ended, and inconsistencies, if any, are
-     * reported immediately by throwing an {@code UncheckedIOException}.
+     * <p>
+     * Once the method is invoked with {@code endOfHeaderBlock == true}, the current header block is deemed ended, and
+     * inconsistencies, if any, are reported immediately by throwing an {@code UncheckedIOException}.
      *
-     * <p> Each callback method is called only after the implementation has
-     * processed the corresponding bytes. If the bytes revealed a decoding
-     * error, the callback method is not called.
+     * <p>
+     * Each callback method is called only after the implementation has processed the corresponding bytes. If the bytes
+     * revealed a decoding error, the callback method is not called.
      *
-     * <p> In addition to exceptions thrown directly by the method, any
-     * exceptions thrown from the {@code callback} will bubble up.
+     * <p>
+     * In addition to exceptions thrown directly by the method, any exceptions thrown from the {@code callback} will bubble
+     * up.
      *
-     * The method asks for {@code endOfHeaderBlock} flag instead of
-     * returning it for two reasons. The first one is that the user of the
-     * decoder always knows which chunk is the last. The second one is to throw
-     * the most detailed exception possible, which might be useful for
-     * diagnosing issues.
+     * The method asks for {@code endOfHeaderBlock} flag instead of returning it for two reasons. The first one is that the
+     * user of the decoder always knows which chunk is the last. The second one is to throw the most detailed exception
+     * possible, which might be useful for diagnosing issues.
      *
-     * This implementation is not atomic in respect to decoding
-     * errors. In other words, if the decoding operation has thrown a decoding
-     * error, the decoder is no longer usable.
+     * This implementation is not atomic in respect to decoding errors. In other words, if the decoding operation has thrown
+     * a decoding error, the decoder is no longer usable.
      *
-     * @param headerBlockChunk
-     *         the chunk of the header block, may be empty
-     * @param finalChunk
-     *         true if the chunk is the final (or the only one) in the sequence
+     * @param headerBlockChunk the chunk of the header block, may be empty
+     * @param finalChunk true if the chunk is the final (or the only one) in the sequence
      *
-     * @param consumer
-     *         the callback
-     * @throws RuntimeException
-     *         in case of a decoding error
-     * @throws NullPointerException
-     *         if either headerBlock or consumer are null
+     * @param consumer the callback
+     * @throws RuntimeException in case of a decoding error
+     * @throws NullPointerException if either headerBlock or consumer are null
      */
-    public void decode(Buffer headerBlockChunk, boolean finalChunk,
-                       DecodingCallback consumer) {
+    public void decode(Buffer headerBlockChunk, boolean finalChunk, DecodingCallback consumer) {
         requireNonNull(headerBlockChunk, "headerBlock");
         requireNonNull(consumer, "consumer");
         while (headerBlockChunk.hasRemaining()) {
@@ -200,38 +187,36 @@ public final class Decoder {
             proceed(headerBlockChunk, consumer, endOfHeaderBlock);
         }
         if (finalChunk && state != State.READY) {
-            throw new RuntimeException(
-                    new ProtocolException("Unexpected end of header block"));
+            throw new RuntimeException(new ProtocolException("Unexpected end of header block"));
         }
     }
 
     private void proceed(Buffer input, DecodingCallback action, boolean endOfHeaderBlock) {
         switch (state) {
-            case READY:
-                resumeReady(input);
-                break;
-            case INDEXED:
-                resumeIndexed(input, action);
-                break;
-            case LITERAL:
-                resumeLiteral(input, action);
-                break;
-            case LITERAL_WITH_INDEXING:
-                resumeLiteralWithIndexing(input, action);
-                break;
-            case LITERAL_NEVER_INDEXED:
-                resumeLiteralNeverIndexed(input, action);
-                break;
-            case SIZE_UPDATE: {
-                if (endOfHeaderBlock) {
-                    throw new RuntimeException("The dynamic table size must not be changed at the end of the header block.");
-                }
-                resumeSizeUpdate(input, action);
-                break;
+        case READY:
+            resumeReady(input);
+            break;
+        case INDEXED:
+            resumeIndexed(input, action);
+            break;
+        case LITERAL:
+            resumeLiteral(input, action);
+            break;
+        case LITERAL_WITH_INDEXING:
+            resumeLiteralWithIndexing(input, action);
+            break;
+        case LITERAL_NEVER_INDEXED:
+            resumeLiteralNeverIndexed(input, action);
+            break;
+        case SIZE_UPDATE: {
+            if (endOfHeaderBlock) {
+                throw new RuntimeException("The dynamic table size must not be changed at the end of the header block.");
             }
-            default:
-                throw new InternalError(
-                        "Unexpected decoder state: " + String.valueOf(state));
+            resumeSizeUpdate(input, action);
+            break;
+        }
+        default:
+            throw new InternalError("Unexpected decoder state: " + String.valueOf(state));
         }
     }
 
@@ -239,49 +224,49 @@ public final class Decoder {
         int b = input.get(input.position()) & 0xff; // absolute read
         State s = states[b];
         switch (s) {
-            case INDEXED:
-                integerReader.configure(7);
-                state = State.INDEXED;
-                firstValueIndex = true;
-                break;
-            case LITERAL:
-                state = State.LITERAL;
-                firstValueIndex = (b & 0b0000_1111) != 0;
-                if (firstValueIndex) {
-                    integerReader.configure(4);
-                }
-                break;
-            case LITERAL_WITH_INDEXING:
-                state = State.LITERAL_WITH_INDEXING;
-                firstValueIndex = (b & 0b0011_1111) != 0;
-                if (firstValueIndex) {
-                    integerReader.configure(6);
-                }
-                break;
-            case LITERAL_NEVER_INDEXED:
-                state = State.LITERAL_NEVER_INDEXED;
-                firstValueIndex = (b & 0b0000_1111) != 0;
-                if (firstValueIndex) {
-                    integerReader.configure(4);
-                }
-                break;
-            case SIZE_UPDATE:
-                integerReader.configure(5);
-                state = State.SIZE_UPDATE;
-                firstValueIndex = true;
-                break;
-            default:
-                throw new InternalError(String.valueOf(s));
+        case INDEXED:
+            integerReader.configure(7);
+            state = State.INDEXED;
+            firstValueIndex = true;
+            break;
+        case LITERAL:
+            state = State.LITERAL;
+            firstValueIndex = (b & 0b0000_1111) != 0;
+            if (firstValueIndex) {
+                integerReader.configure(4);
+            }
+            break;
+        case LITERAL_WITH_INDEXING:
+            state = State.LITERAL_WITH_INDEXING;
+            firstValueIndex = (b & 0b0011_1111) != 0;
+            if (firstValueIndex) {
+                integerReader.configure(6);
+            }
+            break;
+        case LITERAL_NEVER_INDEXED:
+            state = State.LITERAL_NEVER_INDEXED;
+            firstValueIndex = (b & 0b0000_1111) != 0;
+            if (firstValueIndex) {
+                integerReader.configure(4);
+            }
+            break;
+        case SIZE_UPDATE:
+            integerReader.configure(5);
+            state = State.SIZE_UPDATE;
+            firstValueIndex = true;
+            break;
+        default:
+            throw new InternalError(String.valueOf(s));
         }
         if (!firstValueIndex) {
             input.get(); // advance, next stop: "String Literal"
         }
     }
 
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 1 |        Index (7+)         |
-    //            +---+---------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 1 | Index (7+) |
+    // +---+---------------------------+
     //
     private void resumeIndexed(Buffer input, DecodingCallback action) {
         if (!integerReader.read(input)) {
@@ -297,27 +282,27 @@ public final class Decoder {
         }
     }
 
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 0 | 0 | 0 |  Index (4+)   |
-    //            +---+---+-----------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 0 | Index (4+) |
+    // +---+---+-----------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 0 | 0 | 0 |       0       |
-    //            +---+---+-----------------------+
-    //            | H |     Name Length (7+)      |
-    //            +---+---------------------------+
-    //            |  Name String (Length octets)  |
-    //            +---+---------------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 0 | 0 |
+    // +---+---+-----------------------+
+    // | H | Name Length (7+) |
+    // +---+---------------------------+
+    // | Name String (Length octets) |
+    // +---+---------------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
     private void resumeLiteral(Buffer input, DecodingCallback action) {
         if (!completeReading(input)) {
@@ -336,27 +321,27 @@ public final class Decoder {
     }
 
     //
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 1 |      Index (6+)       |
-    //            +---+---+-----------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 1 | Index (6+) |
+    // +---+---+-----------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 1 |           0           |
-    //            +---+---+-----------------------+
-    //            | H |     Name Length (7+)      |
-    //            +---+---------------------------+
-    //            |  Name String (Length octets)  |
-    //            +---+---------------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 1 | 0 |
+    // +---+---+-----------------------+
+    // | H | Name Length (7+) |
+    // +---+---------------------------+
+    // | Name String (Length octets) |
+    // +---+---------------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
     private void resumeLiteralWithIndexing(Buffer input, DecodingCallback action) {
         if (!completeReading(input)) {
@@ -367,7 +352,7 @@ public final class Decoder {
             // 1. (name, value) will be stored in the table as strings
             // 2. Most likely the callback will also create strings from them
             // ------------------------------------------------------------------------
-            //    Let's create those string beforehand (and only once!) to benefit everyone
+            // Let's create those string beforehand (and only once!) to benefit everyone
             //
             String n;
             String v = value.toString();
@@ -381,34 +366,33 @@ public final class Decoder {
             }
             table.put(n, v);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            throw new RuntimeException(
-                    new ProtocolException().initCause(e));
+            throw new RuntimeException(new ProtocolException().initCause(e));
         } finally {
             cleanUpAfterReading();
         }
     }
 
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 0 | 0 | 1 |  Index (4+)   |
-    //            +---+---+-----------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 1 | Index (4+) |
+    // +---+---+-----------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 0 | 0 | 1 |       0       |
-    //            +---+---+-----------------------+
-    //            | H |     Name Length (7+)      |
-    //            +---+---------------------------+
-    //            |  Name String (Length octets)  |
-    //            +---+---------------------------+
-    //            | H |     Value Length (7+)     |
-    //            +---+---------------------------+
-    //            | Value String (Length octets)  |
-    //            +-------------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 1 | 0 |
+    // +---+---+-----------------------+
+    // | H | Name Length (7+) |
+    // +---+---------------------------+
+    // | Name String (Length octets) |
+    // +---+---------------------------+
+    // | H | Value Length (7+) |
+    // +---+---------------------------+
+    // | Value String (Length octets) |
+    // +-------------------------------+
     //
     private void resumeLiteralNeverIndexed(Buffer input, DecodingCallback action) {
         if (!completeReading(input)) {
@@ -426,10 +410,10 @@ public final class Decoder {
         }
     }
 
-    //              0   1   2   3   4   5   6   7
-    //            +---+---+---+---+---+---+---+---+
-    //            | 0 | 0 | 1 |   Max size (5+)   |
-    //            +---+---------------------------+
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 1 | Max size (5+) |
+    // +---+---------------------------+
     //
     private void resumeSizeUpdate(Buffer input, DecodingCallback action) {
         if (!integerReader.read(input)) {
@@ -438,9 +422,7 @@ public final class Decoder {
         intValue = integerReader.get();
         assert intValue >= 0;
         if (intValue > capacity) {
-            throw new RuntimeException(new ProtocolException(
-                    format("Received capacity exceeds expected: " +
-                            "capacity=%s, expected=%s", intValue, capacity)));
+            throw new RuntimeException(new ProtocolException(format("Received capacity exceeds expected: " + "capacity=%s, expected=%s", intValue, capacity)));
         }
         integerReader.reset();
         try {
@@ -486,12 +468,7 @@ public final class Decoder {
     }
 
     private enum State {
-        READY,
-        INDEXED,
-        LITERAL_NEVER_INDEXED,
-        LITERAL,
-        LITERAL_WITH_INDEXING,
-        SIZE_UPDATE
+        READY, INDEXED, LITERAL_NEVER_INDEXED, LITERAL, LITERAL_WITH_INDEXING, SIZE_UPDATE
     }
 
     HeaderTable getTable() {

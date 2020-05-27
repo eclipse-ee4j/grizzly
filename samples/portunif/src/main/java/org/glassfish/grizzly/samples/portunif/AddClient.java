@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -35,7 +36,7 @@ import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * Client app, which tests deployed ADD-service.
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
@@ -63,8 +64,7 @@ public class AddClient {
             transport.start();
 
             // Create the client connection
-            final Future<Connection> connectFuture =
-                    transport.connect("localhost", PUServer.PORT);
+            final Future<Connection> connectFuture = transport.connect("localhost", PUServer.PORT);
             connection = connectFuture.get(10, TimeUnit.SECONDS);
 
             LOGGER.info("Enter 2 numbers separated by space (<value1> <value2>) end press <enter>.");
@@ -72,8 +72,7 @@ public class AddClient {
 
             // Read user input and communicate the ADD-service
             String line;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    System.in, Charsets.ASCII_CHARSET));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, Charsets.ASCII_CHARSET));
             while ((line = reader.readLine()) != null) {
                 if ("q".equals(line)) {
                     break;
@@ -92,21 +91,19 @@ public class AddClient {
                     continue;
                 }
 
-
                 // send the request to ADD-service
-                final GrizzlyFuture<WriteResult> writeFuture =
-                        connection.write(new AddRequestMessage(value1, value2));
+                final GrizzlyFuture<WriteResult> writeFuture = connection.write(new AddRequestMessage(value1, value2));
 
                 final WriteResult result = writeFuture.get(10, TimeUnit.SECONDS);
                 assert result != null;
             }
-            
+
         } finally {
             // Close the client connection
             if (connection != null) {
                 connection.closeSilently();
             }
-            
+
             // Shutdown the transport
             transport.shutdownNow();
         }

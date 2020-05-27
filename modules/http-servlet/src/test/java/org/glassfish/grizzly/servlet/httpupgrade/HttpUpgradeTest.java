@@ -21,6 +21,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.StringTokenizer;
+
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.servlet.WebappContext;
+
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -32,8 +36,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpUpgradeHandler;
 import jakarta.servlet.http.WebConnection;
 import junit.framework.TestCase;
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.servlet.WebappContext;
 
 /**
  * Test Servlet 3.1 upgrade mechanism
@@ -60,22 +62,20 @@ public class HttpUpgradeTest extends TestCase {
             httpServer = HttpServer.createSimpleServer("./", PORT);
 
             WebappContext ctx = new WebappContext("Test", contextRoot);
-            final ServletRegistration reg = ctx.addServlet("EchoProtocol",
-                    new HttpServlet() {
-                        @Override
-                        protected void doPost(HttpServletRequest req, HttpServletResponse res)
-                                throws ServletException, IOException {
-                            if ("echo".equals(req.getHeader("Upgrade"))) {
-                                res.setStatus(101);
-                                res.setHeader("Upgrade", "echo");
-                                res.setHeader("Connection", "Upgrade");
-                                System.out.println("upgraded to use EchoHttpUpgradeHandler");
-                                EchoProtocolUpgradeHandler handler = req.upgrade(EchoProtocolUpgradeHandler.class);
-                                handler.setDelimiter("/");
-                            } else {
-                                res.getWriter().println("No upgrade: " + req.getHeader("Upgrade"));
-                            }
-                        }
+            final ServletRegistration reg = ctx.addServlet("EchoProtocol", new HttpServlet() {
+                @Override
+                protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+                    if ("echo".equals(req.getHeader("Upgrade"))) {
+                        res.setStatus(101);
+                        res.setHeader("Upgrade", "echo");
+                        res.setHeader("Connection", "Upgrade");
+                        System.out.println("upgraded to use EchoHttpUpgradeHandler");
+                        EchoProtocolUpgradeHandler handler = req.upgrade(EchoProtocolUpgradeHandler.class);
+                        handler.setDelimiter("/");
+                    } else {
+                        res.getWriter().println("No upgrade: " + req.getHeader("Upgrade"));
+                    }
+                }
             });
             reg.addMapping(upgradeServlet);
 
@@ -112,7 +112,7 @@ public class HttpUpgradeTest extends TestCase {
                 if (len == -1) {
                     break;
                 }
-                
+
                 String line = new String(b, 0, len);
                 sb.append(line);
                 if (sb.indexOf("World") > 0) {
@@ -149,7 +149,7 @@ public class HttpUpgradeTest extends TestCase {
                 }
             } catch (Exception ignored) {
             }
-            
+
             if (httpServer != null) {
                 httpServer.shutdownNow();
             }
@@ -165,7 +165,8 @@ public class HttpUpgradeTest extends TestCase {
 
     public static class EchoProtocolUpgradeHandler implements HttpUpgradeHandler {
         private String delimiter = "/";
-        
+
+        @Override
         public void init(WebConnection wc) {
             System.out.println("EchoProtocolHandler.init");
             try {
@@ -175,7 +176,7 @@ public class HttpUpgradeTest extends TestCase {
                 input.setReadListener(readListener);
 
                 int b;
-                while (input.isReady() && ((b = input.read()) != -1)) {
+                while (input.isReady() && (b = input.read()) != -1) {
                     System.out.print((char) b);
                     output.write(b);
                 }
@@ -211,14 +212,14 @@ public class HttpUpgradeTest extends TestCase {
                 output = out;
             }
 
+            @Override
             public void onDataAvailable() {
                 try {
                     StringBuilder sb = new StringBuilder();
                     System.out.println("--> onDataAvailable");
                     int len;
                     byte b[] = new byte[1024];
-                    while (input.isReady()
-                            && (len = input.read(b)) != -1) {
+                    while (input.isReady() && (len = input.read(b)) != -1) {
                         String data = new String(b, 0, len);
                         System.out.println("--> " + data);
                         sb.append(data);
@@ -230,6 +231,7 @@ public class HttpUpgradeTest extends TestCase {
                 }
             }
 
+            @Override
             public void onAllDataRead() {
                 try {
                     System.out.println("--> onAllDataRead");
@@ -239,9 +241,10 @@ public class HttpUpgradeTest extends TestCase {
                 }
             }
 
+            @Override
             public void onError(final Throwable t) {
                 System.out.println("--> onError");
-                //t.printStackTrace();
+                // t.printStackTrace();
             }
         }
     }

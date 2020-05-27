@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,6 +15,22 @@
  */
 
 package org.glassfish.grizzly.http2;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
@@ -39,22 +55,6 @@ import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public class TrailersTest extends AbstractHttp2Test {
 
     private static final int PORT = 18903;
@@ -69,7 +69,6 @@ public class TrailersTest extends AbstractHttp2Test {
             httpServer.shutdownNow();
         }
     }
-
 
     @Test
     public void testTrailers() throws Exception {
@@ -140,16 +139,9 @@ public class TrailersTest extends AbstractHttp2Test {
         };
         final Connection c = getConnection("localhost", PORT, filter);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        HttpRequestPacket request = builder.method(Method.POST)
-                .uri("/echo")
-                .protocol(Protocol.HTTP_2_0)
-                .host("localhost:" + PORT).build();
-        c.write(HttpTrailer.builder(request)
-                .content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, "a=b&c=d"))
-                .last(true)
-                .header("trailer-a", "value-a")
-                .header("trailer-b", "value-b")
-                .build());
+        HttpRequestPacket request = builder.method(Method.POST).uri("/echo").protocol(Protocol.HTTP_2_0).host("localhost:" + PORT).build();
+        c.write(HttpTrailer.builder(request).content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, "a=b&c=d")).last(true).header("trailer-a", "value-a")
+                .header("trailer-b", "value-b").build());
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         final Throwable t = error.get();
         if (t != null) {
@@ -167,7 +159,7 @@ public class TrailersTest extends AbstractHttp2Test {
             public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 final InputStream in = request.getInputStream();
-                //noinspection StatementWithEmptyBody
+                // noinspection StatementWithEmptyBody
                 while (in.read() != -1) {
                 }
 
@@ -206,19 +198,11 @@ public class TrailersTest extends AbstractHttp2Test {
         };
         final Connection c = getConnection("localhost", PORT, filter);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        HttpRequestPacket request = builder.method(Method.POST)
-                .uri("/echo")
-                .protocol(Protocol.HTTP_2_0)
-                .host("localhost:" + PORT).build();
+        HttpRequestPacket request = builder.method(Method.POST).uri("/echo").protocol(Protocol.HTTP_2_0).host("localhost:" + PORT).build();
         c.write(HttpContent.builder(request) // write the request
-                .last(false)
-                .build());
+                .last(false).build());
         c.write(HttpTrailer.builder(request) // write the trailer
-                .content(Buffers.EMPTY_BUFFER)
-                .last(true)
-                .header("trailer-a", "value-a")
-                .header("trailer-b", "value-b")
-                .build());
+                .content(Buffers.EMPTY_BUFFER).last(true).header("trailer-a", "value-a").header("trailer-b", "value-b").build());
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         final Throwable t = error.get();
         if (t != null) {
@@ -227,9 +211,7 @@ public class TrailersTest extends AbstractHttp2Test {
         }
     }
 
-
     // -------------------------------------------------------- Private Methods
-
 
     private void configureHttpServer() throws Exception {
         httpServer = createServer(null, PORT, false, true);
@@ -241,17 +223,11 @@ public class TrailersTest extends AbstractHttp2Test {
         httpServer.start();
     }
 
-    private Connection getConnection(final String host,
-                                     final int port,
-                                     final Filter clientFilter)
-            throws Exception {
+    private Connection getConnection(final String host, final int port, final Filter clientFilter) throws Exception {
 
-        final FilterChain clientChain =
-                createClientFilterChainAsBuilder(false, true, clientFilter).build();
+        final FilterChain clientChain = createClientFilterChainAsBuilder(false, true, clientFilter).build();
 
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(clientChain)
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(clientChain)
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect(host, port);

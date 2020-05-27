@@ -16,23 +16,26 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static java.util.logging.Level.INFO;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.logging.Level;
+import java.security.SecureRandom;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.Processor;
+import org.glassfish.grizzly.http.server.HttpServer;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import junit.framework.TestCase;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.Processor;
-import org.glassfish.grizzly.http.server.HttpServer;
 
 /**
  * {@link HttpServer} tests.
@@ -42,11 +45,22 @@ import org.glassfish.grizzly.http.server.HttpServer;
  */
 public class HelloHttpServerTest extends TestCase {
 
-    public static final int PORT = 18890 + 11;
+    public static final int PORT = PORT();
+    
+    static int PORT() {
+        try {
+            int port = 18890 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
     private static final Logger logger = Grizzly.logger(HelloHttpServerTest.class);
     private HttpServer httpServer;
 
-    public void testNPERegression() throws IOException {
+    public void testNPERegression() throws Exception {
         System.out.println("testNPERegression");
         try {
             createHttpServer(PORT);
@@ -55,6 +69,7 @@ public class HelloHttpServerTest extends TestCase {
             ServletRegistration servlet = ctx.addServlet("TestServet", HelloServlet.class);
             servlet.addMapping(aliases);
             ctx.deploy(httpServer);
+            Thread.sleep(10);
             httpServer.start();
 
             String context = "/";
@@ -71,18 +86,18 @@ public class HelloHttpServerTest extends TestCase {
         }
     }
 
-    public void testMultiPath() throws IOException {
+    public void testMultiPath() throws Exception {
         System.out.println("testMultiPath");
         try {
             createHttpServer(PORT);
             String[] aliases = new String[] { "*.php" };
             WebappContext ctx = new WebappContext("Test");
 
-            ServletRegistration servlet =
-                    ctx.addServlet("TestServlet", HelloServlet.class.getName());
+            ServletRegistration servlet = ctx.addServlet("TestServlet", HelloServlet.class.getName());
             servlet.setLoadOnStartup(1);
             servlet.addMapping(aliases);
             ctx.deploy(httpServer);
+            Thread.sleep(10);
             httpServer.start();
 
             String context = "/";
@@ -99,7 +114,6 @@ public class HelloHttpServerTest extends TestCase {
             conn = getConnection(url);
             assertEquals(HttpServletResponse.SC_NOT_FOUND, getResponseCodeFromAlias(conn));
 
-
         } finally {
             stopHttpServer();
         }
@@ -110,8 +124,7 @@ public class HelloHttpServerTest extends TestCase {
         try {
             String[] aliases = new String[] { "*.foo" };
             WebappContext ctx = new WebappContext("Test");
-            ServletRegistration servlet =
-                    ctx.addServlet("TestServlet", HelloServlet.class);
+            ServletRegistration servlet = ctx.addServlet("TestServlet", HelloServlet.class);
             servlet.addMapping(aliases);
             httpServer = HttpServer.createSimpleServer(".", PORT);
             httpServer.start();
@@ -125,18 +138,16 @@ public class HelloHttpServerTest extends TestCase {
         }
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
-     private StringBuffer readResponse(HttpURLConnection conn) throws IOException {
+    private StringBuffer readResponse(HttpURLConnection conn) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
         StringBuffer sb = new StringBuffer();
         String line;
 
-        while((line = reader.readLine())!=null){
-            logger.log(Level.INFO, "received line {0}", line);
+        while ((line = reader.readLine()) != null) {
+            logger.log(INFO, "received line {0}", line);
             sb.append(line).append("\n");
         }
 
@@ -144,7 +155,7 @@ public class HelloHttpServerTest extends TestCase {
     }
 
     private HttpURLConnection getConnection(String path) throws IOException {
-        logger.log(Level.INFO, "sending request to {0}", path);
+        logger.log(INFO, "sending request to {0}", path);
         URL url = new URL("http", "localhost", PORT, path);
         HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
         urlConn.connect();
@@ -155,7 +166,6 @@ public class HelloHttpServerTest extends TestCase {
         return urlConn.getResponseCode();
     }
 
-
     private void createHttpServer(int port) {
         httpServer = HttpServer.createSimpleServer(".", port);
 
@@ -165,33 +175,27 @@ public class HelloHttpServerTest extends TestCase {
         httpServer.shutdownNow();
     }
 
-
     // ---------------------------------------------------------- Nested Classes
 
     /**
-     * Hello world servlet.  Most servlets will extend
-     * jakarta.servlet.http.HttpServlet as this one does.
+     * Hello world servlet. Most servlets will extend jakarta.servlet.http.HttpServlet as this one does.
      */
     public static class HelloServlet extends HttpServlet {
-      /**
-       * Implements the HTTP GET method.  The GET method is the standard
-       * browser method.
-       *
-       * @param request the request object, containing data from the browser
-       * @param response the response object to send data to the browser
-       */
+        /**
+         * Implements the HTTP GET method. The GET method is the standard browser method.
+         *
+         * @param request the request object, containing data from the browser
+         * @param response the response object to send data to the browser
+         */
         @Override
-      public void doGet (HttpServletRequest request,
-                         HttpServletResponse response)
-        throws ServletException, IOException
-      {
+        public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        // Returns a writer to write to the browser
-        PrintWriter out = response.getWriter();
+            // Returns a writer to write to the browser
+            PrintWriter out = response.getWriter();
 
-        // Writes the string to the browser.
-        out.println("Hello, world!");
-        out.close();
-      }
+            // Writes the string to the browser.
+            out.println("Hello, world!");
+            out.close();
+        }
     }
 }

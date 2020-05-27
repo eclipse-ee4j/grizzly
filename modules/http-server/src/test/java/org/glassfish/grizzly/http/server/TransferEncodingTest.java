@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -26,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -53,12 +57,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-
 /**
  * Test transfer-encoding application
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
@@ -68,18 +69,15 @@ public class TransferEncodingTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getIsBinary() {
-        return Arrays.asList(new Object[][]{
-                    {Boolean.FALSE},
-                    {Boolean.TRUE}
-                });
+        return Arrays.asList(new Object[][] { { Boolean.FALSE }, { Boolean.TRUE } });
     }
 
     private final boolean isBinary;
 
     public TransferEncodingTest(boolean isBinary) {
         this.isBinary = isBinary;
-    }    
-    
+    }
+
     @Test
     public void testExplicitContentType() throws Exception {
         final int msgSize = 10;
@@ -111,13 +109,13 @@ public class TransferEncodingTest {
         final HttpContent response1 = doTest(httpHandler1, request1, 10);
 
         assertEquals(msgSize, response1.getHttpHeader().getContentLength());
-        
+
         final HttpPacket request2 = createRequest("/index.html", null);
         final HttpHandler httpHandler2 = new AutoTransferEncodingHandler(msgSize, true);
         final HttpContent response2 = doTest(httpHandler2, request2, 10);
 
         assertEquals(msgSize, response2.getHttpHeader().getContentLength());
-        
+
     }
 
     @Test
@@ -133,10 +131,10 @@ public class TransferEncodingTest {
                 super.service(request, response);
             }
         };
-        
+
         final HttpContent response1 = doTest(httpHandler1, request1, 10);
         assertEquals(msgSize, response1.getHttpHeader().getContentLength());
-        
+
         final HttpPacket request2 = createRequest("/index.html", null);
         final HttpHandler httpHandler2 = new AutoTransferEncodingHandler(msgSize, true) {
             @Override
@@ -146,9 +144,9 @@ public class TransferEncodingTest {
                 super.service(request, response);
             }
         };
-        
+
         final HttpContent response2 = doTest(httpHandler2, request2, 10);
-        assertEquals(msgSize, response2.getHttpHeader().getContentLength());        
+        assertEquals(msgSize, response2.getHttpHeader().getContentLength());
     }
 
     @Test
@@ -160,21 +158,20 @@ public class TransferEncodingTest {
         final HttpContent response1 = doTest(httpHandler1, request1, 10);
 
         assertTrue(response1.getHttpHeader().isChunked());
-        
+
         final HttpPacket request2 = createRequest("/index.html", null);
         final HttpHandler httpHandler2 = new AutoTransferEncodingHandler(msgSize, true);
         final HttpContent response2 = doTest(httpHandler2, request2, 10);
 
         assertTrue(response2.getHttpHeader().isChunked());
-        
+
     }
-    
+
     @Test
     public void testLongContentLength() throws Exception {
         final long contentLength = Long.MAX_VALUE;
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
-        b.method(Method.POST).protocol(Protocol.HTTP_1_1).uri("/postit")
-                .header("Host", "localhost:" + PORT);
+        b.method(Method.POST).protocol(Protocol.HTTP_1_1).uri("/postit").header("Host", "localhost:" + PORT);
         b.contentLength(contentLength);
 
         final HttpHandler httpHandler = new EchoHandler();
@@ -182,8 +179,8 @@ public class TransferEncodingTest {
 
         assertEquals(contentLength, response.getContentLength());
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     private HttpPacket createRequest(String uri, Map<String, String> headers) {
 
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
@@ -197,13 +194,9 @@ public class TransferEncodingTest {
         return b.build();
     }
 
-    private HttpContent doTest(final HttpHandler httpHandler,
-            final HttpPacket request,
-            final int timeout)
-            throws Exception {
+    private HttpContent doTest(final HttpHandler httpHandler, final HttpPacket request, final int timeout) throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         final HttpServer server = createWebServer(httpHandler);
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
@@ -236,13 +229,9 @@ public class TransferEncodingTest {
         }
     }
 
-    private HttpHeader doTestHeader(final HttpHandler httpHandler,
-            final HttpPacket request,
-            final int timeout)
-            throws Exception {
+    private HttpHeader doTestHeader(final HttpHandler httpHandler, final HttpPacket request, final int timeout) throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         final HttpServer server = createWebServer(httpHandler);
         try {
             final FutureImpl<HttpHeader> testResultFuture = SafeFutureImpl.create();
@@ -278,10 +267,7 @@ public class TransferEncodingTest {
     private HttpServer createWebServer(final HttpHandler httpHandler) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandler, "/");
@@ -290,7 +276,6 @@ public class TransferEncodingTest {
 
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -298,19 +283,16 @@ public class TransferEncodingTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -334,8 +316,7 @@ public class TransferEncodingTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -343,7 +324,7 @@ public class TransferEncodingTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
@@ -358,19 +339,16 @@ public class TransferEncodingTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public HeaderTestClientFilter(FutureImpl<HttpHeader> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -390,8 +368,7 @@ public class TransferEncodingTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -399,7 +376,7 @@ public class TransferEncodingTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
@@ -417,18 +394,18 @@ public class TransferEncodingTest {
         @Override
         public void service(Request request, Response response) throws Exception {
             response.setContentLength(length);
-            
+
             if (isBinary) {
                 final byte[] buf = new byte[length];
                 for (int i = 0; i < length; i++) {
-                    buf[i] = (byte) ('0' + (i % 10));
+                    buf[i] = (byte) ('0' + i % 10);
                 }
-                
+
                 response.getOutputStream().write(buf);
             } else {
                 final StringBuilder sb = new StringBuilder(length);
                 for (int i = 0; i < length; i++) {
-                    sb.append((char) ('0' + (i % 10)));
+                    sb.append((char) ('0' + i % 10));
                 }
 
                 response.getWriter().write(sb.toString());
@@ -450,14 +427,14 @@ public class TransferEncodingTest {
             if (isBinary) {
                 final byte[] buf = new byte[length];
                 for (int i = 0; i < length; i++) {
-                    buf[i] = (byte) ('0' + (i % 10));
+                    buf[i] = (byte) ('0' + i % 10);
                 }
-                
+
                 response.getOutputStream().write(buf);
             } else {
                 final StringBuilder sb = new StringBuilder(length);
                 for (int i = 0; i < length; i++) {
-                    sb.append((char) ('0' + (i % 10)));
+                    sb.append((char) ('0' + i % 10));
                 }
 
                 response.getWriter().write(sb.toString());
@@ -468,12 +445,12 @@ public class TransferEncodingTest {
     public class AutoTransferEncodingHandler extends HttpHandler {
         private final int length;
         private final boolean isBatch;
-        
+
         public AutoTransferEncodingHandler(int length, boolean isBatch) {
             this.length = length;
             this.isBatch = isBatch;
         }
-        
+
         @Override
         public void service(Request request, Response response) throws Exception {
             if (isBinary) {
@@ -481,28 +458,28 @@ public class TransferEncodingTest {
                 if (isBatch) {
                     final byte[] buf = new byte[length];
                     for (int i = 0; i < length; i++) {
-                        buf[i] = (byte) ('0' + (i % 10));
+                        buf[i] = (byte) ('0' + i % 10);
                     }
-                    
+
                     os.write(buf);
                 } else {
                     for (int i = 0; i < length; i++) {
-                        os.write(('0' + (i % 10)));
+                        os.write('0' + i % 10);
                     }
                 }
-                
+
             } else {
                 final Writer writer = response.getWriter();
                 if (isBatch) {
                     final char[] buf = new char[length];
                     for (int i = 0; i < length; i++) {
-                        buf[i] = (char) ('0' + (i % 10));
+                        buf[i] = (char) ('0' + i % 10);
                     }
-                    
+
                     writer.write(buf);
                 } else {
                     for (int i = 0; i < length; i++) {
-                        writer.write((char) ('0' + (i % 10)));
+                        writer.write((char) ('0' + i % 10));
                     }
                 }
             }
@@ -511,8 +488,7 @@ public class TransferEncodingTest {
 
     public static class EchoHandler extends HttpHandler {
         @Override
-        public void service(final Request request, final Response response)
-                throws Exception {
+        public void service(final Request request, final Response response) throws Exception {
             response.setContentLengthLong(request.getContentLengthLong());
             response.flush();
 
@@ -520,7 +496,7 @@ public class TransferEncodingTest {
 
             final NIOInputStream inputStream = request.getNIOInputStream();
             final NIOOutputStream outputStream = response.getNIOOutputStream();
-            
+
             inputStream.notifyAvailable(new ReadHandler() {
 
                 @Override

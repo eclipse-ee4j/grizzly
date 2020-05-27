@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -21,9 +21,8 @@ import java.io.IOException;
 import java.net.SocketAddress;
 
 /**
- * Common API for {@link java.net.Socket} based {@link Transport}s, which are able
- * to bind server {@link java.net.Socket} to specific address and listen for incoming
- * data.
+ * Common API for {@link java.net.Socket} based {@link Transport}s, which are able to bind server
+ * {@link java.net.Socket} to specific address and listen for incoming data.
  *
  * @author Alexey Stashok
  */
@@ -51,6 +50,7 @@ public interface SocketBinder {
 
     /**
      * Binds Transport to the specific host and port.
+     * 
      * @param host the local host the server will bind to
      * @param port the port to bind to
      * @param backlog the maximum length of the queue
@@ -107,17 +107,17 @@ public interface SocketBinder {
     Connection<?> bind(SocketAddress socketAddress, int backlog) throws IOException;
 
     /**
-     * Binds the Transport to the channel inherited from the entity that
-     * created this Java virtual machine.
-     * 
+     * Binds the Transport to the channel inherited from the entity that created this Java virtual machine.
+     *
      * @return bound {@link Connection}
-     * 
-     * @throws IOException  if unable to bind i.e. if port already bound
+     *
+     * @throws IOException if unable to bind i.e. if port already bound
      */
     Connection<?> bindToInherited() throws IOException;
-    
+
     /**
      * Unbinds bound {@link Transport} connection.
+     * 
      * @param connection {@link Connection}
      */
     void unbind(Connection<?> connection);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,13 +17,10 @@
 package org.glassfish.grizzly;
 
 /**
- * Default {@link ProcessorSelector} implementation, which uses
- * {@link Connection}'s {@link Processor} preferences.
- * The {@link DefaultProcessorSelector} first checks {@link Connection}'s
- * associated {@link Processor} ({@link Connection#getProcessor()}). If returned
- * {@link Processor} is <tt>null</tt> - if delegates selection to
- * {@link Connection}'s {@link ProcessorSelector}
- * ({@link Connection#getProcessorSelector()}).
+ * Default {@link ProcessorSelector} implementation, which uses {@link Connection}'s {@link Processor} preferences. The
+ * {@link DefaultProcessorSelector} first checks {@link Connection}'s associated {@link Processor}
+ * ({@link Connection#getProcessor()}). If returned {@link Processor} is <tt>null</tt> - if delegates selection to
+ * {@link Connection}'s {@link ProcessorSelector} ({@link Connection#getProcessorSelector()}).
  *
  * @author Alexey Stashok
  */
@@ -47,8 +44,7 @@ public class DefaultProcessorSelector implements ProcessorSelector {
             return eventProcessor;
         }
 
-        ProcessorSelector processorSelector =
-                connection.getProcessorSelector();
+        ProcessorSelector processorSelector = connection.getProcessorSelector();
 
         if (processorSelector != null) {
             return processorSelector.select(ioEvent, connection);

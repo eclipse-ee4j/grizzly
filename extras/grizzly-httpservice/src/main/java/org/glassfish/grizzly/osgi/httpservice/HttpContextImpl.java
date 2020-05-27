@@ -16,14 +16,15 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
-import org.osgi.service.http.HttpContext;
+import java.io.IOException;
+import java.net.URL;
+
 import org.osgi.framework.Bundle;
+import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URL;
 
 /**
  * Grizzly OSGi {@link HttpService}s {@link HttpContext} implementation.
@@ -39,17 +40,17 @@ public class HttpContextImpl implements HttpContext {
         this.bundle = bundle;
     }
 
-    public boolean handleSecurity(
-            HttpServletRequest httpServletRequest,
-            HttpServletResponse httpServletResponse) throws IOException {
+    public boolean handleSecurity(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
         // By default we allow all :)
         return true;
     }
 
+    @Override
     public URL getResource(String s) {
         return bundle.getResource(s);
     }
 
+    @Override
     public String getMimeType(String s) {
         return null;
     }

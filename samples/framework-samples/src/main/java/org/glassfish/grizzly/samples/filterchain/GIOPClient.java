@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -13,6 +13,7 @@ package org.glassfish.grizzly.samples.filterchain;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
@@ -27,7 +28,7 @@ import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * Simple GIOP client
- * 
+ *
  * @author Alexey Stashok
  */
 public class GIOPClient {
@@ -47,8 +48,7 @@ public class GIOPClient {
         filterChainBuilder.add(new CustomClientFilter(resultMessageFuture));
 
         // Create TCP NIO transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -56,15 +56,13 @@ public class GIOPClient {
             transport.start();
 
             // Connect client to the GIOP server
-            Future<Connection> future = transport.connect(GIOPServer.HOST,
-                    GIOPServer.PORT);
+            Future<Connection> future = transport.connect(GIOPServer.HOST, GIOPServer.PORT);
 
             connection = future.get(10, TimeUnit.SECONDS);
 
             // Initialize sample GIOP message
             byte[] testMessage = "GIOP test".getBytes(Charsets.ASCII_CHARSET);
-            GIOPMessage sentMessage = new GIOPMessage((byte) 1, (byte) 2,
-                    (byte) 0x0F, (byte) 0, testMessage);
+            GIOPMessage sentMessage = new GIOPMessage((byte) 1, (byte) 2, (byte) 0x0F, (byte) 0, testMessage);
 
             connection.write(sentMessage);
 
@@ -91,7 +89,7 @@ public class GIOPClient {
 
         public CustomClientFilter(FutureImpl<GIOPMessage> resultFuture) {
             this.resultFuture = resultFuture;
-}
+        }
 
         @Override
         public NextAction handleRead(FilterChainContext ctx) throws IOException {

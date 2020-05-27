@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Formatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Appender;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
@@ -47,20 +48,16 @@ public class Buffers {
     private static final Appender<Buffer> APPENDER_NOT_DISPOSABLE = new BuffersAppender(false);
 
     /**
-     * Get the {@link Appender} which knows how to append {@link Buffer}s.
-     * Returned {@link Appender} uses the same {@link Buffer} appending rules as
-     * described here {@link Buffers#appendBuffers(org.glassfish.grizzly.memory.MemoryManager, org.glassfish.grizzly.Buffer, org.glassfish.grizzly.Buffer, boolean)}.
+     * Get the {@link Appender} which knows how to append {@link Buffer}s. Returned {@link Appender} uses the same
+     * {@link Buffer} appending rules as described here
+     * {@link Buffers#appendBuffers(org.glassfish.grizzly.memory.MemoryManager, org.glassfish.grizzly.Buffer, org.glassfish.grizzly.Buffer, boolean)}.
      *
-     * @param isCompositeBufferDisposable if as the result of {@link Buffer}s
-     *      appending a new {@link CompositeBuffer} will be created - its
-     *      {@link CompositeBuffer#allowBufferDispose(boolean)} value will be set
-     *      according to this parameter.
+     * @param isCompositeBufferDisposable if as the result of {@link Buffer}s appending a new {@link CompositeBuffer} will
+     * be created - its {@link CompositeBuffer#allowBufferDispose(boolean)} value will be set according to this parameter.
      * @return the {@link Buffer} {@link Appender}.
      */
-    public static Appender<Buffer> getBufferAppender(
-            final boolean isCompositeBufferDisposable) {
-        return isCompositeBufferDisposable ?
-                APPENDER_DISPOSABLE : APPENDER_NOT_DISPOSABLE;
+    public static Appender<Buffer> getBufferAppender(final boolean isCompositeBufferDisposable) {
+        return isCompositeBufferDisposable ? APPENDER_DISPOSABLE : APPENDER_NOT_DISPOSABLE;
     }
 
     private static class BuffersAppender implements Appender<Buffer> {
@@ -72,8 +69,7 @@ public class Buffers {
 
         @Override
         public Buffer append(final Buffer element1, final Buffer element2) {
-            return Buffers.appendBuffers(null, element1, element2,
-                    isCompositeBufferDisposable);
+            return Buffers.appendBuffers(null, element1, element2, isCompositeBufferDisposable);
         }
     }
 
@@ -94,31 +90,25 @@ public class Buffers {
     /**
      * Returns {@link Buffer}, which wraps the {@link String}.
      *
-     * @param memoryManager {@link MemoryManager}, which should be
-     *                       used for wrapping.
+     * @param memoryManager {@link MemoryManager}, which should be used for wrapping.
      * @param s {@link String}
      *
      * @return {@link Buffer} wrapper on top of passed {@link String}.
      */
-    public static Buffer wrap(final MemoryManager memoryManager,
-            final String s) {
+    public static Buffer wrap(final MemoryManager memoryManager, final String s) {
         return wrap(memoryManager, s, Charset.defaultCharset());
     }
 
     /**
-     * Returns {@link Buffer}, which wraps the {@link String} with the specific
-     * {@link Charset}.
+     * Returns {@link Buffer}, which wraps the {@link String} with the specific {@link Charset}.
      *
-     * @param memoryManager {@link MemoryManager}, which should be
-     *                       used for wrapping.
+     * @param memoryManager {@link MemoryManager}, which should be used for wrapping.
      * @param s {@link String}
-     * @param charset {@link Charset}, which will be used, when converting
-     * {@link String} to byte array.
+     * @param charset {@link Charset}, which will be used, when converting {@link String} to byte array.
      *
      * @return {@link Buffer} wrapper on top of passed {@link String}.
      */
-    public static Buffer wrap(final MemoryManager memoryManager,
-            final String s, final Charset charset) {
+    public static Buffer wrap(final MemoryManager memoryManager, final String s, final Charset charset) {
         try {
             final byte[] byteRepresentation = s.getBytes(charset.name());
             return wrap(memoryManager, byteRepresentation);
@@ -130,31 +120,26 @@ public class Buffers {
     /**
      * Returns {@link Buffer}, which wraps the byte array.
      *
-     * @param memoryManager {@link MemoryManager}, which should be
-     *                       used for wrapping.
+     * @param memoryManager {@link MemoryManager}, which should be used for wrapping.
      * @param array byte array to wrap.
      *
      * @return {@link Buffer} wrapper on top of passed byte array.
      */
-    public static Buffer wrap(final MemoryManager memoryManager,
-            final byte[] array) {
+    public static Buffer wrap(final MemoryManager memoryManager, final byte[] array) {
         return wrap(memoryManager, array, 0, array.length);
     }
 
     /**
-     * Returns {@link Buffer}, which wraps the part of byte array with
-     * specific offset and length.
+     * Returns {@link Buffer}, which wraps the part of byte array with specific offset and length.
      *
-     * @param memoryManager {@link MemoryManager}, which should be
-     *                       used for wrapping.
+     * @param memoryManager {@link MemoryManager}, which should be used for wrapping.
      * @param array byte array to wrap
      * @param offset byte buffer offset
      * @param length byte buffer length
      *
      * @return {@link Buffer} wrapper on top of passed byte array.
      */
-    public static Buffer wrap(MemoryManager memoryManager,
-            final byte[] array, final int offset, final int length) {
+    public static Buffer wrap(MemoryManager memoryManager, final byte[] array, final int offset, final int length) {
         if (memoryManager == null) {
             memoryManager = getDefaultMemoryManager();
         }
@@ -172,30 +157,24 @@ public class Buffers {
     /**
      * Returns {@link Buffer}, which wraps the {@link ByteBuffer}.
      *
-     * @param memoryManager {@link MemoryManager}, which should be
-     *                       used for wrapping.
+     * @param memoryManager {@link MemoryManager}, which should be used for wrapping.
      * @param byteBuffer {@link ByteBuffer} to wrap
      *
      * @return {@link Buffer} wrapper on top of passed {@link ByteBuffer}.
      */
-    public static Buffer wrap(final MemoryManager memoryManager,
-            final ByteBuffer byteBuffer) {
+    public static Buffer wrap(final MemoryManager memoryManager, final ByteBuffer byteBuffer) {
         if (memoryManager instanceof WrapperAware) {
             return ((WrapperAware) memoryManager).wrap(byteBuffer);
         } else if (byteBuffer.hasArray()) {
-            return wrap(memoryManager, byteBuffer.array(),
-                    byteBuffer.arrayOffset() + byteBuffer.position(),
-                    byteBuffer.remaining());
+            return wrap(memoryManager, byteBuffer.array(), byteBuffer.arrayOffset() + byteBuffer.position(), byteBuffer.remaining());
         }
 
         throw new IllegalStateException("Can not wrap ByteBuffer");
     }
 
-
-
     /**
-     * Slice {@link ByteBuffer} of required size from big chunk.
-     * Passed chunk position will be changed, after the slicing (chunk.position += size).
+     * Slice {@link ByteBuffer} of required size from big chunk. Passed chunk position will be changed, after the slicing
+     * (chunk.position += size).
      *
      * @param chunk big {@link ByteBuffer} pool.
      * @param size required slice size.
@@ -211,12 +190,10 @@ public class Buffers {
         return view;
     }
 
-
     /**
-     * Get the {@link ByteBuffer}'s slice basing on its passed position and limit.
-     * Position and limit values of the passed {@link ByteBuffer} won't be changed.
-     * The result {@link ByteBuffer} position will be equal to 0, and limit
-     * equal to number of sliced bytes (limit - position).
+     * Get the {@link ByteBuffer}'s slice basing on its passed position and limit. Position and limit values of the passed
+     * {@link ByteBuffer} won't be changed. The result {@link ByteBuffer} position will be equal to 0, and limit equal to
+     * number of sliced bytes (limit - position).
      *
      * @param byteBuffer {@link ByteBuffer} to slice/
      * @param position the position in the passed byteBuffer, the slice will start from.
@@ -224,8 +201,7 @@ public class Buffers {
      *
      * @return sliced {@link ByteBuffer} of required size.
      */
-    public static ByteBuffer slice(final ByteBuffer byteBuffer,
-            final int position, final int limit) {
+    public static ByteBuffer slice(final ByteBuffer byteBuffer, final int position, final int limit) {
         final int oldPos = byteBuffer.position();
         final int oldLimit = byteBuffer.limit();
 
@@ -238,8 +214,7 @@ public class Buffers {
         return slice;
     }
 
-    public static String toStringContent(final ByteBuffer byteBuffer,
-            Charset charset, final int position, final int limit) {
+    public static String toStringContent(final ByteBuffer byteBuffer, Charset charset, final int position, final int limit) {
 
         if (charset == null) {
             charset = Charset.defaultCharset();
@@ -256,45 +231,35 @@ public class Buffers {
         }
     }
 
-    public static void setPositionLimit(final Buffer buffer,
-            final int position, final int limit) {
+    public static void setPositionLimit(final Buffer buffer, final int position, final int limit) {
         buffer.limit(limit);
         buffer.position(position);
     }
 
-    public static void setPositionLimit(final ByteBuffer buffer,
-            final int position, final int limit) {
+    public static void setPositionLimit(final ByteBuffer buffer, final int position, final int limit) {
         buffer.limit(limit);
         buffer.position(position);
     }
 
-    public static void put(final ByteBuffer srcBuffer, final int srcOffset,
-            final int length, final ByteBuffer dstBuffer) {
+    public static void put(final ByteBuffer srcBuffer, final int srcOffset, final int length, final ByteBuffer dstBuffer) {
 
         if (dstBuffer.remaining() < length) {
-            LOGGER.log(Level.WARNING,
-                    LogMessages.WARNING_GRIZZLY_BUFFERS_OVERFLOW_EXCEPTION(
-                    srcBuffer, srcOffset, length, dstBuffer));
+            LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_BUFFERS_OVERFLOW_EXCEPTION(srcBuffer, srcOffset, length, dstBuffer));
             throw new BufferOverflowException();
         }
 
         if (srcBuffer.hasArray() && dstBuffer.hasArray()) {
 
-            System.arraycopy(srcBuffer.array(),
-                    srcBuffer.arrayOffset() + srcOffset,
-                    dstBuffer.array(),
-                    dstBuffer.arrayOffset() + dstBuffer.position(),
-                    length);
+            System.arraycopy(srcBuffer.array(), srcBuffer.arrayOffset() + srcOffset, dstBuffer.array(), dstBuffer.arrayOffset() + dstBuffer.position(), length);
             dstBuffer.position(dstBuffer.position() + length);
         } else {
-            for(int i = srcOffset; i < srcOffset + length; i++) {
+            for (int i = srcOffset; i < srcOffset + length; i++) {
                 dstBuffer.put(srcBuffer.get(i));
             }
         }
     }
 
-    public static void put(final Buffer src, final int position,
-            final int length, final Buffer dstBuffer) {
+    public static void put(final Buffer src, final int position, final int length, final Buffer dstBuffer) {
 
         if (dstBuffer.remaining() < length) {
             throw new BufferOverflowException();
@@ -303,16 +268,14 @@ public class Buffers {
         if (!src.isComposite()) {
             final ByteBuffer srcByteBuffer = src.toByteBuffer();
             if (srcByteBuffer.hasArray()) {
-                dstBuffer.put(srcByteBuffer.array(),
-                        srcByteBuffer.arrayOffset() + position, length);
+                dstBuffer.put(srcByteBuffer.array(), srcByteBuffer.arrayOffset() + position, length);
             } else {
-                for(int i=0; i<length; i++) {
+                for (int i = 0; i < length; i++) {
                     dstBuffer.put(srcByteBuffer.get(position + i));
                 }
             }
         } else {
-            final ByteBufferArray array = src.toByteBufferArray(position,
-                    position + length);
+            final ByteBufferArray array = src.toByteBufferArray(position, position + length);
 
             final ByteBuffer[] srcByteBuffers = array.getArray();
             for (int i = 0; i < array.size(); i++) {
@@ -321,9 +284,7 @@ public class Buffers {
                 final int srcByteBufferLen = srcByteBuffer.remaining();
 
                 if (srcByteBuffer.hasArray()) {
-                    dstBuffer.put(srcByteBuffer.array(),
-                            srcByteBuffer.arrayOffset() + initialPosition,
-                            srcByteBufferLen);
+                    dstBuffer.put(srcByteBuffer.array(), srcByteBuffer.arrayOffset() + initialPosition, srcByteBufferLen);
                 } else {
                     for (int j = 0; j < srcByteBufferLen; i++) {
                         dstBuffer.put(srcByteBuffer.get(initialPosition + j));
@@ -336,32 +297,27 @@ public class Buffers {
         }
     }
 
-    public static void get(final ByteBuffer srcBuffer,
-            final byte[] dstBytes, final int dstOffset, final int length) {
+    public static void get(final ByteBuffer srcBuffer, final byte[] dstBytes, final int dstOffset, final int length) {
 
         if (srcBuffer.hasArray()) {
             if (length > srcBuffer.remaining()) {
                 throw new BufferUnderflowException();
             }
 
-            System.arraycopy(srcBuffer.array(),
-                    srcBuffer.arrayOffset() + srcBuffer.position(),
-                    dstBytes, dstOffset, length);
+            System.arraycopy(srcBuffer.array(), srcBuffer.arrayOffset() + srcBuffer.position(), dstBytes, dstOffset, length);
             srcBuffer.position(srcBuffer.position() + length);
         } else {
             srcBuffer.get(dstBytes, dstOffset, length);
         }
     }
 
-    public static void put(final byte[] srcBytes, final int srcOffset,
-            final int length, final ByteBuffer dstBuffer) {
+    public static void put(final byte[] srcBytes, final int srcOffset, final int length, final ByteBuffer dstBuffer) {
         if (dstBuffer.hasArray()) {
             if (length > dstBuffer.remaining()) {
                 throw new BufferOverflowException();
             }
 
-            System.arraycopy(srcBytes, srcOffset, dstBuffer.array(),
-                    dstBuffer.arrayOffset() + dstBuffer.position(), length);
+            System.arraycopy(srcBytes, srcOffset, dstBuffer.array(), dstBuffer.arrayOffset() + dstBuffer.position(), length);
             dstBuffer.position(dstBuffer.position() + length);
         } else {
             dstBuffer.put(srcBytes, srcOffset, length);
@@ -369,61 +325,43 @@ public class Buffers {
     }
 
     /**
-     * Append two {@link Buffer}s.
-     * If one of the {@link Buffer}s is null - then another {@link Buffer} will
-     * be returned as result.
-     * If the first {@link Buffer} is {@link CompositeBuffer} then the second
-     * {@link Buffer} will be appended to it via
-     * {@link CompositeBuffer#append(Buffer)}, else if the second
-     * {@link Buffer} is {@link CompositeBuffer} then the first {@link Buffer}
-     * will be prepended to it via
-     * {@link CompositeBuffer#prepend(org.glassfish.grizzly.Buffer)}.
-     * If none of the {@link Buffer} parameters is null nor
-     * {@link CompositeBuffer}s - then new {@link CompositeBuffer} will be created
-     * and both {@link Buffer}s will be added there. The resulting
-     * {@link CompositeBuffer} will be disallowed for disposal.
+     * Append two {@link Buffer}s. If one of the {@link Buffer}s is null - then another {@link Buffer} will be returned as
+     * result. If the first {@link Buffer} is {@link CompositeBuffer} then the second {@link Buffer} will be appended to it
+     * via {@link CompositeBuffer#append(Buffer)}, else if the second {@link Buffer} is {@link CompositeBuffer} then the
+     * first {@link Buffer} will be prepended to it via {@link CompositeBuffer#prepend(org.glassfish.grizzly.Buffer)}. If
+     * none of the {@link Buffer} parameters is null nor {@link CompositeBuffer}s - then new {@link CompositeBuffer} will be
+     * created and both {@link Buffer}s will be added there. The resulting {@link CompositeBuffer} will be disallowed for
+     * disposal.
      *
-     * @param memoryManager the {@link MemoryManager} to use if a new {@link Buffer}
-     *                      needs to be allocated in order to perform the requested
-     *                      operation.
+     * @param memoryManager the {@link MemoryManager} to use if a new {@link Buffer} needs to be allocated in order to
+     * perform the requested operation.
      * @param buffer1 the {@link Buffer} to append to.
      * @param buffer2 the {@link Buffer} to append.
      *
      * @return the result of appending of two {@link Buffer}s.
      */
-    public static Buffer appendBuffers(final MemoryManager memoryManager,
-            final Buffer buffer1, final Buffer buffer2) {
+    public static Buffer appendBuffers(final MemoryManager memoryManager, final Buffer buffer1, final Buffer buffer2) {
         return appendBuffers(memoryManager, buffer1, buffer2, false);
     }
 
     /**
-     * Append two {@link Buffer}s.
-     * If one of the {@link Buffer}s is null - then another {@link Buffer} will
-     * be returned as result.
-     * If the first {@link Buffer} is {@link CompositeBuffer} then the second
-     * {@link Buffer} will be appended to it via
-     * {@link CompositeBuffer#append(Buffer)}, else if the second
-     * {@link Buffer} is {@link CompositeBuffer} then the first {@link Buffer}
-     * will be prepended to it via
-     * {@link CompositeBuffer#prepend(org.glassfish.grizzly.Buffer)}.
-     * If none of the {@link Buffer} parameters is null nor
-     * {@link CompositeBuffer}s - then new {@link CompositeBuffer} will be created
-     * and both {@link Buffer}s will be added there. The resulting
-     * {@link CompositeBuffer} will be assigned according to the
-     * <code>isCompositeBufferDisposable</code> parameter.
+     * Append two {@link Buffer}s. If one of the {@link Buffer}s is null - then another {@link Buffer} will be returned as
+     * result. If the first {@link Buffer} is {@link CompositeBuffer} then the second {@link Buffer} will be appended to it
+     * via {@link CompositeBuffer#append(Buffer)}, else if the second {@link Buffer} is {@link CompositeBuffer} then the
+     * first {@link Buffer} will be prepended to it via {@link CompositeBuffer#prepend(org.glassfish.grizzly.Buffer)}. If
+     * none of the {@link Buffer} parameters is null nor {@link CompositeBuffer}s - then new {@link CompositeBuffer} will be
+     * created and both {@link Buffer}s will be added there. The resulting {@link CompositeBuffer} will be assigned
+     * according to the <code>isCompositeBufferDisposable</code> parameter.
      *
-     * @param memoryManager the {@link MemoryManager} to use if a new {@link Buffer}
-     *                      needs to be allocated in order to perform the requested
-     *                      operation.
+     * @param memoryManager the {@link MemoryManager} to use if a new {@link Buffer} needs to be allocated in order to
+     * perform the requested operation.
      * @param buffer1 the {@link Buffer} to append to.
      * @param buffer2 the {@link Buffer} to append.
-     * @param isCompositeBufferDisposable flag indicating whether or not the
-     *                                    resulting composite buffer may be disposed.
+     * @param isCompositeBufferDisposable flag indicating whether or not the resulting composite buffer may be disposed.
      *
      * @return the result of appending of two {@link Buffer}s.
      */
-    public static Buffer appendBuffers(final MemoryManager memoryManager,
-            final Buffer buffer1, final Buffer buffer2,
+    public static Buffer appendBuffers(final MemoryManager memoryManager, final Buffer buffer1, final Buffer buffer2,
             final boolean isCompositeBufferDisposable) {
 
         if (buffer1 == null) {
@@ -433,26 +371,25 @@ public class Buffers {
         }
 
         if (buffer1.order() != buffer2.order()) {
-            LOGGER.fine("Appending buffers with different ByteOrder."
-                    + "The result Buffer's order will be the same as the first Buffer's ByteOrder");
+            LOGGER.fine("Appending buffers with different ByteOrder." + "The result Buffer's order will be the same as the first Buffer's ByteOrder");
             buffer2.order(buffer1.order());
         }
 
         // we can only append to or prepend buffer1 if the limit()
-        // is the same as capacity.  If it's not, then appending or
+        // is the same as capacity. If it's not, then appending or
         // prepending effectively clobbers the limit causing an invalid
-        // view of the data.  So instead, we allocate a new CompositeBuffer
-        // and append buffer1 and buffer2 to it.  The underlying buffers
+        // view of the data. So instead, we allocate a new CompositeBuffer
+        // and append buffer1 and buffer2 to it. The underlying buffers
         // aren't changed so the limit they have is maintained.
-        if (buffer1.isComposite() && (buffer1.capacity() == buffer1.limit())) {
+        if (buffer1.isComposite() && buffer1.capacity() == buffer1.limit()) {
             ((CompositeBuffer) buffer1).append(buffer2);
             return buffer1;
-        } if (buffer2.isComposite() && (buffer2.position() == 0)) {
+        }
+        if (buffer2.isComposite() && buffer2.position() == 0) {
             ((CompositeBuffer) buffer2).prepend(buffer1);
             return buffer2;
         } else {
-            final CompositeBuffer compositeBuffer =
-                    CompositeBuffer.newBuffer(memoryManager);
+            final CompositeBuffer compositeBuffer = CompositeBuffer.newBuffer(memoryManager);
 
             compositeBuffer.order(buffer1.order());
             compositeBuffer.append(buffer1);
@@ -464,8 +401,7 @@ public class Buffers {
     }
 
     /**
-     * Fill the {@link Buffer} with the specific byte value. {@link Buffer}'s
-     * position won't be changed.
+     * Fill the {@link Buffer} with the specific byte value. {@link Buffer}'s position won't be changed.
      *
      * @param buffer {@link Buffer}
      * @param b value
@@ -475,16 +411,15 @@ public class Buffers {
     }
 
     /**
-     * Fill the {@link Buffer}'s part [position, limit) with the specific byte value starting from the
-     * {@link Buffer}'s position won't be changed.
+     * Fill the {@link Buffer}'s part [position, limit) with the specific byte value starting from the {@link Buffer}'s
+     * position won't be changed.
      *
      * @param buffer {@link Buffer}
      * @param position {@link Buffer} position to start with (inclusive)
      * @param limit {@link Buffer} limit, where filling ends (exclusive)
      * @param b value
      */
-    public static void fill(final Buffer buffer, final int position,
-            final int limit, final byte b) {
+    public static void fill(final Buffer buffer, final int position, final int limit, final byte b) {
         if (!buffer.isComposite()) {
             final ByteBuffer byteBuffer = buffer.toByteBuffer();
             fill(byteBuffer, position, limit, b);
@@ -504,8 +439,7 @@ public class Buffers {
     }
 
     /**
-     * Fill the {@link ByteBuffer} with the specific byte value. {@link ByteBuffer}'s
-     * position won't be changed.
+     * Fill the {@link ByteBuffer} with the specific byte value. {@link ByteBuffer}'s position won't be changed.
      *
      * @param byteBuffer {@link ByteBuffer}
      * @param b value
@@ -523,12 +457,10 @@ public class Buffers {
      * @param limit {@link Buffer} limit, where filling ends (exclusive)
      * @param b value
      */
-    public static void fill(final ByteBuffer byteBuffer, final int position,
-            final int limit, final byte b) {
+    public static void fill(final ByteBuffer byteBuffer, final int position, final int limit, final byte b) {
         if (byteBuffer.hasArray()) {
             final int arrayOffset = byteBuffer.arrayOffset();
-            Arrays.fill(byteBuffer.array(), arrayOffset + position,
-                    arrayOffset + limit, b);
+            Arrays.fill(byteBuffer.array(), arrayOffset + position, arrayOffset + limit, b);
         } else {
             for (int i = position; i < limit; i++) {
                 byteBuffer.put(i, b);
@@ -537,11 +469,9 @@ public class Buffers {
     }
 
     /**
-     * Clones the source {@link Buffer}.
-     * The method returns a new {@link Buffer} instance, which has the same content.
-     * Please note, source and result {@link Buffer}s have the same content,
-     * but it is *not* shared, so the following content changes in one of the
-     * {@link Buffer}s won't be visible in another one.
+     * Clones the source {@link Buffer}. The method returns a new {@link Buffer} instance, which has the same content.
+     * Please note, source and result {@link Buffer}s have the same content, but it is *not* shared, so the following
+     * content changes in one of the {@link Buffer}s won't be visible in another one.
      *
      * @param srcBuffer the source {@link Buffer}.
      * @return the cloned {@link Buffer}.
@@ -551,19 +481,16 @@ public class Buffers {
     }
 
     /**
-     * Clones the source {@link Buffer}.
-     * The method returns a new {@link Buffer} instance, which has the same content.
-     * Please note, source and result {@link Buffer}s have the same content,
-     * but it is *not* shared, so the following content changes in one of the
-     * {@link Buffer}s won't be visible in another one.
+     * Clones the source {@link Buffer}. The method returns a new {@link Buffer} instance, which has the same content.
+     * Please note, source and result {@link Buffer}s have the same content, but it is *not* shared, so the following
+     * content changes in one of the {@link Buffer}s won't be visible in another one.
      *
      * @param srcBuffer the source {@link Buffer}.
      * @param position the start position in the srcBuffer
      * @param limit the end position in the srcBuffer
      * @return the cloned {@link Buffer}.
      */
-    public static Buffer cloneBuffer(final Buffer srcBuffer,
-            final int position, final int limit) {
+    public static Buffer cloneBuffer(final Buffer srcBuffer, final int position, final int limit) {
         final int srcLength = limit - position;
         if (srcLength == 0) { // make sure clone doesn't return EMPTY_BUFFER
             return wrap(getDefaultMemoryManager(), EMPTY_BYTE_BUFFER);
@@ -585,8 +512,7 @@ public class Buffers {
      *
      * @throws IOExceptionif an error occurs reading the {@link FileChannel}.
      */
-    public static long readFromFileChannel(final FileChannel fileChannel,
-            final Buffer buffer) throws IOException {
+    public static long readFromFileChannel(final FileChannel fileChannel, final Buffer buffer) throws IOException {
 
         final long bytesRead;
 
@@ -597,8 +523,7 @@ public class Buffers {
             bb.position(oldPos);
         } else {
             final ByteBufferArray array = buffer.toByteBufferArray();
-            bytesRead = fileChannel.read(
-                    array.getArray(), 0, array.size());
+            bytesRead = fileChannel.read(array.getArray(), 0, array.size());
 
             array.restore();
             array.recycle();
@@ -621,8 +546,7 @@ public class Buffers {
      * @throws IOExceptionif an error occurs writing to the {@link FileChannel}.
      */
     @SuppressWarnings("UnusedDeclaration")
-    public static long writeToFileChannel(final FileChannel fileChannel,
-            final Buffer buffer) throws IOException {
+    public static long writeToFileChannel(final FileChannel fileChannel, final Buffer buffer) throws IOException {
 
         final long bytesWritten;
 
@@ -633,8 +557,7 @@ public class Buffers {
             bb.position(oldPos);
         } else {
             final ByteBufferArray array = buffer.toByteBufferArray();
-            bytesWritten = fileChannel.write(
-                    array.getArray(), 0, array.size());
+            bytesWritten = fileChannel.write(array.getArray(), 0, array.size());
 
             array.restore();
             array.recycle();
@@ -648,44 +571,41 @@ public class Buffers {
     }
 
     /**
-     * Returns the {@link Buffer}'s {@link String} representation in a form:
-     * {@link Buffer#toString()} + "[" + <head-chunk> + "..." + <tail-chunk> + "]"
-     * For example:
-     * <pre>HeapBuffer (1781633478) [pos=0 lim=285 cap=285][abcde...xyz]</pre>
+     * Returns the {@link Buffer}'s {@link String} representation in a form: {@link Buffer#toString()} + "[" + <head-chunk>
+     * + "..." + <tail-chunk> + "]" For example:
+     * 
+     * <pre>
+     * HeapBuffer (1781633478) [pos=0 lim=285 cap=285][abcde...xyz]
+     * </pre>
      *
      * @param buffer the {@link Buffer}, could be <tt>null</tt>
      * @param headBytesCount the number of heading bytes to include (larger or equal to 0)
      * @param tailBytesCount the number of tailing bytes to include (larger or equal to 0)
-     * @return the {@link Buffer}'s {@link String} representation, or <tt>null</tt>,
-     *      if the {@link Buffer} is <tt>null</tt>
+     * @return the {@link Buffer}'s {@link String} representation, or <tt>null</tt>, if the {@link Buffer} is <tt>null</tt>
      */
-    public String toStringContent(final Buffer buffer,
-            final int headBytesCount, final int tailBytesCount) {
+    public String toStringContent(final Buffer buffer, final int headBytesCount, final int tailBytesCount) {
         if (buffer == null) {
             return null;
         }
 
-        return toStringContent(buffer, headBytesCount, tailBytesCount,
-                Charset.defaultCharset());
+        return toStringContent(buffer, headBytesCount, tailBytesCount, Charset.defaultCharset());
     }
 
     /**
-     * Returns the {@link Buffer}'s {@link String} representation in a form:
-     * {@link Buffer#toString()} + "[" + <head-chunk> + "..." + <tail-chunk> + "]"
-     * For example:
-     * <pre>HeapBuffer (1781633478) [pos=0 lim=285 cap=285][abcde...xyz]</pre>
+     * Returns the {@link Buffer}'s {@link String} representation in a form: {@link Buffer#toString()} + "[" + <head-chunk>
+     * + "..." + <tail-chunk> + "]" For example:
+     * 
+     * <pre>
+     * HeapBuffer (1781633478) [pos=0 lim=285 cap=285][abcde...xyz]
+     * </pre>
      *
      * @param buffer the {@link Buffer}, could be <tt>null</tt>
      * @param headBytesCount the number of heading bytes to include (larger or equal to 0)
      * @param tailBytesCount the number of tailing bytes to include (larger or equal to 0)
-     * @param charset {@link Charset}, if null the {@link Charset#defaultCharset()} will
-     *          be used
-     * @return the {@link Buffer}'s {@link String} representation, or <tt>null</tt>,
-     *      if the {@link Buffer} is <tt>null</tt>
+     * @param charset {@link Charset}, if null the {@link Charset#defaultCharset()} will be used
+     * @return the {@link Buffer}'s {@link String} representation, or <tt>null</tt>, if the {@link Buffer} is <tt>null</tt>
      */
-    public String toStringContent(final Buffer buffer,
-            final int headBytesCount, final int tailBytesCount,
-            final Charset charset) {
+    public String toStringContent(final Buffer buffer, final int headBytesCount, final int tailBytesCount, final Charset charset) {
         if (buffer == null) {
             return null;
         }
@@ -695,8 +615,7 @@ public class Buffers {
         }
 
         final String toString = buffer.toString();
-        final StringBuilder sb = new StringBuilder(
-                toString.length() + headBytesCount + tailBytesCount + 5);
+        final StringBuilder sb = new StringBuilder(toString.length() + headBytesCount + tailBytesCount + 5);
 
         sb.append(toString);
 
@@ -705,13 +624,11 @@ public class Buffers {
         } else {
             sb.append('[');
             if (headBytesCount > 0) {
-                sb.append(buffer.toStringContent(charset,
-                        buffer.position(), buffer.position() + headBytesCount));
+                sb.append(buffer.toStringContent(charset, buffer.position(), buffer.position() + headBytesCount));
             }
             sb.append("...");
             if (tailBytesCount > 0) {
-                sb.append(buffer.toStringContent(charset,
-                        buffer.limit() - tailBytesCount, buffer.limit()));
+                sb.append(buffer.toStringContent(charset, buffer.limit() - tailBytesCount, buffer.limit()));
             }
             sb.append(']');
         }
@@ -721,6 +638,7 @@ public class Buffers {
 
     /**
      * Generates a hex dump of the provided {@link Buffer}.
+     * 
      * @param appendable the {@link Appendable} to write the hex dump to.
      * @param buffer the {@link Buffer} to dump.
      *
@@ -733,9 +651,7 @@ public class Buffers {
     }
 
     @SuppressWarnings("UnusedParameters")
-    private static void dumpBuffer0(final Formatter formatter,
-                                    final Appendable appendable,
-                                    final Buffer buffer) {
+    private static void dumpBuffer0(final Formatter formatter, final Appendable appendable, final Buffer buffer) {
         if (buffer.isComposite()) {
             final BufferArray bufferArray = buffer.toBufferArray();
             final int size = bufferArray.size();
@@ -750,21 +666,20 @@ public class Buffers {
         }
     }
 
-
     private static void dumpBuffer0(final Formatter formatter, final Buffer buffer) {
         formatter.format("%s\n", buffer.toString());
         int line = 0;
         for (int i = 0, len = buffer.remaining() / 16; i < len; i++, line += 16) {
-            byte b0  = buffer.get(line);
-            byte b1  = buffer.get(line + 1);
-            byte b2  = buffer.get(line + 2);
-            byte b3  = buffer.get(line + 3);
-            byte b4  = buffer.get(line + 4);
-            byte b5  = buffer.get(line + 5);
-            byte b6  = buffer.get(line + 6);
-            byte b7  = buffer.get(line + 7);
-            byte b8  = buffer.get(line + 8);
-            byte b9  = buffer.get(line + 9);
+            byte b0 = buffer.get(line);
+            byte b1 = buffer.get(line + 1);
+            byte b2 = buffer.get(line + 2);
+            byte b3 = buffer.get(line + 3);
+            byte b4 = buffer.get(line + 4);
+            byte b5 = buffer.get(line + 5);
+            byte b6 = buffer.get(line + 6);
+            byte b7 = buffer.get(line + 7);
+            byte b8 = buffer.get(line + 8);
+            byte b9 = buffer.get(line + 9);
             byte b10 = buffer.get(line + 10);
             byte b11 = buffer.get(line + 11);
             byte b12 = buffer.get(line + 12);
@@ -772,13 +687,8 @@ public class Buffers {
             byte b14 = buffer.get(line + 14);
             byte b15 = buffer.get(line + 15);
 
-            formatter.format(DumpStrings.DUMP_STRINGS[15],
-                    line,
-                    b0, b1, b2, b3, b4, b5, b6, b7, b8,
-                    b9, b10, b11, b12, b13, b14, b15,
-                    getChar(b0), getChar(b1), getChar(b2), getChar(b3),
-                    getChar(b4), getChar(b5), getChar(b6), getChar(b7),
-                    getChar(b8), getChar(b9), getChar(b10), getChar(b11),
+            formatter.format(DumpStrings.DUMP_STRINGS[15], line, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, getChar(b0), getChar(b1),
+                    getChar(b2), getChar(b3), getChar(b4), getChar(b5), getChar(b6), getChar(b7), getChar(b8), getChar(b9), getChar(b10), getChar(b11),
                     getChar(b12), getChar(b13), getChar(b14), getChar(b15));
         }
         int remaining = buffer.remaining() % 16;
@@ -794,27 +704,22 @@ public class Buffers {
         }
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private static char getChar(final int val) {
         final char c = (char) val;
-        return ((Character.isWhitespace(c) || Character.isISOControl(c)) ? '.' : c);
+        return Character.isWhitespace(c) || Character.isISOControl(c) ? '.' : c;
     }
 
     private static MemoryManager getDefaultMemoryManager() {
         return MemoryManager.DEFAULT_MEMORY_MANAGER;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class DumpStrings {
 
-        private static final String[] DUMP_STRINGS = {
-                "%10d   %02x                                                         %c\n",
+        private static final String[] DUMP_STRINGS = { "%10d   %02x                                                         %c\n",
                 "%10d   %02x %02x                                                      %c%c\n",
                 "%10d   %02x %02x  %02x                                                  %c%c%c\n",
                 "%10d   %02x %02x  %02x %02x                                               %c%c%c%c\n",
@@ -829,8 +734,7 @@ public class Buffers {
                 "%10d   %02x %02x  %02x %02x  %02x %02x  %02x %02x    %02x %02x  %02x %02x  %02x             %c%c%c%c%c%c%c%c%c%c%c%c%c\n",
                 "%10d   %02x %02x  %02x %02x  %02x %02x  %02x %02x    %02x %02x  %02x %02x  %02x %02x          %c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
                 "%10d   %02x %02x  %02x %02x  %02x %02x  %02x %02x    %02x %02x  %02x %02x  %02x %02x  %02x      %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
-                "%10d   %02x %02x  %02x %02x  %02x %02x  %02x %02x    %02x %02x  %02x %02x  %02x %02x  %02x %02x   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n"
-        };
+                "%10d   %02x %02x  %02x %02x  %02x %02x  %02x %02x    %02x %02x  %02x %02x  %02x %02x  %02x %02x   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n" };
 
     } // END DumpStrings
 }

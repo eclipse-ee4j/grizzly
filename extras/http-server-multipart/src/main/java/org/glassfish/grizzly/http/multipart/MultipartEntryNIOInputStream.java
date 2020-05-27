@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http.multipart;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.ReadHandler;
 import org.glassfish.grizzly.http.io.NIOInputStream;
@@ -36,40 +37,36 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
 
     private int requestedSize;
     private ReadHandler handler;
-    
+
     // ------------------------------------------------------------ Constructors
 
-
     /**
-     * Constructs a new <code>NIOInputStream</code> using the specified
-     * {@link #parentNIOInputStream}
-     * @param multipartEntry {@link MultipartEntry} the {@link NIOInputStream
-     * belongs to.
+     * Constructs a new <code>NIOInputStream</code> using the specified {@link #parentNIOInputStream}
+     * 
+     * @param multipartEntry {@link MultipartEntry} the {@link NIOInputStream belongs to.
      */
-    public MultipartEntryNIOInputStream(
-            final MultipartEntry multipartEntry
-            //            final ReadHandler parentReadHandler,
-            ) {
-        
+    public MultipartEntryNIOInputStream(final MultipartEntry multipartEntry
+    // final ReadHandler parentReadHandler,
+    ) {
+
         this.multipartEntry = multipartEntry;
 //        this.parentReadHandler = parentReadHandler;
     }
 
     /**
-     * @param parentNIOInputStream the {@link Request} {@link NIOInputStream}
-     * from which binary content will be supplied
+     * @param parentNIOInputStream the {@link Request} {@link NIOInputStream} from which binary content will be supplied
      */
     protected void initialize(final NIOInputStream parentNIOInputStream) {
         this.parentNIOInputStream = parentNIOInputStream;
     }
-    
-    // ------------------------------------------------ Methods from InputStream
 
+    // ------------------------------------------------ Methods from InputStream
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read() throws IOException {
+    @Override
+    public int read() throws IOException {
         if (isClosed) {
             throw new IOException();
         }
@@ -80,7 +77,7 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
 
         multipartEntry.addAvailableBytes(-1);
 //        available--;
-        
+
         return parentNIOInputStream.read();
     }
 
@@ -88,8 +85,7 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
      * {@inheritDoc}
      */
     @Override
-    public int read(final byte[] b, final int off, final int len)
-            throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         if (isClosed) {
             throw new IOException();
         }
@@ -101,15 +97,16 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
         final int nlen = Math.min(multipartEntry.availableBytes(), len);
         multipartEntry.addAvailableBytes(-nlen);
 //        available -= nlen;
-        
+
         return parentNIOInputStream.read(b, off, nlen);
-        
+
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public long skip(final long n) throws IOException {
+    @Override
+    public long skip(final long n) throws IOException {
         if (isClosed) {
             throw new IOException();
         }
@@ -127,28 +124,32 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
     /**
      * {@inheritDoc}
      */
-    @Override public int available() throws IOException {
+    @Override
+    public int available() throws IOException {
         return readyData();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         isClosed = true;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void mark(final int readlimit) {
+    @Override
+    public void mark(final int readlimit) {
         parentNIOInputStream.mark(readlimit);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void reset() throws IOException {
+    @Override
+    public void reset() throws IOException {
         parentNIOInputStream.reset();
     }
 
@@ -157,13 +158,12 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
      *
      * @return <code>true</code>
      */
-    @Override public boolean markSupported() {
+    @Override
+    public boolean markSupported() {
         return parentNIOInputStream.markSupported();
     }
 
-
     // --------------------------------------------- Methods from InputSource
-
 
     /**
      * {@inheritDoc}
@@ -240,7 +240,6 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
         return readyData() > 0;
     }
 
-
     // --------------------------------------- Methods from BinaryNIOInputSource
 
     /**
@@ -274,7 +273,6 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
         return parentNIOInputStream.readBuffer(size);
     }
 
-    
     protected void recycle() {
         parentNIOInputStream = null;
         handler = null;
@@ -286,8 +284,10 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
      * Append available bytes to the input stream
      */
     void onDataCame() throws Exception {
-        if (handler == null) return;
-        
+        if (handler == null) {
+            return;
+        }
+
         try {
             if (isFinished()) {
                 handler.onAllDataRead();
@@ -308,13 +308,11 @@ final class MultipartEntryNIOInputStream extends NIOInputStream {
     }
 
     /**
-     * @param size the amount of data that must be available for a {@link ReadHandler}
-     *  to be notified.
+     * @param size the amount of data that must be available for a {@link ReadHandler} to be notified.
      * @param available the amount of data currently available.
      *
-     * @return <code>true</code> if the handler should be notified during a call
-     *  to {@link #notifyAvailable(ReadHandler)} or {@link #notifyAvailable(ReadHandler, int)},
-     *  otherwise <code>false</code>
+     * @return <code>true</code> if the handler should be notified during a call to {@link #notifyAvailable(ReadHandler)} or
+     * {@link #notifyAvailable(ReadHandler, int)}, otherwise <code>false</code>
      */
     private static boolean shouldNotifyNow(final int size, final int available) {
 

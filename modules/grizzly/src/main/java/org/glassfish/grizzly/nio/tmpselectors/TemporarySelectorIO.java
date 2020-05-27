@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,15 +16,15 @@
 
 package org.glassfish.grizzly.nio.tmpselectors;
 
-import org.glassfish.grizzly.Grizzly;
-
 import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.Reader;
 import org.glassfish.grizzly.Writer;
-import java.util.logging.Logger;
 import org.glassfish.grizzly.localization.LogMessages;
 
 /**
@@ -39,14 +39,11 @@ public class TemporarySelectorIO {
     private final Reader<SocketAddress> reader;
     private final Writer<SocketAddress> writer;
 
-    public TemporarySelectorIO(Reader<SocketAddress> reader,
-            Writer<SocketAddress> writer) {
+    public TemporarySelectorIO(Reader<SocketAddress> reader, Writer<SocketAddress> writer) {
         this(reader, writer, null);
     }
 
-    public TemporarySelectorIO(Reader<SocketAddress> reader,
-            Writer<SocketAddress> writer,
-            TemporarySelectorPool selectorPool) {
+    public TemporarySelectorIO(Reader<SocketAddress> reader, Writer<SocketAddress> writer, TemporarySelectorPool selectorPool) {
         this.reader = reader;
         this.writer = writer;
         this.selectorPool = selectorPool;
@@ -68,16 +65,13 @@ public class TemporarySelectorIO {
         return writer;
     }
 
-    protected void recycleTemporaryArtifacts(Selector selector,
-            SelectionKey selectionKey) {
-        
+    protected void recycleTemporaryArtifacts(Selector selector, SelectionKey selectionKey) {
+
         if (selectionKey != null) {
             try {
                 selectionKey.cancel();
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_IO_CANCEL_KEY_EXCEPTION(selectionKey),
-                        e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_IO_CANCEL_KEY_EXCEPTION(selectionKey), e);
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@
 
 package org.glassfish.grizzly.http.util;
 
-import org.glassfish.grizzly.Grizzly;
-
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +24,8 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
 
 /**
  * This class implements a String cache for ByteChunk and CharChunk.
@@ -38,91 +38,69 @@ public final class StringCache {
      * Default Logger.
      */
     private final static Logger logger = Grizzly.logger(StringCache.class);
-    
-    
+
     // ------------------------------------------------------- Static Variables
 
-    
     /**
      * Enabled ?
      */
-    static boolean byteEnabled =
-        ("true".equals(System.getProperty("tomcat.util.buf.StringCache.byte.enabled", "false")));
+    static boolean byteEnabled = "true".equals(System.getProperty("tomcat.util.buf.StringCache.byte.enabled", "false"));
 
-    
-    static boolean charEnabled =
-        ("true".equals(System.getProperty("tomcat.util.buf.StringCache.char.enabled", "false")));
+    static boolean charEnabled = "true".equals(System.getProperty("tomcat.util.buf.StringCache.char.enabled", "false"));
 
-    
-    static int trainThreshold =
-        Integer.parseInt(System.getProperty("tomcat.util.buf.StringCache.trainThreshold", "20000"));
-    
+    static int trainThreshold = Integer.parseInt(System.getProperty("tomcat.util.buf.StringCache.trainThreshold", "20000"));
 
-    static int cacheSize =
-        Integer.parseInt(System.getProperty("tomcat.util.buf.StringCache.cacheSize", "200"));
-    
+    static int cacheSize = Integer.parseInt(System.getProperty("tomcat.util.buf.StringCache.cacheSize", "200"));
 
     /**
      * Statistics hash map for byte chunk.
      */
-    static final HashMap<ByteEntry, int[]> bcStats =
-        new HashMap<ByteEntry, int[]>(cacheSize);
+    static final HashMap<ByteEntry, int[]> bcStats = new HashMap<>(cacheSize);
 
-    
     /**
      * toString count for byte chunk.
      */
     static int bcCount = 0;
-    
-    
+
     /**
      * Cache for byte chunk.
      */
     static ByteEntry[] bcCache = null;
-    
 
     /**
      * Statistics hash map for char chunk.
      */
-    static final HashMap<CharEntry, int[]> ccStats =
-        new HashMap<CharEntry, int[]>(cacheSize);
-
+    static final HashMap<CharEntry, int[]> ccStats = new HashMap<>(cacheSize);
 
     /**
      * toString count for char chunk.
      */
     static int ccCount = 0;
-    
 
     /**
      * Cache for char chunk.
      */
     static CharEntry[] ccCache = null;
 
-    
     /**
      * Access count.
      */
     static int accessCount = 0;
-    
 
     /**
      * Hit count.
      */
     static int hitCount = 0;
-    
 
     // ------------------------------------------------------------ Properties
 
-    
     /**
      * @return Returns the cacheSize.
      */
     public static int getCacheSize() {
         return cacheSize;
     }
-    
-    
+
     /**
      * @param cacheSize The cacheSize to set.
      */
@@ -130,47 +108,41 @@ public final class StringCache {
         StringCache.cacheSize = cacheSize;
     }
 
-    
     /**
      * @return Returns the enabled.
      */
     public static boolean getByteEnabled() {
         return byteEnabled;
     }
-    
-    
+
     /**
      * @param byteEnabled The enabled to set.
      */
     public static void setByteEnabled(boolean byteEnabled) {
         StringCache.byteEnabled = byteEnabled;
     }
-    
-    
+
     /**
      * @return Returns the enabled.
      */
     public static boolean getCharEnabled() {
         return charEnabled;
     }
-    
-    
+
     /**
      * @param charEnabled The enabled to set.
      */
     public static void setCharEnabled(boolean charEnabled) {
         StringCache.charEnabled = charEnabled;
     }
-    
-    
+
     /**
      * @return Returns the trainThreshold.
      */
     public static int getTrainThreshold() {
         return trainThreshold;
     }
-    
-    
+
     /**
      * @param trainThreshold The trainThreshold to set.
      */
@@ -178,15 +150,13 @@ public final class StringCache {
         StringCache.trainThreshold = trainThreshold;
     }
 
-    
     /**
      * @return Returns the accessCount.
      */
     public static int getAccessCount() {
         return accessCount;
     }
-    
-    
+
     /**
      * @return Returns the hitCount.
      */
@@ -194,10 +164,8 @@ public final class StringCache {
         return hitCount;
     }
 
-    
     // -------------------------------------------------- Public Static Methods
 
-    
     public static void reset() {
         hitCount = 0;
         accessCount = 0;
@@ -210,8 +178,7 @@ public final class StringCache {
             ccCount = 0;
         }
     }
-    
-    
+
     public static String toString(ByteChunk bc) {
 
         // If the cache is null, then either caching is disabled, or we're
@@ -233,10 +200,8 @@ public final class StringCache {
                     if (bcCount > trainThreshold) {
                         long t1 = System.currentTimeMillis();
                         // Sort the entries according to occurrence
-                        TreeMap<Integer, ArrayList<ByteEntry>> tempMap =
-                            new TreeMap<Integer, ArrayList<ByteEntry>>();
-                        Iterator<ByteEntry> entries =
-                            bcStats.keySet().iterator();
+                        TreeMap<Integer, ArrayList<ByteEntry>> tempMap = new TreeMap<>();
+                        Iterator<ByteEntry> entries = bcStats.keySet().iterator();
                         while (entries.hasNext()) {
                             ByteEntry entry = entries.next();
                             int[] countA = bcStats.get(entry);
@@ -245,7 +210,7 @@ public final class StringCache {
                             ArrayList<ByteEntry> list = tempMap.get(count);
                             if (list == null) {
                                 // Create list
-                                list = new ArrayList<ByteEntry>();
+                                list = new ArrayList<>();
                                 tempMap.put(count, list);
                             }
                             list.add(entry);
@@ -270,8 +235,7 @@ public final class StringCache {
                                 if (insertPos == n) {
                                     tempbcCache[n + 1] = entry;
                                 } else {
-                                    System.arraycopy(tempbcCache, insertPos + 1, tempbcCache, 
-                                            insertPos + 2, n - insertPos - 1);
+                                    System.arraycopy(tempbcCache, insertPos + 1, tempbcCache, insertPos + 2, n - insertPos - 1);
                                     tempbcCache[insertPos + 1] = entry;
                                 }
                                 n++;
@@ -283,7 +247,7 @@ public final class StringCache {
                         bcCache = tempbcCache;
                         if (logger.isLoggable(Level.FINEST)) {
                             long t2 = System.currentTimeMillis();
-                            logger.log(Level.FINEST,"ByteCache generation time: " + (t2 - t1) + "ms");
+                            logger.log(Level.FINEST, "ByteCache generation time: " + (t2 - t1) + "ms");
                         }
                     } else {
                         bcCount++;
@@ -299,7 +263,7 @@ public final class StringCache {
                             System.arraycopy(bc.getBuffer(), start, entry.name, 0, end - start);
                             // Set encoding
                             entry.charset = bc.getCharset();
-                            // Initialize occurrence count to one 
+                            // Initialize occurrence count to one
                             count = new int[1];
                             count[0] = 1;
                             // Set in the stats hash map
@@ -322,12 +286,11 @@ public final class StringCache {
             hitCount++;
             return result;
         }
-        
+
     }
 
-
     public static String toString(CharChunk cc) {
-        
+
         // If the cache is null, then either caching is disabled, or we're
         // still training
         if (ccCache == null) {
@@ -347,8 +310,7 @@ public final class StringCache {
                     if (ccCount > trainThreshold) {
                         long t1 = System.currentTimeMillis();
                         // Sort the entries according to occurrence
-                        TreeMap<Integer, ArrayList<CharEntry>> tempMap =
-                            new TreeMap<Integer, ArrayList<CharEntry>>();
+                        TreeMap<Integer, ArrayList<CharEntry>> tempMap = new TreeMap<>();
                         Iterator<CharEntry> entries = ccStats.keySet().iterator();
                         while (entries.hasNext()) {
                             CharEntry entry = entries.next();
@@ -358,7 +320,7 @@ public final class StringCache {
                             ArrayList<CharEntry> list = tempMap.get(count);
                             if (list == null) {
                                 // Create list
-                                list = new ArrayList<CharEntry>();
+                                list = new ArrayList<>();
                                 tempMap.put(count, list);
                             }
                             list.add(entry);
@@ -383,8 +345,7 @@ public final class StringCache {
                                 if (insertPos == n) {
                                     tempccCache[n + 1] = entry;
                                 } else {
-                                    System.arraycopy(tempccCache, insertPos + 1, tempccCache, 
-                                            insertPos + 2, n - insertPos - 1);
+                                    System.arraycopy(tempccCache, insertPos + 1, tempccCache, insertPos + 2, n - insertPos - 1);
                                     tempccCache[insertPos + 1] = entry;
                                 }
                                 n++;
@@ -396,7 +357,7 @@ public final class StringCache {
                         ccCache = tempccCache;
                         if (logger.isLoggable(Level.FINEST)) {
                             long t2 = System.currentTimeMillis();
-                            logger.log(Level.FINEST,"CharCache generation time: " + (t2 - t1) + "ms");
+                            logger.log(Level.FINEST, "CharCache generation time: " + (t2 - t1) + "ms");
                         }
                     } else {
                         ccCount++;
@@ -410,7 +371,7 @@ public final class StringCache {
                             // Create char array and copy chars
                             entry.name = new char[cc.getLength()];
                             System.arraycopy(cc.getBuffer(), start, entry.name, 0, end - start);
-                            // Initialize occurrence count to one 
+                            // Initialize occurrence count to one
                             count = new int[1];
                             count[0] = 1;
                             // Set in the stats hash map
@@ -433,16 +394,13 @@ public final class StringCache {
             hitCount++;
             return result;
         }
-        
+
     }
-    
-    
+
     // ----------------------------------------------------- Protected Methods
 
-
     /**
-     * Compare given byte chunk with byte array.
-     * Return -1, 0 or +1 if inferior, equal, or superior to the String.
+     * Compare given byte chunk with byte array. Return -1, 0 or +1 if inferior, equal, or superior to the String.
      */
     protected static int compare(ByteChunk name, byte[] compareTo) {
         int result = 0;
@@ -452,10 +410,10 @@ public final class StringCache {
         int end = name.getEnd();
         int len = compareTo.length;
 
-        if ((end - start) < len) {
+        if (end - start < len) {
             len = end - start;
         }
-        for (int i = 0; (i < len) && (result == 0); i++) {
+        for (int i = 0; i < len && result == 0; i++) {
             if (b[i + start] > compareTo[i]) {
                 result = 1;
             } else if (b[i + start] < compareTo[i]) {
@@ -463,34 +421,30 @@ public final class StringCache {
             }
         }
         if (result == 0) {
-            if (compareTo.length > (end - start)) {
+            if (compareTo.length > end - start) {
                 result = -1;
-            } else if (compareTo.length < (end - start)) {
+            } else if (compareTo.length < end - start) {
                 result = 1;
             }
         }
         return result;
     }
 
-    
     /**
      * Find an entry given its name in the cache and return the associated String.
      */
     protected static String find(ByteChunk name) {
         int pos = findClosest(name, bcCache, bcCache.length);
-        if ((pos < 0) || (compare(name, bcCache[pos].name) != 0)
-                || !(name.getCharset().equals(bcCache[pos].charset))) {
+        if (pos < 0 || compare(name, bcCache[pos].name) != 0 || !name.getCharset().equals(bcCache[pos].charset)) {
             return null;
         } else {
             return bcCache[pos].value;
         }
     }
 
-    
     /**
-     * Find an entry given its name in a sorted array of map elements.
-     * This will return the index for the closest inferior or equal item in the
-     * given array.
+     * Find an entry given its name in a sorted array of map elements. This will return the index for the closest inferior
+     * or equal item in the given array.
      */
     protected static int findClosest(ByteChunk name, ByteEntry[] array, int len) {
 
@@ -501,17 +455,17 @@ public final class StringCache {
         if (b == -1) {
             return -1;
         }
-        
+
         if (compare(name, array[0].name) < 0) {
             return -1;
-        }         
+        }
         if (b == 0) {
             return 0;
         }
 
         int i;
         while (true) {
-            i = (b + a) >>> 1;
+            i = b + a >>> 1;
             int result = compare(name, array[i].name);
             if (result == 1) {
                 a = i;
@@ -520,7 +474,7 @@ public final class StringCache {
             } else {
                 b = i;
             }
-            if ((b - a) == 1) {
+            if (b - a == 1) {
                 int result2 = compare(name, array[b].name);
                 if (result2 < 0) {
                     return a;
@@ -532,10 +486,8 @@ public final class StringCache {
 
     }
 
-
     /**
-     * Compare given char chunk with char array.
-     * Return -1, 0 or +1 if inferior, equal, or superior to the String.
+     * Compare given char chunk with char array. Return -1, 0 or +1 if inferior, equal, or superior to the String.
      */
     protected static int compare(CharChunk name, char[] compareTo) {
         int result = 0;
@@ -545,10 +497,10 @@ public final class StringCache {
         int end = name.getEnd();
         int len = compareTo.length;
 
-        if ((end - start) < len) {
+        if (end - start < len) {
             len = end - start;
         }
-        for (int i = 0; (i < len) && (result == 0); i++) {
+        for (int i = 0; i < len && result == 0; i++) {
             if (c[i + start] > compareTo[i]) {
                 result = 1;
             } else if (c[i + start] < compareTo[i]) {
@@ -556,33 +508,30 @@ public final class StringCache {
             }
         }
         if (result == 0) {
-            if (compareTo.length > (end - start)) {
+            if (compareTo.length > end - start) {
                 result = -1;
-            } else if (compareTo.length < (end - start)) {
+            } else if (compareTo.length < end - start) {
                 result = 1;
             }
         }
         return result;
     }
 
-    
     /**
      * Find an entry given its name in the cache and return the associated String.
      */
     protected static String find(CharChunk name) {
         int pos = findClosest(name, ccCache, ccCache.length);
-        if ((pos < 0) || (compare(name, ccCache[pos].name) != 0)) {
+        if (pos < 0 || compare(name, ccCache[pos].name) != 0) {
             return null;
         } else {
             return ccCache[pos].value;
         }
     }
 
-    
     /**
-     * Find an entry given its name in a sorted array of map elements.
-     * This will return the index for the closest inferior or equal item in the
-     * given array.
+     * Find an entry given its name in a sorted array of map elements. This will return the index for the closest inferior
+     * or equal item in the given array.
      */
     protected static int findClosest(CharChunk name, CharEntry[] array, int len) {
 
@@ -593,17 +542,17 @@ public final class StringCache {
         if (b == -1) {
             return -1;
         }
-        
-        if (compare(name, array[0].name) < 0 ) {
+
+        if (compare(name, array[0].name) < 0) {
             return -1;
-        }         
+        }
         if (b == 0) {
             return 0;
         }
 
         int i;
         while (true) {
-            i = (b + a) >>> 1;
+            i = b + a >>> 1;
             int result = compare(name, array[i].name);
             if (result == 1) {
                 a = i;
@@ -612,7 +561,7 @@ public final class StringCache {
             } else {
                 b = i;
             }
-            if ((b - a) == 1) {
+            if (b - a == 1) {
                 int result2 = compare(name, array[b].name);
                 if (result2 < 0) {
                     return a;
@@ -624,9 +573,7 @@ public final class StringCache {
 
     }
 
-
     // -------------------------------------------------- ByteEntry Inner Class
-
 
     protected static class ByteEntry {
 
@@ -634,38 +581,45 @@ public final class StringCache {
         public Charset charset = null;
         public String value = null;
 
+        @Override
         public String toString() {
             return value;
         }
+
+        @Override
         public int hashCode() {
             return value.hashCode();
         }
+
+        @Override
         public boolean equals(Object obj) {
             return obj instanceof ByteEntry && value.equals(((ByteEntry) obj).value);
         }
-        
+
     }
 
-
     // -------------------------------------------------- CharEntry Inner Class
-
 
     protected static class CharEntry {
 
         public char[] name = null;
         public String value = null;
 
+        @Override
         public String toString() {
             return value;
         }
+
+        @Override
         public int hashCode() {
             return value.hashCode();
         }
+
+        @Override
         public boolean equals(Object obj) {
             return obj instanceof CharEntry && value.equals(((CharEntry) obj).value);
         }
-        
-    }
 
+    }
 
 }

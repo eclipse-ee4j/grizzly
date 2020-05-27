@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,10 +17,9 @@
 package org.glassfish.grizzly.http;
 
 /**
- * {@link RuntimeException}, means something wrong happened during HTTP message
- * content parsing. Usually it happens when processing HTTP message payload
- * using {@link TransferEncoding} or {@link ContentEncoding}.
- * 
+ * {@link RuntimeException}, means something wrong happened during HTTP message content parsing. Usually it happens when
+ * processing HTTP message payload using {@link TransferEncoding} or {@link ContentEncoding}.
+ *
  * @author Alexey Stashok
  */
 public final class HttpBrokenContentException extends RuntimeException {
@@ -30,7 +29,7 @@ public final class HttpBrokenContentException extends RuntimeException {
 
     public HttpBrokenContentException(final String message) {
         super(message);
-    }    
+    }
 
     public HttpBrokenContentException(final Throwable cause) {
         this(cause.getMessage(), cause);

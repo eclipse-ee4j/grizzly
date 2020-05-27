@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
@@ -27,15 +28,14 @@ import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.StringFilter;
 
 /**
- * The simple client, which sends a message to the echo server
- * and waits for response
+ * The simple client, which sends a message to the echo server and waits for response
+ * 
  * @author Alexey Stashok
  */
 public class EchoClient {
 
     @SuppressWarnings("unchecked")
-    public static void main(String[] args) throws IOException,
-            ExecutionException, InterruptedException, TimeoutException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         Connection connection = null;
 
@@ -50,8 +50,7 @@ public class EchoClient {
         filterChainBuilder.add(new ClientFilter());
 
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -59,16 +58,14 @@ public class EchoClient {
             transport.start();
 
             // perform async. connect to the server
-            Future<Connection> future = transport.connect(EchoServer.HOST,
-                    EchoServer.PORT);
+            Future<Connection> future = transport.connect(EchoServer.HOST, EchoServer.PORT);
             // wait for connect operation to complete
             connection = future.get(10, TimeUnit.SECONDS);
 
             assert connection != null;
 
             System.out.println("Ready... (\"q\" to exit)");
-            final BufferedReader inReader = new BufferedReader(
-                    new InputStreamReader(System.in, Charsets.ASCII_CHARSET));
+            final BufferedReader inReader = new BufferedReader(new InputStreamReader(System.in, Charsets.ASCII_CHARSET));
             do {
                 final String userInput = inReader.readLine();
                 if (userInput == null || "q".equals(userInput)) {

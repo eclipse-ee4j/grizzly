@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,11 +17,11 @@
 package org.glassfish.grizzly.http;
 
 import java.util.Locale;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.http.util.MimeHeaders;
-
 
 /**
  * The {@link HttpHeader} object, which represents HTTP response message.
@@ -50,7 +50,6 @@ public abstract class HttpResponsePacket extends HttpHeader {
      */
     private String contentLanguage;
 
-
     /**
      * Status code.
      */
@@ -61,10 +60,8 @@ public abstract class HttpResponsePacket extends HttpHeader {
      */
     private final DataChunk reasonPhraseC = DataChunk.newInstance();
 
-
     /**
-     * Does this HttpResponsePacket represent an acknowledgment to
-     * an Expect header.
+     * Does this HttpResponsePacket represent an acknowledgment to an Expect header.
      */
     private boolean acknowledgment;
 
@@ -77,7 +74,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
      * Do we need to encode HTML sensitive characters in custom reason phrase.
      */
     private boolean isHtmlEncodingCustomReasonPhrase = true;
-    
+
     /**
      * Returns {@link HttpResponsePacket} builder.
      *
@@ -101,7 +98,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
     public int getStatus() {
         return getHttpStatus().getStatusCode();
     }
-    
+
     /**
      * Gets the HTTP status for this response.
      *
@@ -111,7 +108,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
         if (httpStatus == null) {
             httpStatus = HttpStatus.OK_200;
         }
-        
+
         return httpStatus;
     }
 
@@ -136,22 +133,21 @@ public abstract class HttpResponsePacket extends HttpHeader {
     }
 
     /**
-     * Returns <code>true</code> if custom status reason phrases are allowed for
-     * this response, or <code>false</tt> otherwise.
+     * Returns <code>true</code> if custom status reason phrases are allowed for this response, or <code>false</tt>
+     * otherwise.
      *
-     * @return <code>true</code> if custom status reason phrases are allowed for
-     * this response, or <code>false</tt> otherwise.
+     * @return <code>true</code> if custom status reason phrases are allowed for this response, or <code>false</tt>
+     * otherwise.
      */
     public final boolean isAllowCustomReasonPhrase() {
         return allowCustomReasonPhrase;
     }
 
     /**
-     * Sets if the custom status reason phrases are allowed for
-     * this response.
+     * Sets if the custom status reason phrases are allowed for this response.
      *
-     * @param allowCustomReasonPhrase <code>true</code> if custom status
-     * reason phrases are allowed for this response, or <code>false</tt> otherwise.
+     * @param allowCustomReasonPhrase <code>true</code> if custom status reason phrases are allowed for this response, or
+     * <code>false</tt> otherwise.
      */
     public final void setAllowCustomReasonPhrase(final boolean allowCustomReasonPhrase) {
         this.allowCustomReasonPhrase = allowCustomReasonPhrase;
@@ -171,29 +167,23 @@ public abstract class HttpResponsePacket extends HttpHeader {
         this.isHtmlEncodingCustomReasonPhrase = isHtmlEncodingCustomReasonPhrase;
     }
 
-    
     /**
-     * Gets the custom status reason phrase for this response as {@link DataChunk}
-     * (avoid creation of a String object}.
+     * Gets the custom status reason phrase for this response as {@link DataChunk} (avoid creation of a String object}.
      *
-     * @return the status reason phrase for this response as {@link DataChunk}
-     * (avoid creation of a String object}.
+     * @return the status reason phrase for this response as {@link DataChunk} (avoid creation of a String object}.
      */
     public final DataChunk getReasonPhraseRawDC() {
         return reasonPhraseC;
     }
 
     /**
-     * Gets the status reason phrase for this response as {@link DataChunk}
-     * (avoid creation of a String object}. This implementation takes into
-     * consideration the {@link #isAllowCustomReasonPhrase()} property - if the
-     * custom reason phrase is allowed and it's value is not null - then the
-     * returned result will be equal to {@link #getReasonPhraseRawDC()}, otherwise
-     * if custom reason phrase is disallowed or its value is null - the default
+     * Gets the status reason phrase for this response as {@link DataChunk} (avoid creation of a String object}. This
+     * implementation takes into consideration the {@link #isAllowCustomReasonPhrase()} property - if the custom reason
+     * phrase is allowed and it's value is not null - then the returned result will be equal to
+     * {@link #getReasonPhraseRawDC()}, otherwise if custom reason phrase is disallowed or its value is null - the default
      * reason phrase for the HTTP response {@link #getStatus()} will be returned.
      *
-     * @return the status reason phrase for this response as {@link DataChunk}
-     * (avoid creation of a String object}.
+     * @return the status reason phrase for this response as {@link DataChunk} (avoid creation of a String object}.
      */
     public final DataChunk getReasonPhraseDC() {
         if (isCustomReasonPhraseSet()) {
@@ -227,7 +217,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
     }
 
     public final boolean isCustomReasonPhraseSet() {
-        return (allowCustomReasonPhrase && !reasonPhraseC.isNull());
+        return allowCustomReasonPhrase && !reasonPhraseC.isNull();
     }
 
     /**
@@ -237,21 +227,18 @@ public abstract class HttpResponsePacket extends HttpHeader {
         return request;
     }
 
-
     /**
-     * @return <code>true</code> if this response packet is intended
-     *  as an acknowledgment to an expectation from a client request.
+     * @return <code>true</code> if this response packet is intended as an acknowledgment to an expectation from a client
+     * request.
      */
     public boolean isAcknowledgement() {
         return acknowledgment;
     }
 
-
     /**
      * Mark this packet as an acknowledgment to a client expectation.
      *
-     * @param acknowledgement <code>true</code> if this packet is an
-     *  acknowledgment to a client expectation.
+     * @param acknowledgement <code>true</code> if this packet is an acknowledgment to a client expectation.
      */
     public void setAcknowledgement(final boolean acknowledgement) {
         this.acknowledgment = acknowledgement;
@@ -267,9 +254,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
         reasonPhraseC.recycle();
     }
 
-
     // --------------------
-
 
     /**
      * {@inheritDoc}
@@ -288,7 +273,6 @@ public abstract class HttpResponsePacket extends HttpHeader {
         super.reset();
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -303,12 +287,9 @@ public abstract class HttpResponsePacket extends HttpHeader {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(256);
-        sb.append("HttpResponsePacket (\n  status=").append(getStatus())
-                .append("\n  reason=").append(getReasonPhrase())
-                .append("\n  protocol=").append(getProtocol().getProtocolString())
-                .append("\n  content-length=").append(getContentLength())
-                .append("\n  committed=").append(isCommitted())
-                .append("\n  headers=[");
+        sb.append("HttpResponsePacket (\n  status=").append(getStatus()).append("\n  reason=").append(getReasonPhrase()).append("\n  protocol=")
+                .append(getProtocol().getProtocolString()).append("\n  content-length=").append(getContentLength()).append("\n  committed=")
+                .append(isCommitted()).append("\n  headers=[");
         final MimeHeaders headersLocal = getHeaders();
         for (final String name : headersLocal.names()) {
             for (String value : headersLocal.values(name)) {
@@ -316,7 +297,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
             }
         }
         sb.append("]\n)");
-        
+
         return sb.toString();
     }
 
@@ -327,15 +308,13 @@ public abstract class HttpResponsePacket extends HttpHeader {
         return locale;
     }
 
-
     /**
-     * Called explicitly by user to set the Content-Language and
-     * the default encoding
+     * Called explicitly by user to set the Content-Language and the default encoding
      */
     public void setLocale(final Locale locale) {
 
         if (locale == null) {
-            return;  // throw an exception?
+            return; // throw an exception?
         }
 
         // Save the locale for use by getLocale()
@@ -343,9 +322,9 @@ public abstract class HttpResponsePacket extends HttpHeader {
 
         // Set the contentLanguage for header output
         contentLanguage = locale.getLanguage();
-        if ((contentLanguage != null) && (contentLanguage.length() > 0)) {
+        if (contentLanguage != null && contentLanguage.length() > 0) {
             final String country = locale.getCountry();
-            if ((country != null) && (country.length() > 0)) {
+            if (country != null && country.length() > 0) {
                 final StringBuilder value = new StringBuilder(contentLanguage);
                 value.append('-');
                 value.append(country);
@@ -355,19 +334,15 @@ public abstract class HttpResponsePacket extends HttpHeader {
 
     }
 
-
     /**
-     * @return the value that will be used by the <code>Content-Language</code>
-     *  response header
+     * @return the value that will be used by the <code>Content-Language</code> response header
      */
     public String getContentLanguage() {
         return contentLanguage;
     }
 
-
     /**
-     * Set the value that will be used by the <code>Content-Language</code>
-     * response header.
+     * Set the value that will be used by the <code>Content-Language</code> response header.
      */
     public void setContentLanguage(final String contentLanguage) {
         this.contentLanguage = contentLanguage;
@@ -381,15 +356,14 @@ public abstract class HttpResponsePacket extends HttpHeader {
 
     // ------------------------------------------------- Package Private Methods
 
-
     /**
      * Associates the request that triggered this response.
+     * 
      * @param request the request that triggered this response
      */
     public void setRequest(final HttpRequestPacket request) {
         this.request = request;
     }
-
 
     // ---------------------------------------------------------- Nested Classes
 
@@ -432,6 +406,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
          *
          * @return <tt>HttpResponsePacket</tt>
          */
+        @Override
         public final HttpResponsePacket build() {
             HttpResponsePacket responsePacket = (HttpResponsePacket) super.build();
             if (status != null) {
@@ -453,8 +428,7 @@ public abstract class HttpResponsePacket extends HttpHeader {
         @Override
         protected HttpHeader create() {
             if (requestPacket == null) {
-                throw new IllegalStateException(
-                        "Unable to create new HttpResponsePacket.  No HttpRequestPacket available.");
+                throw new IllegalStateException("Unable to create new HttpResponsePacket.  No HttpRequestPacket available.");
             }
             HttpResponsePacket responsePacket = requestPacket.getResponse();
             if (responsePacket == null) {

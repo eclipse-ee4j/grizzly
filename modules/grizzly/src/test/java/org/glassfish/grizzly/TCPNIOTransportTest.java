@@ -91,7 +91,7 @@ public class TCPNIOTransportTest {
     @Test
     public void testBindUnbind() throws Exception {
         logger.info("Starting test");
-        
+
         Connection<?> connection = null;
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         try {
@@ -130,7 +130,7 @@ public class TCPNIOTransportTest {
     @Test
     public void testMultiBind() throws Exception {
         logger.info("Starting test");
-        
+
         Connection<?> connection = null;
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         try {
@@ -184,7 +184,7 @@ public class TCPNIOTransportTest {
     @Test
     public void testClose() throws Exception {
         logger.info("Starting test");
-        
+
         BlockingQueue<Connection<?>> acceptedQueue = new LinkedTransferQueue<>();
 
         Connection<?> connectedConnection = null;
@@ -205,7 +205,7 @@ public class TCPNIOTransportTest {
             });
 
             transport.setProcessor(filterChainBuilder.build());
-            
+
             bindToPort(transport);
 
             Future<Connection> connectFuture = transport.connect(new InetSocketAddress("localhost", PORT));
@@ -213,8 +213,8 @@ public class TCPNIOTransportTest {
             connectedConnection = connectFuture.get(10, SECONDS);
             acceptedConnection = acceptedQueue.poll(10, SECONDS);
 
-            FutureImpl<Boolean> connectedCloseFuture = new SafeFutureImpl<Boolean>();
-            FutureImpl<Boolean> acceptedCloseFuture = new SafeFutureImpl<Boolean>();
+            FutureImpl<Boolean> connectedCloseFuture = new SafeFutureImpl<>();
+            FutureImpl<Boolean> acceptedCloseFuture = new SafeFutureImpl<>();
 
             // noinspection deprecation
             connectedConnection.addCloseListener(new GenericCloseListener() {
@@ -254,7 +254,7 @@ public class TCPNIOTransportTest {
     @Test
     public void testSelectorSwitch() throws Exception {
         logger.info("Starting test");
-        
+
         Connection<?> connection = null;
         StreamReader reader;
         StreamWriter writer;
@@ -286,7 +286,6 @@ public class TCPNIOTransportTest {
 
         try {
             bindToPort(transport);
-            
 
             final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
             transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
@@ -331,12 +330,12 @@ public class TCPNIOTransportTest {
     @Test
     public void testConnectFutureCancel() throws Exception {
         logger.info("Starting test");
-        
+
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
 
         AtomicInteger serverConnectCounter = new AtomicInteger();
         AtomicInteger serverCloseCounter = new AtomicInteger();
-        
+
         AtomicInteger clientConnectCounter = new AtomicInteger();
         AtomicInteger clientCloseCounter = new AtomicInteger();
 
@@ -374,10 +373,7 @@ public class TCPNIOTransportTest {
 
         transport.setProcessor(serverFilterChainBuilder.build());
 
-        SocketConnectorHandler connectorHandler = 
-                TCPNIOConnectorHandler.builder(transport)
-                                      .processor(clientFilterChainBuilder.build())
-                                      .build();
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChainBuilder.build()).build();
 
         try {
             bindToPort(transport);
@@ -386,16 +382,16 @@ public class TCPNIOTransportTest {
 
             for (int i = 0; i < connectionsNum; i++) {
                 Future<Connection> connectFuture = connectorHandler.connect(new InetSocketAddress("localhost", PORT));
-                
+
                 Thread.sleep(50);
-                
+
                 if (!connectFuture.cancel(false)) {
                     assertTrue("Future is not done", connectFuture.isDone());
-                    
+
                     Connection connection = connectFuture.get();
                     assertNotNull("Connection is null?", connection);
                     assertTrue("Connection is not connected", connection.isOpen());
-                    
+
                     connection.closeSilently();
                 }
             }
@@ -417,7 +413,7 @@ public class TCPNIOTransportTest {
     @Test
     public void testThreadInterruptionDuringAcceptDoesNotMakeServerDeaf() throws Exception {
         logger.info("Starting test");
-        
+
         Field interruptField = TCPNIOServerConnection.class.getDeclaredField("DISABLE_INTERRUPT_CLEAR");
         interruptField.setAccessible(true);
         interruptField.setBoolean(null, true);
@@ -426,7 +422,7 @@ public class TCPNIOTransportTest {
         transport.setSelectorRunnersCount(1);
         transport.setKernelThreadPoolConfig(ThreadPoolConfig.defaultConfig().setCorePoolSize(1).setMaxPoolSize(1));
         transport.setIOStrategy(new SameThreadIOStrategyInterruptWrapper(true));
-        
+
         bindToPort(transport);
 
         TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
@@ -470,12 +466,12 @@ public class TCPNIOTransportTest {
     @Test
     public void testThreadInterruptionElsewhereDoesNotMakeServerDeaf() throws Exception {
         logger.info("Starting test");
-        
+
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setSelectorRunnersCount(1);
         transport.setKernelThreadPoolConfig(ThreadPoolConfig.defaultConfig().setCorePoolSize(1).setMaxPoolSize(1));
         transport.setIOStrategy(new SameThreadIOStrategyInterruptWrapper(false));
-        
+
         bindToPort(transport);
 
         TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
@@ -484,10 +480,8 @@ public class TCPNIOTransportTest {
         try {
 
             clientTransport.start();
-            SocketConnectorHandler connectorHandler = 
-                    TCPNIOConnectorHandler.builder(clientTransport)
-                                          .processor(FilterChainBuilder.stateless().add(new TransportFilter()).build())
-                                          .build();
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(clientTransport)
+                    .processor(FilterChainBuilder.stateless().add(new TransportFilter()).build()).build();
 
             int successfulAttempts = 0;
 
@@ -495,7 +489,7 @@ public class TCPNIOTransportTest {
                 try {
                     Future<Connection> futureConnection = connectorHandler.connect("localhost", PORT);
                     futureConnection.get(5, SECONDS);
-                    
+
                     System.out.println("Successful connection (" + ++successfulAttempts + ").");
                 } catch (Exception e2) {
                     e2.printStackTrace();
@@ -541,10 +535,7 @@ public class TCPNIOTransportTest {
 
             clientFilterChainBuilder.add(clientTestFilter);
 
-            SocketConnectorHandler connectorHandler = 
-                    TCPNIOConnectorHandler.builder(transport)
-                                          .processor(clientFilterChainBuilder.build())
-                                          .build();
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChainBuilder.build()).build();
 
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, SECONDS);
@@ -579,7 +570,7 @@ public class TCPNIOTransportTest {
 
         }
     }
-    
+
     private static void bindToPort(TCPNIOTransport transport) throws Exception {
         logger.info("Binding to port " + PORT);
         try {
@@ -610,15 +601,15 @@ public class TCPNIOTransportTest {
                     Thread.currentThread().interrupt();
                     interruptedOnce = true;
                 }
-                
+
                 return delegate.executeIoEvent(connection, ioEvent);
-            } 
-            
+            }
+
             boolean result = delegate.executeIoEvent(connection, ioEvent);
             if (ioEvent.equals(SERVER_ACCEPT)) {
                 Thread.currentThread().interrupt();
             }
-            
+
             return result;
         }
 
@@ -653,12 +644,14 @@ public class TCPNIOTransportTest {
         }
 
         @Override
-        public void registerChannelAsync(SelectableChannel channel, int interestOps, Object attachment, CompletionHandler<RegisterChannelResult> completionHandler) {
+        public void registerChannelAsync(SelectableChannel channel, int interestOps, Object attachment,
+                CompletionHandler<RegisterChannelResult> completionHandler) {
             transport.getSelectorHandler().registerChannelAsync(getSelectorRunner(), channel, interestOps, attachment, completionHandler);
         }
 
         @Override
-        public void registerServiceChannelAsync(SelectableChannel channel, int interestOps, Object attachment, CompletionHandler<RegisterChannelResult> completionHandler) {
+        public void registerServiceChannelAsync(SelectableChannel channel, int interestOps, Object attachment,
+                CompletionHandler<RegisterChannelResult> completionHandler) {
             transport.getSelectorHandler().registerChannelAsync(getSelectorRunner(), channel, interestOps, attachment, completionHandler);
         }
 

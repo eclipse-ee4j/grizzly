@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,9 +19,9 @@ package org.glassfish.grizzly.portunif;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 
 /**
- * General interface for protocol finders, responsible to figure out, whether
- * incoming bytes belong to the specific protocol.
- * 
+ * General interface for protocol finders, responsible to figure out, whether incoming bytes belong to the specific
+ * protocol.
+ *
  * @author Alexey Stashok
  */
 public interface ProtocolFinder {
@@ -30,13 +30,11 @@ public interface ProtocolFinder {
     }
 
     /**
-     * Method is called from {@link PUFilter} to check whether the incoming
-     * bytes belong to the specific protocol.
+     * Method is called from {@link PUFilter} to check whether the incoming bytes belong to the specific protocol.
      *
      * @param puContext {@link PUContext}
      * @param ctx {@link FilterChainContext}
      * @return {@link Result}
      */
-    Result find(final PUContext puContext,
-                final FilterChainContext ctx);
+    Result find(final PUContext puContext, final FilterChainContext ctx);
 }

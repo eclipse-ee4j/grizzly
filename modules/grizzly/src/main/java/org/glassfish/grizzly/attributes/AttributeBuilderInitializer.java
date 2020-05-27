@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,10 @@
 
 package org.glassfish.grizzly.attributes;
 
-import org.glassfish.grizzly.Grizzly;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
 
 class AttributeBuilderInitializer {
 
@@ -32,16 +32,13 @@ class AttributeBuilderInitializer {
         final String className = System.getProperty(PROP);
         if (className != null) {
             try {
-                Class<? extends AttributeBuilder> builderClass = (Class<? extends AttributeBuilder>)
-                        Class.forName(className,
-                                true,
-                                AttributeBuilder.class.getClassLoader());
+                Class<? extends AttributeBuilder> builderClass = (Class<? extends AttributeBuilder>) Class.forName(className, true,
+                        AttributeBuilder.class.getClassLoader());
                 return builderClass.newInstance();
             } catch (Exception e) {
                 if (LOGGER.isLoggable(Level.SEVERE)) {
-                    LOGGER.log(Level.SEVERE,
-                            "Unable to load or create a new instance of AttributeBuilder {0}.  Cause: {1}",
-                            new Object[]{className, e.getMessage()});
+                    LOGGER.log(Level.SEVERE, "Unable to load or create a new instance of AttributeBuilder {0}.  Cause: {1}",
+                            new Object[] { className, e.getMessage() });
                 }
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, e.toString(), e);

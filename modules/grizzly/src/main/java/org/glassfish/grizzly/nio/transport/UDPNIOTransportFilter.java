@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Filter;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -36,7 +37,7 @@ import org.glassfish.grizzly.utils.Holder;
 
 /**
  * The {@link UDPNIOTransport}'s transport {@link Filter} implementation
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
@@ -48,8 +49,7 @@ public final class UDPNIOTransportFilter extends BaseFilter {
     }
 
     @Override
-    public NextAction handleRead(final FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
         final UDPNIOConnection connection = (UDPNIOConnection) ctx.getConnection();
         final boolean isBlocking = ctx.getTransportContext().isBlocking();
 
@@ -62,9 +62,7 @@ public final class UDPNIOTransportFilter extends BaseFilter {
             transport.read(connection, inBuffer, readResult);
 
         } else {
-            GrizzlyFuture<ReadResult<Buffer, SocketAddress>> future =
-                    transport.getTemporarySelectorIO().getReader().read(
-                    connection, inBuffer);
+            GrizzlyFuture<ReadResult<Buffer, SocketAddress>> future = transport.getTemporarySelectorIO().getReader().read(connection, inBuffer);
             try {
                 readResult = future.get();
                 future.recycle(false);
@@ -83,8 +81,7 @@ public final class UDPNIOTransportFilter extends BaseFilter {
         if (readResult.getReadSize() > 0) {
             final Buffer buffer = readResult.getMessage();
             buffer.trim();
-            final Holder<SocketAddress> addressHolder =
-                    readResult.getSrcAddressHolder();
+            final Holder<SocketAddress> addressHolder = readResult.getSrcAddressHolder();
             readResult.recycle();
 
             ctx.setMessage(buffer);
@@ -102,23 +99,19 @@ public final class UDPNIOTransportFilter extends BaseFilter {
     }
 
     @Override
-    public NextAction handleWrite(final FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleWrite(final FilterChainContext ctx) throws IOException {
         final WritableMessage message = ctx.getMessage();
         if (message != null) {
             ctx.setMessage(null);
             final Connection connection = ctx.getConnection();
-            final FilterChainContext.TransportContext transportContext =
-                    ctx.getTransportContext();
+            final FilterChainContext.TransportContext transportContext = ctx.getTransportContext();
 
             final CompletionHandler completionHandler = transportContext.getCompletionHandler();
             final Object address = ctx.getAddress();
-            
+
             transportContext.setCompletionHandler(null);
 
-            transport.getWriter(transportContext.isBlocking()).write(
-                    connection, address,
-                    message, completionHandler);
+            transport.getWriter(transportContext.isBlocking()).write(connection, address, message, completionHandler);
         }
 
         return ctx.getInvokeAction();
@@ -126,33 +119,28 @@ public final class UDPNIOTransportFilter extends BaseFilter {
 
     @Override
     @SuppressWarnings("unchecked")
-    public NextAction handleEvent(final FilterChainContext ctx,
-            final FilterChainEvent event) throws IOException {
-        
+    public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
+
         if (event.type() == TransportFilter.FlushEvent.TYPE) {
             final Connection connection = ctx.getConnection();
-            final FilterChainContext.TransportContext transportContext =
-                    ctx.getTransportContext();
+            final FilterChainContext.TransportContext transportContext = ctx.getTransportContext();
 
             if (transportContext.getCompletionHandler() != null) {
                 throw new IllegalStateException("TransportContext CompletionHandler must be null");
             }
 
-            final CompletionHandler completionHandler =
-                    ((TransportFilter.FlushEvent) event).getCompletionHandler();
+            final CompletionHandler completionHandler = ((TransportFilter.FlushEvent) event).getCompletionHandler();
 
-            transport.getWriter(transportContext.isBlocking()).write(connection,
-                    Buffers.EMPTY_BUFFER, completionHandler);
+            transport.getWriter(transportContext.isBlocking()).write(connection, Buffers.EMPTY_BUFFER, completionHandler);
 
             transportContext.setCompletionHandler(null);
         }
 
         return ctx.getInvokeAction();
     }
-    
+
     @Override
-    public void exceptionOccurred(final FilterChainContext ctx,
-            final Throwable error) {
+    public void exceptionOccurred(final FilterChainContext ctx, final Throwable error) {
 
         final Connection connection = ctx.getConnection();
         if (connection != null) {

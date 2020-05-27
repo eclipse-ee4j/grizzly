@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.compression.zip;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.TransformationResult;
@@ -23,11 +25,10 @@ import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.memory.Buffers;
-import java.io.IOException;
 
 /**
- * This class implements a {@link org.glassfish.grizzly.filterchain.Filter} which
- * encodes/decodes data in the GZIP format.
+ * This class implements a {@link org.glassfish.grizzly.filterchain.Filter} which encodes/decodes data in the GZIP
+ * format.
  *
  * @author Alexey Stashok
  */
@@ -35,7 +36,7 @@ public class GZipFilter extends BaseFilter {
 
     private final GZipDecoder decoder;
     private final GZipEncoder encoder;
-    
+
     /**
      * Construct <tt>GZipFilter</tt> using default buffer sizes.
      */
@@ -45,6 +46,7 @@ public class GZipFilter extends BaseFilter {
 
     /**
      * Construct <tt>GZipFilter</tt> using specific buffer sizes.
+     * 
      * @param inBufferSize input buffer size
      * @param outBufferSize output buffer size
      */
@@ -54,8 +56,7 @@ public class GZipFilter extends BaseFilter {
     }
 
     /**
-     * Method perform the clean up of GZIP encoding/decoding state on a closed
-     * {@link Connection}.
+     * Method perform the clean up of GZIP encoding/decoding state on a closed {@link Connection}.
      *
      * @param ctx Context of {@link FilterChainContext} processing.
      * @return the next action
@@ -66,13 +67,14 @@ public class GZipFilter extends BaseFilter {
         final Connection connection = ctx.getConnection();
         decoder.release(connection);
         encoder.release(connection);
-        
+
         return super.handleClose(ctx);
     }
 
     /**
-     * Method decodes GZIP encoded data stored in {@link FilterChainContext#getMessage()} and,
-     * as the result, produces a {@link Buffer} with a plain data.
+     * Method decodes GZIP encoded data stored in {@link FilterChainContext#getMessage()} and, as the result, produces a
+     * {@link Buffer} with a plain data.
+     * 
      * @param ctx Context of {@link FilterChainContext} processing.
      *
      * @return the next action
@@ -82,8 +84,7 @@ public class GZipFilter extends BaseFilter {
     public NextAction handleRead(FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         final Buffer input = ctx.getMessage();
-        final TransformationResult<Buffer, Buffer> result =
-                decoder.transform(connection, input);
+        final TransformationResult<Buffer, Buffer> result = decoder.transform(connection, input);
 
         final Buffer remainder = result.getExternalRemainder();
 
@@ -95,24 +96,21 @@ public class GZipFilter extends BaseFilter {
 
         try {
             switch (result.getStatus()) {
-                case COMPLETE: {
-                    ctx.setMessage(result.getMessage());
-                    return ctx.getInvokeAction(remainder);
-                }
+            case COMPLETE: {
+                ctx.setMessage(result.getMessage());
+                return ctx.getInvokeAction(remainder);
+            }
 
-                case INCOMPLETE: {
-                    return ctx.getStopAction(remainder);
-                }
+            case INCOMPLETE: {
+                return ctx.getStopAction(remainder);
+            }
 
-                case ERROR: {
-                    throw new IllegalStateException("GZip decode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
+            case ERROR: {
+                throw new IllegalStateException("GZip decode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
 
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();
@@ -120,8 +118,9 @@ public class GZipFilter extends BaseFilter {
     }
 
     /**
-     * Method compresses plain data stored in {@link FilterChainContext#getMessage()} and,
-     * as the result, produces a {@link Buffer} with a GZIP compressed data.
+     * Method compresses plain data stored in {@link FilterChainContext#getMessage()} and, as the result, produces a
+     * {@link Buffer} with a GZIP compressed data.
+     * 
      * @param ctx Context of {@link FilterChainContext} processing.
      *
      * @return the next action
@@ -131,39 +130,33 @@ public class GZipFilter extends BaseFilter {
     public NextAction handleWrite(FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         final Buffer input = ctx.getMessage();
-        final TransformationResult<Buffer, Buffer> result =
-                encoder.transform(connection, input);
+        final TransformationResult<Buffer, Buffer> result = encoder.transform(connection, input);
 
         input.dispose();
-        
+
         try {
             switch (result.getStatus()) {
-                case COMPLETE:
-                case INCOMPLETE: {
-                    final Buffer readyBuffer = result.getMessage();
-                    final Buffer finishBuffer = encoder.finish(connection);
+            case COMPLETE:
+            case INCOMPLETE: {
+                final Buffer readyBuffer = result.getMessage();
+                final Buffer finishBuffer = encoder.finish(connection);
 
-                    final Buffer resultBuffer = Buffers.appendBuffers(
-                            connection.getMemoryManager(),
-                            readyBuffer, finishBuffer);
+                final Buffer resultBuffer = Buffers.appendBuffers(connection.getMemoryManager(), readyBuffer, finishBuffer);
 
-                    if (resultBuffer != null) {
-                        ctx.setMessage(resultBuffer);
-                        return ctx.getInvokeAction();
-                    } else {
-                        return ctx.getStopAction();
-                    }
+                if (resultBuffer != null) {
+                    ctx.setMessage(resultBuffer);
+                    return ctx.getInvokeAction();
+                } else {
+                    return ctx.getStopAction();
                 }
+            }
 
-                case ERROR: {
-                    throw new IllegalStateException("GZip decode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
+            case ERROR: {
+                throw new IllegalStateException("GZip decode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
 
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();

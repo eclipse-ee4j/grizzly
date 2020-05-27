@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,32 +16,29 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.glassfish.grizzly.ThreadCache;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
+import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
 
 /**
- * A {@link WrapperAware} {@link MemoryManager} implementation for
- * managing {@link HeapBuffer} instances.
+ * A {@link WrapperAware} {@link MemoryManager} implementation for managing {@link HeapBuffer} instances.
  *
  * @since 2.0
  */
 public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> implements WrapperAware {
 
-    private static final ThreadCache.CachedTypeIndex<TrimmableHeapBuffer> CACHE_IDX =
-            ThreadCache.obtainIndex(TrimmableHeapBuffer.class,
-                    Integer.getInteger(HeapMemoryManager.class.getName() + ".thb-cache-size", 8));
+    private static final ThreadCache.CachedTypeIndex<TrimmableHeapBuffer> CACHE_IDX = ThreadCache.obtainIndex(TrimmableHeapBuffer.class,
+            Integer.getInteger(HeapMemoryManager.class.getName() + ".thb-cache-size", 8));
 
-    private static final ThreadCache.CachedTypeIndex<RecyclableByteBufferWrapper> BBW_CACHE_IDX =
-            ThreadCache.obtainIndex(RecyclableByteBufferWrapper.class,
-                    Integer.getInteger(HeapMemoryManager.class.getName() + ".rbbw-cache-size", 2));
+    private static final ThreadCache.CachedTypeIndex<RecyclableByteBufferWrapper> BBW_CACHE_IDX = ThreadCache.obtainIndex(RecyclableByteBufferWrapper.class,
+            Integer.getInteger(HeapMemoryManager.class.getName() + ".rbbw-cache-size", 2));
 
     public HeapMemoryManager() {
         super();
@@ -53,7 +50,6 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
     // ---------------------------------------------- Methods from MemoryManager
 
-
     /**
      * {@inheritDoc}
      */
@@ -61,7 +57,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     public HeapBuffer allocate(final int size) {
         return allocateHeapBuffer(size);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -77,7 +73,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     public HeapBuffer reallocate(final HeapBuffer oldBuffer, final int newSize) {
         return reallocateHeapBuffer(oldBuffer, newSize);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -85,7 +81,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     public void release(final HeapBuffer buffer) {
         releaseHeapBuffer(buffer);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -115,14 +111,10 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
      */
     @Override
     protected Object createJmxManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.memory.jmx.HeapMemoryManager", this,
-                HeapMemoryManager.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.memory.jmx.HeapMemoryManager", this, HeapMemoryManager.class);
     }
 
-
     // ----------------------------------------------- Methods from WrapperAware
-
 
     /**
      * {@inheritDoc}
@@ -162,9 +154,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     @Override
     public Buffer wrap(final ByteBuffer byteBuffer) {
         if (byteBuffer.hasArray()) {
-            return wrap(byteBuffer.array(),
-                    byteBuffer.arrayOffset() + byteBuffer.position(),
-                    byteBuffer.remaining());
+            return wrap(byteBuffer.array(), byteBuffer.arrayOffset() + byteBuffer.position(), byteBuffer.remaining());
         } else {
             return createByteBufferWrapper(byteBuffer);
         }
@@ -172,11 +162,11 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
     // ------------------------------------------------------- Protected Methods
 
-
     /**
-     * Creates a new HeapBuffer with a a specified size. 
+     * Creates a new HeapBuffer with a a specified size.
+     * 
      * @param size size of buffer created
-     * @return 
+     * @return
      */
     protected HeapBuffer allocateHeapBuffer(final int size) {
         if (size > maxBufferSize) {
@@ -218,51 +208,46 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
             return createTrimAwareBuffer(size);
         }
     }
-    
+
     protected HeapBuffer reallocateHeapBuffer(HeapBuffer oldHeapBuffer, int newSize) {
-        if (oldHeapBuffer.capacity() >= newSize) return oldHeapBuffer;
+        if (oldHeapBuffer.capacity() >= newSize) {
+            return oldHeapBuffer;
+        }
 
         final ThreadLocalPool<HeapBuffer> memoryPool = getHeapBufferThreadLocalPool();
         if (memoryPool != null) {
-            final HeapBuffer newBuffer =
-                    memoryPool.reallocate(oldHeapBuffer, newSize);
+            final HeapBuffer newBuffer = memoryPool.reallocate(oldHeapBuffer, newSize);
 
             if (newBuffer != null) {
-                ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig,
-                        newSize - oldHeapBuffer.capacity());
+                ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig, newSize - oldHeapBuffer.capacity());
 
                 return newBuffer;
             }
         }
-        
+
         final HeapBuffer newHeapBuffer = allocateHeapBuffer(newSize);
         oldHeapBuffer.flip();
         return newHeapBuffer.put(oldHeapBuffer);
     }
-
 
     protected final void releaseHeapBuffer(final HeapBuffer heapBuffer) {
         final ThreadLocalPool<HeapBuffer> memoryPool = getHeapBufferThreadLocalPool();
         if (memoryPool != null) {
 
             if (memoryPool.release(heapBuffer.clear())) {
-                ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig,
-                        heapBuffer.capacity());
+                ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig, heapBuffer.capacity());
             }
         }
 
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private void reallocatePoolBuffer() {
         final byte[] heap = new byte[maxBufferSize];
         ProbeNotifier.notifyBufferAllocated(monitoringConfig, maxBufferSize);
 
-        final HeapBufferThreadLocalPool threadLocalCache =
-                getHeapBufferThreadLocalPool();
+        final HeapBufferThreadLocalPool threadLocalCache = getHeapBufferThreadLocalPool();
         if (threadLocalCache != null) {
             threadLocalCache.reset(heap, 0, maxBufferSize);
         }
@@ -271,12 +256,11 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     TrimmableHeapBuffer createTrimAwareBuffer(final int length) {
         final byte[] heap = new byte[length];
         ProbeNotifier.notifyBufferAllocated(monitoringConfig, length);
-        
+
         return createTrimAwareBuffer(heap, 0, length);
     }
 
-    TrimmableHeapBuffer createTrimAwareBuffer(final byte[] heap,
-            final int offset, final int length) {
+    TrimmableHeapBuffer createTrimAwareBuffer(final byte[] heap, final int offset, final int length) {
 
         final TrimmableHeapBuffer buffer = ThreadCache.takeFromCache(CACHE_IDX);
         if (buffer != null) {
@@ -287,8 +271,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
         return new TrimmableHeapBuffer(this, heap, offset, length);
     }
 
-    private ByteBufferWrapper createByteBufferWrapper(
-            final ByteBuffer underlyingByteBuffer) {
+    private ByteBufferWrapper createByteBufferWrapper(final ByteBuffer underlyingByteBuffer) {
 
         final RecyclableByteBufferWrapper buffer = ThreadCache.takeFromCache(BBW_CACHE_IDX);
         if (buffer != null) {
@@ -300,21 +283,17 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
     }
 
     /**
-     * Gets the thread local buffer pool
-     * If the pool is not an instance of HeapBufferThreadLocalPool then null is returned
-     * @return 
+     * Gets the thread local buffer pool If the pool is not an instance of HeapBufferThreadLocalPool then null is returned
+     * 
+     * @return
      */
     @SuppressWarnings("unchecked")
     private static HeapBufferThreadLocalPool getHeapBufferThreadLocalPool() {
         final ThreadLocalPool pool = getThreadLocalPool();
-        return ((pool instanceof HeapBufferThreadLocalPool)
-                    ? (HeapBufferThreadLocalPool) pool
-                    : null);
+        return pool instanceof HeapBufferThreadLocalPool ? (HeapBufferThreadLocalPool) pool : null;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     /**
      * Information about thread associated memory pool.
@@ -327,20 +306,19 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
         private int leftPos;
         private int rightPos;
-        
+
         private int start;
         private int end;
 
         private final ByteBuffer[] byteBufferCache;
         private int byteBufferCacheSize = 0;
         private final HeapMemoryManager mm;
-        
+
         public HeapBufferThreadLocalPool(final HeapMemoryManager mm) {
             this(mm, 8);
         }
 
-        public HeapBufferThreadLocalPool(final HeapMemoryManager mm,
-                                         final int maxByteBufferCacheSize) {
+        public HeapBufferThreadLocalPool(final HeapMemoryManager mm, final int maxByteBufferCacheSize) {
             byteBufferCache = new ByteBuffer[maxByteBufferCacheSize];
             this.mm = mm;
         }
@@ -361,8 +339,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
         public HeapBuffer reallocate(final HeapBuffer heapBuffer, final int newSize) {
             final int diff;
 
-            if (isLastAllocated(heapBuffer)
-                    && remaining() >= (diff = (newSize - heapBuffer.cap))) {
+            if (isLastAllocated(heapBuffer) && remaining() >= (diff = newSize - heapBuffer.cap)) {
 
                 rightPos += diff;
                 heapBuffer.cap = newSize;
@@ -376,15 +353,13 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
         @Override
         public boolean release(final HeapBuffer heapBuffer) {
-            boolean canCacheByteBuffer =
-                    heapBuffer.byteBuffer != null &&
-                    byteBufferCacheSize < byteBufferCache.length;
+            boolean canCacheByteBuffer = heapBuffer.byteBuffer != null && byteBufferCacheSize < byteBufferCache.length;
 
             final boolean result;
 
             if (isLastAllocated(heapBuffer)) {
                 rightPos -= heapBuffer.cap;
-                
+
                 if (leftPos == rightPos) {
                     leftPos = rightPos = start;
                 }
@@ -395,14 +370,14 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
                 if (leftPos == rightPos) {
                     leftPos = rightPos = start;
                 }
-                
+
                 result = true;
             } else if (wantReset(heapBuffer.cap)) {
                 reset(heapBuffer);
-                
+
                 result = true;
             } else {
-                canCacheByteBuffer = canCacheByteBuffer && (pool == heapBuffer.heap);
+                canCacheByteBuffer = canCacheByteBuffer && pool == heapBuffer.heap;
                 result = false;
             }
 
@@ -435,15 +410,13 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
         @Override
         public boolean isLastAllocated(final HeapBuffer oldHeapBuffer) {
-            return oldHeapBuffer.heap == pool &&
-                    (oldHeapBuffer.offset + oldHeapBuffer.cap == rightPos);
+            return oldHeapBuffer.heap == pool && oldHeapBuffer.offset + oldHeapBuffer.cap == rightPos;
         }
 
         private boolean isReleasableLeft(final HeapBuffer oldHeapBuffer) {
-            return oldHeapBuffer.heap == pool &&
-                    oldHeapBuffer.offset == leftPos;
+            return oldHeapBuffer.heap == pool && oldHeapBuffer.offset == leftPos;
         }
-        
+
         @Override
         public HeapBuffer reduceLastAllocated(final HeapBuffer heapBuffer) {
             final int newPos = heapBuffer.offset + heapBuffer.cap;
@@ -467,10 +440,7 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
         @Override
         public String toString() {
-            return "(pool=" + pool.length +
-                    " pos=" + rightPos +
-                    " cap=" + end
-                    + ')';
+            return "(pool=" + pool.length + " pos=" + rightPos + " cap=" + end + ')';
         }
 
         private void clearByteBufferCache() {
@@ -478,24 +448,17 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
             byteBufferCacheSize = 0;
         }
 
-
     } // END ByteBufferThreadLocalPool
 
-
     /**
-     * {@link HeapBuffer} implementation, which supports trimming. In
-     * other words it's possible to return unused {@link org.glassfish.grizzly.Buffer} space to
-     * pool.
+     * {@link HeapBuffer} implementation, which supports trimming. In other words it's possible to return unused
+     * {@link org.glassfish.grizzly.Buffer} space to pool.
      */
-    private static final class TrimmableHeapBuffer extends HeapBuffer
-            implements TrimAware {
+    private static final class TrimmableHeapBuffer extends HeapBuffer implements TrimAware {
 
         private HeapMemoryManager mm;
-        
-        private TrimmableHeapBuffer(final HeapMemoryManager mm,
-                                    byte[] heap,
-                                    int offset,
-                                    int capacity) {
+
+        private TrimmableHeapBuffer(final HeapMemoryManager mm, byte[] heap, int offset, int capacity) {
             super(heap, offset, capacity);
             this.mm = mm;
         }
@@ -506,10 +469,8 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
 
             final int sizeToReturn = cap - pos;
 
-
             if (sizeToReturn > 0) {
-                final HeapBufferThreadLocalPool threadLocalCache =
-                        getHeapBufferThreadLocalPool();
+                final HeapBufferThreadLocalPool threadLocalCache = getHeapBufferThreadLocalPool();
                 if (threadLocalCache != null) {
 
                     if (threadLocalCache.isLastAllocated(this)) {
@@ -557,15 +518,11 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
         }
 
         @Override
-        protected HeapBuffer createHeapBuffer(final int offs,
-                                              final int capacity) {
+        protected HeapBuffer createHeapBuffer(final int offs, final int capacity) {
             return mm.createTrimAwareBuffer(heap, offs + offset, capacity);
         }
 
-        void initialize(final HeapMemoryManager mm,
-                        final byte[] heap,
-                        final int offset,
-                        final int length) {
+        void initialize(final HeapMemoryManager mm, final byte[] heap, final int offset, final int length) {
 
             this.mm = mm;
             this.heap = heap;
@@ -573,13 +530,12 @@ public class HeapMemoryManager extends AbstractMemoryManager<HeapBuffer> impleme
             pos = 0;
             cap = length;
             lim = length;
-            
+
             disposeStackTrace = null;
         }
     } // END TrimAwareWrapper
 
-    private final static class RecyclableByteBufferWrapper extends ByteBufferWrapper
-            implements Cacheable {
+    private final static class RecyclableByteBufferWrapper extends ByteBufferWrapper implements Cacheable {
 
         private RecyclableByteBufferWrapper(final ByteBuffer underlyingByteBuffer) {
             super(underlyingByteBuffer);

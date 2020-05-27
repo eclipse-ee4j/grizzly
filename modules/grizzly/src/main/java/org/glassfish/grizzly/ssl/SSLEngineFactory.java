@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,24 +20,22 @@ import javax.net.ssl.SSLEngine;
 
 /**
  * The factory responsible for creating {@link SSLEngine}.
- * 
+ *
  * @author Grizzly team
  */
 public interface SSLEngineFactory {
     /**
-     * Create and configure {@link SSLEngine} using this factory configuration
-     * using advisory peer information.
+     * Create and configure {@link SSLEngine} using this factory configuration using advisory peer information.
      * <P>
-     * Applications using this factory method may provide hints
-     * for an internal session reuse strategy by providing peerHost and peerPort
-     * information.
+     * Applications using this factory method may provide hints for an internal session reuse strategy by providing peerHost
+     * and peerPort information.
      * <P>
-     * Some cipher suites (such as Kerberos) require remote hostname
-     * information, in which case peerHost needs to be specified.
-     * 
-     * @param   peerHost the non-authoritative name of the host, or <tt>null</tt> to not specify one
-     * @param   peerPort the non-authoritative port, or <tt>-1</tt> to not specify one
-     * 
+     * Some cipher suites (such as Kerberos) require remote hostname information, in which case peerHost needs to be
+     * specified.
+     *
+     * @param peerHost the non-authoritative name of the host, or <tt>null</tt> to not specify one
+     * @param peerPort the non-authoritative port, or <tt>-1</tt> to not specify one
+     *
      * @return {@link SSLEngine}.
      */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,8 +19,7 @@ package org.glassfish.grizzly;
 import java.io.IOException;
 
 /**
- * Thrown when an attempt is made to add a record that exceeds
- * the configured maximum queue size.
+ * Thrown when an attempt is made to add a record that exceeds the configured maximum queue size.
  *
  * @since 2.0
  */

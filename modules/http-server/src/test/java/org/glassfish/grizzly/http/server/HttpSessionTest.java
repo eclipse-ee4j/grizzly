@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,6 +19,7 @@ package org.glassfish.grizzly.http.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -55,26 +56,38 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 
+import junit.framework.TestCase;
+
 /**
  * Session parsing tests
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class HttpSessionTest extends TestCase {
-    private static final int PORT = 8039;
+    private static int PORT = PORT();
+
+    static int PORT() {
+        try {
+            int port = 8039 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     public void testPassedSessionId() throws Exception {
-        final HttpHandler httpHandler = new HttpSessionHandler();
-        final HttpPacket request = createRequest("/index.html;jsessionid=123456", null);
-        final HttpContent response = doTest(httpHandler, request, 10);
+        HttpHandler httpHandler = new HttpSessionHandler();
+        HttpPacket request = createRequest("/index.html;jsessionid=123456", null);
+        HttpContent response = doTest(httpHandler, request, 10);
 
-        final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        String responseContent = response.getContent().toStringContent();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -86,16 +99,16 @@ public class HttpSessionTest extends TestCase {
     }
 
     public void testPassedSessionId2() throws Exception {
-        final HttpHandler httpHandler = new HttpSessionHandler();
-        final HttpPacket request = createRequest("/index.html;jsessionid=123456;var=abc", null);
-        final HttpContent response = doTest(httpHandler, request, 10);
+        HttpHandler httpHandler = new HttpSessionHandler();
+        HttpPacket request = createRequest("/index.html;jsessionid=123456;var=abc", null);
+        HttpContent response = doTest(httpHandler, request, 10);
 
-        final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        String responseContent = response.getContent().toStringContent();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -107,16 +120,16 @@ public class HttpSessionTest extends TestCase {
     }
 
     public void testPassedSessionIdAndJRoute() throws Exception {
-        final HttpHandler httpHandler = new HttpSessionHandler();
-        final HttpPacket request = createRequest("/index.html;jsessionid=123456:987", null);
-        final HttpContent response = doTest(httpHandler, request, 10);
+        HttpHandler httpHandler = new HttpSessionHandler();
+        HttpPacket request = createRequest("/index.html;jsessionid=123456:987", null);
+        HttpContent response = doTest(httpHandler, request, 10);
 
-        final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        String responseContent = response.getContent().toStringContent();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -133,12 +146,12 @@ public class HttpSessionTest extends TestCase {
     }
 
     public void testCreateSession() throws Exception {
-        final HttpHandler httpHandler = new HttpCreaeteSessionHandler();
-        final HttpPacket request = createRequest("/session", null);
-        final HttpContent response = doTest(httpHandler, request, 10);
+        HttpHandler httpHandler = new HttpCreaeteSessionHandler();
+        HttpPacket request = createRequest("/session", null);
+        HttpContent response = doTest(httpHandler, request, 10);
 
-        final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        String responseContent = response.getContent().toStringContent();
+        Map<String, String> props = new HashMap<>();
 
         String cookieSessionId = null;
         int sessionCookiesNum = 0;
@@ -153,7 +166,7 @@ public class HttpSessionTest extends TestCase {
         // Check session-id in the content
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -163,14 +176,14 @@ public class HttpSessionTest extends TestCase {
         assertNotNull(sessionId);
         assertTrue(cookieSessionId.contains(sessionId));
     }
-    
-    public void testCreateSessionWithInvalidId() throws Exception {
-        final HttpHandler httpHandler = new HttpCreaeteSessionHandler();
-        final HttpPacket request = createRequest("/session;jsessionid=123456", null);
-        final HttpContent response = doTest(httpHandler, request, 10);
 
-        final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+    public void testCreateSessionWithInvalidId() throws Exception {
+        HttpHandler httpHandler = new HttpCreaeteSessionHandler();
+        HttpPacket request = createRequest("/session;jsessionid=123456", null);
+        HttpContent response = doTest(httpHandler, request, 10);
+
+        String responseContent = response.getContent().toStringContent();
+        Map<String, String> props = new HashMap<>();
 
         String cookieSessionId = null;
         int sessionCookiesNum = 0;
@@ -185,7 +198,7 @@ public class HttpSessionTest extends TestCase {
         // Check session-id in the content
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -196,9 +209,9 @@ public class HttpSessionTest extends TestCase {
         assertTrue(cookieSessionId.contains(sessionId));
         assertFalse("123456".equals(sessionId));
     }
-    
+
     public void testChangeSessionId() throws Exception {
-        final HttpHandler httpHandler = new HttpHandler() {
+        HttpHandler httpHandler = new HttpHandler() {
             @Override
             public void service(Request req, Response res) throws Exception {
                 Session session = req.getSession(false);
@@ -212,33 +225,33 @@ public class HttpSessionTest extends TestCase {
                 res.addHeader("A", (String) a);
             }
         };
-        
+
         HttpServer server = createWebServer(httpHandler);
-        
+
         try {
+            Thread.sleep(10);
             server.start();
-            final HttpPacket request1 = createRequest("/test", null);
-            final HttpContent response1 = sendRequest(request1, 10);
-            
+            HttpPacket request1 = createRequest("/test", null);
+            HttpContent response1 = sendRequest(request1, 10);
+
             Cookie[] cookies1 = getCookies(response1.getHttpHeader().getHeaders());
-            
+
             assertEquals(1, cookies1.length);
             assertEquals(Globals.SESSION_COOKIE_NAME, cookies1[0].getName());
-            
+
             String[] values1 = getHeaderValues(response1.getHttpHeader().getHeaders(), "A");
             assertEquals(1, values1.length);
             assertEquals("1", values1[0]);
-                        
-            final HttpPacket request2 = createRequest("/test",
-                    Collections.singletonMap(Header.Cookie.toString(),
-                    Globals.SESSION_COOKIE_NAME + "=" + cookies1[0].getValue()));
-            
-            final HttpContent response2 = sendRequest(request2, 10);
+
+            HttpPacket request2 = createRequest("/test",
+                    Collections.singletonMap(Header.Cookie.toString(), Globals.SESSION_COOKIE_NAME + "=" + cookies1[0].getValue()));
+
+            HttpContent response2 = sendRequest(request2, 10);
             Cookie[] cookies2 = getCookies(response2.getHttpHeader().getHeaders());
-            
+
             assertEquals(1, cookies2.length);
             assertEquals(Globals.SESSION_COOKIE_NAME, cookies2[0].getName());
-            
+
             String[] values2 = getHeaderValues(response2.getHttpHeader().getHeaders(), "A");
             assertEquals(1, values2.length);
             assertEquals("2", values2[0]);
@@ -249,24 +262,25 @@ public class HttpSessionTest extends TestCase {
             server.shutdownNow();
         }
     }
-    
-    public void testEncodeURL() throws Exception {
-        
-        HttpServer server = createWebServer(new HttpEncodeURLHandler());
-        
-        try {
-            server.start();
-            
-            final HttpPacket request = createRequest("/index.html", null);
-            final HttpContent response = sendRequest(request, 10);
 
-            final String responseContent = response.getContent().toStringContent();
-            Map<String, String> props = new HashMap<String, String>();
+    public void testEncodeURL() throws Exception {
+
+        HttpServer server = createWebServer(new HttpEncodeURLHandler());
+
+        try {
+            Thread.sleep(10);
+            server.start();
+
+            HttpPacket request = createRequest("/index.html", null);
+            HttpContent response = sendRequest(request, 10);
+
+            String responseContent = response.getContent().toStringContent();
+            Map<String, String> props = new HashMap<>();
 
             BufferedReader reader = new BufferedReader(new StringReader(responseContent));
             String line;
-            while((line = reader.readLine()) != null) {
-                final int idx = line.indexOf('=');
+            while ((line = reader.readLine()) != null) {
+                int idx = line.indexOf('=');
                 assertTrue(idx != -1);
 
                 props.put(line.substring(0, idx), line.substring(idx + 1, line.length()));
@@ -278,14 +292,13 @@ public class HttpSessionTest extends TestCase {
 
             String encodeURL1 = props.get("encodeURL1");
             assertEquals("/encodeURL", encodeURL1);
-            
+
             String encodeURL2 = props.get("encodeURL2");
             assertEquals("/encodeURL;jsessionid=" + sessionId, encodeURL2);
-            
+
             String encodeURL3 = props.get("encodeURL3");
-            assertEquals("http://localhost:" + PORT + "/;jsessionid=" + sessionId,
-                    encodeURL3);
-            
+            assertEquals("http://localhost:" + PORT + "/;jsessionid=" + sessionId, encodeURL3);
+
             String encodeRedirectURL1 = props.get("encodeRedirectURL1");
             assertEquals("/encodeRedirectURL", encodeRedirectURL1);
 
@@ -298,8 +311,8 @@ public class HttpSessionTest extends TestCase {
             server.shutdownNow();
         }
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     private HttpPacket createRequest(String uri, Map<String, String> headers) {
 
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
@@ -313,13 +326,11 @@ public class HttpSessionTest extends TestCase {
         return b.build();
     }
 
-    private HttpContent doTest(final HttpHandler httpHandler,
-            final HttpPacket request,
-            final int timeout)
-            throws Exception {
+    private HttpContent doTest(HttpHandler httpHandler, HttpPacket request, int timeout) throws Exception {
 
-        final HttpServer server = createWebServer(httpHandler);
+        HttpServer server = createWebServer(httpHandler);
         try {
+            Thread.sleep(10);
             server.start();
             return sendRequest(request, timeout);
         } finally {
@@ -327,13 +338,10 @@ public class HttpSessionTest extends TestCase {
         }
     }
 
-    private HttpServer createWebServer(final HttpHandler httpHandler) {
+    private HttpServer createWebServer(HttpHandler httpHandler) {
 
-        final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        HttpServer server = new HttpServer();
+        NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandler, "/");
@@ -342,10 +350,10 @@ public class HttpSessionTest extends TestCase {
 
     }
 
-    private HttpContent sendRequest(final HttpPacket request, final int timeout) throws Exception {
+    private HttpContent sendRequest(HttpPacket request, int timeout) throws Exception {
 
         HttpConnection connection = connect();
-        
+
         try {
             return connection.send(request).get(timeout, TimeUnit.SECONDS);
         } finally {
@@ -354,70 +362,67 @@ public class HttpSessionTest extends TestCase {
     }
 
     private HttpConnection connect() {
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
 
         FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
         clientFilterChainBuilder.add(new TransportFilter());
         clientFilterChainBuilder.add(new ChunkingFilter(5));
         clientFilterChainBuilder.add(new HttpClientFilter());
-        
-        final ClientFilter clientFilter = new ClientFilter();
-        
+
+        ClientFilter clientFilter = new ClientFilter();
+
         clientFilterChainBuilder.add(clientFilter);
         clientTransport.setProcessor(clientFilterChainBuilder.build());
 
         Connection connection = null;
-        
+
         try {
             clientTransport.start();
             Future<Connection> connectFuture = clientTransport.connect("localhost", PORT);
             connection = connectFuture.get(10, TimeUnit.SECONDS);
-            
+
             return new HttpConnection(clientTransport, connection, clientFilter);
         } catch (Exception e) {
             if (connection != null) {
                 connection.closeSilently();
             }
-            
+
             try {
                 clientTransport.shutdownNow();
             } catch (IOException ee) {
             }
-            
+
             throw new IllegalStateException(e);
         }
     }
 
     private Cookie[] getCookies(MimeHeaders headers) {
-        final Cookies cookies = new Cookies();
+        Cookies cookies = new Cookies();
         cookies.setHeaders(headers, false);
         return cookies.get();
     }
-    
+
     private String[] getHeaderValues(MimeHeaders headers, String name) {
-        final List<String> values = new ArrayList<String>();
-        
+        List<String> values = new ArrayList<>();
+
         for (String value : headers.values(name)) {
             values.add(value);
         }
-        
+
         return values.toArray(new String[values.size()]);
     }
-    
-    private static class HttpConnection {
-        private final Transport transport;
-        private final Connection connection;
-        private final ClientFilter clientFilter;
 
-        private HttpConnection(TCPNIOTransport transport,
-                Connection connection,
-                ClientFilter clientFilter) {
+    private static class HttpConnection {
+        private Transport transport;
+        private Connection connection;
+        private ClientFilter clientFilter;
+
+        private HttpConnection(TCPNIOTransport transport, Connection connection, ClientFilter clientFilter) {
             this.transport = transport;
             this.connection = connection;
             this.clientFilter = clientFilter;
         }
-        
+
         public void close() throws IOException {
             connection.close();
             transport.shutdownNow();
@@ -429,14 +434,13 @@ public class HttpSessionTest extends TestCase {
             return clientFilter.testFuture;
         }
     }
-    
+
     private static class ClientFilter extends BaseFilter {
-        private final static Logger logger = Grizzly.logger(ClientFilter.class);
+        private static Logger logger = Grizzly.logger(ClientFilter.class);
 
         private FutureImpl<HttpContent> testFuture;
 
         // -------------------------------------------------------- Constructors
-
 
         public ClientFilter() {
         }
@@ -448,16 +452,15 @@ public class HttpSessionTest extends TestCase {
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
-            final HttpContent httpContent = ctx.getMessage();
+            HttpContent httpContent = ctx.getMessage();
 
             logger.log(Level.FINE, "Got HTTP response chunk");
 
             // Get HttpContent's Buffer
-            final Buffer buffer = httpContent.getContent();
+            Buffer buffer = httpContent.getContent();
 
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE, "HTTP content size: {0}", buffer.remaining());
@@ -473,8 +476,7 @@ public class HttpSessionTest extends TestCase {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -482,7 +484,7 @@ public class HttpSessionTest extends TestCase {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
@@ -511,7 +513,7 @@ public class HttpSessionTest extends TestCase {
 
         @Override
         public void service(Request request, Response response) throws Exception {
-            final Session session = request.getSession(true);
+            Session session = request.getSession(true);
             if (session != null) {
                 response.getWriter().write("session-id=" + session.getIdInternal() + "\n");
             } else {
@@ -519,22 +521,22 @@ public class HttpSessionTest extends TestCase {
             }
         }
     }
-    
+
     public static class HttpEncodeURLHandler extends HttpHandler {
 
         @Override
         public void service(Request request, Response response) throws Exception {
-            final String encodeURL1 = response.encodeURL("/encodeURL");
-            final String encodeRedirectURL1 = response.encodeRedirectURL("/encodeRedirectURL");
-            
-            final Session session = request.getSession();
-            
-            final String encodeURL2 = response.encodeURL("/encodeURL");
-            final String encodeRedirectURL2 = response.encodeRedirectURL("/encodeRedirectURL");
-            
-            final String encodeURL3 = response.encodeURL("");
-            final String encodeRedirectURL3 = response.encodeRedirectURL("");
-            
+            String encodeURL1 = response.encodeURL("/encodeURL");
+            String encodeRedirectURL1 = response.encodeRedirectURL("/encodeRedirectURL");
+
+            Session session = request.getSession();
+
+            String encodeURL2 = response.encodeURL("/encodeURL");
+            String encodeRedirectURL2 = response.encodeRedirectURL("/encodeRedirectURL");
+
+            String encodeURL3 = response.encodeURL("");
+            String encodeRedirectURL3 = response.encodeRedirectURL("");
+
             if (session != null) {
                 response.getWriter().write("session-id=" + session.getIdInternal() + "\n");
                 response.getWriter().write("encodeURL1=" + encodeURL1 + "\n");
@@ -547,5 +549,5 @@ public class HttpSessionTest extends TestCase {
                 response.getWriter().write("FAILED\n");
             }
         }
-    }    
+    }
 }

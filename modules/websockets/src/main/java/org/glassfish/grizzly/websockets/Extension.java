@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,11 +27,9 @@ import java.util.List;
 public final class Extension {
 
     private final String name;
-    private final List<Parameter> parameters = new ArrayList<Parameter>();
-
+    private final List<Parameter> parameters = new ArrayList<>();
 
     // ------------------------------------------------------------ Constructors
-
 
     /**
      * Constructs a new Extension with the specified name.
@@ -42,9 +40,7 @@ public final class Extension {
         this.name = name;
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     /**
      * @return the extension name.
@@ -62,13 +58,16 @@ public final class Extension {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Extension extension = (Extension) o;
 
-        return name.equals(extension.name)
-                && parameters.equals(extension.parameters);
+        return name.equals(extension.name) && parameters.equals(extension.parameters);
 
     }
 
@@ -94,7 +93,6 @@ public final class Extension {
 
     // ---------------------------------------------------------- Nested Classes
 
-
     /**
      * Representation of extension parameters.
      */
@@ -103,9 +101,7 @@ public final class Extension {
         private final String name;
         private String value;
 
-
         // -------------------------------------------------------- Constructors
-
 
         /**
          * Constructs a new parameter based on the provided values.
@@ -122,7 +118,6 @@ public final class Extension {
             this.name = name;
             this.value = value;
         }
-
 
         // ------------------------------------------------------ Public Methods
 
@@ -151,15 +146,16 @@ public final class Extension {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Parameter parameter = (Parameter) o;
 
-            return name.equals(parameter.name)
-                    && !(value != null
-                             ? !value.equals(parameter.value)
-                             : parameter.value != null);
+            return name.equals(parameter.name) && !(value != null ? !value.equals(parameter.value) : parameter.value != null);
 
         }
 

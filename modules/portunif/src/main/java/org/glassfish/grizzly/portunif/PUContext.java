@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,7 +18,7 @@ package org.glassfish.grizzly.portunif;
 
 /**
  * Protocol discovering context, passed to the {@link ProtocolFinder}.
- * 
+ *
  * @author Alexey Stashok
  */
 public class PUContext {
@@ -44,7 +44,7 @@ public class PUContext {
     }
 
     public boolean noProtocolsFound() {
-        return (Integer.bitCount(skippedProtocolFinders) == protocolMissCount);
+        return Integer.bitCount(skippedProtocolFinders) == protocolMissCount;
     }
 
     void reset() {

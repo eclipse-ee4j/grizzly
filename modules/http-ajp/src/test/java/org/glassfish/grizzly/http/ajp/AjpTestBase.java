@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,6 @@
 
 package org.glassfish.grizzly.http.ajp;
 
-import org.junit.After;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -27,17 +25,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
+import org.junit.After;
 import org.junit.Before;
 
 public class AjpTestBase {
     static final int PORT = 19012;
     static final String LISTENER_NAME = "ajp";
     HttpServer httpServer;
-    
+
     private Socket socket;
 
     AjpAddOn ajpAddon;
@@ -95,7 +95,7 @@ public class AjpTestBase {
         return ByteBuffer.wrap(stream.toByteArray());
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     protected void send(byte[] request) throws IOException {
         if (socket == null || socket.isClosed()) {
             socket = new Socket("localhost", PORT);
@@ -112,41 +112,39 @@ public class AjpTestBase {
                 socket.close();
             } catch (IOException e) {
             }
-            
+
             socket = null;
         }
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     protected byte[] readAjpMessage() throws IOException {
         final byte[] tmpHeaderBuffer = new byte[4];
-        
+
         final InputStream stream = socket.getInputStream();
         Utils.readFully(stream, tmpHeaderBuffer, 0, 4);
 
         if (tmpHeaderBuffer[0] != 'A' || tmpHeaderBuffer[1] != 'B') {
             throw new IllegalStateException("Incorrect protocol magic");
         }
-        
+
         final int length = Utils.getShort(tmpHeaderBuffer, 2);
-        
+
         final byte[] ajpMessage = new byte[4 + length];
         System.arraycopy(tmpHeaderBuffer, 0, ajpMessage, 0, 4);
-        
+
         Utils.readFully(stream, ajpMessage, 4, length);
-        
+
         return ajpMessage;
     }
+
     private void configureHttpServer() throws Exception {
         httpServer = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener(LISTENER_NAME,
-                NetworkListener.DEFAULT_NETWORK_HOST,
-                PORT);
+        final NetworkListener listener = new NetworkListener(LISTENER_NAME, NetworkListener.DEFAULT_NETWORK_HOST, PORT);
 
         ajpAddon = new AjpAddOn();
         listener.registerAddOn(ajpAddon);
-        
+
         httpServer.addListener(listener);
     }
 

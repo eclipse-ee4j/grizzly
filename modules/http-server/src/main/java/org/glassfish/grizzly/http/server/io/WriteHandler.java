@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,14 +16,13 @@
 
 package org.glassfish.grizzly.http.server.io;
 
-
 /**
- * Callback notification mechanism that signals the developer it's possible
- * to write content.
+ * Callback notification mechanism that signals the developer it's possible to write content.
  *
  * @since 2.0
- * 
+ *
  * @deprecated please use {@link org.glassfish.grizzly.WriteHandler}
  */
+@Deprecated
 public interface WriteHandler extends org.glassfish.grizzly.WriteHandler {
 }

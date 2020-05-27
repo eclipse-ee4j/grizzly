@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -40,16 +40,13 @@ public class HttpServiceFactory implements ServiceFactory {
     }
 
     @Override
-    public HttpService getService(
-            Bundle bundle, ServiceRegistration serviceRegistration) {
+    public HttpService getService(Bundle bundle, ServiceRegistration serviceRegistration) {
         logger.info("Bundle: " + bundle + ", is getting HttpService with serviceRegistration: " + serviceRegistration);
         return new HttpServiceImpl(bundle, logger);
     }
 
     @Override
-    public void ungetService(
-            Bundle bundle, ServiceRegistration serviceRegistration,
-            Object httpServiceObj) {
+    public void ungetService(Bundle bundle, ServiceRegistration serviceRegistration, Object httpServiceObj) {
         logger.info("Bundle: " + bundle + ", is ungetting HttpService with serviceRegistration: " + serviceRegistration);
         mainHttpHandler.uregisterAllLocal();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -36,76 +36,141 @@ import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 
 /**
- * An {@link AccessLogFormat} using a standard vaguely similar and heavily
- * influenced by <a href="http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats">Apache's
- * own custom access log formats</a>.
+ * An {@link AccessLogFormat} using a standard vaguely similar and heavily influenced by
+ * <a href="http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats">Apache's own custom access log
+ * formats</a>.
  *
- * <p>As with Apache, the format string specified at
- * {@linkplain #ApacheLogFormat(String) construction} should be composed of
- * these tokens:</p>
+ * <p>
+ * As with Apache, the format string specified at {@linkplain #ApacheLogFormat(String) construction} should be composed
+ * of these tokens:
+ * </p>
  *
  * <table>
- * <tr><th><code>%%</code></th>
- *     <td>The literal percent sign (can also be escaped with back-slash, like "<code>\%</code>"</td></tr>
- * <tr><th><code>%a</code></th>
- *     <td>Remote IP-address</td></tr>
- * <tr><th><code>%A</code></th>
- *     <td>Local IP-address</td></tr>
- * <tr><th><code>%b</code></th>
- *     <td>Size of response in bytes, excluding HTTP headers, using "<code>-</code>" (a <em>dash</em> character) rather than a "<code>0</code>" (<em>zero</em>) when no bytes are sent</td></tr>
- * <tr><th><code>%B</code></th>
- *     <td>Size of response in bytes, excluding HTTP headers</td></tr>
- * <tr><th><code>%{Foobar}C</code></th>
- *     <td>The contents of cookie "<code>Foobar</code>" in the request sent to the server</td></tr>
- * <tr><th><code>%D</code></th>
- *     <td>The time taken to serve the request, in microseconds</td></tr>
- * <tr><th><code>%h</code></th>
- *     <td>Remote host name</td></tr>
- * <tr><th><code>%{local|remote}h</code></th>
- *     <td>Host name, either "<code>local</code>" or "<code>remote</code>"</td></tr>
- * <tr><th><code>%H</code></th>
- *     <td>The request protocol</td></tr>
- * <tr><th><code>%{Foobar}i</code></th>
- *     <td>The contents of the "<code>Foobar: ...</code>" header in the request</td></tr>
- * <tr><th><code>%m</code></th>
- *     <td>The request method</td></tr>
- * <tr><th><code>%{Foobar}o</code></th>
- *     <td>The contents of the "<code>Foobar: ...</code>" header in the response</td></tr>
- * <tr><th><code>%p</code></th>
- *     <td>Local port number</td></tr>
- * <tr><th><code>%{local|remote}p</code></th>
- *     <td>The port number, either "<code>local</code>" or "<code>remote</code>"</td></tr>
- * <tr><th><code>%q</code></th>
- *     <td>The query string, prepended with a "<code>?</code>" (<em>question mark</em>) if a query string exists, otherwise an empty string</td></tr>
- * <tr><th><code>%r</code></th>
- *     <td>First line of request, an alias to "<code>%m %U%q %H</code>"</td></tr>
- * <tr><th><code>%s</code></th>
- *     <td>Status code</td></tr>
- * <tr><th><code>%t</code></th>
- *     <td>The time the request was received, in standard <em>English</em> format (like "<code>[09/Feb/2014:12:00:34 +0900]</code>")</td></tr>
- * <tr><th><code>%{[format][@timezone]}t</code></th>
- *     <td>The time the request was received. Both <em>format</em> and <em>timezone</em> are optional<br>
- *         <ul><li>When "<code>format</code>" is left unspecified, the default <code>%t</code> format <code>[yyyy/MMM/dd:HH:mm:ss Z]</code> is used</li>
- *             <li>When "<code>format</code>" is specified, the given pattern <b>must</b> be a valid {@link SimpleDateFormat} pattern.</li>
- *             <li>When "<code>@timezone</code>" is left unspecified, the {@linkplain TimeZone#getDefault() default time zone} is used.</li>
- *             <li>When "<code>@timezone</code>" is specified, the time zone will be looked up by {@linkplain TimeZone#getTimeZone(String) time zone identifier}
- *                 (note that this will default to <em>GMT</em> if the specified identifier was not recognized).</li>
- *         </ul>
- *         When the "<code>@</code>" character needs to be used in the <em>format</em>, it <b>must</b> be escaped as "<em>@@</em>"</td></tr>
- * <tr><th><code>%T</code></th>
- *     <td>The time taken to serve the request, in seconds</td></tr>
- * <tr><th><code>%{...}T</code></th>
- *     <td>The time taken to serve the request. The parameter can be a time unit like:
- *         <ul><li>"<code>n</code>",  "<code>nano<em>[s]<em></code>",  "<code>nanosec<em>[s]<em></code>",  "<code>nanosecond<em>[s]<em></code>"</li>
- *             <li>                  "<code>micro<em>[s]<em></code>", "<code>microsec<em>[s]<em></code>", "<code>microsecond<em>[s]<em></code>"</li>
- *             <li>"<code>m</code>", "<code>milli<em>[s]<em></code>", "<code>millisec<em>[s]<em></code>", "<code>millisecond<em>[s]<em></code>"</li>
- *             <li>"<code>s</code>",                                       "<code>sec<em>[s]<em></code>",      "<code>second<em>[s]<em></code>"</li></ul></td></tr>
- * <tr><th><code>%u</code></th>
- *     <td>The remote user name</td></tr>
- * <tr><th><code>%U</code></th>
- *     <td>The URL path requested, not including any query string</td></tr>
- * <tr><th><code>%v</code></th>
- *     <td>The name of the server which served the request</td></tr>
+ * <tr>
+ * <th><code>%%</code></th>
+ * <td>The literal percent sign (can also be escaped with back-slash, like "<code>\%</code>"</td>
+ * </tr>
+ * <tr>
+ * <th><code>%a</code></th>
+ * <td>Remote IP-address</td>
+ * </tr>
+ * <tr>
+ * <th><code>%A</code></th>
+ * <td>Local IP-address</td>
+ * </tr>
+ * <tr>
+ * <th><code>%b</code></th>
+ * <td>Size of response in bytes, excluding HTTP headers, using "<code>-</code>" (a <em>dash</em> character) rather than
+ * a "<code>0</code>" (<em>zero</em>) when no bytes are sent</td>
+ * </tr>
+ * <tr>
+ * <th><code>%B</code></th>
+ * <td>Size of response in bytes, excluding HTTP headers</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{Foobar}C</code></th>
+ * <td>The contents of cookie "<code>Foobar</code>" in the request sent to the server</td>
+ * </tr>
+ * <tr>
+ * <th><code>%D</code></th>
+ * <td>The time taken to serve the request, in microseconds</td>
+ * </tr>
+ * <tr>
+ * <th><code>%h</code></th>
+ * <td>Remote host name</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{local|remote}h</code></th>
+ * <td>Host name, either "<code>local</code>" or "<code>remote</code>"</td>
+ * </tr>
+ * <tr>
+ * <th><code>%H</code></th>
+ * <td>The request protocol</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{Foobar}i</code></th>
+ * <td>The contents of the "<code>Foobar: ...</code>" header in the request</td>
+ * </tr>
+ * <tr>
+ * <th><code>%m</code></th>
+ * <td>The request method</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{Foobar}o</code></th>
+ * <td>The contents of the "<code>Foobar: ...</code>" header in the response</td>
+ * </tr>
+ * <tr>
+ * <th><code>%p</code></th>
+ * <td>Local port number</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{local|remote}p</code></th>
+ * <td>The port number, either "<code>local</code>" or "<code>remote</code>"</td>
+ * </tr>
+ * <tr>
+ * <th><code>%q</code></th>
+ * <td>The query string, prepended with a "<code>?</code>" (<em>question mark</em>) if a query string exists, otherwise
+ * an empty string</td>
+ * </tr>
+ * <tr>
+ * <th><code>%r</code></th>
+ * <td>First line of request, an alias to "<code>%m %U%q %H</code>"</td>
+ * </tr>
+ * <tr>
+ * <th><code>%s</code></th>
+ * <td>Status code</td>
+ * </tr>
+ * <tr>
+ * <th><code>%t</code></th>
+ * <td>The time the request was received, in standard <em>English</em> format (like
+ * "<code>[09/Feb/2014:12:00:34 +0900]</code>")</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{[format][@timezone]}t</code></th>
+ * <td>The time the request was received. Both <em>format</em> and <em>timezone</em> are optional<br>
+ * <ul>
+ * <li>When "<code>format</code>" is left unspecified, the default <code>%t</code> format
+ * <code>[yyyy/MMM/dd:HH:mm:ss Z]</code> is used</li>
+ * <li>When "<code>format</code>" is specified, the given pattern <b>must</b> be a valid {@link SimpleDateFormat}
+ * pattern.</li>
+ * <li>When "<code>@timezone</code>" is left unspecified, the {@linkplain TimeZone#getDefault() default time zone} is
+ * used.</li>
+ * <li>When "<code>@timezone</code>" is specified, the time zone will be looked up by
+ * {@linkplain TimeZone#getTimeZone(String) time zone identifier} (note that this will default to <em>GMT</em> if the
+ * specified identifier was not recognized).</li>
+ * </ul>
+ * When the "<code>@</code>" character needs to be used in the <em>format</em>, it <b>must</b> be escaped as
+ * "<em>@@</em>"</td>
+ * </tr>
+ * <tr>
+ * <th><code>%T</code></th>
+ * <td>The time taken to serve the request, in seconds</td>
+ * </tr>
+ * <tr>
+ * <th><code>%{...}T</code></th>
+ * <td>The time taken to serve the request. The parameter can be a time unit like:
+ * <ul>
+ * <li>"<code>n</code>", "<code>nano<em>[s]<em></code>", "<code>nanosec<em>[s]<em></code>",
+ * "<code>nanosecond<em>[s]<em></code>"</li>
+ * <li>"<code>micro<em>[s]<em></code>", "<code>microsec<em>[s]<em></code>", "<code>microsecond<em>[s]<em></code>"</li>
+ * <li>"<code>m</code>", "<code>milli<em>[s]<em></code>", "<code>millisec<em>[s]<em></code>",
+ * "<code>millisecond<em>[s]<em></code>"</li>
+ * <li>"<code>s</code>", "<code>sec<em>[s]<em></code>", "<code>second<em>[s]<em></code>"</li>
+ * </ul>
+ * </td>
+ * </tr>
+ * <tr>
+ * <th><code>%u</code></th>
+ * <td>The remote user name</td>
+ * </tr>
+ * <tr>
+ * <th><code>%U</code></th>
+ * <td>The URL path requested, not including any query string</td>
+ * </tr>
+ * <tr>
+ * <th><code>%v</code></th>
+ * <td>The name of the server which served the request</td>
+ * </tr>
  * </table>
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
@@ -142,17 +207,35 @@ public class ApacheLogFormat implements AccessLogFormat {
     /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>user-agent</em> format. */
     public static final ApacheLogFormat AGENT = new ApacheLogFormat(AGENT_FORMAT);
 
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>common</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>common</em> format set to use the <em>UTC</em>
+     * {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat COMMON_UTC = new ApacheLogFormat(UTC, COMMON_FORMAT);
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>combined</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>combined</em> format set to use the <em>UTC</em>
+     * {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat COMBINED_UTC = new ApacheLogFormat(UTC, COMBINED_FORMAT);
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>common with virtual-hosts</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>common with virtual-hosts</em> format set to use
+     * the <em>UTC</em> {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat VHOST_COMMON_UTC = new ApacheLogFormat(UTC, VHOST_COMMON_FORMAT);
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>combined with virtual-hosts</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>combined with virtual-hosts</em> format set to use
+     * the <em>UTC</em> {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat VHOST_COMBINED_UTC = new ApacheLogFormat(UTC, VHOST_COMBINED_FORMAT);
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>referer</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>referer</em> format set to use the <em>UTC</em>
+     * {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat REFERER_UTC = new ApacheLogFormat(UTC, REFERER_FORMAT);
-    /** A {@linkplain ApacheLogFormat format} compatible with Apache's <em>user-agent</em> format set to use the <em>UTC</em> {@linkplain TimeZone time zone}. */
+    /**
+     * A {@linkplain ApacheLogFormat format} compatible with Apache's <em>user-agent</em> format set to use the <em>UTC</em>
+     * {@linkplain TimeZone time zone}.
+     */
     public static final ApacheLogFormat AGENT_UTC = new ApacheLogFormat(UTC, AGENT_FORMAT);
 
     /* Log log log, never enough */
@@ -165,20 +248,20 @@ public class ApacheLogFormat implements AccessLogFormat {
     private final TimeZone timeZone;
 
     /**
-     * Create a new {@link ApacheLogFormat} instance by parsing the format
-     * from the specified {@link String}.
+     * Create a new {@link ApacheLogFormat} instance by parsing the format from the specified {@link String}.
      */
     public ApacheLogFormat(String format) {
         this(TimeZone.getDefault(), format);
     }
 
     /**
-     * Create a new {@link ApacheLogFormat} instance by parsing the format
-     * from the specified {@link String}.
+     * Create a new {@link ApacheLogFormat} instance by parsing the format from the specified {@link String}.
      */
     public ApacheLogFormat(TimeZone timeZone, String format) {
-        if (timeZone == null) throw new NullPointerException("Null time zone");
-        fields = new ArrayList<Field>();
+        if (timeZone == null) {
+            throw new NullPointerException("Null time zone");
+        }
+        fields = new ArrayList<>();
         this.timeZone = timeZone;
         parse(format);
     }
@@ -187,11 +270,13 @@ public class ApacheLogFormat implements AccessLogFormat {
     public String format(Response response, Date timeStamp, long responseNanos) {
         final StringBuilder builder = new StringBuilder();
         final Request request = response.getRequest();
-        for (Field field: fields) try {
-            field.format(builder, request, response, timeStamp, responseNanos);
-        } catch (Exception exception) {
-            LOGGER.log(WARNING, "Exception formatting access log entry", exception);
-            builder.append('-');
+        for (Field field : fields) {
+            try {
+                field.format(builder, request, response, timeStamp, responseNanos);
+            } catch (Exception exception) {
+                LOGGER.log(WARNING, "Exception formatting access log entry", exception);
+                builder.append('-');
+            }
         }
         return builder.toString();
     }
@@ -199,7 +284,7 @@ public class ApacheLogFormat implements AccessLogFormat {
     String unsafeFormat(Response response, Date timeStamp, long responseNanos) {
         final StringBuilder builder = new StringBuilder();
         final Request request = response.getRequest();
-        for (Field field: fields) {
+        for (Field field : fields) {
             field.format(builder, request, response, timeStamp, responseNanos);
         }
         return builder.toString();
@@ -210,20 +295,27 @@ public class ApacheLogFormat implements AccessLogFormat {
      */
     public String getFormat() {
         final StringBuilder builder = new StringBuilder();
-        for (Field field: fields) builder.append(field.toString());
+        for (Field field : fields) {
+            builder.append(field.toString());
+        }
         return builder.toString();
     }
 
     /* ====================================================================== */
-    /* PARSING OF FORMAT STRINGS                                              */
+    /* PARSING OF FORMAT STRINGS */
     /* ====================================================================== */
 
     private void parse(String format) {
-        for (int x = 0; x < format.length(); x ++) {
+        for (int x = 0; x < format.length(); x++) {
             switch (format.charAt(x)) {
-                case '\\': x = parseEscape(format, x); break;
-                case '%':  x = parseFormat(format, null, x); break;
-                default: addLiteral(format.charAt(x));
+            case '\\':
+                x = parseEscape(format, x);
+                break;
+            case '%':
+                x = parseFormat(format, null, x);
+                break;
+            default:
+                addLiteral(format.charAt(x));
             }
         }
     }
@@ -233,58 +325,109 @@ public class ApacheLogFormat implements AccessLogFormat {
             final char field = format.charAt(position);
 
             /* Initial check to see if parameter is supposed to be there */
-            if (parameter != null) switch (field) {
-                case 'C': break; // parameter is cookie name
-                case 'h': break; // parameter for host ("local" or "remote")
-                case 'i': break; // parameter is request header name
-                case 'o': break; // parameter is response header name
-                case 'p': break; // parameter for port ("local" or "remote")
-                case 't': break; // parameter is simple date format's format
-                case 'T': break; // parameter is scale ("nano", "micro", "milli" or number)
-                default: throw new IllegalArgumentException("Unsupported parameter \"" + parameter + "\" for field '" + field + "' in [" + format + "] at character " + position);
+            if (parameter != null) {
+                switch (field) {
+                case 'C':
+                    break; // parameter is cookie name
+                case 'h':
+                    break; // parameter for host ("local" or "remote")
+                case 'i':
+                    break; // parameter is request header name
+                case 'o':
+                    break; // parameter is response header name
+                case 'p':
+                    break; // parameter for port ("local" or "remote")
+                case 't':
+                    break; // parameter is simple date format's format
+                case 'T':
+                    break; // parameter is scale ("nano", "micro", "milli" or number)
+                default:
+                    throw new IllegalArgumentException(
+                            "Unsupported parameter \"" + parameter + "\" for field '" + field + "' in [" + format + "] at character " + position);
+                }
             }
 
-
             switch (field) {
-                case '{': return parseParameter(format, position);
-                case '%': addLiteral('%'); break; // The percent sign
-                case 'a': fields.add(new RemoteAddressField()); break; // Remote IP-address
-                case 'A': fields.add(new LocalAddressField()); break; // Local IP-address
-                case 'b': fields.add(new ResponseSizeField(false)); break; // Size of response in bytes in CLF format
-                case 'B': fields.add(new ResponseSizeField(true)); break; // Size of response in bytes with zeroes
-          /* */ case 'C': fields.add(new RequestCookieField(parameter)); break; // The contents of a cookie
-                case 'D': fields.add(new ResponseTimeField("micro", format, position)); break; // The time taken to serve the request, in microseconds.
-          /* */ case 'h':  // Remote (or local if parameterized) host
-                    fields.add(parseLocal(parameter, false, field, format, position) ?
-                                   new LocalHostField() :
-                                   new RemoteHostField());
-                    break;
-                case 'H': fields.add(new RequestProtocolField()); break; // The request protocol
-          /* */ case 'i': fields.add(new RequestHeaderField(parameter)); break; // A request header
-                case 'm': fields.add(new RequestMethodField()); break; // The request method
-          /* */ case 'o': fields.add(new ResponseHeaderField(parameter)); break; // A response header
-          /* */ case 'p': // Local (or remote if parameterized) port
-                    fields.add(parseLocal(parameter, true, field, format, position) ?
-                                   new LocalPortField() :
-                                   new RemotePortField());
-                    break;
-                case 'q': fields.add(new RequestQueryField()); break; // The query string (prepended with a ?)
-                case 'r': // First line of request, alias to "%m %U%q %H"
-                    fields.add(new RequestMethodField());
-                    addLiteral(' ');
-                    fields.add(new RequestURIField());
-                    fields.add(new RequestQueryField());
-                    addLiteral(' ');
-                    fields.add(new RequestProtocolField());
-                    break;
+            case '{':
+                return parseParameter(format, position);
+            case '%':
+                addLiteral('%');
+                break; // The percent sign
+            case 'a':
+                fields.add(new RemoteAddressField());
+                break; // Remote IP-address
+            case 'A':
+                fields.add(new LocalAddressField());
+                break; // Local IP-address
+            case 'b':
+                fields.add(new ResponseSizeField(false));
+                break; // Size of response in bytes in CLF format
+            case 'B':
+                fields.add(new ResponseSizeField(true));
+                break;
+            // Size of response in bytes with zeroes
+            /* */ case 'C':
+                fields.add(new RequestCookieField(parameter));
+                break; // The contents of a cookie
+            case 'D':
+                fields.add(new ResponseTimeField("micro", format, position));
+                break;
+            // The time taken to serve the request, in microseconds.
+            /* */ case 'h': // Remote (or local if parameterized) host
+                fields.add(parseLocal(parameter, false, field, format, position) ? new LocalHostField() : new RemoteHostField());
+                break;
+            case 'H':
+                fields.add(new RequestProtocolField());
+                break;
+            // The request protocol
+            /* */ case 'i':
+                fields.add(new RequestHeaderField(parameter));
+                break; // A request header
+            case 'm':
+                fields.add(new RequestMethodField());
+                break;
+            // The request method
+            /* */ case 'o':
+                fields.add(new ResponseHeaderField(parameter));
+                break;
+            // A response header
+            /* */ case 'p': // Local (or remote if parameterized) port
+                fields.add(parseLocal(parameter, true, field, format, position) ? new LocalPortField() : new RemotePortField());
+                break;
+            case 'q':
+                fields.add(new RequestQueryField());
+                break; // The query string (prepended with a ?)
+            case 'r': // First line of request, alias to "%m %U%q %H"
+                fields.add(new RequestMethodField());
+                addLiteral(' ');
+                fields.add(new RequestURIField());
+                fields.add(new RequestQueryField());
+                addLiteral(' ');
+                fields.add(new RequestProtocolField());
+                break;
 
-                case 's': fields.add(new ResponseStatusField()); break; // Status.
-          /* */ case 't': fields.add(new RequestTimeField(parameter, timeZone)); break; // The time, in the form given by format, which should be in strftime(3) format. (potentially localized)
-          /* */ case 'T': fields.add(new ResponseTimeField(parameter, format, position)); break; // The time taken to serve the request, in the scale specified.
-                case 'u': fields.add(new RequestUserField()); break; // The URL path requested, not including any query string.
-                case 'U': fields.add(new RequestURIField()); break; // The URL path requested, not including any query string.
-                case 'v': fields.add(new ServerNameField()); break; // The canonical ServerName of the server serving the request.
-                default: throw new IllegalArgumentException("Unsupported field '" + field + "' in [" + format + "] at character " + position);
+            case 's':
+                fields.add(new ResponseStatusField());
+                break;
+            // Status.
+            /* */ case 't':
+                fields.add(new RequestTimeField(parameter, timeZone));
+                break;
+            // The time, in the form given by format, which should be in strftime(3) format. (potentially localized)
+            /* */ case 'T':
+                fields.add(new ResponseTimeField(parameter, format, position));
+                break; // The time taken to serve the request, in the scale specified.
+            case 'u':
+                fields.add(new RequestUserField());
+                break; // The URL path requested, not including any query string.
+            case 'U':
+                fields.add(new RequestURIField());
+                break; // The URL path requested, not including any query string.
+            case 'v':
+                fields.add(new ServerNameField());
+                break; // The canonical ServerName of the server serving the request.
+            default:
+                throw new IllegalArgumentException("Unsupported field '" + field + "' in [" + format + "] at character " + position);
             }
             return position;
         }
@@ -292,14 +435,17 @@ public class ApacheLogFormat implements AccessLogFormat {
     }
 
     private boolean parseLocal(String parameter, boolean defaultValue, char field, String format, int position) {
-        if (parameter == null) return defaultValue;
+        if (parameter == null) {
+            return defaultValue;
+        }
         final String p = parameter.trim().toLowerCase();
         if (p.equals("local")) {
             return true;
         } else if (p.equals("remote")) {
             return false;
         } else {
-            throw new IllegalArgumentException("Unsupported parameter \"" + parameter + "\" for field '" + field + "' in [" + format + "] at character " + position);
+            throw new IllegalArgumentException(
+                    "Unsupported parameter \"" + parameter + "\" for field '" + field + "' in [" + format + "] at character " + position);
         }
     }
 
@@ -319,12 +465,23 @@ public class ApacheLogFormat implements AccessLogFormat {
         if (++position < format.length()) {
             final char escaped = format.charAt(position);
             switch (escaped) {
-                case 't': addLiteral('\t'); break;
-                case 'b': addLiteral('\b'); break;
-                case 'n': addLiteral('\n'); break;
-                case 'r': addLiteral('\r'); break;
-                case 'f': addLiteral('\f'); break;
-                default:  addLiteral(escaped);
+            case 't':
+                addLiteral('\t');
+                break;
+            case 'b':
+                addLiteral('\b');
+                break;
+            case 'n':
+                addLiteral('\n');
+                break;
+            case 'r':
+                addLiteral('\r');
+                break;
+            case 'f':
+                addLiteral('\f');
+                break;
+            default:
+                addLiteral(escaped);
             }
             return position;
         }
@@ -348,7 +505,7 @@ public class ApacheLogFormat implements AccessLogFormat {
     }
 
     /* ====================================================================== */
-    /* FIELD DECLARATIONS                                                     */
+    /* FIELD DECLARATIONS */
     /* ====================================================================== */
 
     private static abstract class Field {
@@ -376,7 +533,9 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         public final String toString() {
             final StringBuilder builder = new StringBuilder().append('%');
-            if (parameter != null) builder.append('{').append(parameter).append('}');
+            if (parameter != null) {
+                builder.append('{').append(parameter).append('}');
+            }
             return builder.append(format).toString();
         }
     }
@@ -394,8 +553,12 @@ public class ApacheLogFormat implements AccessLogFormat {
 
         StringBuilder format(StringBuilder builder, MimeHeaders headers) {
             final Iterator<String> iterator = headers.values(name).iterator();
-            if (iterator.hasNext()) builder.append(iterator.next());
-            while (iterator.hasNext()) builder.append("; ").append(iterator.next());
+            if (iterator.hasNext()) {
+                builder.append(iterator.next());
+            }
+            while (iterator.hasNext()) {
+                builder.append("; ").append(iterator.next());
+            }
             return builder;
         }
     }
@@ -422,14 +585,20 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         public String toString() {
             final StringBuilder builder = new StringBuilder();
-            for (int x = 0; x < contents.length(); x ++) {
+            for (int x = 0; x < contents.length(); x++) {
                 final char character = contents.charAt(x);
                 /* Escape \t \b \n \r \f and %% */
-                switch(character) {
-                    case 't': case 'b': case 'n': case 'r': case 'f':
-                        builder.append('\\'); break;
-                    case '%':
-                        builder.append('%'); break;
+                switch (character) {
+                case 't':
+                case 'b':
+                case 'n':
+                case 'r':
+                case 'f':
+                    builder.append('\\');
+                    break;
+                case '%':
+                    builder.append('%');
+                    break;
                 }
                 builder.append(character);
             }
@@ -561,7 +730,7 @@ public class ApacheLogFormat implements AccessLogFormat {
                 /* Check for timezone separation */
                 final int pos = format.lastIndexOf('@');
 
-                if ((pos < 0) || ((pos > 0) && (format.charAt(pos - 1) == '@'))) {
+                if (pos < 0 || pos > 0 && format.charAt(pos - 1) == '@') {
                     /* There is no '@' or the last '@' is actually an '@@' */
                     pattern = format.replace("@@", "@");
                     timeZone = zone;
@@ -584,7 +753,9 @@ public class ApacheLogFormat implements AccessLogFormat {
 
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
-            if (timeStamp == null) return builder.append('-');
+            if (timeStamp == null) {
+                return builder.append('-');
+            }
 
             final SimpleDateFormat format = simpleDateFormat.get();
             format.setTimeZone(timeZone);
@@ -653,7 +824,9 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
             final String query = request.getQueryString();
-            if (query != null) builder.append('?').append(query);
+            if (query != null) {
+                builder.append('?').append(query);
+            }
             return builder;
         }
     }
@@ -669,12 +842,18 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
             final Protocol protocol = request.getProtocol();
-            if (protocol == null) return builder.append("-");
+            if (protocol == null) {
+                return builder.append("-");
+            }
             switch (protocol) {
-                case HTTP_0_9: return builder.append("HTTP/0.9");
-                case HTTP_1_0: return builder.append("HTTP/1.0");
-                case HTTP_1_1: return builder.append("HTTP/1.1");
-                default: return builder.append("-");
+            case HTTP_0_9:
+                return builder.append("HTTP/0.9");
+            case HTTP_1_0:
+                return builder.append("HTTP/1.0");
+            case HTTP_1_1:
+                return builder.append("HTTP/1.1");
+            default:
+                return builder.append("-");
             }
         }
     }
@@ -707,9 +886,11 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
             final Cookie[] cookies = request.getCookies();
-            if (cookies != null) for (Cookie cookie: cookies) {
-                if (name.equals(cookie.getName().toLowerCase())) {
-                    return builder.append(cookie.getValue());
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (name.equals(cookie.getName().toLowerCase())) {
+                        return builder.append(cookie.getValue());
+                    }
                 }
             }
             return builder;
@@ -727,8 +908,12 @@ public class ApacheLogFormat implements AccessLogFormat {
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
             final int status = response.getStatus();
-            if (status < 10) builder.append('0');
-            if (status < 100) builder.append('0');
+            if (status < 10) {
+                builder.append('0');
+            }
+            if (status < 100) {
+                builder.append('0');
+            }
             return builder.append(status);
         }
     }
@@ -765,43 +950,44 @@ public class ApacheLogFormat implements AccessLogFormat {
             }
 
             String s = unit.trim().toLowerCase();
-            if (s.equals("n") || s.equals("nano") || s.equals(
-                    "nanos") || s.equals("nanosec") || s.equals(
-                    "nanosecs") || s.equals("nanosecond") || s.equals(
-                    "nanoseconds")) {
+            if (s.equals("n") || s.equals("nano") || s.equals("nanos") || s.equals("nanosec") || s.equals("nanosecs") || s.equals("nanosecond")
+                    || s.equals("nanoseconds")) {
                 scale = 1;
-            } else if (s.equals("micro") || s.equals("micros") || s.equals(
-                    "microsec") || s.equals("microsecs") || s.equals(
-                    "microsecond") || s.equals("microseconds")) {
+            } else if (s.equals("micro") || s.equals("micros") || s.equals("microsec") || s.equals("microsecs") || s.equals("microsecond")
+                    || s.equals("microseconds")) {
                 scale = 1000;
-            } else if (s.equals("m") || s.equals("milli") || s.equals(
-                    "millis") || s.equals("millisec") || s.equals(
-                    "millisecs") || s.equals("millisecond") || s.equals(
-                    "milliseconds")) {
+            } else if (s.equals("m") || s.equals("milli") || s.equals("millis") || s.equals("millisec") || s.equals("millisecs") || s.equals("millisecond")
+                    || s.equals("milliseconds")) {
                 scale = 1000000;
-            } else if (s.equals("s") || s.equals("sec") || s.equals(
-                    "secs") || s.equals("second") || s.equals("seconds")) {
+            } else if (s.equals("s") || s.equals("sec") || s.equals("secs") || s.equals("second") || s.equals("seconds")) {
                 scale = 1000000000;
             } else {
-                throw new IllegalArgumentException(
-                        "Unsupported time unit \"" + unit + "\" for field 'T' in [" + format + "] at character " + position);
+                throw new IllegalArgumentException("Unsupported time unit \"" + unit + "\" for field 'T' in [" + format + "] at character " + position);
             }
         }
 
         @Override
         StringBuilder format(StringBuilder builder, Request request, Response response, Date timeStamp, long responseNanos) {
-            if (responseNanos < 0) return builder.append('-');
+            if (responseNanos < 0) {
+                return builder.append('-');
+            }
             return builder.append(responseNanos / scale);
         }
 
         @Override
         public String toString() {
             final StringBuilder string = new StringBuilder().append('%');
-            if      (scale          == 1) string.append("{n}T");
-            else if (scale       == 1000) string.append('D');
-            else if (scale    == 1000000) string.append("{m}T");
-            else if (scale == 1000000000) string.append('T');
-            else string.append('{').append(scale).append("}T");
+            if (scale == 1) {
+                string.append("{n}T");
+            } else if (scale == 1000) {
+                string.append('D');
+            } else if (scale == 1000000) {
+                string.append("{m}T");
+            } else if (scale == 1000000000) {
+                string.append('T');
+            } else {
+                string.append('{').append(scale).append("}T");
+            }
             return string.toString();
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,13 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Hardcoded mime-type supported by default.   Additional extension/mime-type mappings may be added by calling {@link
- * MimeType#add(String, String)}, however, keep in mind that these mappings are per-JVM.
+ * Hardcoded mime-type supported by default. Additional extension/mime-type mappings may be added by calling
+ * {@link MimeType#add(String, String)}, however, keep in mind that these mappings are per-JVM.
  *
  * @author Jeanfrancois Arcand
  */
 public class MimeType {
-    private final static Map<String, String> contentTypes = new HashMap<String, String>();
+    private final static Map<String, String> contentTypes = new HashMap<>();
 
     static {
         contentTypes.put("abs", "audio/x-mpeg");
@@ -179,8 +179,8 @@ public class MimeType {
     /**
      * @param extension the extension
      *
-     * @return the content type associated with <code>extension</code>.  If no association is found, this method will
-     *         return <code>text/plain</code>
+     * @return the content type associated with <code>extension</code>. If no association is found, this method will return
+     * <code>text/plain</code>
      */
     public static String get(String extension) {
         return get(extension, "text/plain");
@@ -191,7 +191,7 @@ public class MimeType {
      * @param defaultCt the content type to return if there is no known association for the specified extension
      *
      * @return the content type associated with <code>extension</code> or if no associate is found, returns
-     *         <code>defaultCt</code>
+     * <code>defaultCt</code>
      */
     public static String get(String extension, String defaultCt) {
         final String mime = contentTypes.get(extension);
@@ -208,25 +208,25 @@ public class MimeType {
     }
 
     /**
-     * <p> Associates the specified extension and content type </p>
+     * <p>
+     * Associates the specified extension and content type
+     * </p>
      *
      * @param extension the extension
      * @param contentType the content type associated with the extension
      */
     public static void add(String extension, String contentType) {
-        if (extension != null && extension.length() != 0
-            && contentType != null && contentType.length() != 0) {
+        if (extension != null && extension.length() != 0 && contentType != null && contentType.length() != 0) {
 
             contentTypes.put(extension, contentType);
         }
     }
-    
+
     /**
      * @param fileName the filename
      *
-     * @return the content type associated with <code>extension</code> of the 
-     *         given filename or if no associate is found, returns
-     *         <code>null</code>
+     * @return the content type associated with <code>extension</code> of the given filename or if no associate is found,
+     * returns <code>null</code>
      */
     public static String getByFilename(String fileName) {
         String extn = getExtension(fileName);
@@ -237,7 +237,7 @@ public class MimeType {
             return null;
         }
     }
-    
+
     /**
      * Get extension of file, without fragment id
      */
@@ -251,9 +251,9 @@ public class MimeType {
             newEnd = length;
         }
         // Instead of creating a new string.
-        //         if (i != -1) {
-        //             fileName = fileName.substring(0, i);
-        //         }
+        // if (i != -1) {
+        // fileName = fileName.substring(0, i);
+        // }
         int i = fileName.lastIndexOf('.', newEnd);
         if (i != -1) {
             return fileName.substring(i + 1, newEnd);
@@ -261,6 +261,5 @@ public class MimeType {
             // no extension, no content type
             return null;
         }
-    }    
+    }
 }
-

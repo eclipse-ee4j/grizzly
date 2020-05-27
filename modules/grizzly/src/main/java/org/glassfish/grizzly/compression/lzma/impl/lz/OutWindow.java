@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,11 +16,11 @@
 
 package org.glassfish.grizzly.compression.lzma.impl.lz;
 
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.memory.MemoryManager;
-
 import java.io.IOException;
+
+import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.compression.lzma.LZMADecoder;
+import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
  * OutWindow
@@ -49,7 +49,7 @@ public class OutWindow {
     }
 
     public void releaseBuffer() throws IOException {
-        //Flush();
+        // Flush();
         _decoderState = null;
     }
 
@@ -75,7 +75,7 @@ public class OutWindow {
         dst.put(_buffer, _streamPos, size);
         dst.trim();
         dst.position(dst.limit());
-        
+
         if (_pos >= _windowSize) {
             _pos = 0;
         }
@@ -113,16 +113,13 @@ public class OutWindow {
         return _buffer[pos];
     }
 
-    @SuppressWarnings({"unchecked"})
-    private static Buffer resizeBuffer(final MemoryManager memoryManager,
-                                         final Buffer buffer, final int grow) {
+    @SuppressWarnings({ "unchecked" })
+    private static Buffer resizeBuffer(final MemoryManager memoryManager, final Buffer buffer, final int grow) {
         if (buffer == null) {
             return memoryManager.allocate(Math.max(grow, 4096));
         }
 
-        return memoryManager.reallocate(buffer, Math.max(
-                buffer.capacity() + grow,
-                (buffer.capacity() * 3) / 2 + 1));
+        return memoryManager.reallocate(buffer, Math.max(buffer.capacity() + grow, buffer.capacity() * 3 / 2 + 1));
     }
 
 }

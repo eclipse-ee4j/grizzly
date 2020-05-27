@@ -21,10 +21,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Principal;
 import java.util.logging.Logger;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.http.Cookie;
@@ -36,43 +33,41 @@ import org.glassfish.grizzly.servlet.HttpServletResponseImpl;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.websockets.glassfish.GlassfishSupport;
 
-@SuppressWarnings({"StringContatenationInLoop"})
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+@SuppressWarnings({ "StringContatenationInLoop" })
 public class DefaultWebSocket extends SimpleWebSocket {
     private static final Logger LOGGER = Grizzly.logger(DefaultWebSocket.class);
 
     protected final HttpServletRequest servletRequest;
 
-    public DefaultWebSocket(final ProtocolHandler protocolHandler,
-                            final HttpRequestPacket request,
-                            final WebSocketListener... listeners) {
+    public DefaultWebSocket(final ProtocolHandler protocolHandler, final HttpRequestPacket request, final WebSocketListener... listeners) {
 
         super(protocolHandler, listeners);
         final FilterChainContext ctx = protocolHandler.getFilterChainContext();
-        
+
         if (ctx != null) { // ctx != null means server side.
             final WSRequestImpl grizzlyRequest = new WSRequestImpl();
             final Response grizzlyResponse = grizzlyRequest.getResponse();
 
             grizzlyRequest.initialize(request, ctx, null);
-            grizzlyResponse.initialize(grizzlyRequest, request.getResponse(),
-                    ctx, null, null);
+            grizzlyResponse.initialize(grizzlyRequest, request.getResponse(), ctx, null, null);
 
             try {
                 // Has to be called before servlet request/response wrappers initialization
                 grizzlyRequest.parseSessionId();
-                
-                final WSServletRequestImpl grizzlyServletRequest =
-                        new WSServletRequestImpl();
-                final WSServletResponseImpl grizzlyServletResponse =
-                        new WSServletResponseImpl();
-                
-                final WebSocketMappingData mappingData =
-                        protocolHandler.getMappingData();
-                
-                grizzlyServletRequest.initialize(grizzlyRequest,
-                        grizzlyServletResponse, mappingData);
+
+                final WSServletRequestImpl grizzlyServletRequest = new WSServletRequestImpl();
+                final WSServletResponseImpl grizzlyServletResponse = new WSServletResponseImpl();
+
+                final WebSocketMappingData mappingData = protocolHandler.getMappingData();
+
+                grizzlyServletRequest.initialize(grizzlyRequest, grizzlyServletResponse, mappingData);
                 grizzlyServletResponse.initialize(grizzlyResponse, grizzlyServletRequest);
-                
+
                 servletRequest = grizzlyServletRequest;
             } catch (IOException e) {
                 throw new IllegalStateException("Unexpected exception", e);
@@ -84,20 +79,17 @@ public class DefaultWebSocket extends SimpleWebSocket {
     }
 
     /**
-     * Returns the upgrade request for this WebSocket.  
-     * 
-     * @return the upgrade request for this {@link WebSocket}.  This method
-     *  may return <code>null</code> depending on the context under which this
-     *  {@link WebSocket} was created.
+     * Returns the upgrade request for this WebSocket.
+     *
+     * @return the upgrade request for this {@link WebSocket}. This method may return <code>null</code> depending on the
+     * context under which this {@link WebSocket} was created.
      */
     public HttpServletRequest getUpgradeRequest() {
         return servletRequest;
     }
 
-
     // ----------------------------------------------------------- Inner Classes
 
-    
     private static class WSRequestImpl extends Request {
 
         public WSRequestImpl() {
@@ -125,14 +117,14 @@ public class DefaultWebSocket extends SimpleWebSocket {
                 }
             }
         }
-    } // END WSRequestImpl    
-    
+    } // END WSRequestImpl
+
     private static class WSResponseImpl extends Response {
 
         public WSResponseImpl() {
         }
-    } // END WSResponseImpl 
-    
+    } // END WSResponseImpl
+
     private static class WSServletRequestImpl extends HttpServletRequestImpl {
 
         private GlassfishSupport glassfishSupport;
@@ -140,34 +132,32 @@ public class DefaultWebSocket extends SimpleWebSocket {
         private String servletPath;
         private String contextPath;
         private boolean isUserPrincipalUpdated;
-        
+
         private BufferedReader reader;
-        
-        public void initialize(final Request request,
-                final HttpServletResponseImpl servletResponse,
-                final WebSocketMappingData mappingData) throws IOException {
-            
+
+        public void initialize(final Request request, final HttpServletResponseImpl servletResponse, final WebSocketMappingData mappingData)
+                throws IOException {
+
             if (mappingData != null) {
                 updatePaths(mappingData);
             } else {
                 contextPath = request.getContextPath();
             }
-            
+
             if (mappingData != null && mappingData.isGlassfish) {
-                glassfishSupport = new GlassfishSupport(mappingData.context,
-                        mappingData.wrapper, this);
+                glassfishSupport = new GlassfishSupport(mappingData.context, mappingData.wrapper, this);
             } else {
                 glassfishSupport = new GlassfishSupport();
             }
-            
-            super.initialize(request, servletResponse,
-                    new WebappContext("web-socket-ctx", contextPath));
+
+            super.initialize(request, servletResponse, new WebappContext("web-socket-ctx", contextPath));
         }
 
         @Override
         public ServletInputStream getInputStream() throws IOException {
-            if (usingReader)
+            if (usingReader) {
                 throw new IllegalStateException("Illegal attempt to call getInputStream() after getReader() has already been called.");
+            }
 
             usingInputStream = true;
             return Utils.NULL_SERVLET_INPUT_STREAM;
@@ -175,11 +165,12 @@ public class DefaultWebSocket extends SimpleWebSocket {
 
         @Override
         public BufferedReader getReader() throws IOException {
-            if (usingInputStream)
+            if (usingInputStream) {
                 throw new IllegalStateException("Illegal attempt to call getReader() after getInputStream() has already been called.");
+            }
 
             usingReader = true;
-            //inputBuffer.checkConverter();
+            // inputBuffer.checkConverter();
             if (reader == null) {
                 reader = new BufferedReader(Utils.NULL_READER);
             }
@@ -240,9 +231,9 @@ public class DefaultWebSocket extends SimpleWebSocket {
         public String getPathInfo() {
             return pathInfo;
         }
-        
+
         private void updatePaths(final WebSocketMappingData mappingData) {
-            
+
             pathInfo = mappingData.pathInfo.toString();
             servletPath = mappingData.wrapperPath.toString();
             contextPath = mappingData.contextPath.toString();
@@ -255,14 +246,15 @@ public class DefaultWebSocket extends SimpleWebSocket {
             }
         }
     } // END WSServletRequestImpl
-    
+
     private static class WSServletResponseImpl extends HttpServletResponseImpl {
         private PrintWriter writer;
-        
+
         @Override
         public PrintWriter getWriter() throws IOException {
-            if (usingOutputStream)
+            if (usingOutputStream) {
                 throw new IllegalStateException("Illegal attempt to call getWriter() after getOutputStream has already been called.");
+            }
 
             usingWriter = true;
             if (writer == null) {
@@ -274,12 +266,13 @@ public class DefaultWebSocket extends SimpleWebSocket {
 
         @Override
         public ServletOutputStream getOutputStream() throws IOException {
-            if (usingWriter)
+            if (usingWriter) {
                 throw new IllegalStateException("Illegal attempt to call getOutputStream() after getWriter() has already been called.");
+            }
 
             usingOutputStream = true;
             return Utils.NULL_SERVLET_OUTPUT_STREAM;
         }
-        
+
     } // END WSServletResponseImpl
 }

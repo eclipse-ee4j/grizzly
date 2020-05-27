@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -13,6 +13,7 @@ package org.glassfish.grizzly.samples.ssl;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
@@ -24,8 +25,8 @@ import org.glassfish.grizzly.ssl.SSLFilter;
 import org.glassfish.grizzly.utils.StringFilter;
 
 /**
- * Class initializes and starts the SSL echo server, based on Grizzly 2.0
- * We use the {@link EchoFilter} from echo example.
+ * Class initializes and starts the SSL echo server, based on Grizzly 2.0 We use the {@link EchoFilter} from echo
+ * example.
  *
  * @see SSLFilter
  * @see SSLContextConfigurator
@@ -56,10 +57,8 @@ public class SSLEchoServer {
         // Use the plain EchoFilter
         filterChainBuilder.add(new EchoFilter());
 
-
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -79,10 +78,10 @@ public class SSLEchoServer {
             System.out.println("Stopped transport...");
         }
     }
-    
+
     /**
      * Initialize server side SSL configuration.
-     * 
+     *
      * @return server side {@link SSLEngineConfigurator}.
      */
     private static SSLEngineConfigurator initializeSSL() {
@@ -104,9 +103,7 @@ public class SSLEchoServer {
             sslContextConfig.setKeyStorePass("changeit");
         }
 
-
         // Create SSLEngine configurator
-        return new SSLEngineConfigurator(sslContextConfig.createSSLContext(),
-                false, false, false);
+        return new SSLEngineConfigurator(sslContextConfig.createSSLContext(), false, false, false);
     }
 }

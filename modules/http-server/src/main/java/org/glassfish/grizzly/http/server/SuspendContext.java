@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,11 +17,12 @@
 package org.glassfish.grizzly.http.server;
 
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.CompletionHandler;
 
 /**
  * Interface represents a context of the suspended {@link Response}.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface SuspendContext {
@@ -41,17 +42,15 @@ public interface SuspendContext {
     TimeoutHandler getTimeoutHandler();
 
     /**
-     * Get the suspended {@link Response} timeout. If returned value less or equal
-     * to zero - timeout is not set.
+     * Get the suspended {@link Response} timeout. If returned value less or equal to zero - timeout is not set.
      *
-     * @return the suspended {@link Response} timeout. If returned value less or equal
-     * to zero - timeout is not set.
+     * @return the suspended {@link Response} timeout. If returned value less or equal to zero - timeout is not set.
      */
     long getTimeout(TimeUnit timeunit);
 
     /**
-     * Set the suspended {@link Response} timeout. If timeout value less or equal
-     * to zero - suspended {@link Response} won't be never timed out.
+     * Set the suspended {@link Response} timeout. If timeout value less or equal to zero - suspended {@link Response} won't
+     * be never timed out.
      *
      * @param timeout the suspended {@link Response} timeout.
      * @param timeunit timeout units.
@@ -59,11 +58,9 @@ public interface SuspendContext {
     void setTimeout(long timeout, TimeUnit timeunit);
 
     /**
-     * Returns <tt>true</tt>, if the {@link Response} is suspended, or
-     * <tt>false</tt> otherwise.
+     * Returns <tt>true</tt>, if the {@link Response} is suspended, or <tt>false</tt> otherwise.
      *
-     * @return <tt>true</tt>, if the {@link Response} is suspended, or
-     * <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if the {@link Response} is suspended, or <tt>false</tt> otherwise.
      */
     boolean isSuspended();
 }

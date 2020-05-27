@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static jakarta.servlet.DispatcherType.REQUEST;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,14 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.servlet.DispatcherType;
-import static jakarta.servlet.DispatcherType.REQUEST;
-import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.Note;
 import org.glassfish.grizzly.http.server.AfterServiceListener;
@@ -48,30 +43,33 @@ import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpRequestURIDecoder;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+
 /**
- * HttpHandler implementation that provides an entry point for processing
- * a Servlet request.
- * 
+ * HttpHandler implementation that provides an entry point for processing a Servlet request.
+ *
  * @author Jeanfrancois Arcand
  */
 public class ServletHandler extends HttpHandler {
 
     private static final Logger LOGGER = Grizzly.logger(ServletHandler.class);
 
-    static final Note<HttpServletRequestImpl> SERVLET_REQUEST_NOTE =
-            Request.createNote(HttpServletRequestImpl.class.getName());
-    static final Note<HttpServletResponseImpl> SERVLET_RESPONSE_NOTE =
-            Request.createNote(HttpServletResponseImpl.class.getName());
+    static final Note<HttpServletRequestImpl> SERVLET_REQUEST_NOTE = Request.createNote(HttpServletRequestImpl.class.getName());
+    static final Note<HttpServletResponseImpl> SERVLET_RESPONSE_NOTE = Request.createNote(HttpServletResponseImpl.class.getName());
 
-    static final ServletAfterServiceListener servletAfterServiceListener =
-            new ServletAfterServiceListener();
+    static final ServletAfterServiceListener servletAfterServiceListener = new ServletAfterServiceListener();
 
     protected String servletClassName;
     protected Class<? extends Servlet> servletClass;
     protected volatile Servlet servletInstance = null;
     private String contextPath = "";
     private final Object lock = new Object();
-
 
     /**
      * The {@link WebappContext}
@@ -88,7 +86,7 @@ public class ServletHandler extends HttpHandler {
     /**
      * Holder for our configured properties.
      */
-    protected final Map<String, Object> properties = new HashMap<String, Object>();
+    protected final Map<String, Object> properties = new HashMap<>();
     /**
      * Initialize the {@link ServletContext}
      */
@@ -103,7 +101,6 @@ public class ServletHandler extends HttpHandler {
     private List<Runnable> onDestroyListeners;
 
     // ------------------------------------------------------------ Constructors
-
 
     protected ServletHandler(final ServletConfigImpl servletConfig) {
         this.servletConfig = servletConfig;
@@ -125,17 +122,15 @@ public class ServletHandler extends HttpHandler {
     }
 
     /**
-     * Override parent's {@link HttpHandler#sendAcknowledgment(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
+     * Override parent's
+     * {@link HttpHandler#sendAcknowledgment(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
      * to let {@link ExpectationHandler} (if one is registered) process the expectation.
      */
     @Override
-    protected boolean sendAcknowledgment(Request request, Response response)
-            throws IOException {
-        return expectationHandler != null
-                || super.sendAcknowledgment(request, response);
+    protected boolean sendAcknowledgment(Request request, Response response) throws IOException {
+        return expectationHandler != null || super.sendAcknowledgment(request, response);
 
     }
-
 
     /**
      * {@inheritDoc}
@@ -176,7 +171,7 @@ public class ServletHandler extends HttpHandler {
             request.setNote(SERVLET_RESPONSE_NOTE, servletResponse);
 
             request.addAfterServiceListener(servletAfterServiceListener);
-            
+
             loadServlet();
 
             setDispatcherPath(request, getCombinedPath(servletRequest));
@@ -185,18 +180,17 @@ public class ServletHandler extends HttpHandler {
             if (serverInfo != null && !serverInfo.isEmpty()) {
                 servletResponse.addHeader(Header.Server.toString(), serverInfo);
             }
-            
+
             if (expectationHandler != null) {
                 final AckActionImpl ackAction = new AckActionImpl(response);
-                expectationHandler.onExpectAcknowledgement(servletRequest,
-                        servletResponse, ackAction);
+                expectationHandler.onExpectAcknowledgement(servletRequest, servletResponse, ackAction);
                 if (!ackAction.isAcknowledged()) {
                     ackAction.acknowledge();
                 } else if (ackAction.isFailAcknowledgement()) {
                     return;
                 }
             }
-            
+
             FilterChainInvoker filterChain = getFilterChain(request);
             if (filterChain != null) {
                 filterChain.invokeFilterChain(servletRequest, servletResponse);
@@ -226,8 +220,8 @@ public class ServletHandler extends HttpHandler {
     /**
      * Combines the servletPath and the pathInfo.
      *
-     * If pathInfo is <code>null</code>, it is ignored. If servletPath
-     * is <code>null</code>, then <code>null</code> is returned.
+     * If pathInfo is <code>null</code>, it is ignored. If servletPath is <code>null</code>, then <code>null</code> is
+     * returned.
      *
      * @return The combined path with pathInfo appended to servletInfo
      */
@@ -241,8 +235,7 @@ public class ServletHandler extends HttpHandler {
         return request.getServletPath() + request.getPathInfo();
     }
 
-    protected void setPathData(final Request from,
-                               final HttpServletRequestImpl to) {
+    protected void setPathData(final Request from, final HttpServletRequestImpl to) {
 
         final MappingData data = from.obtainMappingData();
         to.setServletPath(data.wrapperPath.toString());
@@ -250,16 +243,11 @@ public class ServletHandler extends HttpHandler {
         to.setContextPath(data.contextPath.toString());
     }
 
-    void doServletService(final ServletRequest servletRequest,
-                          final ServletResponse servletResponse,
-                          final DispatcherType dispatcherType)
+    void doServletService(final ServletRequest servletRequest, final ServletResponse servletResponse, final DispatcherType dispatcherType)
             throws IOException, ServletException {
         try {
             loadServlet();
-            FilterChainImpl filterChain =
-                    filterChainFactory.createFilterChain(servletRequest,
-                                                         servletInstance,
-                                                         dispatcherType);
+            FilterChainImpl filterChain = filterChainFactory.createFilterChain(servletRequest, servletInstance, dispatcherType);
             if (filterChain != null) {
                 filterChain.invokeFilterChain(servletRequest, servletResponse);
             } else {
@@ -276,19 +264,15 @@ public class ServletHandler extends HttpHandler {
 
     /**
      * Customize the error page returned to the client.
-     * @param response  the {@link Response}
-     * @param message   the HTTP error message
+     * 
+     * @param response the {@link Response}
+     * @param message the HTTP error message
      * @param errorCode the error code.
      */
-    public void customizeErrorPage(final Response response,
-                                   final String message,
-                                   final int errorCode,
-                                   final Throwable t) {
+    public void customizeErrorPage(final Response response, final String message, final int errorCode, final Throwable t) {
         if (!response.isCommitted()) {
             try {
-                HtmlHelper.setErrorAndSendErrorPage(response.getRequest(), response,
-                        response.getErrorPageGenerator(), errorCode, message,
-                        message, t);
+                HtmlHelper.setErrorAndSendErrorPage(response.getRequest(), response, response.getErrorPageGenerator(), errorCode, message, message, t);
             } catch (IOException ex) {
                 // We are in a very bad shape. Ignore.
             }
@@ -298,8 +282,7 @@ public class ServletHandler extends HttpHandler {
     /**
      * Load a {@link Servlet} instance.
      *
-     * @throws jakarta.servlet.ServletException If failed to
-     * {@link Servlet#init(jakarta.servlet.ServletConfig)}.
+     * @throws jakarta.servlet.ServletException If failed to {@link Servlet#init(jakarta.servlet.ServletConfig)}.
      */
     protected void loadServlet() throws ServletException {
 
@@ -326,11 +309,9 @@ public class ServletHandler extends HttpHandler {
     }
 
     /**
-     * Configure the {@link WebappContext}
-     * and {@link ServletConfigImpl}
-     * 
-     * @throws jakarta.servlet.ServletException Error while configuring
-     * {@link Servlet}.
+     * Configure the {@link WebappContext} and {@link ServletConfigImpl}
+     *
+     * @throws jakarta.servlet.ServletException Error while configuring {@link Servlet}.
      */
     protected void configureServletEnv() throws ServletException {
         if (contextPath.length() > 0) {
@@ -349,15 +330,17 @@ public class ServletHandler extends HttpHandler {
 
     /**
      * Return the {@link Servlet} instance used by this {@link ServletHandler}
+     * 
      * @return {@link Servlet} instance.
      */
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public Servlet getServletInstance() {
         return servletInstance;
     }
 
     /**
      * Set the {@link Servlet} instance used by this {@link ServletHandler}
+     * 
      * @param servletInstance an instance of Servlet.
      */
     protected void setServletInstance(Servlet servletInstance) {
@@ -374,6 +357,7 @@ public class ServletHandler extends HttpHandler {
 
     /**
      * Set the {@link SessionManager} instance used by this {@link ServletHandler}
+     * 
      * @param sessionManager an implementation of SessionManager.
      */
     protected void setSessionManager(SessionManager sessionManager) {
@@ -382,25 +366,18 @@ public class ServletHandler extends HttpHandler {
 
     /**
      *
-     * Returns the portion of the request URI that indicates the context
-     * of the request. The context path always comes first in a request
-     * URI. The path starts with a "/" character but does not end with a "/"
-     * character. For servlets in the default (root) context, this method
-     * returns "". The container does not decode this string.
+     * Returns the portion of the request URI that indicates the context of the request. The context path always comes first
+     * in a request URI. The path starts with a "/" character but does not end with a "/" character. For servlets in the
+     * default (root) context, this method returns "". The container does not decode this string.
      *
-     * <p>It is possible that a servlet container may match a context by
-     * more than one context path. In such cases this method will return the
-     * actual context path used by the request and it may differ from the
-     * path returned by the
-     * {@link jakarta.servlet.ServletContext#getContextPath()} method.
-     * The context path returned by
-     * {@link jakarta.servlet.ServletContext#getContextPath()}
-     * should be considered as the prime or preferred context path of the
-     * application.
+     * <p>
+     * It is possible that a servlet container may match a context by more than one context path. In such cases this method
+     * will return the actual context path used by the request and it may differ from the path returned by the
+     * {@link jakarta.servlet.ServletContext#getContextPath()} method. The context path returned by
+     * {@link jakarta.servlet.ServletContext#getContextPath()} should be considered as the prime or preferred context path
+     * of the application.
      *
-     * @return		a <code>String</code> specifying the
-     *			portion of the request URI that indicates the context
-     *			of the request
+     * @return a <code>String</code> specifying the portion of the request URI that indicates the context of the request
      *
      * @see jakarta.servlet.ServletContext#getContextPath()
      */
@@ -418,8 +395,7 @@ public class ServletHandler extends HttpHandler {
     }
 
     /**
-     * Destroy this Servlet and its associated
-     * {@link jakarta.servlet.ServletContextListener}
+     * Destroy this Servlet and its associated {@link jakarta.servlet.ServletContextListener}
      */
     @Override
     public void destroy() {
@@ -456,7 +432,6 @@ public class ServletHandler extends HttpHandler {
         }
     }
 
-
     protected WebappContext getServletCtx() {
         return servletCtx;
     }
@@ -479,30 +454,30 @@ public class ServletHandler extends HttpHandler {
     }
 
     /**
-     * Get the {@link ExpectationHandler} responsible for processing
-     * <tt>Expect:</tt> header (for example "Expect: 100-Continue").
-     * 
-     * @return the {@link ExpectationHandler} responsible for processing
-     * <tt>Expect:</tt> header (for example "Expect: 100-Continue").
+     * Get the {@link ExpectationHandler} responsible for processing <tt>Expect:</tt> header (for example "Expect:
+     * 100-Continue").
+     *
+     * @return the {@link ExpectationHandler} responsible for processing <tt>Expect:</tt> header (for example "Expect:
+     * 100-Continue").
      */
     public ExpectationHandler getExpectationHandler() {
         return expectationHandler;
     }
-    
+
     /**
-     * Set the {@link ExpectationHandler} responsible for processing
-     * <tt>Expect:</tt> header (for example "Expect: 100-Continue").
-     * 
-     * @param expectationHandler  the {@link ExpectationHandler} responsible
-     * for processing <tt>Expect:</tt> header (for example "Expect: 100-Continue").
+     * Set the {@link ExpectationHandler} responsible for processing <tt>Expect:</tt> header (for example "Expect:
+     * 100-Continue").
+     *
+     * @param expectationHandler the {@link ExpectationHandler} responsible for processing <tt>Expect:</tt> header (for
+     * example "Expect: 100-Continue").
      */
     public void setExpectationHandler(ExpectationHandler expectationHandler) {
         this.expectationHandler = expectationHandler;
     }
-    
+
     @Override
-    protected void setDispatcherHelper( final DispatcherHelper dispatcherHelper ) {
-        servletCtx.setDispatcherHelper( dispatcherHelper );
+    protected void setDispatcherHelper(final DispatcherHelper dispatcherHelper) {
+        servletCtx.setDispatcherHelper(dispatcherHelper);
     }
 
     protected void setFilterChainFactory(final FilterChainFactory filterChainFactory) {
@@ -511,6 +486,7 @@ public class ServletHandler extends HttpHandler {
 
     /**
      * Overrides default (JSESSIONID) session cookie name.
+     * 
      * @return the session cookie name
      */
     @Override
@@ -523,28 +499,27 @@ public class ServletHandler extends HttpHandler {
      */
     @Override
     protected SessionManager getSessionManager(Request request) {
-        final SessionManager sm = request.getHttpFilter()
-                .getConfiguration().getSessionManager();
+        final SessionManager sm = request.getHttpFilter().getConfiguration().getSessionManager();
         return sm != null ? sm : this.sessionManager;
     }
-    
+
     /**
      * Adds the {@link Runnable}, which will be invoked when {@link #destroy()} is called.
+     * 
      * @param r {@link Runnable}, which contains destroy listener logic.
      */
     void addOnDestroyListener(final Runnable r) {
         if (onDestroyListeners == null) {
-            onDestroyListeners = new ArrayList<Runnable>(2);
+            onDestroyListeners = new ArrayList<>(2);
         }
-        
+
         onDestroyListeners.add(r);
     }
 
     // ---------------------------------------------------------- Nested Classes
 
     /**
-     * AfterServiceListener, which is responsible for recycle servlet request and response
-     * objects.
+     * AfterServiceListener, which is responsible for recycle servlet request and response objects.
      */
     static final class ServletAfterServiceListener implements AfterServiceListener {
 
@@ -559,23 +534,23 @@ public class ServletHandler extends HttpHandler {
             }
         }
     }
-    
+
     static final class AckActionImpl implements ExpectationHandler.AckAction {
         private boolean isAcknowledged;
         private boolean isFailAcknowledgement;
-        
+
         private final Response response;
 
         private AckActionImpl(final Response response) {
             this.response = response;
         }
-        
+
         @Override
         public void acknowledge() throws IOException {
             if (isAcknowledged) {
                 throw new IllegalStateException("Already acknowledged");
             }
-            
+
             isAcknowledged = true;
             response.setStatus(HttpStatus.CONINTUE_100);
             response.sendAcknowledgement();
@@ -588,7 +563,7 @@ public class ServletHandler extends HttpHandler {
             }
             isAcknowledged = true;
             isFailAcknowledgement = true;
-            
+
             response.setStatus(HttpStatus.EXPECTATION_FAILED_417);
             response.finish();
         }
@@ -601,11 +576,11 @@ public class ServletHandler extends HttpHandler {
             return isFailAcknowledgement;
         }
     }
-    
+
     static HttpServletRequestImpl getServletRequest(final Request request) {
         return request.getNote(SERVLET_REQUEST_NOTE);
     }
-    
+
     static HttpServletResponseImpl getServletResponse(final Request request) {
         return request.getNote(SERVLET_RESPONSE_NOTE);
     }

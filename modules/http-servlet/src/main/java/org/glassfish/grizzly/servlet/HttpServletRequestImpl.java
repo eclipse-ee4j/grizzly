@@ -17,12 +17,15 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.HashSet;
@@ -32,6 +35,21 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.ThreadCache;
+import org.glassfish.grizzly.http.Cookie;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.http.server.Session;
+import org.glassfish.grizzly.http.server.TimeoutHandler;
+import org.glassfish.grizzly.http.server.util.Enumerator;
+import org.glassfish.grizzly.http.server.util.Globals;
+import org.glassfish.grizzly.http.server.util.MappingData;
+import org.glassfish.grizzly.localization.LogMessages;
+
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
@@ -52,25 +70,9 @@ import jakarta.servlet.http.MappingMatch;
 import jakarta.servlet.http.Part;
 import jakarta.servlet.http.PushBuilder;
 import jakarta.servlet.http.WebConnection;
-import org.glassfish.grizzly.CompletionHandler;
-import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.ThreadCache;
-import org.glassfish.grizzly.http.Cookie;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.server.Session;
-import org.glassfish.grizzly.http.server.TimeoutHandler;
-import org.glassfish.grizzly.http.server.util.Enumerator;
-import org.glassfish.grizzly.http.server.util.Globals;
-import org.glassfish.grizzly.http.server.util.MappingData;
-import org.glassfish.grizzly.localization.LogMessages;
-
-import static java.util.concurrent.TimeUnit.*;
 
 /**
- * Facade class that wraps a {@link Request} request object.
- * All methods are delegated to the wrapped request.
+ * Facade class that wraps a {@link Request} request object. All methods are delegated to the wrapped request.
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
@@ -80,14 +82,14 @@ import static java.util.concurrent.TimeUnit.*;
 @SuppressWarnings("deprecation")
 public class HttpServletRequestImpl implements HttpServletRequest, Holders.RequestHolder {
     private static final Logger LOGGER = Grizzly.logger(HttpServletRequestImpl.class);
-      
+
     // ----------------------------------------------- Class/Instance Variables
 
     /**
      * The wrapped request.
      */
     protected Request request = null;
-    
+
     /**
      * The corresponding servlet response
      */
@@ -108,7 +110,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     private final ServletInputStreamImpl inputStream;
     private ServletReaderImpl reader;
-    
+
     private HttpSessionImpl httpSession = null;
 
     private WebappContext contextImpl;
@@ -117,18 +119,17 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     private String servletPath = "";
 
     private String pathInfo;
-    
+
     /**
      * Using stream flag.
      */
     protected boolean usingInputStream = false;
 
-
     /**
      * Using writer flag.
      */
     protected boolean usingReader = false;
-    
+
     /*
      * An upgrade request is received
      */
@@ -144,13 +145,11 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
      */
     private HttpServletMapping httpServletMapping;
 
-    private static final ThreadCache.CachedTypeIndex<HttpServletRequestImpl> CACHE_IDX =
-            ThreadCache.obtainIndex(HttpServletRequestImpl.class, 2);
+    private static final ThreadCache.CachedTypeIndex<HttpServletRequestImpl> CACHE_IDX = ThreadCache.obtainIndex(HttpServletRequestImpl.class, 2);
 
     // ------------- Factory ----------------
     public static HttpServletRequestImpl create() {
-        final HttpServletRequestImpl request =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final HttpServletRequestImpl request = ThreadCache.takeFromCache(CACHE_IDX);
         if (request != null) {
             return request;
         }
@@ -160,7 +159,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     // ----------------------------------------------------------- Constructors
 
-
     /**
      * Construct a wrapper for the specified request.
      */
@@ -168,12 +166,9 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         this.inputStream = new ServletInputStreamImpl(this);
     }
 
-    public void initialize(final Request request, 
-                           final HttpServletResponseImpl servletResponse,
-                           final WebappContext context)
-            throws IOException {
+    public void initialize(final Request request, final HttpServletResponseImpl servletResponse, final WebappContext context) throws IOException {
         this.request = request;
-        this.servletResponse = servletResponse;        
+        this.servletResponse = servletResponse;
         inputStream.initialize();
         contextImpl = context;
         if (context.getRequestCharacterEncoding() != null) {
@@ -183,25 +178,19 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             servletResponse.setCharacterEncoding(context.getResponseCharacterEncoding());
         }
     }
-    
 
     // --------------------------------------------------------- Public Methods
-   
-    
+
     /**
-    * Prevent cloning the facade.
-    */
+     * Prevent cloning the facade.
+     */
     @Override
-    protected Object clone()
-        throws CloneNotSupportedException {
+    protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
-    
-    
+
     // ------------------------------------------------- ServletRequest Methods
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -215,8 +204,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getAttribute(name);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -228,16 +215,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetAttributePrivilegedAction());        
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetAttributePrivilegedAction());
         } else {
             return new Enumerator(request.getAttributeNames());
         }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -249,22 +233,18 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetCharacterEncodingPrivilegedAction());
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetCharacterEncodingPrivilegedAction());
         } else {
             return request.getCharacterEncoding();
-        }         
+        }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public void setCharacterEncoding(String env)
-            throws java.io.UnsupportedEncodingException {
+    public void setCharacterEncoding(String env) throws java.io.UnsupportedEncodingException {
 
         if (request == null) {
             throw new IllegalStateException("Null request object");
@@ -273,8 +253,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         request.setCharacterEncoding(env);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -288,7 +266,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getContentLength();
     }
 
-
     @Override
     public long getContentLengthLong() {
         if (request == null) {
@@ -297,8 +274,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         return request.getContentLengthLong();
     }
-    
-    
+
     /**
      * {@inheritDoc}
      */
@@ -312,15 +288,14 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getContentType();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        if (usingReader)
+        if (usingReader) {
             throw new IllegalStateException("Illegal attempt to call getInputStream() after getReader() has already been called.");
+        }
 
         usingInputStream = true;
 
@@ -331,7 +306,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         request = null;
         servletResponse = null;
         reader = null;
-        
+
         inputStream.recycle();
 
         usingInputStream = false;
@@ -339,7 +314,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         upgrade = false;
         httpUpgradeHandler = null;
-        
+
         /*
          * Clear and reinitialize all async related instance vars
          */
@@ -352,7 +327,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         isAsyncComplete = false;
         asyncStartedThread = null;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -364,16 +339,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetParameterPrivilegedAction(name));
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetParameterPrivilegedAction(name));
         } else {
             return request.getParameter(name);
         }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -385,16 +357,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return new Enumerator(AccessController.doPrivileged(
-                new GetParameterNamesPrivilegedAction()));
+        if (System.getSecurityManager() != null) {
+            return new Enumerator(AccessController.doPrivileged(new GetParameterNamesPrivilegedAction()));
         } else {
             return new Enumerator(request.getParameterNames());
         }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -409,12 +378,11 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         String[] ret;
 
         /*
-         * Clone the returned array only if there is a security manager
-         * in place, so that performance won't suffer in the nonsecure case
+         * Clone the returned array only if there is a security manager in place, so that performance won't suffer in the
+         * nonsecure case
          */
-        if (System.getSecurityManager() != null){
-            ret = AccessController.doPrivileged(
-                new GetParameterValuePrivilegedAction(name));
+        if (System.getSecurityManager() != null) {
+            ret = AccessController.doPrivileged(new GetParameterValuePrivilegedAction(name));
             if (ret != null) {
                 ret = ret.clone();
             }
@@ -425,8 +393,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return ret;
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -437,15 +403,12 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetParameterMapPrivilegedAction());        
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetParameterMapPrivilegedAction());
         } else {
             return request.getParameterMap();
         }
     }
-
-
 
     /**
      * {@inheritDoc}
@@ -460,8 +423,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getProtocol().getProtocolString();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -475,8 +436,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getScheme();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -490,8 +449,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getServerName();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -499,34 +456,31 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     public int getServerPort() {
 
         if (request == null) {
-           throw new IllegalStateException("Null request object");
+            throw new IllegalStateException("Null request object");
         }
 
         return request.getServerPort();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public BufferedReader getReader() throws IOException {
-        if (usingInputStream)
+        if (usingInputStream) {
             throw new IllegalStateException("Illegal attempt to call getReader() after getInputStream() has already been called.");
+        }
 
         usingReader = true;
-        //inputBuffer.checkConverter();
+        // inputBuffer.checkConverter();
         if (reader == null) {
             reader = new ServletReaderImpl(request.getReader());
         }
-        
+
         return reader;
 
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -540,8 +494,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRemoteAddr();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -555,7 +507,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRemoteHost();
     }
 
-
     @Override
     public void setAttribute(String name, Object value) {
 
@@ -565,27 +516,25 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         Object oldValue = request.getAttribute(name);
         request.setAttribute(name, value);
-        
+
         EventListener[] listeners = contextImpl.getEventListeners();
-        if (listeners.length == 0)
+        if (listeners.length == 0) {
             return;
+        }
         ServletRequestAttributeEvent event = null;
 
         for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener))
+            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
                 continue;
-            ServletRequestAttributeListener listener =
-                (ServletRequestAttributeListener) listeners[i];
+            }
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) listeners[i];
             try {
                 if (event == null) {
-                    if (oldValue != null)
-                        event =
-                            new ServletRequestAttributeEvent(contextImpl,
-                                                             this, name, oldValue);
-                    else
-                        event =
-                            new ServletRequestAttributeEvent(contextImpl,
-                                                             this, name, value);
+                    if (oldValue != null) {
+                        event = new ServletRequestAttributeEvent(contextImpl, this, name, oldValue);
+                    } else {
+                        event = new ServletRequestAttributeEvent(contextImpl, this, name, value);
+                    }
                 }
                 if (oldValue != null) {
                     listener.attributeReplaced(event);
@@ -594,16 +543,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
                 }
             } catch (Throwable t) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.log(Level.WARNING,
-                               LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_ATTRIBUTE_LISTENER_ADD_ERROR("ServletRequestAttributeListener", listener.getClass().getName()),
-                               t);
+                    LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_ATTRIBUTE_LISTENER_ADD_ERROR("ServletRequestAttributeListener",
+                            listener.getClass().getName()), t);
                 }
             }
         }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -618,30 +564,27 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         // Notify interested application event listeners
         EventListener[] listeners = contextImpl.getEventListeners();
-        if (listeners.length == 0)
+        if (listeners.length == 0) {
             return;
+        }
         ServletRequestAttributeEvent event = null;
         for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener))
+            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
                 continue;
-            ServletRequestAttributeListener listener =
-                (ServletRequestAttributeListener) listeners[i];
+            }
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) listeners[i];
             try {
                 if (event == null) {
-                    event = new ServletRequestAttributeEvent(contextImpl,
-                            this, name, value);
+                    event = new ServletRequestAttributeEvent(contextImpl, this, name, value);
                 }
                 listener.attributeRemoved(event);
             } catch (Throwable t) {
-                LOGGER.log(Level.WARNING,
-                           LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_ATTRIBUTE_LISTENER_REMOVE_ERROR("ServletRequestAttributeListener", listener.getClass().getName()),
-                           t);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_ATTRIBUTE_LISTENER_REMOVE_ERROR("ServletRequestAttributeListener",
+                        listener.getClass().getName()), t);
             }
         }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -653,16 +596,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetLocalePrivilegedAction());
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetLocalePrivilegedAction());
         } else {
             return request.getLocale();
-        }        
+        }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -675,15 +615,12 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
 
         if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(
-                new GetLocalesPrivilegedAction());
+            return AccessController.doPrivileged(new GetLocalesPrivilegedAction());
         } else {
             return new Enumerator(request.getLocales());
-        }        
+        }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -697,41 +634,38 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.isSecure();
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings( "unchecked" )
-    public RequestDispatcher getRequestDispatcher( String path ) {
-        if( request == null ) {
+    @SuppressWarnings("unchecked")
+    public RequestDispatcher getRequestDispatcher(String path) {
+        if (request == null) {
             throw new IllegalStateException("Null request object");
         }
 
-        if( System.getSecurityManager() != null ) {
-            return AccessController.doPrivileged(
-                    new GetRequestDispatcherPrivilegedAction( path ) );
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetRequestDispatcherPrivilegedAction(path));
         } else {
-            return getRequestDispatcherInternal( path );
+            return getRequestDispatcherInternal(path);
         }
     }
 
-
-    private RequestDispatcher getRequestDispatcherInternal( String path ) {
-        if( contextImpl == null ) {
+    private RequestDispatcher getRequestDispatcherInternal(String path) {
+        if (contextImpl == null) {
             return null;
         }
 
         // If the path is already context-relative, just pass it through
-        if( path == null ) {
-            return ( null );
-        } else if( path.startsWith( "/" ) ) {
-            return ( contextImpl.getRequestDispatcher( path ) );
+        if (path == null) {
+            return null;
+        } else if (path.startsWith("/")) {
+            return contextImpl.getRequestDispatcher(path);
         }
 
         // Convert a request-relative path to a context-relative one
-        String servletPath = (String)getAttribute( DispatcherConstants.INCLUDE_SERVLET_PATH );
-        if( servletPath == null ) {
+        String servletPath = (String) getAttribute(DispatcherConstants.INCLUDE_SERVLET_PATH);
+        if (servletPath == null) {
             servletPath = getServletPath();
         }
 
@@ -739,25 +673,23 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         String pathInfo = getPathInfo();
         String requestPath;
 
-        if( pathInfo == null ) {
+        if (pathInfo == null) {
             requestPath = servletPath;
         } else {
             requestPath = servletPath + pathInfo;
         }
 
-        int pos = requestPath.lastIndexOf( '/' );
+        int pos = requestPath.lastIndexOf('/');
         String relative;
-        if( pos >= 0 ) {
-            relative = requestPath.substring( 0, pos + 1 ) + path;
+        if (pos >= 0) {
+            relative = requestPath.substring(0, pos + 1) + path;
         } else {
             relative = requestPath + path;
         }
 
-        return contextImpl.getRequestDispatcher( relative );
+        return contextImpl.getRequestDispatcher(relative);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -767,8 +699,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return contextImpl.getRealPath(path);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -781,7 +711,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getAuthType();
     }
 
-
     @SuppressWarnings("unchecked")
     public Cookie[] getGrizzlyCookies() {
 
@@ -792,12 +721,11 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         Cookie[] ret;
 
         /*
-         * Clone the returned array only if there is a security manager
-         * in place, so that performance won't suffer in the nonsecure case
+         * Clone the returned array only if there is a security manager in place, so that performance won't suffer in the
+         * nonsecure case
          */
-        if (System.getSecurityManager() != null){
-            ret = AccessController.doPrivileged(
-                new GetCookiesPrivilegedAction());
+        if (System.getSecurityManager() != null) {
+            ret = AccessController.doPrivileged(new GetCookiesPrivilegedAction());
             if (ret != null) {
                 ret = ret.clone();
             }
@@ -808,8 +736,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return ret;
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -823,8 +749,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getDateHeader(name);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -838,8 +762,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getHeader(name);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -851,16 +773,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetHeadersPrivilegedAction(name));
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetHeadersPrivilegedAction(name));
         } else {
             return new Enumerator(request.getHeaders(name).iterator());
-        }         
+        }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -872,16 +791,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        if (System.getSecurityManager() != null){
-            return AccessController.doPrivileged(
-                new GetHeaderNamesPrivilegedAction());
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(new GetHeaderNamesPrivilegedAction());
         } else {
             return new Enumerator(request.getHeaderNames().iterator());
-        }             
+        }
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -895,8 +811,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getIntHeader(name);
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -910,37 +824,31 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getMethod().getMethodString();
     }
 
-
-    
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
-    public String getPathInfo(){
-        if (request == null){
+    public String getPathInfo() {
+        if (request == null) {
             throw new IllegalStateException("Null request object");
         }
 
         return pathInfo;
     }
 
-
-    
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public String getPathTranslated() {
         if (getPathInfo() == null) {
-            return (null);
+            return null;
         } else {
-            return (contextImpl.getRealPath(getPathInfo()));
+            return contextImpl.getRealPath(getPathInfo());
         }
 
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -949,7 +857,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return contextPath;
     }
 
-    
     protected void setContextPath(String contextPath) {
         if (contextPath == null) {
             this.contextPath = "";
@@ -957,7 +864,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             this.contextPath = contextPath;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -971,8 +878,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getQueryString();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -986,8 +891,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRemoteUser();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -997,8 +900,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1012,8 +913,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getUserPrincipal();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1027,8 +926,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRequestedSessionId();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1042,8 +939,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRequestURI();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1056,7 +951,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         return Request.appendRequestURL(request, new StringBuffer());
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1073,31 +968,29 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         if (httpSession != null && httpSession.isValid()) {
             return httpSession;
         }
-        
+
         httpSession = null;
-        
+
         final Session internalSession = request.getSession(create);
-        
+
         if (internalSession == null) {
             return null;
         }
 
         internalSession.setSessionTimeout(MILLISECONDS.convert(contextImpl.sessionTimeoutInSeconds, SECONDS));
-        
+
         httpSession = new HttpSessionImpl(contextImpl, internalSession);
-        
+
         if (httpSession.isNew()) {
             httpSession.notifyNew();
         }
-        
+
         return httpSession;
     }
 
-
-    
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public HttpSession getSession() {
 
@@ -1113,11 +1006,10 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         final String oldSessionId = request.changeSessionId();
         getSession(false); // to make sure httpSession is not null
         httpSession.notifyIdChanged(oldSessionId);
-        
+
         return oldSessionId;
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -1126,8 +1018,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.isRequestedSessionIdValid();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1136,8 +1026,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.isRequestedSessionIdFromCookie();
     }
 
-
-    
     /**
      * {@inheritDoc}
      */
@@ -1146,18 +1034,15 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.isRequestedSessionIdFromURL();
     }
 
-
-    
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
-    @SuppressWarnings({"deprecation"})
+    @SuppressWarnings({ "deprecation" })
     public boolean isRequestedSessionIdFromUrl() {
         return isRequestedSessionIdFromURL();
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -1167,7 +1052,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         if (internalCookies == null) {
             return null;
         }
-        
+
         int cookieIdx = 0;
         jakarta.servlet.http.Cookie[] cookies = new jakarta.servlet.http.Cookie[internalCookies.length];
         for (Cookie cookie : internalCookies) {
@@ -1175,9 +1060,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
                 cookies[cookieIdx++] = ((CookieWrapper) cookie).getWrappedCookie();
             } else {
                 try {
-                    jakarta.servlet.http.Cookie currentCookie =
-                            new jakarta.servlet.http.Cookie(
-                                    cookie.getName(), cookie.getValue());
+                    jakarta.servlet.http.Cookie currentCookie = new jakarta.servlet.http.Cookie(cookie.getName(), cookie.getValue());
                     currentCookie.setComment(cookie.getComment());
                     if (cookie.getDomain() != null) {
                         currentCookie.setDomain(cookie.getDomain());
@@ -1189,24 +1072,18 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
                     cookies[cookieIdx++] = currentCookie;
                 } catch (IllegalArgumentException iae) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(Level.WARNING,
-                                LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_COOKIE_CREATE_ERROR(
-                                        cookie.getName(), iae.getLocalizedMessage()));
+                        LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_COOKIE_CREATE_ERROR(cookie.getName(), iae.getLocalizedMessage()));
                     }
                 }
             }
         }
-        
-        return cookieIdx == cookies.length
-                ? cookies
-                : Arrays.copyOf(cookies, cookieIdx);
+
+        return cookieIdx == cookies.length ? cookies : Arrays.copyOf(cookies, cookieIdx);
     }
 
- 
-    
     /**
      * {@inheritDoc}
-     */   
+     */
     @Override
     public int getRemotePort() {
         if (request == null) {
@@ -1216,7 +1093,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getRemotePort();
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -1229,7 +1105,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.getLocalName();
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -1239,10 +1114,9 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        return request.getLocalAddr();    
+        return request.getLocalAddr();
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -1252,37 +1126,37 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             throw new IllegalStateException("Null request object");
         }
 
-        return request.getLocalPort();  
+        return request.getLocalPort();
     }
-
 
     /**
      * Return the underlying {@link WebappContext}
-     * @return  Return the underlying {@link WebappContext}
+     * 
+     * @return Return the underlying {@link WebappContext}
      */
     protected WebappContext getContextImpl() {
         return contextImpl;
     }
 
-    
-     /**
+    /**
      * Set the underlying {@link WebappContext}
+     * 
      * @param contextImpl the underlying {@link WebappContext}
      */
     protected void setContextImpl(WebappContext contextImpl) {
         this.contextImpl = contextImpl;
     }
-    
-  
+
     /**
      * Programmatically set the servlet path value. Default is an empty String.
+     * 
      * @param servletPath Servlet path to set.
      */
-    public void setServletPath(final String servletPath){
+    public void setServletPath(final String servletPath) {
         if (servletPath != null) {
             if (servletPath.length() == 0) {
                 this.servletPath = "";
-            }  else {
+            } else {
                 this.servletPath = servletPath;
             }
         }
@@ -1311,14 +1185,13 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     public Request getInternalRequest() {
         return request;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
     public DispatcherType getDispatcherType() {
-        DispatcherType dispatcher = (DispatcherType) getAttribute(
-                Globals.DISPATCHER_TYPE_ATTR);
+        DispatcherType dispatcher = (DispatcherType) getAttribute(Globals.DISPATCHER_TYPE_ATTR);
         if (dispatcher == null) {
             dispatcher = DispatcherType.REQUEST;
         }
@@ -1337,25 +1210,18 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
      * {@inheritDoc}
      */
     @Override
-    public AsyncContext startAsync(final ServletRequest servletRequest,
-            final ServletResponse servletResponse)
-            throws IllegalStateException {
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
         return startAsync(servletRequest, servletResponse, false);
     }
 
     /**
      * Starts async processing on this request.
      *
-     * @param servletRequest the ServletRequest with which to initialize
-     * the AsyncContext
-     * @param servletResponse the ServletResponse with which to initialize
-     * the AsyncContext
-     * @param isStartAsyncWithZeroArg true if the zero-arg version of
-     * startAsync was called, false otherwise
+     * @param servletRequest the ServletRequest with which to initialize the AsyncContext
+     * @param servletResponse the ServletResponse with which to initialize the AsyncContext
+     * @param isStartAsyncWithZeroArg true if the zero-arg version of startAsync was called, false otherwise
      */
-    private AsyncContext startAsync(ServletRequest servletRequest,
-                ServletResponse servletResponse,
-                boolean isStartAsyncWithZeroArg)
+    private AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse, boolean isStartAsyncWithZeroArg)
             throws IllegalStateException {
 
         if (servletRequest == null || servletResponse == null) {
@@ -1363,48 +1229,36 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
 
         if (!isAsyncSupported()) {
-            throw new IllegalStateException("Request is within the scope of a "
-                    + "filter or servlet that does not support asynchronous operations");
+            throw new IllegalStateException("Request is within the scope of a " + "filter or servlet that does not support asynchronous operations");
         }
 
         final AsyncContextImpl asyncContextLocal = asyncContext;
 
         if (asyncContextLocal != null) {
             if (isAsyncStarted()) {
-                throw new IllegalStateException("ServletRequest.startAsync called"
-                        + " again without any asynchronous dispatch, or called "
-                        + "outside the scope of any such dispatch, or called "
-                        + "again within the scope of the same dispatch");
+                throw new IllegalStateException("ServletRequest.startAsync called" + " again without any asynchronous dispatch, or called "
+                        + "outside the scope of any such dispatch, or called " + "again within the scope of the same dispatch");
             }
             if (isAsyncComplete) {
                 throw new IllegalStateException("Response already closed");
             }
             if (!asyncContextLocal.isStartAsyncInScope()) {
-                throw new IllegalStateException("ServletRequest.startAsync called "
-                        + "outside the scope of an async dispatch");
+                throw new IllegalStateException("ServletRequest.startAsync called " + "outside the scope of an async dispatch");
             }
 
             // Reinitialize existing AsyncContext
-            asyncContextLocal.reinitialize(servletRequest, servletResponse,
-                    isStartAsyncWithZeroArg);
+            asyncContextLocal.reinitialize(servletRequest, servletResponse, isStartAsyncWithZeroArg);
         } else {
-            final AsyncContextImpl asyncContextFinal =
-                    new AsyncContextImpl(this,
-                                         servletRequest,
-                                         servletResponse,
-                                         isStartAsyncWithZeroArg);
+            final AsyncContextImpl asyncContextFinal = new AsyncContextImpl(this, servletRequest, servletResponse, isStartAsyncWithZeroArg);
             asyncContext = asyncContextFinal;
 
-            final CompletionHandler<org.glassfish.grizzly.http.server.Response> requestCompletionHandler =
-                    new EmptyCompletionHandler<org.glassfish.grizzly.http.server.Response>() {
+            final CompletionHandler<org.glassfish.grizzly.http.server.Response> requestCompletionHandler = new EmptyCompletionHandler<org.glassfish.grizzly.http.server.Response>() {
 
-                        @Override
-                        public void completed(org.glassfish.grizzly.http.server.Response response) {
-                            asyncContextFinal.notifyAsyncListeners(
-                                    AsyncContextImpl.AsyncEventType.COMPLETE,
-                                    null);
-                        }
-                    };
+                @Override
+                public void completed(org.glassfish.grizzly.http.server.Response response) {
+                    asyncContextFinal.notifyAsyncListeners(AsyncContextImpl.AsyncEventType.COMPLETE, null);
+                }
+            };
 
             final TimeoutHandler timeoutHandler = new TimeoutHandler() {
 
@@ -1413,8 +1267,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
                     return processTimeout();
                 }
             };
-            request.getResponse().suspend(-1, MILLISECONDS,
-                    requestCompletionHandler, timeoutHandler);
+            request.getResponse().suspend(-1, MILLISECONDS, requestCompletionHandler, timeoutHandler);
             asyncStartedThread = Thread.currentThread();
         }
 
@@ -1439,19 +1292,17 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     /**
      * Disables async support for this request.
      *
-     * Async support is disabled as soon as this request has passed a filter
-     * or servlet that does not support async (either via the designated
-     * annotation or declaratively).
+     * Async support is disabled as soon as this request has passed a filter or servlet that does not support async (either
+     * via the designated annotation or declaratively).
      */
     public void disableAsyncSupport() {
         isAsyncSupported = false;
     }
 
     void setAsyncTimeout(long timeout) {
-        request.getResponse().getSuspendContext().setTimeout(
-                timeout, MILLISECONDS);
+        request.getResponse().getSuspendContext().setTimeout(timeout, MILLISECONDS);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1471,10 +1322,9 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         return asyncContext;
     }
-    
+
     /*
-     * Invokes any registered AsyncListener instances at their
-     * <tt>onComplete</tt> method
+     * Invokes any registered AsyncListener instances at their <tt>onComplete</tt> method
      */
     void asyncComplete() {
         if (isAsyncComplete) {
@@ -1482,14 +1332,12 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
         isAsyncComplete = true;
         asyncStarted.set(false);
-        
-        if (asyncStartedThread != Thread.currentThread() ||
-                !asyncContext.isOkToConfigure()) {
+
+        if (asyncStartedThread != Thread.currentThread() || !asyncContext.isOkToConfigure()) {
             // it's not safe to just mark response as resumed
             request.getResponse().resume();
         } else {
-            final Response.SuspendedContextImpl suspendContext =
-                    (Response.SuspendedContextImpl) request.getResponse().getSuspendContext();
+            final Response.SuspendedContextImpl suspendContext = (Response.SuspendedContextImpl) request.getResponse().getSuspendContext();
 
             suspendContext.markResumed();
             suspendContext.getSuspendStatus().reset();
@@ -1497,40 +1345,32 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     }
 
     /*
-     * Invokes all registered AsyncListener instances at their
-     * <tt>onTimeout</tt> method.
+     * Invokes all registered AsyncListener instances at their <tt>onTimeout</tt> method.
      *
-     * This method also performs an error dispatch and completes the response
-     * if none of the listeners have done so.
+     * This method also performs an error dispatch and completes the response if none of the listeners have done so.
      */
     void asyncTimeout() {
         if (asyncContext != null) {
-            asyncContext.notifyAsyncListeners(
-                    AsyncContextImpl.AsyncEventType.TIMEOUT, null);
+            asyncContext.notifyAsyncListeners(AsyncContextImpl.AsyncEventType.TIMEOUT, null);
         }
         errorDispatchAndComplete(null);
     }
-    
+
     /**
-     * Notifies this Request that the container-initiated dispatch
-     * during which ServletRequest#startAsync was called is about to
-     * return to the container
+     * Notifies this Request that the container-initiated dispatch during which ServletRequest#startAsync was called is
+     * about to return to the container
      */
     void onAfterService() throws IOException {
         if (asyncContext != null) {
             asyncContext.setOkToConfigure(false);
 
             if (asyncStarted.get()) {
-                request.getResponse().getSuspendContext().setTimeout(
-                        asyncContext.getTimeout(), MILLISECONDS);
+                request.getResponse().getSuspendContext().setTimeout(asyncContext.getTimeout(), MILLISECONDS);
             }
 
         } else if (isUpgrade()) {
             if (httpUpgradeHandler != null) {
-                final WebConnection wc = WebConnectionFactory.create(
-                        this,
-                        getInputStream(),
-                        servletResponse.getOutputStream());
+                final WebConnection wc = WebConnectionFactory.create(this, getInputStream(), servletResponse.getOutputStream());
                 httpUpgradeHandler.init(wc);
             } else {
                 LOGGER.log(Level.SEVERE, "HttpUpgradeHandler handler cannot be null");
@@ -1546,20 +1386,16 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         } finally {
             result = asyncContextLocal != null && !asyncContextLocal.getAndResetDispatchInScope();
         }
-        
+
         return result;
     }
 
     void errorDispatchAndComplete(Throwable t) {
         /*
-         * If no listeners, or none of the listeners called
-         * AsyncContext#complete or any of the AsyncContext#dispatch
-         * methods (in which case asyncStarted would have been set to false),
-         * perform an error dispatch with a status code equal to 500.
+         * If no listeners, or none of the listeners called AsyncContext#complete or any of the AsyncContext#dispatch methods
+         * (in which case asyncStarted would have been set to false), perform an error dispatch with a status code equal to 500.
          */
-        if (asyncContext != null
-                && !asyncContext.isDispatchInScope()
-                && !isAsyncComplete && isAsyncStarted()) {
+        if (asyncContext != null && !asyncContext.isDispatchInScope() && !isAsyncComplete && isAsyncStarted()) {
             servletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 //            response.setError();
             if (t != null) {
@@ -1573,8 +1409,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
                 LOGGER.log(Level.SEVERE, "Unable to perform error dispatch", e);
             } finally {
                 /*
-                 * If no matching error page was found, or the error page
-                 * did not call AsyncContext#complete or any of the
+                 * If no matching error page was found, or the error page did not call AsyncContext#complete or any of the
                  * AsyncContext#dispatch methods, call AsyncContext#complete
                  */
                 if (!isAsyncComplete && isAsyncStarted()) {
@@ -1583,10 +1418,10 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             }
         }
     }
-    
+
     /**
-     * Create an instance of <code>HttpUpgradeHandler</code> for an given
-     * class and uses it for the http protocol upgrade processing.
+     * Create an instance of <code>HttpUpgradeHandler</code> for an given class and uses it for the http protocol upgrade
+     * processing.
      *
      * @param handlerClass The <code>ProtocolHandler</code> class used for the upgrade.
      *
@@ -1605,9 +1440,9 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         T handler;
         try {
             handler = contextImpl.createHttpUpgradeHandlerInstance(handlerClass);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             if (ex instanceof IOException) {
-                throw (IOException)ex;
+                throw (IOException) ex;
             } else {
                 throw new IOException(ex);
             }
@@ -1616,7 +1451,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         request.getResponse().suspend();
         return handler;
     }
-    
+
     public boolean isUpgrade() {
         return upgrade;
     }
@@ -1624,7 +1459,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     public HttpUpgradeHandler getHttpUpgradeHandler() {
         return httpUpgradeHandler;
     }
-    
+
     @Override
     public boolean authenticate(HttpServletResponse hsr) throws IOException, ServletException {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -1775,174 +1610,146 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     // ----------------------------------------------------------- DoPrivileged
 
-    
-    private final class GetAttributePrivilegedAction
-            implements PrivilegedAction<Enumeration<String>> {
-        
+    private final class GetAttributePrivilegedAction implements PrivilegedAction<Enumeration<String>> {
+
         @Override
         public Enumeration<String> run() {
             return new Enumerator<>(request.getAttributeNames());
-        }            
+        }
     }
-     
-    
-    private final class GetParameterMapPrivilegedAction
-            implements PrivilegedAction<Map<String, String[]>> {
-        
+
+    private final class GetParameterMapPrivilegedAction implements PrivilegedAction<Map<String, String[]>> {
+
         @Override
         public Map<String, String[]> run() {
             return request.getParameterMap();
-        }        
-    }    
-    
-    
-    private final class GetRequestDispatcherPrivilegedAction
-            implements PrivilegedAction<RequestDispatcher> {
+        }
+    }
+
+    private final class GetRequestDispatcherPrivilegedAction implements PrivilegedAction<RequestDispatcher> {
 
         private final String path;
 
-        public GetRequestDispatcherPrivilegedAction(String path){
+        public GetRequestDispatcherPrivilegedAction(String path) {
             this.path = path;
         }
-        
+
         @Override
         public RequestDispatcher run() {
             return getRequestDispatcherInternal(path);
-        }           
-    }    
-    
-    
-    private final class GetParameterPrivilegedAction
-            implements PrivilegedAction<String> {
+        }
+    }
+
+    private final class GetParameterPrivilegedAction implements PrivilegedAction<String> {
 
         public final String name;
 
-        public GetParameterPrivilegedAction(String name){
+        public GetParameterPrivilegedAction(String name) {
             this.name = name;
         }
 
         @Override
         public String run() {
             return request.getParameter(name);
-        }           
-    }    
-    
-     
-    private final class GetParameterNamesPrivilegedAction
-            implements PrivilegedAction<Set<String>> {
-        
+        }
+    }
+
+    private final class GetParameterNamesPrivilegedAction implements PrivilegedAction<Set<String>> {
+
         @Override
         public Set<String> run() {
             return request.getParameterNames();
-        }           
-    } 
-    
-    
-    private final class GetParameterValuePrivilegedAction
-            implements PrivilegedAction<String[]> {
+        }
+    }
+
+    private final class GetParameterValuePrivilegedAction implements PrivilegedAction<String[]> {
 
         public final String name;
 
-        public GetParameterValuePrivilegedAction(String name){
+        public GetParameterValuePrivilegedAction(String name) {
             this.name = name;
         }
 
         @Override
         public String[] run() {
             return request.getParameterValues(name);
-        }           
-    }    
-  
-    
-    private final class GetCookiesPrivilegedAction
-            implements PrivilegedAction<Cookie[]> {
-        
+        }
+    }
+
+    private final class GetCookiesPrivilegedAction implements PrivilegedAction<Cookie[]> {
+
         @Override
         public Cookie[] run() {
             return request.getCookies();
-        }           
-    }      
-    
-    
-    private final class GetCharacterEncodingPrivilegedAction
-            implements PrivilegedAction<String> {
-        
+        }
+    }
+
+    private final class GetCharacterEncodingPrivilegedAction implements PrivilegedAction<String> {
+
         @Override
         public String run() {
             return request.getCharacterEncoding();
-        }           
-    }   
-        
-    
-    private final class GetHeadersPrivilegedAction
-            implements PrivilegedAction<Enumeration<String>> {
+        }
+    }
+
+    private final class GetHeadersPrivilegedAction implements PrivilegedAction<Enumeration<String>> {
 
         private final String name;
 
-        public GetHeadersPrivilegedAction(String name){
+        public GetHeadersPrivilegedAction(String name) {
             this.name = name;
         }
-        
+
         @Override
         public Enumeration<String> run() {
             return new Enumerator<>(request.getHeaders(name));
-        }           
-    }    
-        
-    
-    private final class GetHeaderNamesPrivilegedAction
-            implements PrivilegedAction<Enumeration<String>> {
+        }
+    }
+
+    private final class GetHeaderNamesPrivilegedAction implements PrivilegedAction<Enumeration<String>> {
 
         @Override
         public Enumeration<String> run() {
             return new Enumerator<>(request.getHeaderNames());
-        }           
-    }  
-            
-    
-    private final class GetLocalePrivilegedAction
-            implements PrivilegedAction<Locale> {
+        }
+    }
+
+    private final class GetLocalePrivilegedAction implements PrivilegedAction<Locale> {
 
         @Override
         public Locale run() {
             return request.getLocale();
-        }           
-    }    
-            
-    
-    private final class GetLocalesPrivilegedAction
-            implements PrivilegedAction<Enumeration<Locale>> {
+        }
+    }
+
+    private final class GetLocalesPrivilegedAction implements PrivilegedAction<Enumeration<Locale>> {
 
         @Override
         public Enumeration<Locale> run() {
             return new Enumerator<>(request.getLocales());
-        }           
-    }    
-    
+        }
+    }
+
 //    private static final class GetSessionPrivilegedAction
 //            implements PrivilegedAction {
 //
 //        private final boolean create;
-//        
+//
 //        public GetSessionPrivilegedAction(boolean create){
 //            this.create = create;
 //        }
-//                
+//
 //        @Override
-//        public Object run() {  
+//        public Object run() {
 //            throw new UnsupportedOperationException("Not supported yet.");
-//        }           
+//        }
 //    }
 
     /**
-     * The static factory is required to avoid NoClassDefFoundError when
-     * running w/ Servlet 3.0 API and JDK6
+     * The static factory is required to avoid NoClassDefFoundError when running w/ Servlet 3.0 API and JDK6
      */
     static class WebConnectionFactory {
-        static WebConnection create(
-                final HttpServletRequestImpl req,
-                final ServletInputStream inputStream,
-                final ServletOutputStream outputStream) {
+        static WebConnection create(final HttpServletRequestImpl req, final ServletInputStream inputStream, final ServletOutputStream outputStream) {
             return new WebConnectionImpl(req, inputStream, outputStream);
         }
     }
@@ -1961,49 +1768,46 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             }
 
             // Trim leading "/"
-            matchValue = (((data.matchedPath != null) && (data.matchedPath.length() >= 2))
-                    ? data.matchedPath.substring(1)
-                    : "");
-            pattern = ((data.descriptorPath != null) ? data.descriptorPath : "");
-            servletName = ((data.servletName != null) ? data.servletName : "");
+            matchValue = data.matchedPath != null && data.matchedPath.length() >= 2 ? data.matchedPath.substring(1) : "";
+            pattern = data.descriptorPath != null ? data.descriptorPath : "";
+            servletName = data.servletName != null ? data.servletName : "";
 
             switch (data.mappingType) {
-                case MappingData.CONTEXT_ROOT:
-                    mappingMatch = MappingMatch.CONTEXT_ROOT;
-                    break;
-                case MappingData.DEFAULT:
-                    mappingMatch = MappingMatch.DEFAULT;
-                    break;
-                case MappingData.EXACT:
-                    mappingMatch = MappingMatch.EXACT;
-                    break;
-                case MappingData.EXTENSION:
-                    mappingMatch = MappingMatch.EXTENSION;
-                    // Ensure pattern is valid
-                    if (pattern.charAt(0) == '*') {
-                        // Mutate matchValue to mean "what * was matched with".
-                        int i = matchValue.indexOf(pattern.substring(1));
-                        if (-1 != i) {
-                            matchValue = matchValue.substring(0, i);
-                        }
+            case MappingData.CONTEXT_ROOT:
+                mappingMatch = MappingMatch.CONTEXT_ROOT;
+                break;
+            case MappingData.DEFAULT:
+                mappingMatch = MappingMatch.DEFAULT;
+                break;
+            case MappingData.EXACT:
+                mappingMatch = MappingMatch.EXACT;
+                break;
+            case MappingData.EXTENSION:
+                mappingMatch = MappingMatch.EXTENSION;
+                // Ensure pattern is valid
+                if (pattern.charAt(0) == '*') {
+                    // Mutate matchValue to mean "what * was matched with".
+                    int i = matchValue.indexOf(pattern.substring(1));
+                    if (-1 != i) {
+                        matchValue = matchValue.substring(0, i);
                     }
-                    break;
-                case MappingData.PATH:
-                    mappingMatch = MappingMatch.PATH;
-                    // Ensure pattern is valid
-                    int patternLen = pattern.length();
-                    if (patternLen > 0 && pattern.charAt(patternLen - 1) == '*') {
-                        int indexOfPatternStart = patternLen - 2;
-                        int matchValueLen = matchValue.length();
-                        if (0 <= indexOfPatternStart && indexOfPatternStart < matchValueLen) {
-                            // Remove the pattern from the end of matchValue
-                            matchValue = matchValue.substring(indexOfPatternStart);
-                        }
+                }
+                break;
+            case MappingData.PATH:
+                mappingMatch = MappingMatch.PATH;
+                // Ensure pattern is valid
+                int patternLen = pattern.length();
+                if (patternLen > 0 && pattern.charAt(patternLen - 1) == '*') {
+                    int indexOfPatternStart = patternLen - 2;
+                    int matchValueLen = matchValue.length();
+                    if (0 <= indexOfPatternStart && indexOfPatternStart < matchValueLen) {
+                        // Remove the pattern from the end of matchValue
+                        matchValue = matchValue.substring(indexOfPatternStart);
                     }
-                    break;
+                }
+                break;
             }
         }
-
 
         @Override
         public String getMatchValue() {
@@ -2027,12 +1831,8 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
         @Override
         public String toString() {
-            return "Mapping{" +
-                    "matchValue='" + matchValue + '\'' +
-                    ", pattern='" + pattern + '\'' +
-                    ", servletName='" + servletName + '\'' +
-                    ", mappingMatch=" + mappingMatch +
-                    '}';
+            return "Mapping{" + "matchValue='" + matchValue + '\'' + ", pattern='" + pattern + '\'' + ", servletName='" + servletName + '\'' + ", mappingMatch="
+                    + mappingMatch + '}';
         }
     }
 }

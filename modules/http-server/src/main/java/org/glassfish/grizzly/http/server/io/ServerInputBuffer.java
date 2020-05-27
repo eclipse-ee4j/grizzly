@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.http.server.io;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.http.HttpBrokenContent;
@@ -27,19 +28,18 @@ import org.glassfish.grizzly.http.server.Request;
 
 /**
  * Server-side implementation of the {@link InputBuffer}.
- * 
+ *
  * @author Alexey Stashok
  */
 public class ServerInputBuffer extends InputBuffer {
     private volatile long totalReadContentInBytes;
     private volatile Request serverRequest;
-    
-    public void initialize(final Request serverRequest,
-            final FilterChainContext ctx) {
+
+    public void initialize(final Request serverRequest, final FilterChainContext ctx) {
         this.serverRequest = serverRequest;
         super.initialize(serverRequest.getRequest(), ctx);
     }
-    
+
     /**
      * Initiates asynchronous data receiving.
      *
@@ -48,18 +48,16 @@ public class ServerInputBuffer extends InputBuffer {
     @Override
     public void initiateAsyncronousDataReceiving() {
         if (!checkChunkedMaxPostSize()) {
-            final HttpContent brokenContent =
-                    HttpBrokenContent.builder(serverRequest.getRequest())
-                    .error(new IOException("The HTTP request content exceeds max post size"))
-                    .build();
+            final HttpContent brokenContent = HttpBrokenContent.builder(serverRequest.getRequest())
+                    .error(new IOException("The HTTP request content exceeds max post size")).build();
             try {
                 append(brokenContent);
             } catch (IOException ignored) {
             }
-            
+
             return;
         }
-        
+
         super.initiateAsyncronousDataReceiving();
     }
 
@@ -68,7 +66,7 @@ public class ServerInputBuffer extends InputBuffer {
         if (!checkChunkedMaxPostSize()) {
             throw new IOException("The HTTP request content exceeds max post size");
         }
-        
+
         return super.blockingRead();
     }
 
@@ -77,8 +75,7 @@ public class ServerInputBuffer extends InputBuffer {
         totalReadContentInBytes += buffer.remaining();
         super.updateInputContentBuffer(buffer);
     }
-    
-    
+
     @Override
     public void recycle() {
         serverRequest = null;
@@ -96,7 +93,7 @@ public class ServerInputBuffer extends InputBuffer {
             final long maxPostSize = serverRequest.getHttpFilter().getConfiguration().getMaxPostSize();
             return maxPostSize < 0 || maxPostSize > totalReadContentInBytes;
         }
-        
+
         return true;
     }
 }

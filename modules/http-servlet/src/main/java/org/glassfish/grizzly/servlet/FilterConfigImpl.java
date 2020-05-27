@@ -20,57 +20,50 @@ package org.glassfish.grizzly.servlet;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
+
+import org.glassfish.grizzly.http.server.util.Enumerator;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContext;
-import org.glassfish.grizzly.http.server.util.Enumerator;
-
 
 /**
  * {@link FilterConfig} implementation.
- * 
+ *
  * @author Jeanfrancois Arcand
  */
 @SuppressWarnings("unchecked")
 public class FilterConfigImpl implements FilterConfig {
 
-    
     /**
      * The Context with which we are associated.
      */
     private WebappContext servletContext = null;
-    
-    
+
     /**
      * The application Filter we are configured for.
      */
     private Filter filter = null;
-    
-    
+
     /**
      * Filter's initParameters.
      */
     private Map<String, String> initParameters = null;
-    
-    
+
     /**
      * Filter name
      */
     private String filterName;
 
-    
     // ------------------------------------------------------------------ //
-    
 
-    
     public FilterConfigImpl(WebappContext servletContext) {
         this.servletContext = servletContext;
     }
 
-    
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public String getInitParameter(String name) {
         if (initParameters == null) {
@@ -79,7 +72,6 @@ public class FilterConfigImpl implements FilterConfig {
         return initParameters.get(name);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -87,8 +79,7 @@ public class FilterConfigImpl implements FilterConfig {
     public String getFilterName() {
         return filterName;
     }
-    
-    
+
     /**
      * {@inheritDoc}
      */
@@ -96,13 +87,12 @@ public class FilterConfigImpl implements FilterConfig {
     public Enumeration<String> getInitParameterNames() {
         Map map = initParameters;
         if (map == null) {
-            return (new Enumerator<String>(new ArrayList<String>()));
+            return new Enumerator<>(new ArrayList<String>());
         } else {
-            return (new Enumerator<String>(map.keySet()));
+            return new Enumerator<String>(map.keySet());
         }
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -111,18 +101,15 @@ public class FilterConfigImpl implements FilterConfig {
         return servletContext;
     }
 
-    
     /**
      * Return the application Filter we are configured for.
      */
-    public Filter getFilter(){
-       return filter;
+    public Filter getFilter() {
+        return filter;
     }
 
-    
     /**
-     * Release the Filter instance associated with this FilterConfig,
-     * if there is one.
+     * Release the Filter instance associated with this FilterConfig, if there is one.
      */
     protected void recycle() {
         if (this.filter != null) {
@@ -131,29 +118,29 @@ public class FilterConfigImpl implements FilterConfig {
         this.filter = null;
     }
 
-
     /**
      * Set the {@link Filter} associated with this object.
+     * 
      * @param filter
      */
     protected void setFilter(Filter filter) {
         this.filter = filter;
     }
 
-    
     /**
      * Set the {@link Filter}'s name associated with this object.
+     * 
      * @param filterName the name of this {@link Filter}.
-     */    
+     */
     protected void setFilterName(String filterName) {
         this.filterName = filterName;
     }
 
-    
     /**
      * Set the init parameters associated with this associated {@link Filter}.
+     * 
      * @param initParameters the configuration parameters for this {@link Filter}
-     */    
+     */
     protected void setInitParameters(Map<String, String> initParameters) {
         if (initParameters != null && !initParameters.isEmpty()) {
             this.initParameters = initParameters;

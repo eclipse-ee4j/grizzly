@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.http.HttpRequestPacket;
@@ -32,20 +33,17 @@ import org.glassfish.grizzly.ssl.SSLSupport;
 import org.glassfish.grizzly.utils.BufferInputStream;
 
 /**
- * {@link HttpRequestPacket} implementation, which also contains AJP
- * related meta data.
- * 
+ * {@link HttpRequestPacket} implementation, which also contains AJP related meta data.
+ *
  * @author Alexey Stashok
  */
 public final class AjpHttpRequest extends HttpRequestPacket {
     private static final Logger LOGGER = Grizzly.logger(AjpHttpRequest.class);
-    
-    private static final ThreadCache.CachedTypeIndex<AjpHttpRequest> CACHE_IDX =
-            ThreadCache.obtainIndex(AjpHttpRequest.class, 2);
+
+    private static final ThreadCache.CachedTypeIndex<AjpHttpRequest> CACHE_IDX = ThreadCache.obtainIndex(AjpHttpRequest.class, 2);
 
     public static AjpHttpRequest create() {
-        AjpHttpRequest httpRequestImpl =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        AjpHttpRequest httpRequestImpl = ThreadCache.takeFromCache(CACHE_IDX);
         if (httpRequestImpl == null) {
             httpRequestImpl = new AjpHttpRequest();
         }
@@ -57,11 +55,11 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     private final DataChunk sslCert = DataChunk.newInstance();
 
     final DataChunk tmpDataChunk = DataChunk.newInstance();
-    
+
     private String secret;
-    
+
     private final AjpHttpResponse cachedResponse = new AjpHttpResponse();
-    
+
     final ProcessingState processingState = new ProcessingState();
 
     private int contentBytesRemaining = -1;
@@ -72,20 +70,18 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     @Override
     public Object getAttribute(final String name) {
         Object result = super.getAttribute(name);
-        
+
         // If it's CERTIFICATE_KEY request - lazy initialize it, if required
         if (result == null && SSLSupport.CERTIFICATE_KEY.equals(name)) {
             // Extract SSL certificate information (if requested)
             if (!sslCert.isNull()) {
                 final BufferChunk bc = sslCert.getBufferChunk();
-                BufferInputStream bais = new BufferInputStream(bc.getBuffer(),
-                        bc.getStart(), bc.getEnd());
+                BufferInputStream bais = new BufferInputStream(bc.getBuffer(), bc.getStart(), bc.getEnd());
 
                 // Fill the first element.
                 X509Certificate jsseCerts[];
                 try {
-                    CertificateFactory cf =
-                            CertificateFactory.getInstance("X.509");
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     X509Certificate cert = (X509Certificate) cf.generateCertificate(bais);
                     jsseCerts = new X509Certificate[1];
                     jsseCerts[0] = cert;
@@ -127,7 +123,7 @@ public final class AjpHttpRequest extends HttpRequestPacket {
             // Copy the addr from localName
             localAddressC.setString(localNameC.toString());
         }
-        
+
         return localAddressC;
     }
 
@@ -148,14 +144,13 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     }
 
     /**
-     * @return the current remote host value. Unlike {@link #remoteHost()}, this
-     *         method doesn't try to resolve the host name based on the current
-     *         {@link #remoteAddr()} value
+     * @return the current remote host value. Unlike {@link #remoteHost()}, this method doesn't try to resolve the host name
+     * based on the current {@link #remoteAddr()} value
      */
     public DataChunk remoteHostRaw() {
         return remoteHostC;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -163,30 +158,27 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     public DataChunk remoteHost() {
         if (remoteHostC.isNull()) {
             try {
-                remoteHostC.setString(InetAddress.getByName(
-                        remoteAddr().toString()).
-                        getHostName());
+                remoteHostC.setString(InetAddress.getByName(remoteAddr().toString()).getHostName());
             } catch (IOException iex) {
                 if (LOGGER.isLoggable(Level.FINEST)) {
                     LOGGER.log(Level.FINEST, "Unable to resolve {0}", remoteAddr());
                 }
             }
         }
-        
+
         return remoteHostC;
     }
-    
+
     /**
-     * Get the instance id (or JVM route). Currently Ajp is sending it with each
-     * request. In future this should be fixed, and sent only once ( or
-     * 'negotiated' at config time so both tomcat and apache share the same name.
+     * Get the instance id (or JVM route). Currently Ajp is sending it with each request. In future this should be fixed,
+     * and sent only once ( or 'negotiated' at config time so both tomcat and apache share the same name.
      *
      * @return the instance id
      */
     public DataChunk instanceId() {
         return instanceId;
     }
-    
+
     DataChunk sslCert() {
         return sslCert;
     }
@@ -198,7 +190,7 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     void setSecret(final String secret) {
         this.secret = secret;
     }
-    
+
     private AjpHttpRequest init() {
         cachedResponse.setRequest(this);
         cachedResponse.setChunkingAllowed(true);
@@ -232,7 +224,7 @@ public final class AjpHttpRequest extends HttpRequestPacket {
     protected void doParseHostHeader() {
         AjpMessageUtils.parseHost(unparsedHostC, serverNameRaw(), this);
     }
-    
+
     @Override
     protected void reset() {
         processingState.recycle();
@@ -244,7 +236,7 @@ public final class AjpHttpRequest extends HttpRequestPacket {
         tmpDataChunk.recycle();
 
         secret = null;
-        
+
         super.reset();
     }
 
@@ -255,5 +247,4 @@ public final class AjpHttpRequest extends HttpRequestPacket {
         ThreadCache.putToCache(CACHE_IDX, this);
     }
 
-    
 }

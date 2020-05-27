@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,10 @@
 
 package org.glassfish.grizzly.http2;
 
+import java.util.concurrent.ExecutorService;
+
 import org.glassfish.grizzly.filterchain.Filter;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * Configuration information for HTTP/2 {@link Filter} implementations.
@@ -47,9 +47,7 @@ public class Http2Configuration {
     private final ExecutorService executorService;
     private final ThreadPoolConfig threadPoolConfig;
 
-
     // ----------------------------------------------------------- Constructors
-
 
     private Http2Configuration(final Http2ConfigurationBuilder builder) {
         maxConcurrentStreams = builder.maxConcurrentStreams;
@@ -66,9 +64,7 @@ public class Http2Configuration {
         cleanFrequencyCheck = builder.cleanFrequencyCheck;
     }
 
-
     // --------------------------------------------------------- Public Methods
-
 
     /**
      * @return a new {@link Http2ConfigurationBuilder} instance.
@@ -78,16 +74,14 @@ public class Http2Configuration {
     }
 
     /**
-     * @return the default maximum number of concurrent streams allowed for one session.
-     * Negative value means "unlimited".
+     * @return the default maximum number of concurrent streams allowed for one session. Negative value means "unlimited".
      */
     public int getMaxConcurrentStreams() {
         return maxConcurrentStreams;
     }
 
     /**
-     * Sets the default maximum number of concurrent streams allowed for one session.
-     * Negative value means "unlimited".
+     * Sets the default maximum number of concurrent streams allowed for one session. Negative value means "unlimited".
      */
     public void setMaxConcurrentStreams(final int maxConcurrentStreams) {
         this.maxConcurrentStreams = maxConcurrentStreams;
@@ -122,8 +116,8 @@ public class Http2Configuration {
     }
 
     /**
-     * @return the maximum size, in bytes, of header list.  If not explicitly configured, the default of
-     *  {@link #DEFAULT_MAX_HEADER_LIST_SIZE} is used.
+     * @return the maximum size, in bytes, of header list. If not explicitly configured, the default of
+     * {@link #DEFAULT_MAX_HEADER_LIST_SIZE} is used.
      */
     public int getMaxHeaderListSize() {
         return maxHeaderListSize;
@@ -137,8 +131,8 @@ public class Http2Configuration {
     }
 
     /**
-     * @return whether or not strict cipher suite checking against RFC 7540's blacklist is performed or not.
-     *  If not explicitly configured, checking will be performed.
+     * @return whether or not strict cipher suite checking against RFC 7540's blacklist is performed or not. If not
+     * explicitly configured, checking will be performed.
      */
     public boolean isDisableCipherCheck() {
         return disableCipherCheck;
@@ -154,8 +148,8 @@ public class Http2Configuration {
     }
 
     /**
-     * @return <code>true</code> if this filter will bypass using the HTTP/1.1 upgrade mechanism and send the
-     *  client preface immediately with the knowledge that the remote endpoint supports HTTP/2.
+     * @return <code>true</code> if this filter will bypass using the HTTP/1.1 upgrade mechanism and send the client preface
+     * immediately with the knowledge that the remote endpoint supports HTTP/2.
      */
     public boolean isPriorKnowledge() {
         return priorKnowledge;
@@ -163,8 +157,9 @@ public class Http2Configuration {
 
     /**
      * Control how the HTTP/2 connection is established with the server.
-     * @param priorKnowledge <code>true</code> if it's known that the server supports HTTP/2.  By default no
-     *                       prior knowledge is assumed.
+     * 
+     * @param priorKnowledge <code>true</code> if it's known that the server supports HTTP/2. By default no prior knowledge
+     * is assumed.
      */
     public void setPriorKnowledge(final boolean priorKnowledge) {
         this.priorKnowledge = priorKnowledge;
@@ -185,53 +180,51 @@ public class Http2Configuration {
     }
 
     /**
-     * @return the high-water mark indicating streams old closed streams should be cleaned up.
-     *  If not explicitly configured, this returns {@value #DEFAULT_STREAMS_HIGH_WATER_MARK}.
+     * @return the high-water mark indicating streams old closed streams should be cleaned up. If not explicitly configured,
+     * this returns {@value #DEFAULT_STREAMS_HIGH_WATER_MARK}.
      */
     public float getStreamsHighWaterMark() {
         return streamsHighWaterMark;
     }
 
     /**
-     * Streams are maintained and periodically cleaned when the stream count (open or otherwise) surpasses the
-     * the specified high-water mark.  This value is applied against the max concurrent streams for the
-     * endpoint which HTTP2 is being configured for.  For example, if the max concurrent streams is 100 and the mark
-     * percentage is .5, then the high water mark for a clean attempt would be 50.
+     * Streams are maintained and periodically cleaned when the stream count (open or otherwise) surpasses the the specified
+     * high-water mark. This value is applied against the max concurrent streams for the endpoint which HTTP2 is being
+     * configured for. For example, if the max concurrent streams is 100 and the mark percentage is .5, then the high water
+     * mark for a clean attempt would be 50.
      */
     public void setStreamsHighWaterMark(final float streamsHighWaterMark) {
         this.streamsHighWaterMark = streamsHighWaterMark;
     }
 
     /**
-     * @return the number of streams to attempt to remove from the streams structure.  Note that only closed streams
-     * will ultimately be removed.  If not explicitly configured, this returns {@value #DEFAULT_STREAMS_CLEAN_PERCENTAGE}.
+     * @return the number of streams to attempt to remove from the streams structure. Note that only closed streams will
+     * ultimately be removed. If not explicitly configured, this returns {@value #DEFAULT_STREAMS_CLEAN_PERCENTAGE}.
      */
     public float getCleanPercentage() {
         return cleanPercentage;
     }
 
     /**
-     * The number of streams to attempt to remove from the streams structure.  Note that only closed streams
-     * will ultimately be removed.  This value is applied against the computed result for the streams high water
-     * mark.  For example, if the max concurrent streams is 100 and the mark percentage is .5, then the high water mark
-     * for a clean attempt would be 50.  The number of streams to process in the clean attempt, assuming the clean
-     * percentage is .5, would be 25.
+     * The number of streams to attempt to remove from the streams structure. Note that only closed streams will ultimately
+     * be removed. This value is applied against the computed result for the streams high water mark. For example, if the
+     * max concurrent streams is 100 and the mark percentage is .5, then the high water mark for a clean attempt would be
+     * 50. The number of streams to process in the clean attempt, assuming the clean percentage is .5, would be 25.
      */
     public void setCleanPercentage(final float cleanPercentage) {
         this.cleanPercentage = cleanPercentage;
     }
 
     /**
-     * @return how often, in terms of closed streams, the streams structure will be checked for cleaning.
-     *  If not explicitly configured, this returns {@value #DEFAULT_CLEAN_FREQUENCY_CHECK}
+     * @return how often, in terms of closed streams, the streams structure will be checked for cleaning. If not explicitly
+     * configured, this returns {@value #DEFAULT_CLEAN_FREQUENCY_CHECK}
      */
     public int getCleanFrequencyCheck() {
         return cleanFrequencyCheck;
     }
 
     /**
-     * Set the number of streams that must be closed before checking if the number of streams exceeds the high-water
-     * mark.
+     * Set the number of streams that must be closed before checking if the number of streams exceeds the high-water mark.
      */
     public void setCleanFrequencyCheck(final int cleanFrequencyCheck) {
         this.cleanFrequencyCheck = cleanFrequencyCheck;
@@ -252,7 +245,6 @@ public class Http2Configuration {
     }
 
     // --------------------------------------------------------- Nested Classes
-
 
     public static final class Http2ConfigurationBuilder {
         private int maxConcurrentStreams = -1;
@@ -312,8 +304,8 @@ public class Http2Configuration {
         }
 
         /**
-         * Specifies a thread pool configuration that will be used to create a new
-         *  {@link ExecutorService} handling HTTP/2 streams.
+         * Specifies a thread pool configuration that will be used to create a new {@link ExecutorService} handling HTTP/2
+         * streams.
          */
         public Http2ConfigurationBuilder threadPoolConfig(final ThreadPoolConfig val) {
             threadPoolConfig = val;
@@ -321,8 +313,8 @@ public class Http2Configuration {
         }
 
         /**
-         * Specifies a pre-existing {@link ExecutorService} for handling HTTP/2 streams.
-         * If called, it will clear any value set previously by {@link #threadPoolConfig(ThreadPoolConfig)}.
+         * Specifies a pre-existing {@link ExecutorService} for handling HTTP/2 streams. If called, it will clear any value set
+         * previously by {@link #threadPoolConfig(ThreadPoolConfig)}.
          */
         public Http2ConfigurationBuilder executorService(final ExecutorService val) {
             threadPoolConfig = null;

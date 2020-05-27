@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,12 @@
 
 package org.glassfish.grizzly.http.ajp;
 
-import org.glassfish.grizzly.memory.Buffers;
+import static org.glassfish.grizzly.http.util.HttpCodecUtils.getLongAsBuffer;
+import static org.glassfish.grizzly.http.util.HttpCodecUtils.put;
+import static org.glassfish.grizzly.http.util.HttpCodecUtils.resizeBuffer;
+
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
@@ -25,26 +29,24 @@ import org.glassfish.grizzly.http.util.Ascii;
 import org.glassfish.grizzly.http.util.BufferChunk;
 import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.http.util.HexUtils;
+import org.glassfish.grizzly.http.util.HttpUtils;
 import org.glassfish.grizzly.http.util.MimeHeaders;
+import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.CompositeBuffer;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.ssl.SSLSupport;
-import static org.glassfish.grizzly.http.util.HttpCodecUtils.*;
-import org.glassfish.grizzly.http.util.HttpUtils;
 
 /**
  * Utility method for Ajp message parsing and serialization.
- * 
+ *
  * @author Alexey Stashok
  */
 final class AjpMessageUtils {
-    
+
     private static final int[] DEC = HexUtils.getDecBytes();
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    static void decodeRequest(final Buffer requestContent,
-            final AjpHttpRequest req, final boolean tomcatAuthentication)
-            throws IOException {
+    static void decodeRequest(final Buffer requestContent, final AjpHttpRequest req, final boolean tomcatAuthentication) throws IOException {
         // FORWARD_REQUEST handler
 
         int offset = requestContent.position();
@@ -52,7 +54,7 @@ final class AjpMessageUtils {
         // Translate the HTTP method code to a String.
         byte methodCode = requestContent.get(offset++);
         if (methodCode != AjpConstants.SC_M_JK_STORED) {
-            String mName = AjpConstants.methodTransArray[(int) methodCode - 1];
+            String mName = AjpConstants.methodTransArray[methodCode - 1];
             req.getMethodDC().setString(mName);
         }
 
@@ -73,24 +75,21 @@ final class AjpMessageUtils {
         req.setLocalPort(readShort(requestContent, offset));
         offset += 2;
 
-
         final boolean isSSL = requestContent.get(offset++) != 0;
         req.setSecure(isSSL);
         req.getResponse().setSecure(isSSL);
 
         offset = decodeHeaders(requestContent, offset, req);
 
-        decodeAttributes(requestContent, offset, req,
-                tomcatAuthentication);
+        decodeAttributes(requestContent, offset, req, tomcatAuthentication);
 
         req.setUnparsedHostHeader(req.getHeaders().getValue("host"));
     }
 
-    private static int decodeAttributes(final Buffer requestContent, int offset,
-            final AjpHttpRequest req, final boolean tomcatAuthentication) {
+    private static int decodeAttributes(final Buffer requestContent, int offset, final AjpHttpRequest req, final boolean tomcatAuthentication) {
 
         final DataChunk tmpDataChunk = req.tmpDataChunk;
-        
+
         boolean moreAttr = true;
 
         while (moreAttr) {
@@ -99,12 +98,12 @@ final class AjpMessageUtils {
                 return offset;
             }
 
-            /* Special case ( XXX in future API make it separate type !)
+            /*
+             * Special case ( XXX in future API make it separate type !)
              */
             if (attributeCode == AjpConstants.SC_A_SSL_KEY_SIZE) {
                 // Bug 1326: it's an Integer.
-                req.setAttribute(SSLSupport.KEY_SIZE_KEY,
-                        readShort(requestContent, offset));
+                req.setAttribute(SSLSupport.KEY_SIZE_KEY, readShort(requestContent, offset));
                 offset += 2;
             }
 
@@ -113,90 +112,82 @@ final class AjpMessageUtils {
                 offset = setStringAttribute(req, requestContent, offset);
             }
 
-
             // 1 string attributes
             switch (attributeCode) {
-                case AjpConstants.SC_A_CONTEXT:
-                    // nothing
+            case AjpConstants.SC_A_CONTEXT:
+                // nothing
+                offset = skipBytes(requestContent, offset);
+                break;
+
+            case AjpConstants.SC_A_REMOTE_USER:
+                if (tomcatAuthentication) {
+                    // ignore server
                     offset = skipBytes(requestContent, offset);
-                    break;
+                } else {
+                    offset = getBytesToDataChunk(requestContent, offset, req.remoteUser());
+                }
+                break;
 
-                case AjpConstants.SC_A_REMOTE_USER:
-                    if (tomcatAuthentication) {
-                        // ignore server
-                        offset = skipBytes(requestContent, offset);
-                    } else {
-                        offset = getBytesToDataChunk(requestContent, offset,
-                                req.remoteUser());
-                    }
-                    break;
+            case AjpConstants.SC_A_AUTH_TYPE:
+                if (tomcatAuthentication) {
+                    // ignore server
+                    offset = skipBytes(requestContent, offset);
+                } else {
+                    offset = getBytesToDataChunk(requestContent, offset, req.authType());
+                }
+                break;
 
-                case AjpConstants.SC_A_AUTH_TYPE:
-                    if (tomcatAuthentication) {
-                        // ignore server
-                        offset = skipBytes(requestContent, offset);
-                    } else {
-                        offset = getBytesToDataChunk(requestContent, offset,
-                                req.authType());
-                    }
-                    break;
+            case AjpConstants.SC_A_QUERY_STRING:
+                offset = getBytesToDataChunk(requestContent, offset, req.getQueryStringDC());
+                break;
 
-                case AjpConstants.SC_A_QUERY_STRING:
-                    offset = getBytesToDataChunk(requestContent, offset,
-                            req.getQueryStringDC());
-                    break;
+            case AjpConstants.SC_A_JVM_ROUTE:
+                offset = getBytesToDataChunk(requestContent, offset, req.instanceId());
+                break;
 
-                case AjpConstants.SC_A_JVM_ROUTE:
-                    offset = getBytesToDataChunk(requestContent, offset,
-                            req.instanceId());
-                    break;
+            case AjpConstants.SC_A_SSL_CERT:
+                req.setSecure(true);
+                // SSL certificate extraction is costy, initialize on demand
+                offset = getBytesToDataChunk(requestContent, offset, req.sslCert());
+                break;
 
-                case AjpConstants.SC_A_SSL_CERT:
-                    req.setSecure(true);
-                    // SSL certificate extraction is costy, initialize on demand
-                    offset = getBytesToDataChunk(requestContent, offset, req.sslCert());
-                    break;
+            case AjpConstants.SC_A_SSL_CIPHER:
+                req.setSecure(true);
+                offset = setStringAttributeValue(req, SSLSupport.CIPHER_SUITE_KEY, requestContent, offset);
+                break;
 
-                case AjpConstants.SC_A_SSL_CIPHER:
-                    req.setSecure(true);
-                    offset = setStringAttributeValue(req,
-                            SSLSupport.CIPHER_SUITE_KEY, requestContent, offset);
-                    break;
+            case AjpConstants.SC_A_SSL_SESSION:
+                req.setSecure(true);
+                offset = setStringAttributeValue(req, SSLSupport.SESSION_ID_KEY, requestContent, offset);
+                break;
 
-                case AjpConstants.SC_A_SSL_SESSION:
-                    req.setSecure(true);
-                    offset = setStringAttributeValue(req,
-                            SSLSupport.SESSION_ID_KEY, requestContent, offset);
-                    break;
+            case AjpConstants.SC_A_SECRET:
+                offset = getBytesToDataChunk(requestContent, offset, tmpDataChunk);
 
-                case AjpConstants.SC_A_SECRET:
-                    offset = getBytesToDataChunk(requestContent, offset, tmpDataChunk);
+                req.setSecret(tmpDataChunk.toString());
+                tmpDataChunk.recycle();
 
-                    req.setSecret(tmpDataChunk.toString());
-                    tmpDataChunk.recycle();
+                break;
 
-                    break;
+            case AjpConstants.SC_A_STORED_METHOD:
+                offset = getBytesToDataChunk(requestContent, offset, req.getMethodDC());
+                break;
 
-                case AjpConstants.SC_A_STORED_METHOD:
-                    offset = getBytesToDataChunk(requestContent, offset, req.getMethodDC());
-                    break;
-
-                default:
-                    break; // ignore, we don't know about it - backward compat
+            default:
+                break; // ignore, we don't know about it - backward compat
             }
         }
-        
+
         return offset;
     }
 
-    static int decodeHeaders(final Buffer requestContent, int offset,
-            final AjpHttpRequest req) {
+    static int decodeHeaders(final Buffer requestContent, int offset, final AjpHttpRequest req) {
         // Decode headers
         final MimeHeaders headers = req.getHeaders();
 
         final int hCount = readShort(requestContent, offset);
         offset += 2;
-        
+
         for (int i = 0; i < hCount; i++) {
             String hName;
 
@@ -218,13 +209,12 @@ final class AjpMessageUtils {
                 // will think it's the content-type header or the
                 // content-length header - SC_REQ_CONTENT_TYPE=7,
                 // SC_REQ_CONTENT_LENGTH=8 - leading to unexpected
-                // behaviour.  see bug 5861 for more information.
+                // behaviour. see bug 5861 for more information.
                 hId = -1;
 
                 final int headerNameLen = readShort(requestContent, offset);
                 offset += 2;
-                valueDC = headers.addValue(requestContent,
-                        offset, headerNameLen);
+                valueDC = headers.addValue(requestContent, offset, headerNameLen);
                 // Don't forget to skip the terminating \0 (that's why "+ 1")
                 offset += headerNameLen + 1;
             }
@@ -234,15 +224,13 @@ final class AjpMessageUtils {
             // Get the last added header name (the one we need)
             final DataChunk headerNameDC = headers.getName(headers.size() - 1);
 
-            if (hId == AjpConstants.SC_REQ_CONTENT_LENGTH
-                    || (hId == -1 && headerNameDC.equalsIgnoreCase("Content-Length"))) {
+            if (hId == AjpConstants.SC_REQ_CONTENT_LENGTH || hId == -1 && headerNameDC.equalsIgnoreCase("Content-Length")) {
                 // just read the content-length header, so set it
                 final long cl = Ascii.parseLong(valueDC);
                 if (cl < Integer.MAX_VALUE) {
                     req.setContentLength((int) cl);
                 }
-            } else if (hId == AjpConstants.SC_REQ_CONTENT_TYPE
-                    || (hId == -1 && headerNameDC.equalsIgnoreCase("Content-Type"))) {
+            } else if (hId == AjpConstants.SC_REQ_CONTENT_TYPE || hId == -1 && headerNameDC.equalsIgnoreCase("Content-Type")) {
                 // just read the content-type header, so set it
                 req.setContentType(valueDC.toString());
             }
@@ -254,9 +242,7 @@ final class AjpMessageUtils {
     /**
      * Parse host.
      */
-    static void parseHost(final DataChunk hostDC,
-            final DataChunk serverNameDC,
-            final HttpRequestPacket request) {
+    static void parseHost(final DataChunk hostDC, final DataChunk serverNameDC, final HttpRequestPacket request) {
 
         if (hostDC == null) {
             // HTTP/1.0
@@ -273,7 +259,7 @@ final class AjpMessageUtils {
         int colonPos = -1;
 
         final Buffer valueB = valueBC.getBuffer();
-        final boolean ipv6 = (valueB.get(valueS) == '[');
+        final boolean ipv6 = valueB.get(valueS) == '[';
         boolean bracketClosed = false;
         for (int i = 0; i < valueL; i++) {
             final byte b = valueB.get(i + valueS);
@@ -302,14 +288,12 @@ final class AjpMessageUtils {
             int port = 0;
             int mult = 1;
             for (int i = valueL - 1; i > colonPos; i--) {
-                int charValue = DEC[(int) valueB.get(i + valueS)];
+                int charValue = DEC[valueB.get(i + valueS)];
                 if (charValue == -1) {
                     // Invalid character
-                    throw new IllegalStateException(
-                            String.format("Host header %s contained a non-decimal value in the port definition.",
-                                          hostDC.toString()));
+                    throw new IllegalStateException(String.format("Host header %s contained a non-decimal value in the port definition.", hostDC.toString()));
                 }
-                port = port + (charValue * mult);
+                port = port + charValue * mult;
                 mult = 10 * mult;
             }
             request.setServerPort(port);
@@ -326,8 +310,7 @@ final class AjpMessageUtils {
         return buffer.getShort(offset) & 0xFFFF;
     }
 
-    static int getBytesToDataChunk(final Buffer buffer, final int offset,
-            final DataChunk dataChunk) {
+    static int getBytesToDataChunk(final Buffer buffer, final int offset, final DataChunk dataChunk) {
 
         final int bytesStart = offset + 2;
         final int length = readShort(buffer, offset);
@@ -353,8 +336,7 @@ final class AjpMessageUtils {
         return bytesStart + length + 1;
     }
 
-    private static int setStringAttribute(final AjpHttpRequest req,
-            final Buffer buffer, int offset) {
+    private static int setStringAttribute(final AjpHttpRequest req, final Buffer buffer, int offset) {
         final DataChunk tmpDataChunk = req.tmpDataChunk;
 
         offset = getBytesToDataChunk(buffer, offset, tmpDataChunk);
@@ -362,51 +344,43 @@ final class AjpMessageUtils {
 
         tmpDataChunk.recycle();
 
-        offset = getBytesToDataChunk(buffer, offset, tmpDataChunk);        
-        final String value = tmpDataChunk.toString();
-        
-        tmpDataChunk.recycle();
-
-        req.setAttribute(key, value);
-        
-        return offset;
-    }
-
-    private static int setStringAttributeValue(final AjpHttpRequest req,
-            final String key, final Buffer buffer, int offset) {
-
-        final DataChunk tmpDataChunk = req.tmpDataChunk;
-        
         offset = getBytesToDataChunk(buffer, offset, tmpDataChunk);
         final String value = tmpDataChunk.toString();
-        
+
+        tmpDataChunk.recycle();
+
+        req.setAttribute(key, value);
+
+        return offset;
+    }
+
+    private static int setStringAttributeValue(final AjpHttpRequest req, final String key, final Buffer buffer, int offset) {
+
+        final DataChunk tmpDataChunk = req.tmpDataChunk;
+
+        offset = getBytesToDataChunk(buffer, offset, tmpDataChunk);
+        final String value = tmpDataChunk.toString();
+
         tmpDataChunk.recycle();
 
         req.setAttribute(key, value);
         return offset;
     }
 
-    public static Buffer encodeHeaders(final MemoryManager mm,
-            final HttpResponsePacket httpResponsePacket) {
+    public static Buffer encodeHeaders(final MemoryManager mm, final HttpResponsePacket httpResponsePacket) {
         Buffer encodedBuffer = mm.allocate(4096);
         int startPos = encodedBuffer.position();
         // Skip 4 bytes for the Ajp header
         encodedBuffer.position(startPos + 4);
-        
+
         encodedBuffer.put(AjpConstants.JK_AJP13_SEND_HEADERS);
         encodedBuffer.putShort((short) httpResponsePacket.getStatus());
         final byte[] tempBuffer = httpResponsePacket.getTempHeaderEncodingBuffer();
         if (httpResponsePacket.isCustomReasonPhraseSet()) {
-            encodedBuffer = putBytes(mm,
-                                     encodedBuffer,
-                                     HttpUtils.filter(
-                                             httpResponsePacket.getReasonPhraseDC()),
-                                     tempBuffer);
+            encodedBuffer = putBytes(mm, encodedBuffer, HttpUtils.filter(httpResponsePacket.getReasonPhraseDC()), tempBuffer);
         } else {
-            encodedBuffer = putBytes(mm, encodedBuffer,
-                    httpResponsePacket.getHttpStatus().getReasonPhraseBytes());
+            encodedBuffer = putBytes(mm, encodedBuffer, httpResponsePacket.getHttpStatus().getReasonPhraseBytes());
         }
-        
 
         if (httpResponsePacket.isAcknowledgement()) {
             // If it's acknoledgment packet - don't encode the headers
@@ -425,8 +399,7 @@ final class AjpMessageUtils {
             final long contentLength = httpResponsePacket.getContentLength();
             if (contentLength >= 0) {
                 final Buffer contentLengthBuffer = getLongAsBuffer(mm, contentLength);
-                headers.setValue("Content-Length").setBuffer(contentLengthBuffer,
-                        contentLengthBuffer.position(), contentLengthBuffer.limit());
+                headers.setValue("Content-Length").setBuffer(contentLengthBuffer, contentLengthBuffer.position(), contentLengthBuffer.limit());
             }
 
             final int numHeaders = headers.size();
@@ -445,29 +418,24 @@ final class AjpMessageUtils {
         // Add Ajp message header
         encodedBuffer.put(startPos, (byte) 'A');
         encodedBuffer.put(startPos + 1, (byte) 'B');
-        encodedBuffer.putShort(startPos + 2,
-                (short) (encodedBuffer.position() - startPos - 4));
+        encodedBuffer.putShort(startPos + 2, (short) (encodedBuffer.position() - startPos - 4));
 
         return encodedBuffer;
     }
 
     private static final int BODY_CHUNK_HEADER_SIZE = 7;
-    private static final int MAX_BODY_CHUNK_CONTENT_SIZE =
-            AjpConstants.SUGGESTED_MAX_PAYLOAD_SIZE - BODY_CHUNK_HEADER_SIZE - 1; // -1 because of terminating \0
-    public static Buffer appendContentAndTrim(final MemoryManager memoryManager,
-            Buffer dstBuffer, Buffer httpContentBuffer) {
+    private static final int MAX_BODY_CHUNK_CONTENT_SIZE = AjpConstants.SUGGESTED_MAX_PAYLOAD_SIZE - BODY_CHUNK_HEADER_SIZE - 1; // -1 because of terminating \0
+
+    public static Buffer appendContentAndTrim(final MemoryManager memoryManager, Buffer dstBuffer, Buffer httpContentBuffer) {
         Buffer resultBuffer = null;
         do {
             Buffer contentRemainder = null;
             if (httpContentBuffer.remaining() > MAX_BODY_CHUNK_CONTENT_SIZE) {
-                contentRemainder = httpContentBuffer.split(
-                        httpContentBuffer.position() + MAX_BODY_CHUNK_CONTENT_SIZE);
+                contentRemainder = httpContentBuffer.split(httpContentBuffer.position() + MAX_BODY_CHUNK_CONTENT_SIZE);
             }
 
-            final Buffer encodedContentChunk = appendContentChunkAndTrim(
-                    memoryManager,dstBuffer, httpContentBuffer);
-            resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer,
-                    encodedContentChunk);
+            final Buffer encodedContentChunk = appendContentChunkAndTrim(memoryManager, dstBuffer, httpContentBuffer);
+            resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer, encodedContentChunk);
 
             // dstBuffer use only once, when it comes from caller
             dstBuffer = null;
@@ -477,11 +445,9 @@ final class AjpMessageUtils {
         return resultBuffer;
     }
 
-    private static Buffer appendContentChunkAndTrim(final MemoryManager memoryManager,
-            final Buffer dstBuffer, final Buffer httpContentBuffer) {
+    private static Buffer appendContentChunkAndTrim(final MemoryManager memoryManager, final Buffer dstBuffer, final Buffer httpContentBuffer) {
 
-        final boolean useDstBufferForHeaders = dstBuffer != null &&
-                dstBuffer.remaining() >= BODY_CHUNK_HEADER_SIZE;
+        final boolean useDstBufferForHeaders = dstBuffer != null && dstBuffer.remaining() >= BODY_CHUNK_HEADER_SIZE;
 
         final Buffer headerBuffer;
         if (useDstBufferForHeaders) {
@@ -501,19 +467,16 @@ final class AjpMessageUtils {
         headerBuffer.putShort((short) httpContentBuffer.remaining());
         headerBuffer.trim();
 
-        Buffer resultBuffer = Buffers.appendBuffers(memoryManager,
-                headerBuffer, httpContentBuffer);
-        
+        Buffer resultBuffer = Buffers.appendBuffers(memoryManager, headerBuffer, httpContentBuffer);
+
         // Add terminating \0
         final Buffer terminatingBuffer = memoryManager.allocate(1);
         terminatingBuffer.allowBufferDispose(true);
-        
-        resultBuffer = Buffers.appendBuffers(memoryManager,
-                resultBuffer, terminatingBuffer);
-        
+
+        resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer, terminatingBuffer);
+
         if (!useDstBufferForHeaders && dstBuffer != null) {
-            resultBuffer = Buffers.appendBuffers(memoryManager,
-                    dstBuffer, resultBuffer);
+            resultBuffer = Buffers.appendBuffers(memoryManager, dstBuffer, resultBuffer);
         }
 
         if (resultBuffer.isComposite()) {
@@ -525,10 +488,7 @@ final class AjpMessageUtils {
         return resultBuffer;
     }
 
-    private static Buffer putBytes(final MemoryManager memoryManager,
-                                   Buffer dstBuffer,
-                                   final DataChunk dataChunk,
-                                   final byte[] tempBuffer) {
+    private static Buffer putBytes(final MemoryManager memoryManager, Buffer dstBuffer, final DataChunk dataChunk, final byte[] tempBuffer) {
         if (dataChunk == null || dataChunk.isNull()) {
             return putBytes(memoryManager, dstBuffer, EMPTY_BYTE_ARRAY);
         }
@@ -549,8 +509,7 @@ final class AjpMessageUtils {
         return dstBuffer;
     }
 
-    private static Buffer putBytes(final MemoryManager memoryManager,
-            Buffer dstBuffer, final byte[] bytes) {
+    private static Buffer putBytes(final MemoryManager memoryManager, Buffer dstBuffer, final byte[] bytes) {
         final int size = bytes.length;
 
         // Don't forget the terminating \0 (that's why "+ 1")
@@ -567,8 +526,7 @@ final class AjpMessageUtils {
         return dstBuffer;
     }
 
-    private static Buffer putShort(final MemoryManager memoryManager,
-            Buffer dstBuffer, final int value) {
+    private static Buffer putShort(final MemoryManager memoryManager, Buffer dstBuffer, final int value) {
         if (dstBuffer.remaining() < 2) {
             dstBuffer = resizeBuffer(memoryManager, dstBuffer, 2);
         }

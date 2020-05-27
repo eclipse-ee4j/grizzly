@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,19 +28,23 @@ public final class LocalizableMessage implements Localizable {
     public LocalizableMessage(String bundlename, String key, Object... args) {
         _bundlename = bundlename;
         _key = key;
-        if(args==null)
+        if (args == null) {
             args = new Object[0];
+        }
         _args = args;
     }
 
+    @Override
     public String getKey() {
         return _key;
     }
 
+    @Override
     public Object[] getArguments() {
         return _args;
     }
 
+    @Override
     public String getResourceBundleName() {
         return _bundlename;
     }

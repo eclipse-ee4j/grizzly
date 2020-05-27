@@ -18,11 +18,13 @@
 package org.glassfish.grizzly.servlet;
 
 import java.io.IOException;
-import jakarta.servlet.ReadListener;
-import jakarta.servlet.ServletInputStream;
+
 import org.glassfish.grizzly.ReadHandler;
 import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.localization.LogMessages;
+
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 
 /**
  *
@@ -37,9 +39,8 @@ public class ServletInputStreamImpl extends ServletInputStream {
     private boolean hasSetReadListener = false;
     private boolean prevIsReady = true;
 
-    private static final ThreadLocal<Boolean> IS_READY_SCOPE =
-            new ThreadLocal<Boolean>();
-    
+    private static final ThreadLocal<Boolean> IS_READY_SCOPE = new ThreadLocal<>();
+
     protected ServletInputStreamImpl(final HttpServletRequestImpl servletRequest) {
         this.servletRequest = servletRequest;
     }
@@ -51,10 +52,9 @@ public class ServletInputStreamImpl extends ServletInputStream {
     @Override
     public int read() throws IOException {
         if (!prevIsReady) {
-            throw new IllegalStateException(
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
+            throw new IllegalStateException(LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
         }
-        
+
         return inputStream.read();
     }
 
@@ -63,32 +63,29 @@ public class ServletInputStreamImpl extends ServletInputStream {
         if (!prevIsReady) {
             return 0;
         }
-        
+
         return inputStream.available();
     }
 
     @Override
     public int read(final byte[] b) throws IOException {
         if (!prevIsReady) {
-            throw new IllegalStateException(
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
+            throw new IllegalStateException(LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
         }
-        
+
         return inputStream.read(b, 0, b.length);
     }
 
     @Override
-    public int read(final byte[] b, final int off, final int len)
-            throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         if (!prevIsReady) {
-            throw new IllegalStateException(
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
+            throw new IllegalStateException(LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_NON_BLOCKING_ERROR());
         }
-        
+
         return inputStream.read(b, off, len);
     }
 
-    /** 
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -119,11 +116,9 @@ public class ServletInputStreamImpl extends ServletInputStream {
     public boolean markSupported() {
         return inputStream.markSupported();
     }
-    
-    /** 
-     * Close the stream
-     * Since we re-cycle, we can't allow the call to super.close()
-     * which would permanently disable us.
+
+    /**
+     * Close the stream Since we re-cycle, we can't allow the call to super.close() which would permanently disable us.
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -152,14 +147,13 @@ public class ServletInputStreamImpl extends ServletInputStream {
     @Override
     public boolean isReady() {
         if (!hasSetReadListener) {
-            throw new IllegalStateException(
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_INPUTSTREAM_ISREADY_ERROR());
+            throw new IllegalStateException(LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_INPUTSTREAM_ISREADY_ERROR());
         }
-        
+
         if (!prevIsReady) {
             return false;
         }
-        
+
         boolean result = inputStream.isReady();
         if (!result) {
             if (hasSetReadListener) {
@@ -170,15 +164,15 @@ public class ServletInputStreamImpl extends ServletInputStream {
                 } finally {
                     IS_READY_SCOPE.remove();
                 }
-                
+
             } else {
-                prevIsReady = true;  // Allow next .isReady() call to check underlying inputStream
+                prevIsReady = true; // Allow next .isReady() call to check underlying inputStream
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -189,14 +183,13 @@ public class ServletInputStreamImpl extends ServletInputStream {
         }
 
         if (!(servletRequest.isAsyncStarted() || servletRequest.isUpgrade())) {
-            throw new IllegalStateException(
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_INPUTSTREAM_SETREADLISTENER_ERROR());
+            throw new IllegalStateException(LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_INPUTSTREAM_SETREADLISTENER_ERROR());
         }
-        
+
         readHandler = new ReadHandlerImpl(readListener);
         hasSetReadListener = true;
     }
-    
+
     class ReadHandlerImpl implements ReadHandler {
         private ReadListener readListener = null;
 
@@ -263,5 +256,5 @@ public class ServletInputStreamImpl extends ServletInputStream {
                 readListener.onError(t);
             }
         }
-    }    
+    }
 }

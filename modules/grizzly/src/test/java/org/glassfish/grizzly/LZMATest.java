@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,6 +15,17 @@
  */
 
 package org.glassfish.grizzly;
+
+import static org.junit.Assert.assertTrue;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Random;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.glassfish.grizzly.compression.lzma.LZMAFilter;
 import org.glassfish.grizzly.filterchain.BaseFilter;
@@ -34,21 +45,10 @@ import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.glassfish.grizzly.utils.DelayFilter;
 import org.glassfish.grizzly.utils.EchoFilter;
 import org.glassfish.grizzly.utils.StringFilter;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Random;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 
 public class LZMATest {
@@ -61,12 +61,8 @@ public class LZMATest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getLazySslInit() {
-        return Arrays.asList(new Object[][]{
-                {new HeapMemoryManager()},
-                {new ByteBufferManager()},
-        });
+        return Arrays.asList(new Object[][] { { new HeapMemoryManager() }, { new ByteBufferManager() }, });
     }
-
 
     @Test
     public void testSimpleEcho() throws Exception {
@@ -113,7 +109,6 @@ public class LZMATest {
 
     // --------------------------------------------------------- Private Methods
 
-
     private void doTest(String... messages) throws Exception {
         doTest(false, messages);
     }
@@ -149,8 +144,7 @@ public class LZMATest {
             clientChainBuilder.add(new StringFilter());
             clientChainBuilder.add(new ClientEchoCheckFilter(completeFuture, messages));
 
-            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport)
-                .processor(clientChainBuilder.build()).build();
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientChainBuilder.build()).build();
 
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
 
@@ -196,9 +190,8 @@ public class LZMATest {
                     ctx.write(messages[currentIdx + 1]);
                 }
             } else {
-                future.failure(new IllegalStateException("Message #" +
-                        currentIdx + " is incorrect. Expected: " +
-                        messageToCompare + " received: " + echoedMessage));
+                future.failure(
+                        new IllegalStateException("Message #" + currentIdx + " is incorrect. Expected: " + messageToCompare + " received: " + echoedMessage));
             }
 
             return ctx.getStopAction();

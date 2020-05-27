@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http.ajp;
 
 import java.util.Properties;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.http.HttpCodecFilter;
 import org.glassfish.grizzly.http.server.AddOn;
@@ -26,9 +27,8 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 /**
  * Ajp {@link AddOn} for the {@link org.glassfish.grizzly.http.server.HttpServer}.
  *
- * The addon searches for {@link HttpCodecFilter} occurrence in the passed
- * {@link FilterChainBuilder}, removes it and adds 2 filters:
- * {@link AjpMessageFilter} and {@link AjpHandlerFilter} on its place.
+ * The addon searches for {@link HttpCodecFilter} occurrence in the passed {@link FilterChainBuilder}, removes it and
+ * adds 2 filters: {@link AjpMessageFilter} and {@link AjpHandlerFilter} on its place.
  *
  * @author Alexey Stashok
  */
@@ -44,22 +44,19 @@ public class AjpAddOn implements AddOn {
     /**
      * Construct AjpAddOn
      *
-     * @param isTomcatAuthentication if true, the authentication will be done in Grizzly.
-     * Otherwise, the authenticated principal will be propagated from the
-     * native webserver and used for authorization in Grizzly.
+     * @param isTomcatAuthentication if true, the authentication will be done in Grizzly. Otherwise, the authenticated
+     * principal will be propagated from the native webserver and used for authorization in Grizzly.
      *
-     * @param secret if not null, only requests from workers with this
-     * secret keyword will be accepted, or null otherwise.
+     * @param secret if not null, only requests from workers with this secret keyword will be accepted, or null otherwise.
      */
-    public void configure(final boolean isTomcatAuthentication,
-            final String secret) {
+    public void configure(final boolean isTomcatAuthentication, final String secret) {
         this.isTomcatAuthentication = isTomcatAuthentication;
         this.secret = secret;
     }
 
     /**
-     * Configure Ajp Filter using properties.
-     * We support following properties: request.useSecret, request.secret, tomcatAuthentication.
+     * Configure Ajp Filter using properties. We support following properties: request.useSecret, request.secret,
+     * tomcatAuthentication.
      *
      * @param properties
      */
@@ -69,39 +66,31 @@ public class AjpAddOn implements AddOn {
         }
 
         secret = properties.getProperty("request.secret", secret);
-        isTomcatAuthentication =
-                Boolean.parseBoolean(properties.getProperty(
-                "tomcatAuthentication", "true"));
+        isTomcatAuthentication = Boolean.parseBoolean(properties.getProperty("tomcatAuthentication", "true"));
     }
 
     /**
-     * If set to true, the authentication will be done in Grizzly.
-     * Otherwise, the authenticated principal will be propagated from the
-     * native webserver and used for authorization in Grizzly.
-     * The default value is true.
+     * If set to true, the authentication will be done in Grizzly. Otherwise, the authenticated principal will be propagated
+     * from the native webserver and used for authorization in Grizzly. The default value is true.
      *
-     * @return true, if the authentication will be done in Grizzly.
-     * Otherwise, the authenticated principal will be propagated from the
-     * native webserver and used for authorization in Grizzly.
+     * @return true, if the authentication will be done in Grizzly. Otherwise, the authenticated principal will be
+     * propagated from the native webserver and used for authorization in Grizzly.
      */
     public boolean isTomcatAuthentication() {
         return isTomcatAuthentication;
     }
 
     /**
-     * If not null, only requests from workers with this secret keyword will
-     * be accepted.
+     * If not null, only requests from workers with this secret keyword will be accepted.
      *
-     * @return not null, if only requests from workers with this secret keyword will
-     * be accepted, or null otherwise.
+     * @return not null, if only requests from workers with this secret keyword will be accepted, or null otherwise.
      */
     public String getSecret() {
         return secret;
     }
 
     @Override
-    public void setup(final NetworkListener networkListener,
-            final FilterChainBuilder builder) {
+    public void setup(final NetworkListener networkListener, final FilterChainBuilder builder) {
 
         final int httpCodecFilterIdx = builder.indexOfType(HttpCodecFilter.class);
         final int httpServerFilterIdx = builder.indexOfType(HttpServerFilter.class);

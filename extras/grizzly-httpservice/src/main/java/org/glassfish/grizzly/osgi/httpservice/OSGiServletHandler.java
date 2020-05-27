@@ -16,19 +16,19 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.glassfish.grizzly.servlet.FilterChainFactory;
 import org.glassfish.grizzly.servlet.ServletConfigImpl;
+import org.glassfish.grizzly.servlet.ServletHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.osgi.service.http.HttpContext;
 
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import org.glassfish.grizzly.servlet.ServletHandler;
 
 /**
  * OSGi customized {@link ServletHandler}.
@@ -41,33 +41,28 @@ public class OSGiServletHandler extends ServletHandler implements OSGiHandler {
     private final Logger logger;
     private String servletPath;
 
-    public OSGiServletHandler(final Servlet servlet,
-                              final HttpContext httpContext,
-                              final OSGiServletContext servletContext,
-                              final HashMap<String, String> servletInitParams,
-                              final Logger logger) {
+    public OSGiServletHandler(final Servlet servlet, final HttpContext httpContext, final OSGiServletContext servletContext,
+            final HashMap<String, String> servletInitParams, final Logger logger) {
         super(createServletConfig(servletContext, servletInitParams));
-        //noinspection AccessingNonPublicFieldOfAnotherObject
+        // noinspection AccessingNonPublicFieldOfAnotherObject
         super.servletInstance = servlet;
         this.httpContext = httpContext;
         this.logger = logger;
     }
 
-    private OSGiServletHandler(final ServletConfigImpl servletConfig,
-                               final Logger logger) {
+    private OSGiServletHandler(final ServletConfigImpl servletConfig, final Logger logger) {
         super(servletConfig);
         this.logger = logger;
 
     }
 
     public OSGiServletHandler newServletHandler(Servlet servlet) {
-        OSGiServletHandler servletHandler =
-                new OSGiServletHandler(getServletConfig(), logger);
+        OSGiServletHandler servletHandler = new OSGiServletHandler(getServletConfig(), logger);
 
         servletHandler.setServletInstance(servlet);
         servletHandler.setServletPath(getServletPath());
         servletHandler.setFilterChainFactory(filterChainFactory);
-        //noinspection AccessingNonPublicFieldOfAnotherObject
+        // noinspection AccessingNonPublicFieldOfAnotherObject
         servletHandler.httpContext = httpContext;
         return servletHandler;
     }
@@ -110,31 +105,23 @@ public class OSGiServletHandler extends ServletHandler implements OSGiHandler {
         return httpContext;
     }
 
-
     // ------------------------------------------------------- Protected Methods
-
 
     @Override
     protected void setFilterChainFactory(FilterChainFactory filterChainFactory) {
         super.setFilterChainFactory(filterChainFactory);
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
-
-    private static ServletConfigImpl createServletConfig(final OSGiServletContext ctx,
-                                                         final Map<String,String> params) {
+    private static ServletConfigImpl createServletConfig(final OSGiServletContext ctx, final Map<String, String> params) {
 
         final OSGiServletConfig config = new OSGiServletConfig(ctx);
         config.setInitParameters(params);
         return config;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class OSGiServletConfig extends ServletConfigImpl {
 

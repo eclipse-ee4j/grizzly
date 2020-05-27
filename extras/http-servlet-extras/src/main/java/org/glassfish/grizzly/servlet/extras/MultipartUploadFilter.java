@@ -16,28 +16,6 @@
 
 package org.glassfish.grizzly.servlet.extras;
 
-
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.ReadHandler;
-import org.glassfish.grizzly.http.multipart.ContentDisposition;
-import org.glassfish.grizzly.http.multipart.MultipartEntry;
-import org.glassfish.grizzly.http.multipart.MultipartEntryHandler;
-import org.glassfish.grizzly.http.multipart.MultipartScanner;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.io.NIOInputStream;
-import org.glassfish.grizzly.http.io.NIOReader;
-import org.glassfish.grizzly.http.util.Parameters;
-import org.glassfish.grizzly.memory.ByteBufferArray;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -49,18 +27,39 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.ReadHandler;
+import org.glassfish.grizzly.http.io.NIOInputStream;
+import org.glassfish.grizzly.http.io.NIOReader;
+import org.glassfish.grizzly.http.multipart.ContentDisposition;
+import org.glassfish.grizzly.http.multipart.MultipartEntry;
+import org.glassfish.grizzly.http.multipart.MultipartEntryHandler;
+import org.glassfish.grizzly.http.multipart.MultipartScanner;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.http.util.Parameters;
+import org.glassfish.grizzly.memory.ByteBufferArray;
 import org.glassfish.grizzly.servlet.HttpServletRequestImpl;
 import org.glassfish.grizzly.servlet.HttpServletResponseImpl;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+
 /**
  * <p>
- * A {@link Filter} implementation that leverages the non-blocking multipart
- * processing API.
+ * A {@link Filter} implementation that leverages the non-blocking multipart processing API.
  * </p>
  *
  * <p>
- * NOTE: this filter is implementation specific and will not function properly
- * outside of the Grizzly 2.x Servlet implementation.
+ * NOTE: this filter is implementation specific and will not function properly outside of the Grizzly 2.x Servlet
+ * implementation.
  * </p>
  *
  * @since 2.2
@@ -68,16 +67,15 @@ import org.glassfish.grizzly.servlet.HttpServletResponseImpl;
 public class MultipartUploadFilter implements Filter {
 
     /**
-     * Filter initialization parameter name to control whether or not
-     * the temp files used to store the uploaded file bytes will be deleted
-     * after the request ends.  If this parameter is omitted, it will be assumed
-     * that the files will be deleted after request end.
+     * Filter initialization parameter name to control whether or not the temp files used to store the uploaded file bytes
+     * will be deleted after the request ends. If this parameter is omitted, it will be assumed that the files will be
+     * deleted after request end.
      */
     public static final String DELETE_ON_REQUEST_END = "org.glassfish.grizzly.multipart.DELETE_ON_REQUEST_END";
 
     /**
-     * The name of the request attribute with which an array of all Files (java.io.File[])
-     * that were uploaded will be stored.
+     * The name of the request attribute with which an array of all Files (java.io.File[]) that were uploaded will be
+     * stored.
      */
     public static final java.lang.String UPLOADED_FILES = "org.glassfish.grizzly.multipart.UPLOADED_FILES";
 
@@ -90,7 +88,6 @@ public class MultipartUploadFilter implements Filter {
     private File tempDir;
 
     // ----------------------------------------------------- Methods from Filter
-
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -107,10 +104,8 @@ public class MultipartUploadFilter implements Filter {
     }
 
     @Override
-    public void doFilter(final ServletRequest servletRequest,
-                         final ServletResponse servletResponse,
-                         final FilterChain filterChain)
-    throws IOException, ServletException {
+    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain)
+            throws IOException, ServletException {
 
         final String contentType = servletRequest.getContentType();
         if (contentType == null || !contentType.startsWith(MULTIPART_FORM)) {
@@ -123,41 +118,38 @@ public class MultipartUploadFilter implements Filter {
         final Response response = ((HttpServletResponseImpl) servletResponse).getResponse();
         response.suspend();
         // Start the asynchronous multipart request scanning...
-        final List<File> uploadedFiles = new ArrayList<File>();
+        final List<File> uploadedFiles = new ArrayList<>();
         final Parameters formParams = new Parameters();
-        final UploadMultipartHandler uploadHandler =
-                new UploadMultipartHandler(uploadedFiles, dir, formParams);
-        MultipartScanner.scan(request,
-                uploadHandler,
-                new EmptyCompletionHandler<Request>() {
-                    // CompletionHandler is called once HTTP request processing is completed
-                    // or failed.
-                    @Override
-                    public void completed(final Request request) {
-                        // Resume the asynchronous HTTP request processing
-                        // (in other words finish the asynchronous HTTP request processing).
-                        request.setRequestParameters(formParams);
-                        servletRequest.setAttribute(UPLOADED_FILES, uploadedFiles.toArray(new File[uploadedFiles.size()]));
-                        try {
-                            filterChain.doFilter(servletRequest, servletResponse);
-                        } catch (Exception e) {
-                            LOGGER.log(Level.SEVERE, e.toString(), e);
-                        } finally {
-                            if (deleteAfterRequestEnd) {
-                                clean(dir);
-                            }
-                            response.resume();
-                        }
+        final UploadMultipartHandler uploadHandler = new UploadMultipartHandler(uploadedFiles, dir, formParams);
+        MultipartScanner.scan(request, uploadHandler, new EmptyCompletionHandler<Request>() {
+            // CompletionHandler is called once HTTP request processing is completed
+            // or failed.
+            @Override
+            public void completed(final Request request) {
+                // Resume the asynchronous HTTP request processing
+                // (in other words finish the asynchronous HTTP request processing).
+                request.setRequestParameters(formParams);
+                servletRequest.setAttribute(UPLOADED_FILES, uploadedFiles.toArray(new File[uploadedFiles.size()]));
+                try {
+                    filterChain.doFilter(servletRequest, servletResponse);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, e.toString(), e);
+                } finally {
+                    if (deleteAfterRequestEnd) {
+                        clean(dir);
                     }
+                    response.resume();
+                }
+            }
 
-                    @Override
-                    public void failed(Throwable throwable) {
-                        // if failed - log the error
-                        LOGGER.log(Level.SEVERE, "Upload failed.", throwable);
-                        // Complete the asynchronous HTTP request processing.
-                        response.resume();
-                    }
-                });
+            @Override
+            public void failed(Throwable throwable) {
+                // if failed - log the error
+                LOGGER.log(Level.SEVERE, "Upload failed.", throwable);
+                // Complete the asynchronous HTTP request processing.
+                response.resume();
+            }
+        });
 
     }
 
@@ -168,13 +160,9 @@ public class MultipartUploadFilter implements Filter {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
-    private static void validateRequestResponse(ServletRequest servletRequest,
-                                                ServletResponse servletResponse)
-    throws ServletException {
+    private static void validateRequestResponse(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException {
 
         if (!(servletRequest instanceof HttpServletRequestImpl)) {
             throw new ServletException("ServletRequest instances passed to MultipartUploadFilter must not be wrapped.");
@@ -196,8 +184,7 @@ public class MultipartUploadFilter implements Filter {
             if (f.length == 0) {
                 if (!file.delete()) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.warning(String.format("Unable to delete directory %s.  Will attempt deletion again upon JVM exit.",
-                                file.getAbsolutePath()));
+                        LOGGER.warning(String.format("Unable to delete directory %s.  Will attempt deletion again upon JVM exit.", file.getAbsolutePath()));
                     }
                 }
             } else {
@@ -208,8 +195,7 @@ public class MultipartUploadFilter implements Filter {
         } else {
             if (!file.delete()) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.warning(String.format("Unable to delete file %s.  Will attempt deletion again upon JVM exit.",
-                                   file.getAbsolutePath()));
+                    LOGGER.warning(String.format("Unable to delete file %s.  Will attempt deletion again upon JVM exit.", file.getAbsolutePath()));
                 }
                 file.deleteOnExit();
             }
@@ -217,15 +203,12 @@ public class MultipartUploadFilter implements Filter {
 
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     /**
      * {@link org.glassfish.grizzly.http.multipart.MultipartEntryHandler}, responsible for processing the upload.
      */
-    private static final class UploadMultipartHandler
-            implements MultipartEntryHandler {
+    private static final class UploadMultipartHandler implements MultipartEntryHandler {
 
         // number of bytes uploaded
         private final AtomicInteger uploadedBytesCounter = new AtomicInteger();
@@ -233,10 +216,7 @@ public class MultipartUploadFilter implements Filter {
         private final List<File> uploadedFiles;
         private final Parameters formParams;
 
-
-        public UploadMultipartHandler(final List<File> uploadedFiles,
-                                      final File uploadDir,
-                                      final Parameters formParams) {
+        public UploadMultipartHandler(final List<File> uploadedFiles, final File uploadDir, final Parameters formParams) {
             this.uploadedFiles = uploadedFiles;
             this.uploadDir = uploadDir;
             this.formParams = formParams;
@@ -248,43 +228,36 @@ public class MultipartUploadFilter implements Filter {
         @Override
         public void handle(final MultipartEntry multipartEntry) throws Exception {
             // get the entry's Content-Disposition
-            final ContentDisposition contentDisposition =
-                    multipartEntry.getContentDisposition();
+            final ContentDisposition contentDisposition = multipartEntry.getContentDisposition();
 
             final String paramName = contentDisposition.getDispositionParamUnquoted("name");
             // get the filename for Content-Disposition
-            final String filename =
-                    contentDisposition.getDispositionParamUnquoted("filename");
+            final String filename = contentDisposition.getDispositionParamUnquoted("filename");
 
             if (filename != null && filename.length() > 0) {
                 formParams.addParameterValues(paramName, new String[] { filename });
                 // Get the NIOInputStream to read the multipart entry content
                 final NIOInputStream inputStream = multipartEntry.getNIOInputStream();
 
-                LOGGER.log(Level.FINE, "Uploading file {0}",
-                        new Object[]{filename});
+                LOGGER.log(Level.FINE, "Uploading file {0}", new Object[] { filename });
 
                 // start asynchronous non-blocking content read.
-                inputStream.notifyAvailable(
-                        new UploadReadHandler(uploadedFiles,
-                                uploadDir,
-                                filename,
-                                inputStream,
-                                uploadedBytesCounter));
+                inputStream.notifyAvailable(new UploadReadHandler(uploadedFiles, uploadDir, filename, inputStream, uploadedBytesCounter));
             } else {
                 // standard param value
                 final NIOReader nioReader = multipartEntry.getNIOReader();
                 nioReader.notifyAvailable(new ReadHandler() {
                     @Override
                     public void onDataAvailable() throws Exception {
-                     // ignored
+                        // ignored
                     }
 
                     @Override
                     public void onError(Throwable t) {
                         try {
                             nioReader.close();
-                        } catch (IOException ignored) {}
+                        } catch (IOException ignored) {
+                        }
                     }
 
                     @Override
@@ -299,11 +272,9 @@ public class MultipartUploadFilter implements Filter {
 
     } // END UploadMultipartHandler
 
-
     /**
-     * Simple {@link org.glassfish.grizzly.ReadHandler} implementation, which is reading HTTP request
-     * content (uploading file) in non-blocking mode and saves the content into
-     * the specific file.
+     * Simple {@link org.glassfish.grizzly.ReadHandler} implementation, which is reading HTTP request content (uploading
+     * file) in non-blocking mode and saves the content into the specific file.
      */
     private static class UploadReadHandler implements ReadHandler {
 
@@ -322,13 +293,8 @@ public class MultipartUploadFilter implements Filter {
 
         private final List<File> uploadedFiles;
 
-        private UploadReadHandler(
-                final List<File> uploadedFiles,
-                final File uploadDir,
-                final String filename,
-                final NIOInputStream inputStream,
-                final AtomicInteger uploadedBytesCounter)
-                throws FileNotFoundException {
+        private UploadReadHandler(final List<File> uploadedFiles, final File uploadDir, final String filename, final NIOInputStream inputStream,
+                final AtomicInteger uploadedBytesCounter) throws FileNotFoundException {
 
             this.uploadedFiles = uploadedFiles;
             this.filename = filename;
@@ -376,8 +342,7 @@ public class MultipartUploadFilter implements Filter {
         }
 
         /**
-         * Read available file content data out of HTTP request and save the
-         * chunk into local file output stream
+         * Read available file content data out of HTTP request and save the chunk into local file output stream
          *
          * @throws IOException
          */
@@ -392,8 +357,7 @@ public class MultipartUploadFilter implements Filter {
             }
         }
 
-        private void writeCompositeBuffer(final Buffer b)
-        throws IOException {
+        private void writeCompositeBuffer(final Buffer b) throws IOException {
             // Use toByteBufferArray() as the buffer returned by
             // readBuffer() may be a CompositeBuffer - this avoids
             // an unnecessary copy.
@@ -406,13 +370,11 @@ public class MultipartUploadFilter implements Filter {
                 writeBufferToDiskAndUpdateStats(buffers[i]);
             }
         }
-            
-        private void writeBufferToDiskAndUpdateStats(final ByteBuffer b) 
-        throws IOException {
+
+        private void writeBufferToDiskAndUpdateStats(final ByteBuffer b) throws IOException {
             uploadedBytesCounter.addAndGet(b.remaining());
             fileOutput.write(b);
         }
-   
 
         /**
          * Finish the file upload

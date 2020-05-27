@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,25 +31,18 @@ import java.io.Reader;
  */
 public class ServletReaderImpl extends BufferedReader {
 
-
-
     // -------------------------------------------------------------- Constants
-
 
     private static final char[] LINE_SEP = { '\r', '\n' };
     private static final int MAX_LINE_LENGTH = 4096;
 
-
     // ----------------------------------------------------- Instance Variables
-
 
     protected Reader ib;
 
     protected char[] lineBuffer = null;
 
-
     // ----------------------------------------------------------- Constructors
-
 
     public ServletReaderImpl(Reader ib) {
         super(ib, 1);
@@ -58,19 +51,15 @@ public class ServletReaderImpl extends BufferedReader {
 
     // --------------------------------------------------------- Public Methods
 
-
     /**
-    * Prevent cloning the facade.
-    */
+     * Prevent cloning the facade.
+     */
     @Override
-    protected Object clone()
-        throws CloneNotSupportedException {
+    protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 
-
     // -------------------------------------------------------- Package Methods
-
 
     /**
      * Clear facade.
@@ -79,75 +68,55 @@ public class ServletReaderImpl extends BufferedReader {
         ib = null;
     }
 
-
     // --------------------------------------------------------- Reader Methods
 
-
     @Override
-    public void close()
-        throws IOException {
+    public void close() throws IOException {
         ib.close();
     }
 
-
     @Override
-    public int read()
-        throws IOException {
+    public int read() throws IOException {
         return ib.read();
     }
 
-
     @Override
-    public int read(char[] cbuf)
-        throws IOException {
+    public int read(char[] cbuf) throws IOException {
         return ib.read(cbuf, 0, cbuf.length);
     }
 
-
     @Override
-    public int read(char[] cbuf, int off, int len)
-        throws IOException {
+    public int read(char[] cbuf, int off, int len) throws IOException {
         return ib.read(cbuf, off, len);
     }
 
-
     @Override
-    public long skip(long n)
-        throws IOException {
+    public long skip(long n) throws IOException {
         return ib.skip(n);
     }
 
-
     @Override
-    public boolean ready()
-        throws IOException {
+    public boolean ready() throws IOException {
         return ib.ready();
     }
-
 
     @Override
     public boolean markSupported() {
         return true;
     }
 
-
     @Override
-    public void mark(int readAheadLimit)
-        throws IOException {
+    public void mark(int readAheadLimit) throws IOException {
         ib.mark(readAheadLimit);
     }
 
-
     @Override
-    public void reset()
-        throws IOException {
+    public void reset() throws IOException {
         ib.reset();
     }
 
-
     @Override
-    public String readLine()
-        throws IOException {
+    public String readLine() throws IOException {
 
         if (lineBuffer == null) {
             lineBuffer = new char[MAX_LINE_LENGTH];
@@ -161,7 +130,7 @@ public class ServletReaderImpl extends BufferedReader {
         StringBuilder aggregator = null;
         while (end < 0) {
             mark(MAX_LINE_LENGTH);
-            while ((pos < MAX_LINE_LENGTH) && (end < 0)) {
+            while (pos < MAX_LINE_LENGTH && end < 0) {
                 int nRead = read(lineBuffer, pos, MAX_LINE_LENGTH - pos);
                 if (nRead < 0) {
                     if (pos == 0 && aggregator == null) {
@@ -170,15 +139,15 @@ public class ServletReaderImpl extends BufferedReader {
                     end = pos;
                     skip = pos;
                 }
-                for (int i = pos; (i < (pos + nRead)) && (end < 0); i++) {
+                for (int i = pos; i < pos + nRead && end < 0; i++) {
                     if (lineBuffer[i] == LINE_SEP[0]) {
                         end = i;
                         skip = i + 1;
                         char nextchar;
-                        if (i == (pos + nRead - 1)) {
+                        if (i == pos + nRead - 1) {
                             nextchar = (char) read();
                         } else {
-                            nextchar = lineBuffer[i+1];
+                            nextchar = lineBuffer[i + 1];
                         }
                         if (nextchar == LINE_SEP[1]) {
                             skip++;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +17,20 @@
 
 package org.glassfish.grizzly.http.util;
 
+import static org.glassfish.grizzly.http.util.CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE;
+import static org.glassfish.grizzly.http.util.CookieUtils.OLD_COOKIE_FORMAT;
+import static org.glassfish.grizzly.http.util.CookieUtils.RFC_6265_SUPPORT_ENABLED;
+import static org.glassfish.grizzly.http.util.CookieUtils.equalsIgnoreCase;
+import static org.glassfish.grizzly.http.util.CookieUtils.getQuotedValueEndPosition;
+import static org.glassfish.grizzly.http.util.CookieUtils.getTokenEndPosition;
+import static org.glassfish.grizzly.http.util.CookieUtils.isSeparator;
+import static org.glassfish.grizzly.http.util.CookieUtils.isWhiteSpace;
+
 import java.text.ParseException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.Cookie;
@@ -28,13 +38,10 @@ import org.glassfish.grizzly.http.Cookies;
 import org.glassfish.grizzly.http.LazyCookieState;
 import org.glassfish.grizzly.utils.Charsets;
 
-import static org.glassfish.grizzly.http.util.CookieUtils.*;
-
 /**
  * The set of Cookie utility methods for cookie parsing.
  *
- * There is duplication of logic within which we know to be frowned upon, however
- * it is done with performance in mind.
+ * There is duplication of logic within which we know to be frowned upon, however it is done with performance in mind.
  *
  * @author Grizzly team
  */
@@ -43,28 +50,16 @@ public class CookieParserUtils {
     private static final Logger LOGGER = Grizzly.logger(CookieParserUtils.class);
 
     /**
-     * Parses a cookie header after the initial "Cookie:"
-     * [WS][$]token[WS]=[WS](token|QV)[;|,]
-     * RFC 2965
-     * JVK
+     * Parses a cookie header after the initial "Cookie:" [WS][$]token[WS]=[WS](token|QV)[;|,] RFC 2965 JVK
      */
-    public static void parseClientCookies(Cookies cookies,
-            Buffer buffer, int off, int len) {
+    public static void parseClientCookies(Cookies cookies, Buffer buffer, int off, int len) {
         parseClientCookies(cookies, buffer, off, len, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, RFC_6265_SUPPORT_ENABLED);
     }
 
     /**
-     * Parses a cookie header after the initial "Cookie:"
-     * [WS][$]token[WS]=[WS](token|QV)[;|,]
-     * RFC 2965
-     * JVK
+     * Parses a cookie header after the initial "Cookie:" [WS][$]token[WS]=[WS](token|QV)[;|,] RFC 2965 JVK
      */
-    public static void parseClientCookies(Cookies cookies,
-                                          Buffer buffer,
-                                          int off,
-                                          int len,
-                                          boolean versionOneStrictCompliance,
-                                          boolean rfc6265Enabled) {
+    public static void parseClientCookies(Cookies cookies, Buffer buffer, int off, int len, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
         }
@@ -77,12 +72,8 @@ public class CookieParserUtils {
 
         if (buffer.hasArray()) {
             parseClientCookies(cookies,
-                               /*buffer,*/
-                               buffer.array(),
-                               off + buffer.arrayOffset(),
-                               len,
-                               versionOneStrictCompliance,
-                               rfc6265Enabled);
+                    /* buffer, */
+                    buffer.array(), off + buffer.arrayOffset(), len, versionOneStrictCompliance, rfc6265Enabled);
             return;
         }
 
@@ -105,8 +96,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(buffer.get(pos)) || isWhiteSpace(buffer.get(pos)))) {
+            while (pos < end && (isSeparator(buffer.get(pos)) || isWhiteSpace(buffer.get(pos)))) {
                 pos++;
             }
 
@@ -147,60 +137,57 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (buffer.get(pos)) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(buffer,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(buffer, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(buffer.get(pos), versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(buffer, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(buffer.get(pos), versionOneStrictCompliance)) {
-                        // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(buffer, valueStart, end,
-                                versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && buffer.get(pos) != ';'
-                                    && buffer.get(pos) != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && buffer.get(pos) != ';' && buffer.get(pos) != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            lazyCookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        lazyCookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -232,14 +219,12 @@ public class CookieParserUtils {
                 isSpecial = false;
                 // $Version must be the first avpair in the cookie header
                 // (sc must be null)
-                if (CookieUtils.equals("Version", buffer, nameStart, nameEnd)
-                        && cookie == null) {
+                if (CookieUtils.equals("Version", buffer, nameStart, nameEnd) && cookie == null) {
                     if (rfc6265Enabled) {
                         continue;
                     }
                     // Set version
-                    if (buffer.get(valueStart) == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (buffer.get(valueStart) == '1' && valueEnd == valueStart + 1) {
                         version = 1;
                     } else {
                         // unknown version (Versioning is not very strict)
@@ -254,17 +239,14 @@ public class CookieParserUtils {
 
                 // Domain is more common, so it goes first
                 if (CookieUtils.equals("Domain", buffer, nameStart, nameEnd)) {
-                    lazyCookie.getDomain().setBuffer(buffer,
-                            valueStart, valueEnd);
+                    lazyCookie.getDomain().setBuffer(buffer, valueStart, valueEnd);
                     continue;
                 }
 
                 if (CookieUtils.equals("Path", buffer, nameStart, nameEnd)) {
-                    lazyCookie.getPath().setBuffer(buffer,
-                            valueStart, valueEnd);
+                    lazyCookie.getPath().setBuffer(buffer, valueStart, valueEnd);
                     continue;
                 }
-
 
 //                if (CookieUtils.equals("Port", buffer, nameStart, nameEnd)) {
 //                    // sc.getPort is not currently implemented.
@@ -300,28 +282,16 @@ public class CookieParserUtils {
     }
 
     /**
-     * Parses a cookie header after the initial "Cookie:"
-     * [WS][$]token[WS]=[WS](token|QV)[;|,]
-     * RFC 2965
-     * JVK
+     * Parses a cookie header after the initial "Cookie:" [WS][$]token[WS]=[WS](token|QV)[;|,] RFC 2965 JVK
      */
-    public static void parseClientCookies(Cookies cookies,
-            byte[] bytes, int off, int len) {
+    public static void parseClientCookies(Cookies cookies, byte[] bytes, int off, int len) {
         parseClientCookies(cookies, bytes, off, len, COOKIE_VERSION_ONE_STRICT_COMPLIANCE, false);
     }
 
     /**
-     * Parses a cookie header after the initial "Cookie:"
-     * [WS][$]token[WS]=[WS](token|QV)[;|,]
-     * RFC 2965
-     * JVK
+     * Parses a cookie header after the initial "Cookie:" [WS][$]token[WS]=[WS](token|QV)[;|,] RFC 2965 JVK
      */
-    public static void parseClientCookies(Cookies cookies,
-                                           byte[] bytes,
-                                           int off,
-                                           int len,
-                                           boolean versionOneStrictCompliance,
-                                           boolean rfc6265Enabled) {
+    public static void parseClientCookies(Cookies cookies, byte[] bytes, int off, int len, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
 
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
@@ -336,8 +306,8 @@ public class CookieParserUtils {
         // into the byte[] but it's also needed when translating positions
         // *back* into the buffer.
 //        int arrayOffset = buffer.arrayOffset();
-        int end = off /*+ arrayOffset*/ + len;
-        int pos = off /*+ arrayOffset*/;
+        int end = off /* + arrayOffset */ + len;
+        int pos = off /* + arrayOffset */;
         int nameStart;
         int nameEnd;
         int valueStart;
@@ -355,8 +325,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(bytes[pos]) || isWhiteSpace(bytes[pos]))) {
+            while (pos < end && (isSeparator(bytes[pos]) || isWhiteSpace(bytes[pos]))) {
                 pos++;
             }
 
@@ -397,60 +366,57 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (bytes[pos]) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(bytes,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(bytes, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(bytes[pos], versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(bytes, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(bytes[pos], versionOneStrictCompliance)) {
-                            // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(bytes, valueStart, end,
-                                    versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && bytes[pos] != ';'
-                                    && bytes[pos] != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && bytes[pos] != ';' && bytes[pos] != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            lazyCookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        lazyCookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -482,14 +448,12 @@ public class CookieParserUtils {
                 isSpecial = false;
                 // $Version must be the first avpair in the cookie header
                 // (sc must be null)
-                if (CookieUtils.equals("Version", bytes, nameStart, nameEnd)
-                        && cookie == null) {
+                if (CookieUtils.equals("Version", bytes, nameStart, nameEnd) && cookie == null) {
                     if (rfc6265Enabled) {
                         continue;
                     }
                     // Set version
-                    if (bytes[valueStart] == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (bytes[valueStart] == '1' && valueEnd == valueStart + 1) {
                         version = 1;
                     } else {
                         // unknown version (Versioning is not very strict)
@@ -504,14 +468,12 @@ public class CookieParserUtils {
 
                 // Domain is more common, so it goes first
                 if (CookieUtils.equals("Domain", bytes, nameStart, nameEnd)) {
-                    lazyCookie.getDomain().setBytes(bytes,
-                            valueStart, valueEnd);
+                    lazyCookie.getDomain().setBytes(bytes, valueStart, valueEnd);
                     continue;
                 }
 
                 if (CookieUtils.equals("Path", bytes, nameStart, nameEnd)) {
-                    lazyCookie.getPath().setBytes(bytes,
-                            valueStart, valueEnd);
+                    lazyCookie.getPath().setBytes(bytes, valueStart, valueEnd);
                     continue;
                 }
 
@@ -541,15 +503,9 @@ public class CookieParserUtils {
     }
 
     /**
-     * Parses a cookie header after the initial "Cookie:"
-     * [WS][$]token[WS]=[WS](token|QV)[;|,]
-     * RFC 2965
-     * JVK
+     * Parses a cookie header after the initial "Cookie:" [WS][$]token[WS]=[WS](token|QV)[;|,] RFC 2965 JVK
      */
-    public static void parseClientCookies(Cookies cookies,
-                                          String cookiesStr,
-                                          boolean versionOneStrictCompliance,
-                                          boolean rfc6265Enabled) {
+    public static void parseClientCookies(Cookies cookies, String cookiesStr, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
         }
@@ -578,8 +534,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(cookiesStr.charAt(pos)) || isWhiteSpace(cookiesStr.charAt(pos)))) {
+            while (pos < end && (isSeparator(cookiesStr.charAt(pos)) || isWhiteSpace(cookiesStr.charAt(pos)))) {
                 pos++;
             }
 
@@ -620,59 +575,56 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (cookiesStr.charAt(pos)) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(cookiesStr,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(cookiesStr, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(cookiesStr.charAt(pos), versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(cookiesStr, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(cookiesStr.charAt(pos), versionOneStrictCompliance)) {
-                        // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(cookiesStr, valueStart, end,
-                                versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && cookiesStr.charAt(pos) != ';'
-                                    && cookiesStr.charAt(pos) != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && cookiesStr.charAt(pos) != ';' && cookiesStr.charAt(pos) != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -704,14 +656,12 @@ public class CookieParserUtils {
                 isSpecial = false;
                 // $Version must be the first avpair in the cookie header
                 // (sc must be null)
-                if (CookieUtils.equals("Version", cookiesStr, nameStart, nameEnd)
-                        && cookie == null) {
+                if (CookieUtils.equals("Version", cookiesStr, nameStart, nameEnd) && cookie == null) {
                     if (rfc6265Enabled) {
                         continue;
                     }
                     // Set version
-                    if (cookiesStr.charAt(valueStart) == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (cookiesStr.charAt(valueStart) == '1' && valueEnd == valueStart + 1) {
                         version = 1;
                     } else {
                         // unknown version (Versioning is not very strict)
@@ -765,12 +715,7 @@ public class CookieParserUtils {
         }
     }
 
-    public static void parseServerCookies(Cookies cookies,
-                                           byte[] bytes,
-                                           int off,
-                                           int len,
-                                           boolean versionOneStrictCompliance,
-                                           boolean rfc6265Enabled) {
+    public static void parseServerCookies(Cookies cookies, byte[] bytes, int off, int len, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
 
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
@@ -786,8 +731,8 @@ public class CookieParserUtils {
         // into the byte[] but it's also needed when translating positions
         // *back* into the buffer.
 //        int arrayOffset = buffer.arrayOffset();
-        int end = off + /*arrayOffset +*/ len;
-        int pos = off /*+ arrayOffset*/;
+        int end = off + /* arrayOffset + */ len;
+        int pos = off /* + arrayOffset */;
         int nameStart;
         int nameEnd;
         int valueStart;
@@ -802,8 +747,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(bytes[pos]) || isWhiteSpace(bytes[pos]))) {
+            while (pos < end && (isSeparator(bytes[pos]) || isWhiteSpace(bytes[pos]))) {
                 pos++;
             }
 
@@ -838,60 +782,57 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (bytes[pos]) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(bytes,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(bytes, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(bytes[pos], versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(bytes, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(bytes[pos], versionOneStrictCompliance)) {
-                            // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(bytes, valueStart, end,
-                                    versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && bytes[pos] != ';'
-                                    && bytes[pos] != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && bytes[pos] != ';' && bytes[pos] != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            lazyCookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        lazyCookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -921,18 +862,14 @@ public class CookieParserUtils {
             // special avpairs first
             if (cookie != null) {
                 // Domain is more common, so it goes first
-                if (lazyCookie.getDomain().isNull() &&
-                        equalsIgnoreCase("Domain", bytes, nameStart, nameEnd)) {
-                    lazyCookie.getDomain().setBytes(bytes,
-                            valueStart, valueEnd);
+                if (lazyCookie.getDomain().isNull() && equalsIgnoreCase("Domain", bytes, nameStart, nameEnd)) {
+                    lazyCookie.getDomain().setBytes(bytes, valueStart, valueEnd);
                     continue;
                 }
 
                 // Path
-                if (lazyCookie.getPath().isNull() &&
-                        equalsIgnoreCase("Path", bytes, nameStart, nameEnd)) {
-                    lazyCookie.getPath().setBytes(bytes,
-                            valueStart, valueEnd);
+                if (lazyCookie.getPath().isNull() && equalsIgnoreCase("Path", bytes, nameStart, nameEnd)) {
+                    lazyCookie.getPath().setBytes(bytes, valueStart, valueEnd);
                     continue;
                 }
 
@@ -942,8 +879,7 @@ public class CookieParserUtils {
                         continue;
                     }
                     // Set version
-                    if (bytes[valueStart] == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (bytes[valueStart] == '1' && valueEnd == valueStart + 1) {
                         cookie.setVersion(1);
                     } else {
                         // unknown version (Versioning is not very strict)
@@ -952,32 +888,25 @@ public class CookieParserUtils {
                 }
 
                 // Comment
-                if (lazyCookie.getComment().isNull() &&
-                        CookieUtils.equals("Comment", bytes, nameStart, nameEnd)) {
-                    lazyCookie.getComment().setBytes(bytes,
-                            valueStart, valueEnd);
+                if (lazyCookie.getComment().isNull() && CookieUtils.equals("Comment", bytes, nameStart, nameEnd)) {
+                    lazyCookie.getComment().setBytes(bytes, valueStart, valueEnd);
                     continue;
                 }
 
                 // Max-Age
-                if (cookie.getMaxAge() == -1 &&
-                        CookieUtils.equals("Max-Age", bytes, nameStart, nameEnd)) {
-                    cookie.setMaxAge(Ascii.parseInt(bytes,
-                            valueStart,
-                            valueEnd - valueStart));
+                if (cookie.getMaxAge() == -1 && CookieUtils.equals("Max-Age", bytes, nameStart, nameEnd)) {
+                    cookie.setMaxAge(Ascii.parseInt(bytes, valueStart, valueEnd - valueStart));
                     continue;
                 }
 
                 // Expires
-                if ((cookie.getVersion() == 0 || !cookie.isVersionSet()) && cookie.getMaxAge() == -1 &&
-                        equalsIgnoreCase("Expires", bytes, nameStart, nameEnd)) {
+                if ((cookie.getVersion() == 0 || !cookie.isVersionSet()) && cookie.getMaxAge() == -1
+                        && equalsIgnoreCase("Expires", bytes, nameStart, nameEnd)) {
                     try {
                         valueEnd = getTokenEndPosition(bytes, valueEnd + 1, end, false);
                         pos = valueEnd + 1;
 
-                        final String expiresDate = new String(bytes,
-                                valueStart, valueEnd - valueStart,
-                                Charsets.ASCII_CHARSET);
+                        final String expiresDate = new String(bytes, valueStart, valueEnd - valueStart, Charsets.ASCII_CHARSET);
 
                         final Date date = OLD_COOKIE_FORMAT.get().parse(expiresDate);
                         cookie.setMaxAge(getMaxAgeDelta(date.getTime(), System.currentTimeMillis()) / 1000);
@@ -988,15 +917,13 @@ public class CookieParserUtils {
                 }
 
                 // Secure
-                if (!cookie.isSecure() &&
-                        equalsIgnoreCase("Secure", bytes, nameStart, nameEnd)) {
+                if (!cookie.isSecure() && equalsIgnoreCase("Secure", bytes, nameStart, nameEnd)) {
                     lazyCookie.setSecure(true);
                     continue;
                 }
 
                 // HttpOnly
-                if (!cookie.isHttpOnly() &&
-                        CookieUtils.equals("HttpOnly", bytes, nameStart, nameEnd)) {
+                if (!cookie.isHttpOnly() && CookieUtils.equals("HttpOnly", bytes, nameStart, nameEnd)) {
                     cookie.setHttpOnly(true);
                     continue;
                 }
@@ -1028,12 +955,7 @@ public class CookieParserUtils {
         }
     }
 
-    public static void parseServerCookies(Cookies cookies,
-                                          Buffer buffer,
-                                          int off,
-                                          int len,
-                                          boolean versionOneStrictCompliance,
-                                          boolean rfc6265Enabled) {
+    public static void parseServerCookies(Cookies cookies, Buffer buffer, int off, int len, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
 
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
@@ -1047,12 +969,8 @@ public class CookieParserUtils {
 
         if (buffer.hasArray()) {
             parseServerCookies(cookies,
-                               /*buffer,*/
-                               buffer.array(),
-                               off + buffer.arrayOffset(),
-                               len,
-                               versionOneStrictCompliance,
-                               rfc6265Enabled);
+                    /* buffer, */
+                    buffer.array(), off + buffer.arrayOffset(), len, versionOneStrictCompliance, rfc6265Enabled);
             return;
         }
 
@@ -1072,8 +990,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(buffer.get(pos)) || isWhiteSpace(buffer.get(pos)))) {
+            while (pos < end && (isSeparator(buffer.get(pos)) || isWhiteSpace(buffer.get(pos)))) {
                 pos++;
             }
 
@@ -1108,60 +1025,57 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (buffer.get(pos)) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(buffer,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(buffer, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(buffer.get(pos), versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(buffer, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(buffer.get(pos), versionOneStrictCompliance)) {
-                        // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(buffer, valueStart, end,
-                                versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && buffer.get(pos) != ';'
-                                    && buffer.get(pos) != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && buffer.get(pos) != ';' && buffer.get(pos) != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            lazyCookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        lazyCookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -1191,18 +1105,14 @@ public class CookieParserUtils {
             // special avpairs first
             if (cookie != null) {
                 // Domain is more common, so it goes first
-                if (lazyCookie.getDomain().isNull() &&
-                        equalsIgnoreCase("Domain", buffer, nameStart, nameEnd)) {
-                    lazyCookie.getDomain().setBuffer(buffer,
-                            valueStart, valueEnd);
+                if (lazyCookie.getDomain().isNull() && equalsIgnoreCase("Domain", buffer, nameStart, nameEnd)) {
+                    lazyCookie.getDomain().setBuffer(buffer, valueStart, valueEnd);
                     continue;
                 }
 
                 // Path
-                if (lazyCookie.getPath().isNull() &&
-                        equalsIgnoreCase("Path", buffer, nameStart, nameEnd)) {
-                    lazyCookie.getPath().setBuffer(buffer,
-                            valueStart, valueEnd);
+                if (lazyCookie.getPath().isNull() && equalsIgnoreCase("Path", buffer, nameStart, nameEnd)) {
+                    lazyCookie.getPath().setBuffer(buffer, valueStart, valueEnd);
                     continue;
                 }
 
@@ -1212,8 +1122,7 @@ public class CookieParserUtils {
                         continue;
                     }
                     // Set version
-                    if (buffer.get(valueStart) == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (buffer.get(valueStart) == '1' && valueEnd == valueStart + 1) {
                         cookie.setVersion(1);
                     } else {
                         // unknown version (Versioning is not very strict)
@@ -1222,33 +1131,25 @@ public class CookieParserUtils {
                 }
 
                 // Comment
-                if (lazyCookie.getComment().isNull() &&
-                        CookieUtils.equals("Comment", buffer, nameStart, nameEnd)) {
-                    lazyCookie.getComment().setBuffer(buffer,
-                            valueStart, valueEnd);
+                if (lazyCookie.getComment().isNull() && CookieUtils.equals("Comment", buffer, nameStart, nameEnd)) {
+                    lazyCookie.getComment().setBuffer(buffer, valueStart, valueEnd);
                     continue;
                 }
 
                 // Max-Age
-                if (cookie.getMaxAge() == -1 &&
-                        CookieUtils.equals("Max-Age", buffer, nameStart, nameEnd)) {
-                    cookie.setMaxAge(Ascii.parseInt(buffer,
-                            valueStart,
-                            valueEnd - valueStart));
+                if (cookie.getMaxAge() == -1 && CookieUtils.equals("Max-Age", buffer, nameStart, nameEnd)) {
+                    cookie.setMaxAge(Ascii.parseInt(buffer, valueStart, valueEnd - valueStart));
                     continue;
                 }
 
                 // Expires
-                if ((cookie.getVersion() == 0 || !cookie.isVersionSet()) && cookie.getMaxAge() == -1 &&
-                        equalsIgnoreCase("Expires", buffer, nameStart, nameEnd)) {
+                if ((cookie.getVersion() == 0 || !cookie.isVersionSet()) && cookie.getMaxAge() == -1
+                        && equalsIgnoreCase("Expires", buffer, nameStart, nameEnd)) {
                     try {
                         valueEnd = getTokenEndPosition(buffer, valueEnd + 1, end, false);
                         pos = valueEnd + 1;
 
-                        final String expiresDate =
-                                buffer.toStringContent(Charsets.ASCII_CHARSET,
-                                                       valueStart,
-                                                       valueEnd);
+                        final String expiresDate = buffer.toStringContent(Charsets.ASCII_CHARSET, valueStart, valueEnd);
                         final Date date = OLD_COOKIE_FORMAT.get().parse(expiresDate);
                         cookie.setMaxAge(getMaxAgeDelta(date.getTime(), System.currentTimeMillis()) / 1000);
                     } catch (ParseException ignore) {
@@ -1258,15 +1159,13 @@ public class CookieParserUtils {
                 }
 
                 // Secure
-                if (!cookie.isSecure() &&
-                        equalsIgnoreCase("Secure", buffer, nameStart, nameEnd)) {
+                if (!cookie.isSecure() && equalsIgnoreCase("Secure", buffer, nameStart, nameEnd)) {
                     lazyCookie.setSecure(true);
                     continue;
                 }
 
                 // HttpOnly
-                if (!cookie.isHttpOnly() &&
-                        CookieUtils.equals("HttpOnly", buffer, nameStart, nameEnd)) {
+                if (!cookie.isHttpOnly() && CookieUtils.equals("HttpOnly", buffer, nameStart, nameEnd)) {
                     cookie.setHttpOnly(true);
                     continue;
                 }
@@ -1298,10 +1197,7 @@ public class CookieParserUtils {
         }
     }
 
-    public static void parseServerCookies(Cookies cookies,
-                                          String cookiesStr,
-                                          boolean versionOneStrictCompliance,
-                                          boolean rfc6265Enabled) {
+    public static void parseServerCookies(Cookies cookies, String cookiesStr, boolean versionOneStrictCompliance, boolean rfc6265Enabled) {
 
         if (cookies == null) {
             throw new IllegalArgumentException("cookies cannot be null.");
@@ -1329,8 +1225,7 @@ public class CookieParserUtils {
             isQuoted = false;
 
             // Skip whitespace and non-token characters (separators)
-            while (pos < end
-                    && (isSeparator(cookiesStr.charAt(pos)) || isWhiteSpace(cookiesStr.charAt(pos)))) {
+            while (pos < end && (isSeparator(cookiesStr.charAt(pos)) || isWhiteSpace(cookiesStr.charAt(pos)))) {
                 pos++;
             }
 
@@ -1365,59 +1260,56 @@ public class CookieParserUtils {
                 // Determine what type of value this is, quoted value,
                 // token, name-only with an '=', or other (bad)
                 switch (cookiesStr.charAt(pos)) {
-                    case '"':
-                        // Quoted Value
-                        isQuoted = true;
-                        valueStart = pos + 1; // strip "
-                        // getQuotedValue returns the position before
-                        // at the last qoute. This must be dealt with
-                        // when the bytes are copied into the cookie
-                        valueEnd = getQuotedValueEndPosition(cookiesStr,
-                                valueStart, end);
+                case '"':
+                    // Quoted Value
+                    isQuoted = true;
+                    valueStart = pos + 1; // strip "
+                    // getQuotedValue returns the position before
+                    // at the last qoute. This must be dealt with
+                    // when the bytes are copied into the cookie
+                    valueEnd = getQuotedValueEndPosition(cookiesStr, valueStart, end);
+                    // We need pos to advance
+                    pos = valueEnd;
+                    // Handles cases where the quoted value is
+                    // unterminated and at the end of the header,
+                    // e.g. [myname="value]
+                    if (pos >= end) {
+                        return;
+                    }
+                    break;
+                case ';':
+                case ',':
+                    // Name-only cookie with an '=' after the name token
+                    // This may not be RFC compliant
+                    valueStart = valueEnd = -1;
+                    // The position is OK (On a delimiter)
+                    break;
+                default:
+                    if (!isSeparator(cookiesStr.charAt(pos), versionOneStrictCompliance)) {
+                        // Token
+                        // Token
+                        valueStart = pos;
+                        // getToken returns the position at the delimeter
+                        // or other non-token character
+                        valueEnd = getTokenEndPosition(cookiesStr, valueStart, end, versionOneStrictCompliance);
                         // We need pos to advance
                         pos = valueEnd;
-                        // Handles cases where the quoted value is
-                        // unterminated and at the end of the header,
-                        // e.g. [myname="value]
-                        if (pos >= end) {
-                            return;
-                        }
-                        break;
-                    case ';':
-                    case ',':
-                        // Name-only cookie with an '=' after the name token
-                        // This may not be RFC compliant
-                        valueStart = valueEnd = -1;
-                        // The position is OK (On a delimiter)
-                        break;
-                    default:
-                        if (!isSeparator(cookiesStr.charAt(pos), versionOneStrictCompliance)) {
-                        // Token
-                            // Token
-                            valueStart = pos;
-                            // getToken returns the position at the delimeter
-                            // or other non-token character
-                            valueEnd = getTokenEndPosition(cookiesStr, valueStart, end,
-                                versionOneStrictCompliance);
-                            // We need pos to advance
-                            pos = valueEnd;
-                        } else {
-                            // INVALID COOKIE, advance to next delimiter
-                            // The starting character of the cookie value was
-                            // not valid.
-                            LOGGER.fine("Invalid cookie. Value not a token or quoted value");
-                            while (pos < end && cookiesStr.charAt(pos) != ';'
-                                    && cookiesStr.charAt(pos) != ',') {
-                                pos++;
-                            }
-
+                    } else {
+                        // INVALID COOKIE, advance to next delimiter
+                        // The starting character of the cookie value was
+                        // not valid.
+                        LOGGER.fine("Invalid cookie. Value not a token or quoted value");
+                        while (pos < end && cookiesStr.charAt(pos) != ';' && cookiesStr.charAt(pos) != ',') {
                             pos++;
-                            // Make sure no special avpairs can be attributed to
-                            // the previous cookie by setting the current cookie
-                            // to null
-                            cookie = null;
-                            continue;
                         }
+
+                        pos++;
+                        // Make sure no special avpairs can be attributed to
+                        // the previous cookie by setting the current cookie
+                        // to null
+                        cookie = null;
+                        continue;
+                    }
                 }
             } else {
                 // Name only cookie
@@ -1447,15 +1339,13 @@ public class CookieParserUtils {
             // special avpairs first
             if (cookie != null) {
                 // Domain is more common, so it goes first
-                if (cookie.getDomain() == null &&
-                        equalsIgnoreCase("Domain", cookiesStr, nameStart, nameEnd)) {
+                if (cookie.getDomain() == null && equalsIgnoreCase("Domain", cookiesStr, nameStart, nameEnd)) {
                     cookie.setDomain(cookiesStr.substring(valueStart, valueEnd));
                     continue;
                 }
 
                 // Path
-                if (cookie.getPath() == null &&
-                        equalsIgnoreCase("Path", cookiesStr, nameStart, nameEnd)) {
+                if (cookie.getPath() == null && equalsIgnoreCase("Path", cookiesStr, nameStart, nameEnd)) {
                     cookie.setPath(cookiesStr.substring(valueStart, valueEnd));
                     continue;
                 }
@@ -1466,8 +1356,7 @@ public class CookieParserUtils {
                         continue;
                     }
                     // Set version
-                    if (cookiesStr.charAt(valueStart) == '1'
-                            && valueEnd == (valueStart + 1)) {
+                    if (cookiesStr.charAt(valueStart) == '1' && valueEnd == valueStart + 1) {
                         cookie.setVersion(1);
                     } else {
                         if (!rfc6265Enabled) {
@@ -1478,28 +1367,24 @@ public class CookieParserUtils {
                 }
 
                 // Comment
-                if (cookie.getComment() == null &&
-                        CookieUtils.equals("Comment", cookiesStr, nameStart, nameEnd)) {
+                if (cookie.getComment() == null && CookieUtils.equals("Comment", cookiesStr, nameStart, nameEnd)) {
                     cookie.setComment(cookiesStr.substring(valueStart, valueEnd));
                     continue;
                 }
 
                 // Max-Age
-                if (cookie.getMaxAge() == -1 &&
-                        CookieUtils.equals("Max-Age", cookiesStr, nameStart, nameEnd)) {
-                    cookie.setMaxAge(Integer.parseInt(
-                            cookiesStr.substring(valueStart, valueEnd)));
+                if (cookie.getMaxAge() == -1 && CookieUtils.equals("Max-Age", cookiesStr, nameStart, nameEnd)) {
+                    cookie.setMaxAge(Integer.parseInt(cookiesStr.substring(valueStart, valueEnd)));
                     continue;
                 }
 
                 // Expires
-                if ((cookie.getVersion() == 0 || cookie.isVersionSet()) && cookie.getMaxAge() == -1 &&
-                        equalsIgnoreCase("Expires", cookiesStr, nameStart, nameEnd)) {
+                if ((cookie.getVersion() == 0 || cookie.isVersionSet()) && cookie.getMaxAge() == -1
+                        && equalsIgnoreCase("Expires", cookiesStr, nameStart, nameEnd)) {
                     try {
                         valueEnd = getTokenEndPosition(cookiesStr, valueEnd + 1, end, false);
                         pos = valueEnd + 1;
-                        final String expiresDate =
-                                cookiesStr.substring(valueStart, valueEnd);
+                        final String expiresDate = cookiesStr.substring(valueStart, valueEnd);
                         final Date date = OLD_COOKIE_FORMAT.get().parse(expiresDate);
                         cookie.setMaxAge(getMaxAgeDelta(date.getTime(), System.currentTimeMillis()) / 1000);
                     } catch (ParseException ignore) {
@@ -1509,20 +1394,18 @@ public class CookieParserUtils {
                 }
 
                 // Secure
-                if (!cookie.isSecure() &&
-                        equalsIgnoreCase("Secure", cookiesStr, nameStart, nameEnd)) {
+                if (!cookie.isSecure() && equalsIgnoreCase("Secure", cookiesStr, nameStart, nameEnd)) {
                     cookie.setSecure(true);
                     continue;
                 }
 
                 // HttpOnly
-                if (!cookie.isHttpOnly() &&
-                        CookieUtils.equals("HttpOnly", cookiesStr, nameStart, nameEnd)) {
+                if (!cookie.isHttpOnly() && CookieUtils.equals("HttpOnly", cookiesStr, nameStart, nameEnd)) {
                     cookie.setHttpOnly(true);
                     continue;
                 }
 
-                if (CookieUtils.equals("Discard", cookiesStr,  nameStart,  nameEnd)) {
+                if (CookieUtils.equals("Discard", cookiesStr, nameStart, nameEnd)) {
                     continue;
                 }
             }
@@ -1534,8 +1417,7 @@ public class CookieParserUtils {
             if (valueStart != -1) { // Normal AVPair
                 if (isQuoted) {
                     // We know this is a byte value so this is safe
-                    value = unescapeDoubleQuotes(cookiesStr, valueStart,
-                            valueEnd - valueStart);
+                    value = unescapeDoubleQuotes(cookiesStr, valueStart, valueEnd - valueStart);
                 } else {
                     value = cookiesStr.substring(valueStart, valueEnd);
                 }
@@ -1560,19 +1442,20 @@ public class CookieParserUtils {
      */
     public static void unescapeDoubleQuotes(DataChunk dc) {
         switch (dc.getType()) {
-            case Bytes:
-                unescapeDoubleQuotes(dc.getByteChunk());
-                return;
-            case Buffer:
-                unescapeDoubleQuotes(dc.getBufferChunk());
-                return;
-            case String:
-                final String s = dc.toString();
-                dc.setString(unescapeDoubleQuotes(s, 0, s.length()));
-                return;
-            case Chars:
+        case Bytes:
+            unescapeDoubleQuotes(dc.getByteChunk());
+            return;
+        case Buffer:
+            unescapeDoubleQuotes(dc.getBufferChunk());
+            return;
+        case String:
+            final String s = dc.toString();
+            dc.setString(unescapeDoubleQuotes(s, 0, s.length()));
+            return;
+        case Chars:
 
-            default: throw new NullPointerException();
+        default:
+            throw new NullPointerException();
 
         }
     }
@@ -1722,12 +1605,12 @@ public class CookieParserUtils {
         return sb.toString();
     }
 
-
     private static int getMaxAgeDelta(long date1, long date2) {
         long result = date1 - date2;
         if (result > Integer.MAX_VALUE) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine("Integer overflow when calculating max age delta.  Date: " + date1 + ", current date: " + date2 + ".  Using Integer.MAX_VALUE for further calculation.");
+                LOGGER.fine("Integer overflow when calculating max age delta.  Date: " + date1 + ", current date: " + date2
+                        + ".  Using Integer.MAX_VALUE for further calculation.");
             }
             return Integer.MAX_VALUE;
         } else {

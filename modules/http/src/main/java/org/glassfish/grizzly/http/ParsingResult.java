@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,7 +22,7 @@ import org.glassfish.grizzly.ThreadCache;
 
 /**
  * Class, which represents result of {@link TransferEncoding} or {@link ContentEncoding} parsing.
- * 
+ *
  * @author Alexey Stashok
  */
 public final class ParsingResult implements Cacheable {
@@ -42,9 +42,7 @@ public final class ParsingResult implements Cacheable {
         return resultObject;
     }
 
-    public static ParsingResult create(final HttpContent httpContent,
-                                       final Buffer remainderBuffer,
-                                       final boolean sendHeaderUpstream) {
+    public static ParsingResult create(final HttpContent httpContent, final Buffer remainderBuffer, final boolean sendHeaderUpstream) {
         ParsingResult resultObject = create(httpContent, remainderBuffer);
         resultObject.sendHeaderUpstream = sendHeaderUpstream;
         return resultObject;

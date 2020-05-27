@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,13 +16,13 @@
 
 package org.glassfish.grizzly.threadpool;
 
-import org.glassfish.grizzly.memory.MemoryManager;
-
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.monitoring.MonitoringAware;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
 
@@ -30,8 +30,7 @@ import org.glassfish.grizzly.monitoring.MonitoringConfig;
  *
  * @author gustav trede
  */
-public class GrizzlyExecutorService extends AbstractExecutorService
-        implements MonitoringAware<ThreadPoolProbe> {
+public class GrizzlyExecutorService extends AbstractExecutorService implements MonitoringAware<ThreadPoolProbe> {
 
     private final Object statelock = new Object();
     private volatile AbstractThreadPool pool;
@@ -68,29 +67,27 @@ public class GrizzlyExecutorService extends AbstractExecutorService
         if (cfg.getMemoryManager() == null) {
             cfg.setMemoryManager(MemoryManager.DEFAULT_MEMORY_MANAGER);
         }
-        
-        final Queue<Runnable> queue = cfg.getQueue();
-        if ((queue == null || queue instanceof BlockingQueue) &&
-                (cfg.getCorePoolSize() < 0 || cfg.getCorePoolSize() == cfg.getMaxPoolSize())) {
 
-            this.pool = cfg.getQueueLimit() < 0
-                ? new FixedThreadPool(cfg)
-                : new QueueLimitedThreadPool(cfg);
+        final Queue<Runnable> queue = cfg.getQueue();
+        if ((queue == null || queue instanceof BlockingQueue) && (cfg.getCorePoolSize() < 0 || cfg.getCorePoolSize() == cfg.getMaxPoolSize())) {
+
+            this.pool = cfg.getQueueLimit() < 0 ? new FixedThreadPool(cfg) : new QueueLimitedThreadPool(cfg);
         } else {
             this.pool = new SyncThreadPool(cfg);
         }
-        
+
         this.config = cfg;
     }
 
     /**
      * Sets the {@link ThreadPoolConfig}
+     * 
      * @param config
      * @return returns {@link GrizzlyExecutorService}
      */
     public GrizzlyExecutorService reconfigure(ThreadPoolConfig config) {
         synchronized (statelock) {
-            //TODO: only create new pool if old one cant be runtime config
+            // TODO: only create new pool if old one cant be runtime config
             // for the needed state change(s).
             final AbstractThreadPool oldpool = this.pool;
             if (config.getQueue() == oldpool.getQueue()) {
@@ -138,8 +135,7 @@ public class GrizzlyExecutorService extends AbstractExecutorService
     }
 
     @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit)
-            throws InterruptedException {
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         return pool.awaitTermination(timeout, unit);
     }
 

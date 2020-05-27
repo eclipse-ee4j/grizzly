@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,20 +17,17 @@
 
 package org.glassfish.grizzly.http.server.util;
 
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-
 /**
- * HttpHandler class that wraps an <code>Enumeration</code> around a Java2
- * collection classes object <code>Iterator</code> so that existing APIs
- * returning Enumerations can easily run on top of the new collections.
+ * HttpHandler class that wraps an <code>Enumeration</code> around a Java2 collection classes object
+ * <code>Iterator</code> so that existing APIs returning Enumerations can easily run on top of the new collections.
  * Constructors are provided to easily create such wrappers.
  *
  * @author Craig R. McClanahan
@@ -39,9 +36,7 @@ import java.util.NoSuchElementException;
 
 public final class Enumerator<E> implements Enumeration<E> {
 
-
     // ----------------------------------------------------------- Constructors
-
 
     /**
      * Return an Enumeration over the values of the specified Collection.
@@ -53,7 +48,6 @@ public final class Enumerator<E> implements Enumeration<E> {
         this(collection.iterator());
 
     }
-
 
     /**
      * Return an Enumeration over the values of the specified Collection.
@@ -67,10 +61,8 @@ public final class Enumerator<E> implements Enumeration<E> {
 
     }
 
-
     /**
-     * Return an Enumeration over the values returned by the
-     * specified {@link Iterable}.
+     * Return an Enumeration over the values returned by the specified {@link Iterable}.
      *
      * @param iterable {@link Iterable} to be wrapped
      */
@@ -78,10 +70,8 @@ public final class Enumerator<E> implements Enumeration<E> {
         this(iterable.iterator());
     }
 
-
     /**
-     * Return an Enumeration over the values returned by the
-     * specified {@link Iterable}.
+     * Return an Enumeration over the values returned by the specified {@link Iterable}.
      *
      * @param iterable {@link Iterable} to be wrapped
      * @param clone true to clone iterator
@@ -90,10 +80,8 @@ public final class Enumerator<E> implements Enumeration<E> {
         this(iterable.iterator(), clone);
     }
 
-
     /**
-     * Return an Enumeration over the values returned by the
-     * specified Iterator.
+     * Return an Enumeration over the values returned by the specified Iterator.
      *
      * @param iterator Iterator to be wrapped
      */
@@ -103,10 +91,8 @@ public final class Enumerator<E> implements Enumeration<E> {
 
     }
 
-
     /**
-     * Return an Enumeration over the values returned by the
-     * specified Iterator.
+     * Return an Enumeration over the values returned by the specified Iterator.
      *
      * @param iterator Iterator to be wrapped
      * @param clone true to clone iterator
@@ -117,7 +103,7 @@ public final class Enumerator<E> implements Enumeration<E> {
         if (!clone) {
             this.iterator = iterator;
         } else {
-            List<E> list = new ArrayList<E>();
+            List<E> list = new ArrayList<>();
             while (iterator.hasNext()) {
                 list.add(iterator.next());
             }
@@ -126,7 +112,6 @@ public final class Enumerator<E> implements Enumeration<E> {
 
     }
 
-    
     /**
      * Return an Enumeration over the values of the specified Map.
      *
@@ -137,7 +122,6 @@ public final class Enumerator<E> implements Enumeration<E> {
         this(map.values().iterator());
 
     }
-
 
     /**
      * Return an Enumeration over the values of the specified Map.
@@ -151,47 +135,40 @@ public final class Enumerator<E> implements Enumeration<E> {
 
     }
 
-
     // ----------------------------------------------------- Instance Variables
 
-
     /**
-     * The <code>Iterator</code> over which the <code>Enumeration</code>
-     * represented by this class actually operates.
+     * The <code>Iterator</code> over which the <code>Enumeration</code> represented by this class actually operates.
      */
     private Iterator<E> iterator = null;
 
-
     // --------------------------------------------------------- Public Methods
-
 
     /**
      * Tests if this enumeration contains more elements.
      *
-     * @return <tt>true</tt> if and only if this enumeration object
-     *  contains at least one more element to provide, <tt>false</tt>
-     *  otherwise
+     * @return <tt>true</tt> if and only if this enumeration object contains at least one more element to provide,
+     * <tt>false</tt> otherwise
      */
+    @Override
     public boolean hasMoreElements() {
 
-        return (iterator.hasNext());
+        return iterator.hasNext();
 
     }
 
-
     /**
-     * Returns the next element of this enumeration if this enumeration
-     * has at least one more element to provide.
+     * Returns the next element of this enumeration if this enumeration has at least one more element to provide.
      *
      * @return the next element of this enumeration
      *
      * @exception NoSuchElementException if no more elements exist
      */
+    @Override
     public E nextElement() throws NoSuchElementException {
 
-        return (iterator.next());
+        return iterator.next();
 
     }
-
 
 }

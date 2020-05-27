@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,14 +16,14 @@
 
 package org.glassfish.grizzly.nio;
 
-import org.glassfish.grizzly.IOEvent;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 
+import org.glassfish.grizzly.IOEvent;
+
 /**
- * {@link SelectionKeyHandler} implementations are responsible for handling
- * {@link SelectionKey} life cycle events.
- * 
+ * {@link SelectionKeyHandler} implementations are responsible for handling {@link SelectionKey} life cycle events.
+ *
  * @author Alexey Stashok
  */
 public interface SelectionKeyHandler {
@@ -34,29 +34,28 @@ public interface SelectionKeyHandler {
      * </p>
      *
      * <p>
-     * The default may be changed by setting the system property <code>org.glassfish.grizzly.DEFAULT_SELECTION_KEY_HANDLER</code>
-     * with the fully qualified name of the class that implements the SelectionKeyHandler interface.  Note that this class must
-     * be public and have a public no-arg constructor.
+     * The default may be changed by setting the system property
+     * <code>org.glassfish.grizzly.DEFAULT_SELECTION_KEY_HANDLER</code> with the fully qualified name of the class that
+     * implements the SelectionKeyHandler interface. Note that this class must be public and have a public no-arg
+     * constructor.
      * </p>
      */
-    SelectionKeyHandler DEFAULT_SELECTION_KEY_HANDLER =
-            SelectionKeyHandlerInitializer.initHandler();
+    SelectionKeyHandler DEFAULT_SELECTION_KEY_HANDLER = SelectionKeyHandlerInitializer.initHandler();
 
     void onKeyRegistered(SelectionKey key);
-    
+
     void onKeyDeregistered(SelectionKey key);
 
     boolean onProcessInterest(SelectionKey key, int interest) throws IOException;
 
     void cancel(SelectionKey key) throws IOException;
-    
+
     NIOConnection getConnectionForKey(SelectionKey selectionKey);
 
-    void setConnectionForKey(NIOConnection connection,
-            SelectionKey selectionKey);
+    void setConnectionForKey(NIOConnection connection, SelectionKey selectionKey);
 
     int ioEvent2SelectionKeyInterest(IOEvent ioEvent);
-    
+
     IOEvent selectionKeyInterest2IoEvent(int selectionKeyInterest);
 
     IOEvent[] getIOEvents(int interest);

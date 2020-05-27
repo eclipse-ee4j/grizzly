@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -69,11 +69,9 @@ public class Masker {
     }
 
     public void mask(byte[] target, int location, byte[] bytes) {
-        if(bytes != null && target != null) {
+        if (bytes != null && target != null) {
             for (int i = 0; i < bytes.length; i++) {
-                target[location + i] = mask == null
-                        ? bytes[i]
-                        : (byte) (bytes[i] ^ mask[index++ % Constants.MASK_SIZE]);
+                target[location + i] = mask == null ? bytes[i] : (byte) (bytes[i] ^ mask[index++ % Constants.MASK_SIZE]);
             }
         }
     }
@@ -84,11 +82,10 @@ public class Masker {
         mask(masked, Constants.MASK_SIZE, packet);
         return masked;
     }
-    
+
     public void setBuffer(Buffer buffer) {
         this.buffer = buffer;
     }
-
 
     public byte[] getMask() {
         return mask;

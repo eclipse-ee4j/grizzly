@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,7 @@ package org.glassfish.grizzly.servlet;
 import java.io.Serializable;
 
 /**
- * This class stores information about the last dispatch target
- * which is used for AsyncContext#dispatch().
+ * This class stores information about the last dispatch target which is used for AsyncContext#dispatch().
  *
  * @author Shing Wai Chan
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.FileTransfer;
@@ -49,7 +50,7 @@ import org.glassfish.grizzly.memory.Buffers;
  */
 public class FileCacheFilter extends BaseFilter {
     private static final Logger LOGGER = Grizzly.logger(FileCacheFilter.class);
-    
+
     private final FileCache fileCache;
 
     public FileCacheFilter(FileCache fileCache) {
@@ -58,9 +59,7 @@ public class FileCacheFilter extends BaseFilter {
 
     }
 
-
     // ----------------------------------------------------- Methods from Filter
-
 
     @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
@@ -73,45 +72,33 @@ public class FileCacheFilter extends BaseFilter {
             if (cacheEntry != null) {
                 final HttpResponsePacket response = request.getResponse();
                 prepareResponse(cacheEntry, response);
-                
+
                 if (response.getStatus() != 200) {
                     // The cache hit - return empty response
-                    ctx.write(HttpContent.builder(response)
-                            .content(Buffers.EMPTY_BUFFER)
-                            .last(true)
-                            .build());
-                    
+                    ctx.write(HttpContent.builder(response).content(Buffers.EMPTY_BUFFER).last(true).build());
+
                     return flush(ctx);
                 }
 
                 // check if we can send plain or compressed data back.
                 // depends on client request headers and file cache entry
-                final boolean isServeCompressed =
-                        cacheEntry.canServeCompressed(request);
-                
+                final boolean isServeCompressed = cacheEntry.canServeCompressed(request);
+
                 // The client doesn't have this resource cached, so
                 // we have to send entire payload
-                prepareResponseWithPayload(cacheEntry, response,
-                        isServeCompressed);
+                prepareResponseWithPayload(cacheEntry, response, isServeCompressed);
 
                 if (cacheEntry.type != CacheType.FILE) {
                     // the payload is available in a ByteBuffer
-                    final Buffer buffer = Buffers.wrap(ctx.getMemoryManager(),
-                            cacheEntry.getByteBuffer(isServeCompressed).duplicate());
+                    final Buffer buffer = Buffers.wrap(ctx.getMemoryManager(), cacheEntry.getByteBuffer(isServeCompressed).duplicate());
 
-                    ctx.write(HttpContent.builder(response)
-                            .content(buffer)
-                            .last(true)
-                            .build());
+                    ctx.write(HttpContent.builder(response).content(buffer).last(true).build());
 
                     return flush(ctx);
                 }
-                
-                return fileCache.isFileSendEnabled() && !request.isSecure()
-                        ? sendFileZeroCopy(ctx, response, cacheEntry,
-                            isServeCompressed)
-                        : sendFileUsingBuffers(ctx, response, cacheEntry,
-                            isServeCompressed);
+
+                return fileCache.isFileSendEnabled() && !request.isSecure() ? sendFileZeroCopy(ctx, response, cacheEntry, isServeCompressed)
+                        : sendFileUsingBuffers(ctx, response, cacheEntry, isServeCompressed);
             }
         }
 
@@ -122,44 +109,38 @@ public class FileCacheFilter extends BaseFilter {
     public FileCache getFileCache() {
         return fileCache;
     }
-    
+
     /**
      * Prepares common response headers.
      */
-    private void prepareResponse(final FileCacheEntry entry,
-            final HttpResponsePacket response) throws IOException {
+    private void prepareResponse(final FileCacheEntry entry, final HttpResponsePacket response) throws IOException {
         response.setContentType(entry.contentType.prepare());
 
         if (entry.server != null) {
             response.addHeader(Header.Server, entry.server);
         }
     }
-    
-    
+
     /**
      * Prepare response with payload headers.
      */
-    private void prepareResponseWithPayload(final FileCacheEntry entry,
-            final HttpResponsePacket response, final boolean isServeCompressed)
-            throws IOException {
+    private void prepareResponseWithPayload(final FileCacheEntry entry, final HttpResponsePacket response, final boolean isServeCompressed) throws IOException {
         response.addHeader(Header.ETag, entry.Etag);
         response.addHeader(Header.LastModified, entry.lastModifiedHeader);
 
         response.setContentLengthLong(entry.getFileSize(isServeCompressed));
-        
+
         if (isServeCompressed) {
             response.addHeader(Header.ContentEncoding, "gzip");
         }
     }
 
-    private NextAction sendFileUsingBuffers(final FilterChainContext ctx,
-            final HttpResponsePacket response, final FileCacheEntry cacheEntry,
+    private NextAction sendFileUsingBuffers(final FilterChainContext ctx, final HttpResponsePacket response, final FileCacheEntry cacheEntry,
             final boolean isServeCompressed) {
         try {
-            final FileSendEntry sendEntry = FileSendEntry.create(ctx, response,
-                    cacheEntry.getFile(isServeCompressed),
+            final FileSendEntry sendEntry = FileSendEntry.create(ctx, response, cacheEntry.getFile(isServeCompressed),
                     cacheEntry.getFileSize(isServeCompressed));
-            
+
             ctx.suspend();
             sendEntry.send();
             return ctx.getSuspendAction();
@@ -169,36 +150,31 @@ public class FileCacheFilter extends BaseFilter {
         // FAILURE
         return ctx.getInvokeAction();
     }
-    
-    private NextAction sendFileZeroCopy(final FilterChainContext ctx,
-            final HttpResponsePacket response, final FileCacheEntry cacheEntry,
+
+    private NextAction sendFileZeroCopy(final FilterChainContext ctx, final HttpResponsePacket response, final FileCacheEntry cacheEntry,
             final boolean isServeCompressed) {
-        
+
         // flush response
         ctx.write(response);
 
         // send-file
-        final FileTransfer f = new FileTransfer(
-                cacheEntry.getFile(isServeCompressed),
-                0, cacheEntry.getFileSize(isServeCompressed));
+        final FileTransfer f = new FileTransfer(cacheEntry.getFile(isServeCompressed), 0, cacheEntry.getFileSize(isServeCompressed));
         ctx.write(f, new EmptyCompletionHandler<WriteResult>() {
             @Override
             public void failed(Throwable throwable) {
-                LOGGER.log(Level.FINE, "Error reported during file-send entry: " +
-                        cacheEntry, throwable);
+                LOGGER.log(Level.FINE, "Error reported during file-send entry: " + cacheEntry, throwable);
             }
         });
 
-        
         return flush(ctx);
     }
-    
+
     private NextAction flush(final FilterChainContext ctx) {
         final HttpContext httpContext = HttpContext.get(ctx);
         assert httpContext != null;
         final OutputSink output = httpContext.getOutputSink();
 
-        if (output.canWrite()) {  // if connection write queue is not overloaded
+        if (output.canWrite()) { // if connection write queue is not overloaded
             return ctx.getStopAction();
         } else { // if connection write queue is overloaded
 
@@ -226,29 +202,26 @@ public class FileCacheFilter extends BaseFilter {
             return suspendAction;
         }
     }
-    
+
     private static class FileSendEntry implements WriteHandler {
         private final FilterChainContext ctx;
         private final FileChannel fc;
         private final FileInputStream fis;
         private final HttpResponsePacket response;
         private final OutputSink output;
-        
+
         private long remaining;
 
-        public static FileSendEntry create(final FilterChainContext ctx,
-                final HttpResponsePacket response,
-                final File file, final long size) throws IOException {
-            
+        public static FileSendEntry create(final FilterChainContext ctx, final HttpResponsePacket response, final File file, final long size)
+                throws IOException {
+
             final FileInputStream fis = new FileInputStream(file);
             final FileChannel fc = fis.getChannel();
-            
+
             return new FileSendEntry(ctx, response, fis, fc, size);
         }
-        
-        public FileSendEntry(final FilterChainContext ctx,
-                final HttpResponsePacket response,
-                final FileInputStream fis, final FileChannel fc,
+
+        public FileSendEntry(final FilterChainContext ctx, final HttpResponsePacket response, final FileInputStream fis, final FileChannel fc,
                 final long size) {
 
             this.ctx = ctx;
@@ -256,13 +229,12 @@ public class FileCacheFilter extends BaseFilter {
             this.fis = fis;
             this.fc = fc;
             this.remaining = size;
-            
+
             final HttpContext httpContext = response.getProcessingState().getHttpContext();
             assert httpContext != null;
             output = httpContext.getOutputSink();
         }
-        
-        
+
         public void close() {
             try {
                 fis.close();
@@ -278,18 +250,15 @@ public class FileCacheFilter extends BaseFilter {
                 do {
                     final Buffer buffer = ctx.getMemoryManager().allocate(chunkSize);
                     buffer.allowBufferDispose(true);
-                    
+
                     final long readNow = Buffers.readFromFileChannel(fc, buffer);
                     isLast = readNow <= 0 || (remaining -= readNow) <= 0;
 
                     buffer.trim();
-                    ctx.write(HttpContent.builder(response)
-                            .content(buffer)
-                            .last(isLast)
-                            .build());
-                    
+                    ctx.write(HttpContent.builder(response).content(buffer).last(isLast).build());
+
                 } while (!isLast && output.canWrite());
-                
+
                 if (isLast) {
                     done();
                 } else {

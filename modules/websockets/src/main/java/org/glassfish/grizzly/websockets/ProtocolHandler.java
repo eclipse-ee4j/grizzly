@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -50,21 +50,18 @@ public abstract class ProtocolHandler {
     protected final CharsetDecoder currentDecoder = utf8.newDecoder();
     protected ByteBuffer remainder;
     protected WebSocketMappingData mappingData;
-    
+
     public ProtocolHandler(boolean maskData) {
         this.maskData = maskData;
     }
 
-    public HandShake handshake(FilterChainContext ctx,
-            WebSocketApplication app,
-            HttpContent request) {
-        
+    public HandShake handshake(FilterChainContext ctx, WebSocketApplication app, HttpContent request) {
+
         final HandShake handshake = createServerHandShake(request);
         app.handshake(handshake);
-        
-        final HttpResponsePacket response =
-                ((HttpRequestPacket) request.getHttpHeader()).getResponse();
-        
+
+        final HttpResponsePacket response = ((HttpRequestPacket) request.getHttpHeader()).getResponse();
+
         handshake.respond(ctx, app, response);
         return handshake;
     }
@@ -73,8 +70,7 @@ public abstract class ProtocolHandler {
         return send(frame, null);
     }
 
-    public GrizzlyFuture<DataFrame> send(DataFrame frame,
-            CompletionHandler<DataFrame> completionHandler) {
+    public GrizzlyFuture<DataFrame> send(DataFrame frame, CompletionHandler<DataFrame> completionHandler) {
         return write(frame, completionHandler);
     }
 
@@ -115,32 +111,24 @@ public abstract class ProtocolHandler {
     }
 
     public abstract byte[] frame(DataFrame frame);
-/*
-    public void readFrame() {
-        while (connection.ready()) {
-            try {
-                unframe(buffer, parsingFrame).respond(getWebSocket());
-            } catch (FramingException fe) {
-                fe.printStackTrace();
-                System.out.println("connection = " + connection);
-                getWebSocket().close();
-            }
-        }
-    }
-*/
+    /*
+     * public void readFrame() { while (connection.ready()) { try { unframe(buffer, parsingFrame).respond(getWebSocket()); }
+     * catch (FramingException fe) { fe.printStackTrace(); System.out.println("connection = " + connection);
+     * getWebSocket().close(); } } }
+     */
 
     public DataFrame toDataFrame(String data) {
         return toDataFrame(data, true);
     }
-    
+
     public DataFrame toDataFrame(byte[] data) {
         return toDataFrame(data, true);
     }
-    
+
     public DataFrame toDataFrame(String data, boolean last) {
         return new DataFrame(new TextFrameType(), data, last);
     }
-    
+
     public DataFrame toDataFrame(byte[] data, boolean last) {
         return new DataFrame(new BinaryFrameType(), data, last);
     }
@@ -167,32 +155,30 @@ public abstract class ProtocolHandler {
 
     public GrizzlyFuture<DataFrame> close(int code, String reason) {
         final ClosingFrame closingFrame = new ClosingFrame(code, reason);
-        return send(closingFrame,
-                new EmptyCompletionHandler<DataFrame>() {
+        return send(closingFrame, new EmptyCompletionHandler<DataFrame>() {
 
-                    @Override
-                    public void failed(final Throwable throwable) {
-                        webSocket.onClose(closingFrame);
-                    }
+            @Override
+            public void failed(final Throwable throwable) {
+                webSocket.onClose(closingFrame);
+            }
 
-                    @Override
-                    public void completed(DataFrame result) {
-                        if (!maskData) {
-                            webSocket.onClose(closingFrame);
-                        }
-                    }
-                });
+            @Override
+            public void completed(DataFrame result) {
+                if (!maskData) {
+                    webSocket.onClose(closingFrame);
+                }
+            }
+        });
     }
 
-    @SuppressWarnings({"unchecked"})
-    private GrizzlyFuture<DataFrame> write(final DataFrame frame,
-            final CompletionHandler<DataFrame> completionHandler) {
-        
+    @SuppressWarnings({ "unchecked" })
+    private GrizzlyFuture<DataFrame> write(final DataFrame frame, final CompletionHandler<DataFrame> completionHandler) {
+
         final Connection localConnection = connection;
         if (localConnection == null) {
             throw new IllegalStateException("Connection is null");
         }
-        
+
         final FutureImpl<DataFrame> localFuture = SafeFutureImpl.create();
 
         localConnection.write(frame, new EmptyCompletionHandler() {
@@ -225,17 +211,21 @@ public abstract class ProtocolHandler {
     public abstract DataFrame parse(Buffer buffer);
 
     /**
-     * Convert a byte[] to a long.  Used for rebuilding payload length.
+     * Convert a byte[] to a long. Used for rebuilding payload length.
      */
     public long decodeLength(byte[] bytes) {
         return Utils.toLong(bytes, 0, bytes.length);
     }
 
     /**
-     * Converts the length given to the appropriate framing data: <ol> <li>0-125 one element that is the payload length.
+     * Converts the length given to the appropriate framing data:
+     * <ol>
+     * <li>0-125 one element that is the payload length.
      * <li>up to 0xFFFF, 3 element array starting with 126 with the following 2 bytes interpreted as a 16 bit unsigned
-     * integer showing the payload length. <li>else 9 element array starting with 127 with the following 8 bytes
-     * interpreted as a 64-bit unsigned integer (the high bit must be 0) showing the payload length. </ol>
+     * integer showing the payload length.
+     * <li>else 9 element array starting with 127 with the following 8 bytes interpreted as a 64-bit unsigned integer (the
+     * high bit must be 0) showing the payload length.
+     * </ol>
      *
      * @param length the payload size
      *
@@ -298,53 +288,53 @@ public abstract class ProtocolHandler {
     }
 
     protected void utf8Decode(boolean finalFragment, byte[] data, DataFrame dataFrame) {
-            final ByteBuffer b = getByteBuffer(data);
-            int n = (int) (b.remaining() * currentDecoder.averageCharsPerByte());
-            CharBuffer cb = CharBuffer.allocate(n);
-            for (; ; ) {
-                CoderResult result = currentDecoder.decode(b, cb, finalFragment);
-                if (result.isUnderflow()) {
-                    if (finalFragment) {
-                        currentDecoder.flush(cb);
-                        if (b.hasRemaining()) {
-                            throw new IllegalStateException("Final UTF-8 fragment received, but not all bytes consumed by decode process");
-                        }
-                        currentDecoder.reset();
-                    } else {
-                        if (b.hasRemaining()) {
-                            remainder = b;
-                        }
+        final ByteBuffer b = getByteBuffer(data);
+        int n = (int) (b.remaining() * currentDecoder.averageCharsPerByte());
+        CharBuffer cb = CharBuffer.allocate(n);
+        for (;;) {
+            CoderResult result = currentDecoder.decode(b, cb, finalFragment);
+            if (result.isUnderflow()) {
+                if (finalFragment) {
+                    currentDecoder.flush(cb);
+                    if (b.hasRemaining()) {
+                        throw new IllegalStateException("Final UTF-8 fragment received, but not all bytes consumed by decode process");
                     }
-                    cb.flip();
-                    String res = cb.toString();
-                    dataFrame.setPayload(res);
-                    dataFrame.setPayload(Utf8Utils.encode(Charsets.UTF8_CHARSET, res));
-                    break;
+                    currentDecoder.reset();
+                } else {
+                    if (b.hasRemaining()) {
+                        remainder = b;
+                    }
                 }
-                if (result.isOverflow()) {
-                    CharBuffer tmp = CharBuffer.allocate(2 * n + 1);
-                    cb.flip();
-                    tmp.put(cb);
-                    cb = tmp;
-                    continue;
-                }
-                if (result.isError() || result.isMalformed()) {
-                    throw new Utf8DecodingError("Illegal UTF-8 Sequence");
-                }
+                cb.flip();
+                String res = cb.toString();
+                dataFrame.setPayload(res);
+                dataFrame.setPayload(Utf8Utils.encode(Charsets.UTF8_CHARSET, res));
+                break;
+            }
+            if (result.isOverflow()) {
+                CharBuffer tmp = CharBuffer.allocate(2 * n + 1);
+                cb.flip();
+                tmp.put(cb);
+                cb = tmp;
+                continue;
+            }
+            if (result.isError() || result.isMalformed()) {
+                throw new Utf8DecodingError("Illegal UTF-8 Sequence");
             }
         }
+    }
 
-        protected ByteBuffer getByteBuffer(final byte[] data) {
-            if (remainder == null) {
-                return ByteBuffer.wrap(data);
-            } else {
-                final int rem = remainder.remaining();
-                final byte[] orig = remainder.array();
-                byte[] b = new byte[rem + data.length];
-                System.arraycopy(orig, orig.length - rem, b, 0, rem);
-                System.arraycopy(data, 0, b, rem, data.length);
-                remainder = null;
-                return ByteBuffer.wrap(b);
-            }
+    protected ByteBuffer getByteBuffer(final byte[] data) {
+        if (remainder == null) {
+            return ByteBuffer.wrap(data);
+        } else {
+            final int rem = remainder.remaining();
+            final byte[] orig = remainder.array();
+            byte[] b = new byte[rem + data.length];
+            System.arraycopy(orig, orig.length - rem, b, 0, rem);
+            System.arraycopy(data, 0, b, rem, data.length);
+            remainder = null;
+            return ByteBuffer.wrap(b);
         }
+    }
 }

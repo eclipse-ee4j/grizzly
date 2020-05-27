@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -17,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.filterchain.BaseFilter;
@@ -28,20 +29,19 @@ import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.impl.FutureImpl;
 
 /**
- * HTTP client download filter.
- * This Filter is responsible for asynchronous downloading of a HTTP resource and
- * saving its content in a local file.
+ * HTTP client download filter. This Filter is responsible for asynchronous downloading of a HTTP resource and saving
+ * its content in a local file.
  *
  * @author Alexey Stashok
  */
 public class ClientDownloadFilter extends BaseFilter {
     private final static Logger logger = Grizzly.logger(ClientDownloadFilter.class);
-    
+
     // URI of a remote resource
     private final URI uri;
     // local filename, where content will be saved
     private final String fileName;
-    
+
     // Download completion future
     private final FutureImpl<String> completeFuture;
 
@@ -60,10 +60,9 @@ public class ClientDownloadFilter extends BaseFilter {
      */
     public ClientDownloadFilter(URI uri, FutureImpl<String> completeFuture) {
         this.uri = uri;
-        
+
         // Extracting resource path
-        resourcePath =
-                uri.getPath().trim().length() > 0 ? uri.getPath().trim() : "/";
+        resourcePath = uri.getPath().trim().length() > 0 ? uri.getPath().trim() : "/";
 
         int lastSlashIdx = resourcePath.lastIndexOf('/');
         if (lastSlashIdx != -1 && lastSlashIdx < resourcePath.length() - 1) {
@@ -73,15 +72,13 @@ public class ClientDownloadFilter extends BaseFilter {
             // if the path doesn't contain filename - we will use default filename
             fileName = "download#" + System.currentTimeMillis() + ".txt";
         }
-        
+
         this.completeFuture = completeFuture;
     }
 
     /**
-     * The method is called, when a client connection gets connected to a web
-     * server.
-     * When this method gets called by a framework - it means that client connection
-     * has been established and we can send HTTP request to the web server.
+     * The method is called, when a client connection gets connected to a web server. When this method gets called by a
+     * framework - it means that client connection has been established and we can send HTTP request to the web server.
      *
      * @param ctx Client connect processing context
      *
@@ -93,8 +90,7 @@ public class ClientDownloadFilter extends BaseFilter {
         // Build the HttpRequestPacket, which will be sent to a server
         // We construct HTTP request version 1.1 and specifying the URL of the
         // resource we want to download
-        final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET")
-                .uri(resourcePath).protocol(Protocol.HTTP_1_1)
+        final HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("GET").uri(resourcePath).protocol(Protocol.HTTP_1_1)
                 .header("Host", uri.getHost()).build();
         logger.log(Level.INFO, "Connected... Sending the request: {0}", httpRequest);
 
@@ -107,9 +103,9 @@ public class ClientDownloadFilter extends BaseFilter {
     }
 
     /**
-     * The method is called, when we receive a {@link HttpContent} from a server.
-     * Once we receive one - we save the content chunk to a local file.
-     * 
+     * The method is called, when we receive a {@link HttpContent} from a server. Once we receive one - we save the content
+     * chunk to a local file.
+     *
      * @param ctx Request processing context
      *
      * @return {@link NextAction}
@@ -136,13 +132,13 @@ public class ClientDownloadFilter extends BaseFilter {
             logger.log(Level.FINE, "HTTP content size: {0}", buffer.remaining());
             if (buffer.remaining() > 0) {
                 bytesDownloaded += buffer.remaining();
-                
+
                 // save Buffer to a local file, represented by FileChannel
                 ByteBuffer byteBuffer = buffer.toByteBuffer();
                 do {
                     output.write(byteBuffer);
                 } while (byteBuffer.hasRemaining());
-                
+
                 // Dispose a content buffer
                 buffer.dispose();
             }
@@ -164,9 +160,8 @@ public class ClientDownloadFilter extends BaseFilter {
     }
 
     /**
-     * The method is called, when the client connection will get closed.
-     * Intercepting this method let's use release resources, like local FileChannel,
-     * if it wasn't released before.
+     * The method is called, when the client connection will get closed. Intercepting this method let's use release
+     * resources, like local FileChannel, if it wasn't released before.
      *
      * @param ctx Request processing context
      *
@@ -180,9 +175,9 @@ public class ClientDownloadFilter extends BaseFilter {
     }
 
     /**
-     * Method closes the local file channel, and if download wasn't completed -
-     * notify {@link FutureImpl} about download failure.
-     * 
+     * Method closes the local file channel, and if download wasn't completed - notify {@link FutureImpl} about download
+     * failure.
+     *
      * @throws IOException If failed to close <em>localOutput</em>.
      */
     private void close() throws IOException {
@@ -193,7 +188,7 @@ public class ClientDownloadFilter extends BaseFilter {
         }
 
         if (!completeFuture.isDone()) {
-            //noinspection ThrowableInstanceNeverThrown
+            // noinspection ThrowableInstanceNeverThrown
             completeFuture.failure(new IOException("Connection was closed"));
         }
     }

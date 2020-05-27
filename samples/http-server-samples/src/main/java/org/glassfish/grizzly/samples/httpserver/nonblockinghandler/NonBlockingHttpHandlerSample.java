@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -9,6 +9,12 @@
  */
 
 package org.glassfish.grizzly.samples.httpserver.nonblockinghandler;
+
+import java.io.IOException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
@@ -22,56 +28,43 @@ import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.http.HttpClientFilter;
 import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.io.NIOReader;
+import org.glassfish.grizzly.http.io.NIOWriter;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
-import org.glassfish.grizzly.http.io.NIOReader;
-import org.glassfish.grizzly.http.io.NIOWriter;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HeaderValue;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-
-import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-
 
 /**
  * <p>
- * This example demonstrates the use of a {@link HttpHandler} to echo
- * <code>HTTP</code> <code>POST</code> data sent by the client, back to the client using
- * non-blocking streams introduced in Grizzly 2.0.
+ * This example demonstrates the use of a {@link HttpHandler} to echo <code>HTTP</code> <code>POST</code> data sent by
+ * the client, back to the client using non-blocking streams introduced in Grizzly 2.0.
  * </p>
  *
  * <p>
  * The is composed of two main parts (as nested classes of <code>BlockingHttpHandlerSample</code>)
  * <ul>
- *    <li>
- *       Client: This is a simple <code>HTTP</code> based on the Grizzly {@link org.glassfish.grizzly.http.HttpClientFilter}.
- *               The client uses a custom {@link org.glassfish.grizzly.filterchain.Filter} on top
- *               of the {@link org.glassfish.grizzly.http.HttpClientFilter} to send the <code>POST</code> and
- *               read, and ultimately display, the response from the server.  To
- *               better demonstrate the callbacks defined by {@link ReadHandler},
- *               the client will send each data chunk two seconds apart.
+ * <li>Client: This is a simple <code>HTTP</code> based on the Grizzly
+ * {@link org.glassfish.grizzly.http.HttpClientFilter}. The client uses a custom
+ * {@link org.glassfish.grizzly.filterchain.Filter} on top of the {@link org.glassfish.grizzly.http.HttpClientFilter} to
+ * send the <code>POST</code> and read, and ultimately display, the response from the server. To better demonstrate the
+ * callbacks defined by {@link ReadHandler}, the client will send each data chunk two seconds apart.
  *
- *    </li>
- *    <li>
- *       NoneBlockingEchoHandler: This {@link HttpHandler} is installed to the
- *                                {@link org.glassfish.grizzly.http.server.HttpServer} instance and associated
- *                                with the path <code>/echo</code>.  The handler uses the {@link org.glassfish.grizzly.http.io.NIOReader}
- *                                returned by {@link org.glassfish.grizzly.http.server.Request#getReader()}.
- *                                As data is received asynchronously, the {@link ReadHandler} callbacks are
- *                                invoked at this time data is then written to the response.
- *    </li>
+ * </li>
+ * <li>NoneBlockingEchoHandler: This {@link HttpHandler} is installed to the
+ * {@link org.glassfish.grizzly.http.server.HttpServer} instance and associated with the path <code>/echo</code>. The
+ * handler uses the {@link org.glassfish.grizzly.http.io.NIOReader} returned by
+ * {@link org.glassfish.grizzly.http.server.Request#getReader()}. As data is received asynchronously, the
+ * {@link ReadHandler} callbacks are invoked at this time data is then written to the response.</li>
  * </ul>
  * </p>
  *
@@ -79,7 +72,6 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 public class NonBlockingHttpHandlerSample {
 
     private static final Logger LOGGER = Grizzly.logger(NonBlockingHttpHandlerSample.class);
-
 
     public static void main(String[] args) {
 
@@ -102,9 +94,7 @@ public class NonBlockingHttpHandlerSample {
         }
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class Client {
 
@@ -124,10 +114,8 @@ public class NonBlockingHttpHandlerSample {
             // Add ClientFilter
             clientFilterChainBuilder.add(new ClientFilter(completeFuture));
 
-
             // Initialize Transport
-            final TCPNIOTransport transport =
-                    TCPNIOTransportBuilder.newInstance().build();
+            final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
             // Set filterchain as a Transport Processor
             transport.setProcessor(clientFilterChainBuilder.build());
 
@@ -169,19 +157,12 @@ public class NonBlockingHttpHandlerSample {
             }
         }
 
-
         // ------------------------------------------------------ Nested Classes
 
         private static final class ClientFilter extends BaseFilter {
-            private static final HeaderValue HOST_HEADER_VALUE =
-                    HeaderValue.newHeaderValue(HOST + ':' + PORT).prepare();
+            private static final HeaderValue HOST_HEADER_VALUE = HeaderValue.newHeaderValue(HOST + ':' + PORT).prepare();
 
-            private static final String[] CONTENT = {
-                "contentA-",
-                "contentB-",
-                "contentC-",
-                "contentD"
-            };
+            private static final String[] CONTENT = { "contentA-", "contentB-", "contentC-", "contentD" };
 
             private final FutureImpl<String> future;
 
@@ -189,16 +170,13 @@ public class NonBlockingHttpHandlerSample {
 
             // ---------------------------------------------------- Constructors
 
-
             private ClientFilter(FutureImpl<String> future) {
-                this.future = future;                
+                this.future = future;
             }
-
 
             // ----------------------------------------- Methods from BaseFilter
 
-
-            @SuppressWarnings({"unchecked"})
+            @SuppressWarnings({ "unchecked" })
             @Override
             public NextAction handleConnect(FilterChainContext ctx) throws IOException {
                 System.out.println("\nClient connected!\n");
@@ -222,7 +200,7 @@ public class NonBlockingHttpHandlerSample {
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
-                        e.printStackTrace(); 
+                        e.printStackTrace();
                     }
                 }
 
@@ -236,7 +214,6 @@ public class NonBlockingHttpHandlerSample {
                 return ctx.getStopAction(); // discontinue filter chain execution
 
             }
-
 
             @Override
             public NextAction handleRead(FilterChainContext ctx) throws IOException {
@@ -256,9 +233,7 @@ public class NonBlockingHttpHandlerSample {
 
             }
 
-
             // ------------------------------------------------- Private Methods
-
 
             private HttpRequestPacket createRequest() {
 
@@ -277,20 +252,15 @@ public class NonBlockingHttpHandlerSample {
 
     } // END Client
 
-
     /**
-     * This handler using non-blocking streams to read POST data and echo it
-     * back to the client.
+     * This handler using non-blocking streams to read POST data and echo it back to the client.
      */
     private static class NonBlockingEchoHandler extends HttpHandler {
 
-
         // -------------------------------------------- Methods from HttpHandler
 
-
         @Override
-        public void service(final Request request,
-                            final Response response) throws Exception {
+        public void service(final Request request, final Response response) throws Exception {
 
             final char[] buf = new char[128];
             final NIOReader in = request.getNIOReader(); // return the non-blocking InputStream
@@ -337,15 +307,14 @@ public class NonBlockingHttpHandlerSample {
 
         }
 
-        private void echoAvailableData(NIOReader in, NIOWriter out, char[] buf)
-                throws IOException {
-            
-            while(in.isReady()) {
+        private void echoAvailableData(NIOReader in, NIOWriter out, char[] buf) throws IOException {
+
+            while (in.isReady()) {
                 int len = in.read(buf);
                 out.write(buf, 0, len);
             }
         }
 
     } // END NonBlockingEchoHandler
-    
+
 }

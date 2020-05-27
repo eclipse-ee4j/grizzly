@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,19 +20,16 @@ import java.nio.ByteBuffer;
 
 public abstract class AjpPacket {
     public static ByteBuffer putShort(ByteBuffer target, short value) {
-        return ensureCapacity(target, 2)
-                .putShort(value);
+        return ensureCapacity(target, 2).putShort(value);
     }
 
     public static ByteBuffer putString(ByteBuffer target, String value) {
         ByteBuffer buffer;
         if (value == null) {
-            buffer = ensureCapacity(target, 2)
-                    .putShort((short) 0xFFFF);
+            buffer = ensureCapacity(target, 2).putShort((short) 0xFFFF);
         } else {
             final byte[] bytes = value.getBytes();
-            buffer = ensureCapacity(target, 3 + bytes.length)
-                    .putShort((short) bytes.length);
+            buffer = ensureCapacity(target, 3 + bytes.length).putShort((short) bytes.length);
             buffer.put(value.getBytes());
             buffer.put((byte) 0);
         }
@@ -63,7 +60,7 @@ public abstract class AjpPacket {
         ByteBuffer header = buildContent();
         ByteBuffer pktHeader = buildPacketHeader((short) header.remaining());
 
-        ByteBuffer packet = ByteBuffer.allocate(pktHeader.remaining()+ header.remaining());
+        ByteBuffer packet = ByteBuffer.allocate(pktHeader.remaining() + header.remaining());
         packet.put(pktHeader);
         packet.put(header);
         packet.flip();
@@ -74,11 +71,11 @@ public abstract class AjpPacket {
         final ByteBuffer byteBuffer = toBuffer();
         byte[] body = new byte[byteBuffer.remaining()];
         byteBuffer.get(body);
-        
-        
+
         return body;
     }
-    
+
+    @Override
     public String toString() {
         final ByteBuffer buffer = toBuffer();
         return new String(buffer.array(), buffer.position(), buffer.limit() - buffer.position());

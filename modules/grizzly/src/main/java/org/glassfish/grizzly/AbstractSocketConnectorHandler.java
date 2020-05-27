@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -21,25 +21,23 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 
 /**
- * Abstract class simplifies the implementation of
- * {@link SocketConnectorHandler}
- * interface by pre-implementing some of its methods.
- * 
+ * Abstract class simplifies the implementation of {@link SocketConnectorHandler} interface by pre-implementing some of
+ * its methods.
+ *
  * @author Alexey Stashok
  */
-public abstract class AbstractSocketConnectorHandler
-        implements SocketConnectorHandler {
+public abstract class AbstractSocketConnectorHandler implements SocketConnectorHandler {
 
     protected final Transport transport;
     private Processor processor;
     private ProcessorSelector processorSelector;
 
-    protected final List<ConnectionProbe> probes =
-            new LinkedList<ConnectionProbe>();
+    protected final List<ConnectionProbe> probes = new LinkedList<>();
 
     public AbstractSocketConnectorHandler(Transport transport) {
         this.transport = transport;
@@ -58,78 +56,65 @@ public abstract class AbstractSocketConnectorHandler
     }
 
     @Override
-    public void connect(SocketAddress remoteAddress,
-            CompletionHandler<Connection> completionHandler) {
+    public void connect(SocketAddress remoteAddress, CompletionHandler<Connection> completionHandler) {
         connect(remoteAddress, null, completionHandler);
     }
 
     @Override
-    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress,
-            SocketAddress localAddress) {
+    public GrizzlyFuture<Connection> connect(SocketAddress remoteAddress, SocketAddress localAddress) {
         return connectAsync(remoteAddress, localAddress, null, true);
     }
 
     @Override
-    public void connect(SocketAddress remoteAddress,
-            SocketAddress localAddress,
-            CompletionHandler<Connection> completionHandler) {
+    public void connect(SocketAddress remoteAddress, SocketAddress localAddress, CompletionHandler<Connection> completionHandler) {
         connectAsync(remoteAddress, localAddress, completionHandler, false);
     }
 
-    protected abstract FutureImpl<Connection> connectAsync(
-            final SocketAddress remoteAddress,
-            final SocketAddress localAddress,
-            final CompletionHandler<Connection> completionHandler,
-            final boolean needFuture);
+    protected abstract FutureImpl<Connection> connectAsync(final SocketAddress remoteAddress, final SocketAddress localAddress,
+            final CompletionHandler<Connection> completionHandler, final boolean needFuture);
 
     /**
-     * Get the default {@link Processor} to process {@link IOEvent}, occurring
-     * on connection phase.
+     * Get the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      *
-     * @return the default {@link Processor} to process {@link IOEvent},
-     * occurring on connection phase.
+     * @return the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      */
     public Processor getProcessor() {
         return processor;
     }
 
     /**
-     * Set the default {@link Processor} to process {@link IOEvent}, occurring
-     * on connection phase.
+     * Set the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      *
-     * @param processor the default {@link Processor} to process
-     * {@link IOEvent}, occurring on connection phase.
+     * @param processor the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      */
     public void setProcessor(Processor processor) {
         this.processor = processor;
     }
 
     /**
-     * Gets the default {@link ProcessorSelector}, which will be used to get
-     * {@link Processor} to process I/O events, occurring on connection phase.
+     * Gets the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
+     * occurring on connection phase.
      *
-     * @return the default {@link ProcessorSelector}, which will be used to get
-     * {@link Processor} to process I/O events, occurring on connection phase.
+     * @return the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
+     * occurring on connection phase.
      */
     public ProcessorSelector getProcessorSelector() {
         return processorSelector;
     }
 
     /**
-     * Sets the default {@link ProcessorSelector}, which will be used to get
-     * {@link Processor} to process I/O events, occurring on connection phase.
-     *
-     * @param processorSelector the default {@link ProcessorSelector},
-     * which will be used to get {@link Processor} to process I/O events,
+     * Sets the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
      * occurring on connection phase.
+     *
+     * @param processorSelector the default {@link ProcessorSelector}, which will be used to get {@link Processor} to
+     * process I/O events, occurring on connection phase.
      */
     public void setProcessorSelector(ProcessorSelector processorSelector) {
         this.processorSelector = processorSelector;
     }
 
     /**
-     * Add the {@link ConnectionProbe}, which will be notified about
-     * <tt>Connection</tt> life-cycle events.
+     * Add the {@link ConnectionProbe}, which will be notified about <tt>Connection</tt> life-cycle events.
      *
      * @param probe the {@link ConnectionProbe}.
      */
@@ -148,10 +133,9 @@ public abstract class AbstractSocketConnectorHandler
     }
 
     /**
-     * Get the {@link ConnectionProbe}, which are registered on the <tt>Connection</tt>.
-     * Please note, it's not appropriate to modify the returned array's content.
-     * Please use {@link #addMonitoringProbe(org.glassfish.grizzly.ConnectionProbe)} and
-     * {@link #removeMonitoringProbe(org.glassfish.grizzly.ConnectionProbe)} instead.
+     * Get the {@link ConnectionProbe}, which are registered on the <tt>Connection</tt>. Please note, it's not appropriate
+     * to modify the returned array's content. Please use {@link #addMonitoringProbe(org.glassfish.grizzly.ConnectionProbe)}
+     * and {@link #removeMonitoringProbe(org.glassfish.grizzly.ConnectionProbe)} instead.
      *
      * @return the {@link ConnectionProbe}, which are registered on the <tt>Connection</tt>.
      */
@@ -160,9 +144,8 @@ public abstract class AbstractSocketConnectorHandler
     }
 
     /**
-     * Pre-configures {@link Connection} object before actual connecting phase
-     * will be started.
-     * 
+     * Pre-configures {@link Connection} object before actual connecting phase will be started.
+     *
      * @param connection {@link Connection} to pre-configure.
      */
     protected void preConfigure(Connection connection) {
@@ -188,7 +171,7 @@ public abstract class AbstractSocketConnectorHandler
             }
         };
     }
-    
+
     /**
      * Builder
      *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,11 +27,13 @@ public abstract class AbstractBufferArray<E> {
     protected final Class<E> clazz;
     private E[] byteBufferArray;
     private PosLim[] initStateArray;
-    
+
     private int size;
 
     protected abstract void setPositionLimit(E buffer, int position, int limit);
+
     protected abstract int getPosition(E buffer);
+
     protected abstract int getLimit(E buffer);
 
     @SuppressWarnings("unchecked")
@@ -45,9 +47,8 @@ public abstract class AbstractBufferArray<E> {
         add(byteBuffer, getPosition(byteBuffer), getLimit(byteBuffer));
     }
 
-    public void add(final E byteBuffer, final int restorePosition,
-            final int restoreLimit) {
-        
+    public void add(final E byteBuffer, final int restorePosition, final int restoreLimit) {
+
         ensureCapacity(1);
         byteBufferArray[size] = byteBuffer;
         PosLim poslim = initStateArray[size];
@@ -71,15 +72,14 @@ public abstract class AbstractBufferArray<E> {
     public void restore() {
         for (int i = 0; i < size; i++) {
             final PosLim poslim = initStateArray[i];
-            setPositionLimit(byteBufferArray[i],
-                    poslim.restorePosition, poslim.restoreLimit);
+            setPositionLimit(byteBufferArray[i], poslim.restorePosition, poslim.restoreLimit);
         }
     }
 
     public final int getInitialPosition(final int idx) {
         return initStateArray[idx].initialPosition;
     }
-    
+
     public int getInitialLimit(final int idx) {
         return initStateArray[idx].initialLimit;
     }
@@ -98,7 +98,7 @@ public abstract class AbstractBufferArray<E> {
             return;
         }
 
-        final int newSize = Math.max(diff + size, (byteBufferArray.length * 3) / 2 + 1);
+        final int newSize = Math.max(diff + size, byteBufferArray.length * 3 / 2 + 1);
         byteBufferArray = Arrays.copyOf(byteBufferArray, newSize);
         initStateArray = Arrays.copyOf(initStateArray, newSize);
     }

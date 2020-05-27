@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,19 +10,19 @@
 
 package org.glassfish.grizzly.samples.echo;
 
-import org.glassfish.grizzly.filterchain.BaseFilter;
 import java.io.IOException;
-import org.glassfish.grizzly.filterchain.FilterChain;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+
 /**
- * Implementation of {@link FilterChain} filter, which asynchronously replies
- * with the request message.
+ * Implementation of {@link FilterChain} filter, which asynchronously replies with the request message.
  *
  * @author Alexey Stashok
  */
@@ -38,18 +38,16 @@ public class EchoFilterAsync extends BaseFilter {
             return thread;
         }
     });
-    
+
     /**
-     * Handle just read operation, when some message has come and ready to be
-     * processed.
+     * Handle just read operation, when some message has come and ready to be processed.
      *
      * @param ctx Context of {@link FilterChainContext} processing
      * @return the next action
      * @throws java.io.IOException
      */
     @Override
-    public NextAction handleRead(final FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
 
         final Object message = ctx.getMessage();
 

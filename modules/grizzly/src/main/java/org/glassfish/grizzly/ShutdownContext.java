@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,8 +17,7 @@
 package org.glassfish.grizzly;
 
 /**
- * This class will be passed to {@link GracefulShutdownListener} instances
- * registered against a {@link Transport}.
+ * This class will be passed to {@link GracefulShutdownListener} instances registered against a {@link Transport}.
  *
  * @since 2.3.5
  */
@@ -30,8 +29,8 @@ public interface ShutdownContext {
     Transport getTransport();
 
     /**
-     * Invoked by called {@link GracefulShutdownListener} to notify the graceful
-     * termination process that it's safe to terminate the transport.
+     * Invoked by called {@link GracefulShutdownListener} to notify the graceful termination process that it's safe to
+     * terminate the transport.
      */
     void ready();
 

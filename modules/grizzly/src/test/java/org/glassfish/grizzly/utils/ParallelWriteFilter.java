@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,13 @@
 
 package org.glassfish.grizzly.utils;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -26,75 +33,66 @@ import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public final class ParallelWriteFilter extends BaseFilter {
-    
-        private static final Logger LOGGER = Grizzly.logger(ParallelWriteFilter.class);
-        private final int packetsNumber;
-        private final int size;
 
-        private final ExecutorService executorService;
+    private static final Logger LOGGER = Grizzly.logger(ParallelWriteFilter.class);
+    private final int packetsNumber;
+    private final int size;
 
-        public ParallelWriteFilter(ExecutorService executorService,
-                                   int packetsNumber, int size) {
-            this.executorService = executorService;
-            this.packetsNumber = packetsNumber;
-            this.size = size;
-        }
+    private final ExecutorService executorService;
 
-        @Override
-        public NextAction handleRead(final FilterChainContext ctx) throws IOException {
-            final Connection connection = ctx.getConnection();
-            for (int i = 0; i < packetsNumber; i++) {
-                final int packetNumber = i;
-
-                executorService.submit(new Runnable() {
-                    @SuppressWarnings("unchecked")
-                    @Override
-                    public void run() {
-                        final char[] chars = new char[size];
-                        Arrays.fill(chars, (char) ('0' + (packetNumber % 10)));
-                        final String content = new String(chars);
-                        final FutureImpl<Boolean> completionHandlerFuture =
-                                SafeFutureImpl.create();
-                        try {
-
-                            connection.write(content, new CompletionHandler<WriteResult>() {
-                                @Override
-                                public void cancelled() {
-                                    completionHandlerFuture.failure(new IOException("cancelled"));
-                                }
-
-                                @Override
-                                public void failed(Throwable throwable) {
-                                    completionHandlerFuture.failure(throwable);
-                                }
-
-                                @Override
-                                public void completed(WriteResult result) {
-                                    completionHandlerFuture.result(true);
-                                }
-
-                                @Override
-                                public void updated(WriteResult result) {
-                                }
-                            });
-
-                            completionHandlerFuture.get(10, TimeUnit.SECONDS);
-
-                        } catch (Exception e) {
-                            LOGGER.log(Level.SEVERE, "sending packet #" + packetNumber, e);
-                        }
-                    }
-                });
-            }
-
-            return ctx.getInvokeAction();
-        }
+    public ParallelWriteFilter(ExecutorService executorService, int packetsNumber, int size) {
+        this.executorService = executorService;
+        this.packetsNumber = packetsNumber;
+        this.size = size;
     }
+
+    @Override
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
+        final Connection connection = ctx.getConnection();
+        for (int i = 0; i < packetsNumber; i++) {
+            final int packetNumber = i;
+
+            executorService.submit(new Runnable() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void run() {
+                    final char[] chars = new char[size];
+                    Arrays.fill(chars, (char) ('0' + packetNumber % 10));
+                    final String content = new String(chars);
+                    final FutureImpl<Boolean> completionHandlerFuture = SafeFutureImpl.create();
+                    try {
+
+                        connection.write(content, new CompletionHandler<WriteResult>() {
+                            @Override
+                            public void cancelled() {
+                                completionHandlerFuture.failure(new IOException("cancelled"));
+                            }
+
+                            @Override
+                            public void failed(Throwable throwable) {
+                                completionHandlerFuture.failure(throwable);
+                            }
+
+                            @Override
+                            public void completed(WriteResult result) {
+                                completionHandlerFuture.result(true);
+                            }
+
+                            @Override
+                            public void updated(WriteResult result) {
+                            }
+                        });
+
+                        completionHandlerFuture.get(10, TimeUnit.SECONDS);
+
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "sending packet #" + packetNumber, e);
+                    }
+                }
+            });
+        }
+
+        return ctx.getInvokeAction();
+    }
+}

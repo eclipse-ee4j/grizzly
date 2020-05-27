@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,7 @@
 
 package org.glassfish.grizzly.compression.lzma.impl;
 
+import java.io.IOException;
 
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.compression.lzma.LZMAEncoder;
@@ -23,8 +24,6 @@ import org.glassfish.grizzly.compression.lzma.impl.lz.BinTree;
 import org.glassfish.grizzly.compression.lzma.impl.rangecoder.BitTreeEncoder;
 import org.glassfish.grizzly.compression.lzma.impl.rangecoder.RangeEncoder;
 import org.glassfish.grizzly.memory.MemoryManager;
-
-import java.io.IOException;
 
 /**
  * RangeEncoder
@@ -44,7 +43,7 @@ public class Encoder {
         g_FastPos[0] = 0;
         g_FastPos[1] = 1;
         for (int slotFast = 2; slotFast < kFastSlots; slotFast++) {
-            int k = (1 << ((slotFast >> 1) - 1));
+            int k = 1 << (slotFast >> 1) - 1;
             for (int j = 0; j < k; j++, c++) {
                 g_FastPos[c] = (byte) slotFast;
             }
@@ -52,24 +51,25 @@ public class Encoder {
     }
 
     static int getPosSlot(int pos) {
-        if (pos < (1 << 11)) {
+        if (pos < 1 << 11) {
             return g_FastPos[pos];
         }
-        if (pos < (1 << 21)) {
-            return (g_FastPos[pos >> 10] + 20);
+        if (pos < 1 << 21) {
+            return g_FastPos[pos >> 10] + 20;
         }
-        return (g_FastPos[pos >> 20] + 40);
+        return g_FastPos[pos >> 20] + 40;
     }
 
     static int getPosSlot2(int pos) {
-        if (pos < (1 << 17)) {
-            return (g_FastPos[pos >> 6] + 12);
+        if (pos < 1 << 17) {
+            return g_FastPos[pos >> 6] + 12;
         }
-        if (pos < (1 << 27)) {
-            return (g_FastPos[pos >> 16] + 32);
+        if (pos < 1 << 27) {
+            return g_FastPos[pos >> 16] + 32;
         }
-        return (g_FastPos[pos >> 26] + 52);
+        return g_FastPos[pos >> 26] + 52;
     }
+
     int _state = Base.stateInit();
     byte _previousByte;
     final int[] _repDistances = new int[Base.kNumRepDistances];
@@ -81,6 +81,7 @@ public class Encoder {
             _repDistances[i] = 0;
         }
     }
+
     static final int kDefaultDictionaryLogSize = 22;
     static final int kNumFastBytesDefault = 0x20;
 
@@ -97,9 +98,9 @@ public class Encoder {
             public void encode(RangeEncoder rangeEncoder, byte symbol) throws IOException {
                 int context = 1;
                 for (int i = 7; i >= 0; i--) {
-                    int bit = ((symbol >> i) & 1);
+                    int bit = symbol >> i & 1;
                     rangeEncoder.encode(m_Encoders, context, bit);
-                    context = (context << 1) | bit;
+                    context = context << 1 | bit;
                 }
             }
 
@@ -107,15 +108,15 @@ public class Encoder {
                 int context = 1;
                 boolean same = true;
                 for (int i = 7; i >= 0; i--) {
-                    int bit = ((symbol >> i) & 1);
+                    int bit = symbol >> i & 1;
                     int state = context;
                     if (same) {
-                        int matchBit = ((matchByte >> i) & 1);
-                        state += ((1 + matchBit) << 8);
-                        same = (matchBit == bit);
+                        int matchBit = matchByte >> i & 1;
+                        state += 1 + matchBit << 8;
+                        same = matchBit == bit;
                     }
                     rangeEncoder.encode(m_Encoders, state, bit);
-                    context = (context << 1) | bit;
+                    context = context << 1 | bit;
                 }
             }
 
@@ -125,10 +126,10 @@ public class Encoder {
                 int i = 7;
                 if (matchMode) {
                     for (; i >= 0; i--) {
-                        int matchBit = (matchByte >> i) & 1;
-                        int bit = (symbol >> i) & 1;
-                        price += RangeEncoder.getPrice(m_Encoders[((1 + matchBit) << 8) + context], bit);
-                        context = (context << 1) | bit;
+                        int matchBit = matchByte >> i & 1;
+                        int bit = symbol >> i & 1;
+                        price += RangeEncoder.getPrice(m_Encoders[(1 + matchBit << 8) + context], bit);
+                        context = context << 1 | bit;
                         if (matchBit != bit) {
                             i--;
                             break;
@@ -136,13 +137,14 @@ public class Encoder {
                     }
                 }
                 for (; i >= 0; i--) {
-                    int bit = (symbol >> i) & 1;
+                    int bit = symbol >> i & 1;
                     price += RangeEncoder.getPrice(m_Encoders[context], bit);
-                    context = (context << 1) | bit;
+                    context = context << 1 | bit;
                 }
                 return price;
             }
         }
+
         Encoder2[] m_Coders;
         int m_NumPrevBits;
         int m_NumPosBits;
@@ -155,7 +157,7 @@ public class Encoder {
             m_NumPosBits = numPosBits;
             m_PosMask = (1 << numPosBits) - 1;
             m_NumPrevBits = numPrevBits;
-            int numStates = 1 << (m_NumPrevBits + m_NumPosBits);
+            int numStates = 1 << m_NumPrevBits + m_NumPosBits;
             m_Coders = new Encoder2[numStates];
             for (int i = 0; i < numStates; i++) {
                 m_Coders[i] = new Encoder2();
@@ -163,14 +165,14 @@ public class Encoder {
         }
 
         public void init() {
-            int numStates = 1 << (m_NumPrevBits + m_NumPosBits);
+            int numStates = 1 << m_NumPrevBits + m_NumPosBits;
             for (int i = 0; i < numStates; i++) {
                 m_Coders[i].init();
             }
         }
 
         public Encoder2 getSubCoder(int pos, byte prevByte) {
-            return m_Coders[((pos & m_PosMask) << m_NumPrevBits) + ((prevByte & 0xFF) >>> (8 - m_NumPrevBits))];
+            return m_Coders[((pos & m_PosMask) << m_NumPrevBits) + ((prevByte & 0xFF) >>> 8 - m_NumPrevBits)];
         }
     }
 
@@ -266,6 +268,7 @@ public class Encoder {
             }
         }
 
+        @Override
         public void encode(RangeEncoder rangeEncoder, int symbol, int posState) throws IOException {
             super.encode(rangeEncoder, symbol, posState);
             if (--_counters[posState] == 0) {
@@ -273,6 +276,7 @@ public class Encoder {
             }
         }
     }
+
     static final int kNumOpts = 1 << 12;
 
     static class Optimal {
@@ -301,7 +305,7 @@ public class Encoder {
         }
 
         public boolean isShortRep() {
-            return (BackPrev == 0);
+            return BackPrev == 0;
         }
     }
 
@@ -328,16 +332,16 @@ public class Encoder {
     int _optimumEndIndex;
     int _optimumCurrentIndex;
     boolean _longestMatchWasFound;
-    final int[] _posSlotPrices = new int[1 << (Base.kNumPosSlotBits + Base.kNumLenToPosStatesBits)];
+    final int[] _posSlotPrices = new int[1 << Base.kNumPosSlotBits + Base.kNumLenToPosStatesBits];
     final int[] _distancesPrices = new int[Base.kNumFullDistances << Base.kNumLenToPosStatesBits];
     final int[] _alignPrices = new int[Base.kAlignTableSize];
     int _alignPriceCount;
-    int _distTableSize = (kDefaultDictionaryLogSize * 2);
+    int _distTableSize = kDefaultDictionaryLogSize * 2;
     int _posStateBits = 2;
-    int _posStateMask = (4 - 1);
+    int _posStateMask = 4 - 1;
     int _numLiteralPosStateBits = 0;
     int _numLiteralContextBits = 3;
-    int _dictionarySize = (1 << kDefaultDictionaryLogSize);
+    int _dictionarySize = 1 << kDefaultDictionaryLogSize;
     int _dictionarySizePrev = -1;
     int _numFastBytesPrev = -1;
     long nowPos64;
@@ -392,18 +396,10 @@ public class Encoder {
         RangeEncoder.initBitModels(_isRepG2);
         RangeEncoder.initBitModels(_posEncoders);
 
-
-
-
-
-
-
         _literalEncoder.init();
         for (int i = 0; i < Base.kNumLenToPosStates; i++) {
             _posSlotEncoder[i].init();
         }
-
-
 
         _lenEncoder.init(1 << _posStateBits);
         _repMatchLenEncoder.init(1 << _posStateBits);
@@ -422,8 +418,7 @@ public class Encoder {
         if (_numDistancePairs > 0) {
             lenRes = _matchDistances[_numDistancePairs - 2];
             if (lenRes == _numFastBytes) {
-                lenRes += _matchFinder.getMatchLen(lenRes - 1, _matchDistances[_numDistancePairs - 1],
-                        Base.kMatchMaxLen - lenRes);
+                lenRes += _matchFinder.getMatchLen(lenRes - 1, _matchDistances[_numDistancePairs - 1], Base.kMatchMaxLen - lenRes);
             }
         }
         _additionalOffset++;
@@ -438,8 +433,7 @@ public class Encoder {
     }
 
     int getRepLen1Price(int state, int posState) {
-        return RangeEncoder.getPrice0(_isRepG0[state]) +
-                RangeEncoder.getPrice0(_isRep0Long[(state << Base.kNumPosStatesBitsMax) + posState]);
+        return RangeEncoder.getPrice0(_isRepG0[state]) + RangeEncoder.getPrice0(_isRep0Long[(state << Base.kNumPosStatesBitsMax) + posState]);
     }
 
     int getPureRepPrice(int repIndex, int state, int posState) {
@@ -468,10 +462,9 @@ public class Encoder {
         int price;
         int lenToPosState = Base.getLenToPosState(len);
         if (pos < Base.kNumFullDistances) {
-            price = _distancesPrices[(lenToPosState * Base.kNumFullDistances) + pos];
+            price = _distancesPrices[lenToPosState * Base.kNumFullDistances + pos];
         } else {
-            price = _posSlotPrices[(lenToPosState << Base.kNumPosSlotBits) + getPosSlot2(pos)] +
-                    _alignPrices[pos & Base.kAlignMask];
+            price = _posSlotPrices[(lenToPosState << Base.kNumPosSlotBits) + getPosSlot2(pos)] + _alignPrices[pos & Base.kAlignMask];
         }
         return price + _lenEncoder.getPrice(len - Base.kMatchMinLen, posState);
     }
@@ -504,6 +497,7 @@ public class Encoder {
         _optimumCurrentIndex = _optimum[0].PosPrev;
         return _optimumCurrentIndex;
     }
+
     final int[] reps = new int[Base.kNumRepDistances];
     final int[] repLens = new int[Base.kNumRepDistances];
     int backRes;
@@ -567,10 +561,10 @@ public class Encoder {
 
         _optimum[0].State = _state;
 
-        int posState = (position & _posStateMask);
+        int posState = position & _posStateMask;
 
-        _optimum[1].Price = RangeEncoder.getPrice0(_isMatch[(_state << Base.kNumPosStatesBitsMax) + posState]) +
-                _literalEncoder.getSubCoder(position, _previousByte).getPrice(!Base.stateIsCharState(_state), matchByte, currentByte);
+        _optimum[1].Price = RangeEncoder.getPrice0(_isMatch[(_state << Base.kNumPosStatesBitsMax) + posState])
+                + _literalEncoder.getSubCoder(position, _previousByte).getPrice(!Base.stateIsCharState(_state), matchByte, currentByte);
         _optimum[1].makeAsChar();
 
         int matchPrice = RangeEncoder.getPrice1(_isMatch[(_state << Base.kNumPosStatesBitsMax) + posState]);
@@ -584,7 +578,7 @@ public class Encoder {
             }
         }
 
-        int lenEnd = ((lenMain >= repLens[repMaxIndex]) ? lenMain : repLens[repMaxIndex]);
+        int lenEnd = lenMain >= repLens[repMaxIndex] ? lenMain : repLens[repMaxIndex];
 
         if (lenEnd < 2) {
             backRes = _optimum[1].BackPrev;
@@ -623,7 +617,7 @@ public class Encoder {
 
         int normalMatchPrice = matchPrice + RangeEncoder.getPrice0(_isRep[_state]);
 
-        len = ((repLens[0] >= 2) ? repLens[0] + 1 : 2);
+        len = repLens[0] >= 2 ? repLens[0] + 1 : 2;
         if (len <= lenMain) {
             int offs = 0;
             while (len > _matchDistances[offs]) {
@@ -726,7 +720,7 @@ public class Encoder {
                         reps[3] = opt.Backs2;
                     }
                 } else {
-                    reps[0] = (pos - Base.kNumRepDistances);
+                    reps[0] = pos - Base.kNumRepDistances;
                     reps[1] = opt.Backs0;
                     reps[2] = opt.Backs1;
                     reps[3] = opt.Backs2;
@@ -742,12 +736,10 @@ public class Encoder {
             currentByte = _matchFinder.getIndexByte(0 - 1);
             matchByte = _matchFinder.getIndexByte(0 - reps[0] - 1 - 1);
 
-            posState = (position & _posStateMask);
+            posState = position & _posStateMask;
 
-            int curAnd1Price = curPrice +
-                    RangeEncoder.getPrice0(_isMatch[(state << Base.kNumPosStatesBitsMax) + posState]) +
-                    _literalEncoder.getSubCoder(position, _matchFinder.getIndexByte(0 - 2)).
-                    getPrice(!Base.stateIsCharState(state), matchByte, currentByte);
+            int curAnd1Price = curPrice + RangeEncoder.getPrice0(_isMatch[(state << Base.kNumPosStatesBitsMax) + posState])
+                    + _literalEncoder.getSubCoder(position, _matchFinder.getIndexByte(0 - 2)).getPrice(!Base.stateIsCharState(state), matchByte, currentByte);
 
             Optimal nextOptimum = _optimum[cur + 1];
 
@@ -762,8 +754,7 @@ public class Encoder {
             matchPrice = curPrice + RangeEncoder.getPrice1(_isMatch[(state << Base.kNumPosStatesBitsMax) + posState]);
             repMatchPrice = matchPrice + RangeEncoder.getPrice1(_isRep[state]);
 
-            if (matchByte == currentByte &&
-                    !(nextOptimum.PosPrev < cur && nextOptimum.BackPrev == 0)) {
+            if (matchByte == currentByte && !(nextOptimum.PosPrev < cur && nextOptimum.BackPrev == 0)) {
                 int shortRepPrice = repMatchPrice + getRepLen1Price(state, posState);
                 if (shortRepPrice <= nextOptimum.Price) {
                     nextOptimum.Price = shortRepPrice;
@@ -790,17 +781,15 @@ public class Encoder {
                 if (lenTest2 >= 2) {
                     int state2 = Base.stateUpdateChar(state);
 
-                    int posStateNext = (position + 1) & _posStateMask;
-                    int nextRepMatchPrice = curAnd1Price +
-                            RangeEncoder.getPrice1(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]) +
-                            RangeEncoder.getPrice1(_isRep[state2]);
+                    int posStateNext = position + 1 & _posStateMask;
+                    int nextRepMatchPrice = curAnd1Price + RangeEncoder.getPrice1(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext])
+                            + RangeEncoder.getPrice1(_isRep[state2]);
                     {
                         int offset = cur + 1 + lenTest2;
                         while (lenEnd < offset) {
                             _optimum[++lenEnd].Price = kIfinityPrice;
                         }
-                        int curAndLenPrice = nextRepMatchPrice + getRepPrice(
-                                0, lenTest2, state2, posStateNext);
+                        int curAndLenPrice = nextRepMatchPrice + getRepPrice(0, lenTest2, state2, posStateNext);
                         Optimal optimum = _optimum[offset];
                         if (curAndLenPrice < optimum.Price) {
                             optimum.Price = curAndLenPrice;
@@ -847,16 +836,13 @@ public class Encoder {
                     if (lenTest2 >= 2) {
                         int state2 = Base.stateUpdateRep(state);
 
-                        int posStateNext = (position + lenTest) & _posStateMask;
-                        int curAndLenCharPrice =
-                                repMatchPrice + getRepPrice(repIndex, lenTest, state, posState) +
-                                RangeEncoder.getPrice0(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]) +
-                                _literalEncoder.getSubCoder(position + lenTest,
-                                        _matchFinder.getIndexByte(lenTest - 1 - 1)).getPrice(true,
-                                        _matchFinder.getIndexByte(lenTest - 1 - (reps[repIndex] + 1)),
-                                        _matchFinder.getIndexByte(lenTest - 1));
+                        int posStateNext = position + lenTest & _posStateMask;
+                        int curAndLenCharPrice = repMatchPrice + getRepPrice(repIndex, lenTest, state, posState)
+                                + RangeEncoder.getPrice0(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext])
+                                + _literalEncoder.getSubCoder(position + lenTest, _matchFinder.getIndexByte(lenTest - 1 - 1)).getPrice(true,
+                                        _matchFinder.getIndexByte(lenTest - 1 - (reps[repIndex] + 1)), _matchFinder.getIndexByte(lenTest - 1));
                         state2 = Base.stateUpdateChar(state2);
-                        posStateNext = (position + lenTest + 1) & _posStateMask;
+                        posStateNext = position + lenTest + 1 & _posStateMask;
                         int nextMatchPrice = curAndLenCharPrice + RangeEncoder.getPrice1(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]);
                         int nextRepMatchPrice = nextMatchPrice + RangeEncoder.getPrice1(_isRep[state2]);
 
@@ -884,7 +870,9 @@ public class Encoder {
 
             if (newLen > numAvailableBytes) {
                 newLen = numAvailableBytes;
-                for (numDistancePairs = 0; newLen > _matchDistances[numDistancePairs]; numDistancePairs += 2);
+                for (numDistancePairs = 0; newLen > _matchDistances[numDistancePairs]; numDistancePairs += 2) {
+                    ;
+                }
                 _matchDistances[numDistancePairs] = newLen;
                 numDistancePairs += 2;
             }
@@ -917,20 +905,15 @@ public class Encoder {
                             if (lenTest2 >= 2) {
                                 int state2 = Base.stateUpdateMatch(state);
 
-                                int posStateNext = (position + lenTest) & _posStateMask;
-                                int curAndLenCharPrice = curAndLenPrice +
-                                        RangeEncoder.getPrice0(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]) +
-                                        _literalEncoder.getSubCoder(position + lenTest,
-                                                _matchFinder.getIndexByte(lenTest - 1 - 1)).
-                                        getPrice(true,
-                                                _matchFinder.getIndexByte(lenTest - (curBack + 1) - 1),
-                                                _matchFinder.getIndexByte(lenTest - 1));
+                                int posStateNext = position + lenTest & _posStateMask;
+                                int curAndLenCharPrice = curAndLenPrice + RangeEncoder.getPrice0(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext])
+                                        + _literalEncoder.getSubCoder(position + lenTest, _matchFinder.getIndexByte(lenTest - 1 - 1)).getPrice(true,
+                                                _matchFinder.getIndexByte(lenTest - (curBack + 1) - 1), _matchFinder.getIndexByte(lenTest - 1));
                                 state2 = Base.stateUpdateChar(state2);
-                                posStateNext = (position + lenTest + 1) & _posStateMask;
-                                int nextMatchPrice = curAndLenCharPrice + RangeEncoder
-                                        .getPrice1(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]);
-                                int nextRepMatchPrice = nextMatchPrice + RangeEncoder
-                                        .getPrice1(_isRep[state2]);
+                                posStateNext = position + lenTest + 1 & _posStateMask;
+                                int nextMatchPrice = curAndLenCharPrice
+                                        + RangeEncoder.getPrice1(_isMatch[(state2 << Base.kNumPosStatesBitsMax) + posStateNext]);
+                                int nextRepMatchPrice = nextMatchPrice + RangeEncoder.getPrice1(_isRep[state2]);
 
                                 int offset = lenTest + 1 + lenTest2;
                                 while (lenEnd < cur + offset) {
@@ -961,7 +944,7 @@ public class Encoder {
 
     boolean changePair(int smallDist, int bigDist) {
         int kDif = 7;
-        return (smallDist < (1 << (32 - kDif)) && bigDist >= (smallDist << kDif));
+        return smallDist < 1 << 32 - kDif && bigDist >= smallDist << kDif;
     }
 
     void writeEndMarker(int posState) throws IOException {
@@ -1005,7 +988,6 @@ public class Encoder {
         }
         _finished = true;
 
-
         long progressPosValuePrev = nowPos64;
         if (nowPos64 == 0) {
             if (_matchFinder.getNumAvailableBytes() == 0) {
@@ -1014,11 +996,11 @@ public class Encoder {
             }
 
             readMatchDistances();
-            int posState = (int) (nowPos64) & _posStateMask;
+            int posState = (int) nowPos64 & _posStateMask;
             _rangeEncoder.encode(_isMatch, (_state << Base.kNumPosStatesBitsMax) + posState, 0);
             _state = Base.stateUpdateChar(_state);
             byte curByte = _matchFinder.getIndexByte(0 - _additionalOffset);
-            _literalEncoder.getSubCoder((int) (nowPos64), _previousByte).encode(_rangeEncoder, curByte);
+            _literalEncoder.getSubCoder((int) nowPos64, _previousByte).encode(_rangeEncoder, curByte);
             _previousByte = curByte;
             _additionalOffset--;
             nowPos64++;
@@ -1031,7 +1013,7 @@ public class Encoder {
 
             int len = getOptimum((int) nowPos64);
             int pos = backRes;
-            int posState = ((int) nowPos64) & _posStateMask;
+            int posState = (int) nowPos64 & _posStateMask;
             int complexState = (_state << Base.kNumPosStatesBitsMax) + posState;
             if (len == 1 && pos == -1) {
                 _rangeEncoder.encode(_isMatch, complexState, 0);
@@ -1087,12 +1069,11 @@ public class Encoder {
 
                     if (posSlot >= Base.kStartPosModelIndex) {
                         int footerBits = (posSlot >> 1) - 1;
-                        int baseVal = ((2 | (posSlot & 1)) << footerBits);
+                        int baseVal = (2 | posSlot & 1) << footerBits;
                         int posReduced = pos - baseVal;
 
                         if (posSlot < Base.kEndPosModelIndex) {
-                            BitTreeEncoder.reverseEncode(_posEncoders,
-                                    baseVal - posSlot - 1, _rangeEncoder, footerBits, posReduced);
+                            BitTreeEncoder.reverseEncode(_posEncoders, baseVal - posSlot - 1, _rangeEncoder, footerBits, posReduced);
                         } else {
                             _rangeEncoder.encodeDirectBits(posReduced >> Base.kNumAlignBits, footerBits - Base.kNumAlignBits);
                             _posAlignEncoder.reverseEncode(_rangeEncoder, posReduced & Base.kAlignMask);
@@ -1110,7 +1091,7 @@ public class Encoder {
             nowPos64 += len;
             if (_additionalOffset == 0) {
                 // if (!_fastMode)
-                if (_matchPriceCount >= (1 << 7)) {
+                if (_matchPriceCount >= 1 << 7) {
                     fillDistancesPrices();
                 }
                 if (_alignPriceCount >= Base.kAlignTableSize) {
@@ -1123,7 +1104,7 @@ public class Encoder {
                     return;
                 }
 
-                if (nowPos64 - progressPosValuePrev >= (1 << 12)) {
+                if (nowPos64 - progressPosValuePrev >= 1 << 12) {
                     _finished = false;
                     finished[0] = false;
                     return;
@@ -1172,6 +1153,7 @@ public class Encoder {
 
         nowPos64 = 0;
     }
+
     final long[] processedInSize = new long[1];
     final long[] processedOutSize = new long[1];
     final boolean[] finished = new boolean[1];
@@ -1201,9 +1183,10 @@ public class Encoder {
 
         dst.put((byte) ((_posStateBits * 5 + _numLiteralPosStateBits) * 9 + _numLiteralContextBits));
         for (int i = 0; i < 4; i++) {
-            dst.put((byte) (_dictionarySize >> (8 * i)));
+            dst.put((byte) (_dictionarySize >> 8 * i));
         }
     }
+
     final int[] tempPrices = new int[Base.kNumFullDistances];
     int _matchPriceCount;
 
@@ -1211,21 +1194,20 @@ public class Encoder {
         for (int i = Base.kStartPosModelIndex; i < Base.kNumFullDistances; i++) {
             int posSlot = getPosSlot(i);
             int footerBits = (posSlot >> 1) - 1;
-            int baseVal = ((2 | (posSlot & 1)) << footerBits);
-            tempPrices[i] = BitTreeEncoder.reverseGetPrice(_posEncoders,
-                    baseVal - posSlot - 1, footerBits, i - baseVal);
+            int baseVal = (2 | posSlot & 1) << footerBits;
+            tempPrices[i] = BitTreeEncoder.reverseGetPrice(_posEncoders, baseVal - posSlot - 1, footerBits, i - baseVal);
         }
 
         for (int lenToPosState = 0; lenToPosState < Base.kNumLenToPosStates; lenToPosState++) {
             int posSlot;
             BitTreeEncoder encoder = _posSlotEncoder[lenToPosState];
 
-            int st = (lenToPosState << Base.kNumPosSlotBits);
+            int st = lenToPosState << Base.kNumPosSlotBits;
             for (posSlot = 0; posSlot < _distTableSize; posSlot++) {
                 _posSlotPrices[st + posSlot] = encoder.getPrice(posSlot);
             }
             for (posSlot = Base.kEndPosModelIndex; posSlot < _distTableSize; posSlot++) {
-                _posSlotPrices[st + posSlot] += ((((posSlot >> 1) - 1) - Base.kNumAlignBits) << RangeEncoder.kNumBitPriceShiftBits);
+                _posSlotPrices[st + posSlot] += (posSlot >> 1) - 1 - Base.kNumAlignBits << RangeEncoder.kNumBitPriceShiftBits;
             }
 
             int st2 = lenToPosState * Base.kNumFullDistances;
@@ -1249,20 +1231,21 @@ public class Encoder {
 
     public boolean setAlgorithm(int algorithm) {
         /*
-        _fastMode = (algorithm == 0);
-        _maxMode = (algorithm >= 2);
+         * _fastMode = (algorithm == 0); _maxMode = (algorithm >= 2);
          */
         return true;
     }
 
     public boolean setDictionarySize(int dictionarySize) {
         int kDicLogSizeMaxCompress = 29;
-        if (dictionarySize < (1 << Base.kDicLogSizeMin) || dictionarySize > (1 << kDicLogSizeMaxCompress)) {
+        if (dictionarySize < 1 << Base.kDicLogSizeMin || dictionarySize > 1 << kDicLogSizeMaxCompress) {
             return false;
         }
         _dictionarySize = dictionarySize;
         int dicLogSize;
-        for (dicLogSize = 0; dictionarySize > (1 << dicLogSize); dicLogSize++);
+        for (dicLogSize = 0; dictionarySize > 1 << dicLogSize; dicLogSize++) {
+            ;
+        }
         _distTableSize = dicLogSize * 2;
         return true;
     }
@@ -1289,15 +1272,14 @@ public class Encoder {
     }
 
     public boolean setLcLpPb(int lc, int lp, int pb) {
-        if (lp < 0 || lp > Base.kNumLitPosStatesBitsEncodingMax ||
-                lc < 0 || lc > Base.kNumLitContextBitsMax ||
-                pb < 0 || pb > Base.kNumPosStatesBitsEncodingMax) {
+        if (lp < 0 || lp > Base.kNumLitPosStatesBitsEncodingMax || lc < 0 || lc > Base.kNumLitContextBitsMax || pb < 0
+                || pb > Base.kNumPosStatesBitsEncodingMax) {
             return false;
         }
         _numLiteralPosStateBits = lp;
         _numLiteralContextBits = lc;
         _posStateBits = pb;
-        _posStateMask = ((1) << _posStateBits) - 1;
+        _posStateMask = (1 << _posStateBits) - 1;
         return true;
     }
 
@@ -1305,4 +1287,3 @@ public class Encoder {
         _writeEndMark = endMarkerMode;
     }
 }
-

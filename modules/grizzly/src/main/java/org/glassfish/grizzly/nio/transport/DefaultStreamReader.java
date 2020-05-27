@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.nio.transport;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -72,21 +73,18 @@ public final class DefaultStreamReader extends AbstractStreamReader {
         }
 
         @Override
-        protected void notifyFailure(final CompletionHandler<Integer> completionHandler,
-                final Throwable failure) {
+        protected void notifyFailure(final CompletionHandler<Integer> completionHandler, final Throwable failure) {
             if (completionHandler != null) {
                 completionHandler.failed(failure);
             }
         }
 
-        private class InputInterceptor implements
-                Interceptor<ReadResult<Buffer, ?>> {
+        private class InputInterceptor implements Interceptor<ReadResult<Buffer, ?>> {
 
             boolean isDone = false;
 
             @Override
-            public int intercept(int event, Object context,
-                    ReadResult<Buffer, ?> result) {
+            public int intercept(int event, Object context, ReadResult<Buffer, ?> result) {
                 if (event == Reader.READ_EVENT) {
                     final Buffer buffer = result.getMessage();
                     result.setMessage(null);
@@ -101,8 +99,7 @@ public final class DefaultStreamReader extends AbstractStreamReader {
                         return Interceptor.COMPLETED;
                     }
 
-                    return Interceptor.INCOMPLETED
-                            | Interceptor.RESET;
+                    return Interceptor.INCOMPLETED | Interceptor.RESET;
                 }
 
                 return Interceptor.DEFAULT;

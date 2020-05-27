@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -11,6 +11,7 @@
 package org.glassfish.grizzly.samples.portunif.subservice;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -18,17 +19,16 @@ import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * The SUB-service message parser/serializer, which is responsible for parsing
- * {@link SubResponseMessage} and serializing {@link SubRequestMessage}.
+ * The SUB-service message parser/serializer, which is responsible for parsing {@link SubResponseMessage} and
+ * serializing {@link SubRequestMessage}.
  *
  * @author Alexey Stashok
  */
 public class SubClientMessageFilter extends BaseFilter {
-    private final static int MESSAGE_SIZE = 4;  // BODY = RESULT(INT) = 4
+    private final static int MESSAGE_SIZE = 4; // BODY = RESULT(INT) = 4
 
     /**
-     * Handle just read operation, when some message has come and ready to be
-     * processed.
+     * Handle just read operation, when some message has come and ready to be processed.
      *
      * @param ctx Context of {@link FilterChainContext} processing
      * @return the next action
@@ -48,18 +48,16 @@ public class SubClientMessageFilter extends BaseFilter {
         final int result = input.getInt(0);
 
         // Construct SubResponseMessage, based on the result
-        final SubResponseMessage subResponseMessage =
-                new SubResponseMessage(result);
+        final SubResponseMessage subResponseMessage = new SubResponseMessage(result);
         // set the SubResponseMessage on context
         ctx.setMessage(subResponseMessage);
 
         // Split the remainder, if any
-        final Buffer remainder = input.remaining() > MESSAGE_SIZE ?
-            input.split(MESSAGE_SIZE) : null;
+        final Buffer remainder = input.remaining() > MESSAGE_SIZE ? input.split(MESSAGE_SIZE) : null;
 
         // Try to dispose the parsed chunk
         input.tryDispose();
-        
+
         // continue filter chain execution
         return ctx.getInvokeAction(remainder);
     }
@@ -91,7 +89,7 @@ public class SubClientMessageFilter extends BaseFilter {
         output.putInt(value1);
         // Add value2
         output.putInt(value2);
-        
+
         // Allow Grizzly dispose this Buffer
         output.allowBufferDispose();
 

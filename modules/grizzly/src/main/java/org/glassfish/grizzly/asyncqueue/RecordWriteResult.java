@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,21 +25,20 @@ import org.glassfish.grizzly.utils.Holder;
  *
  * @param <K>
  * @param <L>
- * 
+ *
  * @author Alexey Stashok
  */
 public final class RecordWriteResult<K, L> extends WriteResult<K, L> {
     private long lastWrittenBytes;
     private long bytesToReleaseAfterLastWrite;
-    
+
     /**
-     *  Settable destination address
+     * Settable destination address
      */
-    private final SettableHolder<L> dstAddressHolder = new SettableHolder<L>();
-    
+    private final SettableHolder<L> dstAddressHolder = new SettableHolder<>();
+
     @Override
-    protected void set(final Connection<L> connection, final K message,
-            final L dstAddress, final long writtenSize) {
+    protected void set(final Connection<L> connection, final K message, final L dstAddress, final long writtenSize) {
         super.set(connection, message, dstAddress, writtenSize);
     }
 
@@ -56,31 +55,30 @@ public final class RecordWriteResult<K, L> extends WriteResult<K, L> {
         return bytesToReleaseAfterLastWrite;
     }
 
-    public RecordWriteResult<K, L> lastWriteResult(
-            final long lastWrittenBytes,
-            final long bytesToReleaseAfterLastWrite) {
+    public RecordWriteResult<K, L> lastWriteResult(final long lastWrittenBytes, final long bytesToReleaseAfterLastWrite) {
         this.lastWrittenBytes = lastWrittenBytes;
         this.bytesToReleaseAfterLastWrite = bytesToReleaseAfterLastWrite;
-        
+
         return this;
     }
-    
+
     @Override
     public void recycle() {
         lastWrittenBytes = 0;
         bytesToReleaseAfterLastWrite = 0;
         dstAddressHolder.obj = null;
-        
+
         reset();
     }
-    
+
     private static class SettableHolder<L> extends Holder<L> {
         private L obj;
-                
+
         public SettableHolder<L> set(final L obj) {
             this.obj = obj;
             return this;
         }
+
         @Override
         public L get() {
             return obj;
