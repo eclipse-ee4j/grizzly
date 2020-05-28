@@ -23,13 +23,13 @@
     <parent>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-bom</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
+        <version>3.0.0-M1</version>
         <relativePath>boms/bom/pom.xml</relativePath>
     </parent>
 
     <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-project</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0-M1</version>
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
