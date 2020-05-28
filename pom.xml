@@ -24,10 +24,12 @@
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-bom</artifactId>
         <version>3.0.0-SNAPSHOT</version>
-        <relativePath>bom/pom.xml</relativePath>
+        <relativePath>boms/bom/pom.xml</relativePath>
     </parent>
 
+    <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-project</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
@@ -98,7 +100,7 @@
     </mailingLists>
 
     <modules>
-        <module>bom</module>
+        <module>boms/bom/</module>
         <module>modules/</module>
         <module>samples/</module>
         <module>extras/</module>
