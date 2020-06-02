@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,21 +21,18 @@ package org.glassfish.grizzly.filterchain;
  *
  * @see org.glassfish.grizzly.Transport
  * @see FilterChain
- * 
+ *
  * @author Alexey Stashok
  */
 public interface FilterChainEnabledTransport {
     /**
-     * Get transport {@link Filter}, which is aware of {@link org.glassfish.grizzly.Transport}
-     * specifics; knows how to read/write from/to {@link org.glassfish.grizzly.Transport}
-     * specific {@link org.glassfish.grizzly.Connection} streams.
-     * 
-     * Each {@link org.glassfish.grizzly.Transport} should provide transport {@link Filter}
-     * implementation.
+     * Get transport {@link Filter}, which is aware of {@link org.glassfish.grizzly.Transport} specifics; knows how to
+     * read/write from/to {@link org.glassfish.grizzly.Transport} specific {@link org.glassfish.grizzly.Connection} streams.
      *
-     * @return transport {@link Filter}, which is aware of {@link org.glassfish.grizzly.Transport}
-     * specifics; knows how to read/write from/to {@link org.glassfish.grizzly.Transport}
-     * specific {@link org.glassfish.grizzly.Connection}s.
+     * Each {@link org.glassfish.grizzly.Transport} should provide transport {@link Filter} implementation.
+     *
+     * @return transport {@link Filter}, which is aware of {@link org.glassfish.grizzly.Transport} specifics; knows how to
+     * read/write from/to {@link org.glassfish.grizzly.Transport} specific {@link org.glassfish.grizzly.Connection}s.
      */
     Filter getTransportFilter();
 }

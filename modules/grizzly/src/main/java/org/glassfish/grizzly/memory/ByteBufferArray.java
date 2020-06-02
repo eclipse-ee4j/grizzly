@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.memory;
 
 import java.nio.ByteBuffer;
+
 import org.glassfish.grizzly.ThreadCache;
 
 /**
@@ -25,9 +26,8 @@ import org.glassfish.grizzly.ThreadCache;
  */
 public final class ByteBufferArray extends AbstractBufferArray<ByteBuffer> {
 
-    private static final ThreadCache.CachedTypeIndex<ByteBufferArray> CACHE_IDX =
-            ThreadCache.obtainIndex(ByteBufferArray.class,
-                    Integer.getInteger(ByteBufferArray.class.getName() + "bba-cache-size", 4));
+    private static final ThreadCache.CachedTypeIndex<ByteBufferArray> CACHE_IDX = ThreadCache.obtainIndex(ByteBufferArray.class,
+            Integer.getInteger(ByteBufferArray.class.getName() + "bba-cache-size", 4));
 
     public static ByteBufferArray create() {
         final ByteBufferArray array = ThreadCache.takeFromCache(CACHE_IDX);
@@ -50,8 +50,7 @@ public final class ByteBufferArray extends AbstractBufferArray<ByteBuffer> {
     }
 
     @Override
-    protected void setPositionLimit(final ByteBuffer buffer,
-            final int position, final int limit) {
+    protected void setPositionLimit(final ByteBuffer buffer, final int position, final int limit) {
         Buffers.setPositionLimit(buffer, position, limit);
     }
 

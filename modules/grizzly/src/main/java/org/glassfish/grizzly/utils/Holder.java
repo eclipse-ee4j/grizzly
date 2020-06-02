@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,7 +18,7 @@ package org.glassfish.grizzly.utils;
 
 /**
  * The object holder, which might be used for lazy object initialization.
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class Holder<E> {
@@ -31,7 +31,7 @@ public abstract class Holder<E> {
             }
         };
     }
-    
+
     public static IntHolder staticIntHolder(final int value) {
         return new IntHolder() {
 
@@ -51,7 +51,7 @@ public abstract class Holder<E> {
             }
         };
     }
-    
+
     public static LazyIntHolder lazyIntHolder(final NullaryFunction<Integer> factory) {
         return new LazyIntHolder() {
 
@@ -61,39 +61,38 @@ public abstract class Holder<E> {
             }
         };
     }
-    
+
     public abstract E get();
-    
+
     @Override
     public String toString() {
         final E obj = get();
         return obj != null ? "{" + obj + "}" : null;
     }
 
-    
     public static abstract class LazyHolder<E> extends Holder<E> {
         private volatile boolean isSet;
         private E value;
-        
+
         @Override
         public final E get() {
             if (isSet) {
                 return value;
             }
-            
+
             synchronized (this) {
                 if (!isSet) {
                     value = evaluate();
                     isSet = true;
                 }
             }
-            
+
             return value;
         }
-        
+
         protected abstract E evaluate();
-    }    
-    
+    }
+
     public static abstract class IntHolder extends Holder<Integer> {
         @Override
         public final Integer get() {
@@ -102,27 +101,27 @@ public abstract class Holder<E> {
 
         public abstract int getInt();
     }
-    
+
     public static abstract class LazyIntHolder extends IntHolder {
         private volatile boolean isSet;
         private int value;
-        
+
         @Override
         public final int getInt() {
             if (isSet) {
                 return value;
             }
-            
+
             synchronized (this) {
                 if (!isSet) {
                     value = evaluate();
                     isSet = true;
                 }
             }
-            
+
             return value;
         }
-        
+
         protected abstract int evaluate();
     }
 }

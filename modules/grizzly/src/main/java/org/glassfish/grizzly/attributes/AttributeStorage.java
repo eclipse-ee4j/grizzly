@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,10 +17,9 @@
 package org.glassfish.grizzly.attributes;
 
 /**
- * <tt>AttributeStorage</tt> provides access to a {@link AttributeHolder}, where
- * application can store {@link Attribute}s.
- * This interface lets us describe class, which is not {@link AttributeHolder}
- * itself, but has associated {@link AttributeHolder}.
+ * <tt>AttributeStorage</tt> provides access to a {@link AttributeHolder}, where application can store
+ * {@link Attribute}s. This interface lets us describe class, which is not {@link AttributeHolder} itself, but has
+ * associated {@link AttributeHolder}.
  *
  * @see AttributeHolder
  *
@@ -28,12 +27,10 @@ package org.glassfish.grizzly.attributes;
  */
 public interface AttributeStorage {
     /**
-     * Get associated {@link AttributeHolder}.
-     * Implementation may return <tt>null</tt> if {@link AttributeHolder} wasn't
+     * Get associated {@link AttributeHolder}. Implementation may return <tt>null</tt> if {@link AttributeHolder} wasn't
      * initialized yet.
      *
-     * @return associated {@link AttributeHolder}.
-     * Implementation may return <tt>null</tt> if {@link AttributeHolder} wasn't
+     * @return associated {@link AttributeHolder}. Implementation may return <tt>null</tt> if {@link AttributeHolder} wasn't
      * initialized yet.
      */
     AttributeHolder getAttributes();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,35 +16,34 @@
 
 package org.glassfish.grizzly.jmxbase;
 
-import org.glassfish.grizzly.utils.ServiceFinder;
 import java.util.Iterator;
+
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
+import org.glassfish.grizzly.utils.ServiceFinder;
 
 /**
  * Grizzly JMX manager
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class GrizzlyJmxManager {
     private static final GrizzlyJmxManager manager;
-    
+
     static {
         ServiceFinder<GrizzlyJmxManager> serviceFinder = ServiceFinder.find(GrizzlyJmxManager.class);
         final Iterator<GrizzlyJmxManager> it = serviceFinder.iterator();
         GrizzlyJmxManager jmxManager;
-        
+
         if (it.hasNext()) {
             jmxManager = it.next();
         } else {
             try {
-                jmxManager = (GrizzlyJmxManager) loadClass(
-                        "org.glassfish.grizzly.monitoring.jmx.DefaultJmxManager")
-                        .newInstance();
+                jmxManager = (GrizzlyJmxManager) loadClass("org.glassfish.grizzly.monitoring.jmx.DefaultJmxManager").newInstance();
             } catch (Exception e) {
                 jmxManager = new NullJmxManager();
             }
         }
-        
+
         manager = jmxManager;
     }
 
@@ -53,10 +52,10 @@ public abstract class GrizzlyJmxManager {
         if (classLoader == null) {
             classLoader = MonitoringUtils.class.getClassLoader();
         }
-        
+
         return classLoader.loadClass(classname);
     }
-    
+
     /**
      * Return the <tt>GrizzlyJmxManager</tt> instance.
      *
@@ -73,7 +72,7 @@ public abstract class GrizzlyJmxManager {
      * @return JMX Bean object.
      */
     public abstract Object registerAtRoot(Object object);
-    
+
     /**
      * Register Grizzly JMX {@link Object} at the root with the passed name.
      *
@@ -91,10 +90,9 @@ public abstract class GrizzlyJmxManager {
      * @return JMX Bean object.
      */
     public abstract Object register(Object parent, Object object);
-    
+
     /**
-     * Register Grizzly JMX {@link Object} as child of the passed parent object
-     * with the specific name.
+     * Register Grizzly JMX {@link Object} as child of the passed parent object with the specific name.
      *
      * @param parent parent
      * @param object JMX {@link Object} to register.
@@ -109,7 +107,7 @@ public abstract class GrizzlyJmxManager {
      * @param object JMX {@link Object} to deregister.
      */
     public abstract void deregister(Object object);
-    
+
     /**
      * Null JMX manager
      */
@@ -119,7 +117,7 @@ public abstract class GrizzlyJmxManager {
         public Object registerAtRoot(Object object) {
             return null;
         }
-        
+
         @Override
         public Object registerAtRoot(Object object, String name) {
             return null;

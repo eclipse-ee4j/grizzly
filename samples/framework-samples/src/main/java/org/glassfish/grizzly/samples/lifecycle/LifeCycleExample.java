@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -11,6 +11,7 @@
 package org.glassfish.grizzly.samples.lifecycle;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
@@ -40,8 +41,7 @@ public class LifeCycleExample {
         filterChainBuilder.add(new EchoFilter());
 
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -67,9 +67,7 @@ public class LifeCycleExample {
      * @param lifeCycleFilter the {@link LifeCycleFilter}
      */
     private static void printStats(LifeCycleFilter lifeCycleFilter) {
-        System.out.println("The total number of connections ever connected: " +
-                lifeCycleFilter.getTotalConnections());
-        System.out.println("The number of active connections: " +
-                lifeCycleFilter.getActiveConnections().size());
+        System.out.println("The total number of connections ever connected: " + lifeCycleFilter.getTotalConnections());
+        System.out.println("The number of active connections: " + lifeCycleFilter.getActiveConnections().size());
     }
 }

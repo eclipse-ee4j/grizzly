@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,8 +17,7 @@
 package org.glassfish.grizzly.filterchain;
 
 /**
- * The interface defines the instruction for a {@link FilterChain},
- * how it should continue filter chain execution.
+ * The interface defines the instruction for a {@link FilterChain}, how it should continue filter chain execution.
  *
  * @see Filter
  * @see FilterChain
@@ -28,6 +27,7 @@ package org.glassfish.grizzly.filterchain;
 public interface NextAction {
     /**
      * Get <tt>NextAction</tt> type
+     * 
      * @return <tt>NextAction</tt> type
      */
     int type();

@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.StaticHttpHandlerBase;
 
@@ -25,16 +27,14 @@ import jakarta.servlet.ServletRequestWrapper;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * This servlet will be invoked when no other servlet matches the request URI.
  *
- * TODO:  This needs more work.  Review the DefaultServlet implementations
- *   included with popular servlet containers to get an understanding of
- *   what may be added
+ * TODO: This needs more work. Review the DefaultServlet implementations included with popular servlet containers to get
+ * an understanding of what may be added
  *
- *   @since 2.2
+ * @since 2.2
  */
 public class DefaultServlet extends HttpServlet {
 
@@ -42,16 +42,13 @@ public class DefaultServlet extends HttpServlet {
 
     // ------------------------------------------------------------ Constructors
 
-
     protected DefaultServlet(final StaticHttpHandlerBase staticHttpHandlerBase) {
 
         this.staticHttpHandlerBase = staticHttpHandlerBase;
 
     }
 
-
     // ------------------------------------------------ Methods from HttpServlet
-
 
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
@@ -66,9 +63,7 @@ public class DefaultServlet extends HttpServlet {
     }
 
     private static HttpServletRequestImpl unwrap(final ServletRequest request) {
-        return ((request instanceof  HttpServletRequestImpl)
-                    ? (HttpServletRequestImpl) request
-                    : unwrap(((ServletRequestWrapper) request).getRequest()));
+        return request instanceof HttpServletRequestImpl ? (HttpServletRequestImpl) request : unwrap(((ServletRequestWrapper) request).getRequest());
     }
 
 }

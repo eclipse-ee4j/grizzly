@@ -18,11 +18,13 @@ package org.glassfish.grizzly.servlet;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.glassfish.grizzly.http.server.Request;
+
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpUpgradeHandler;
 import jakarta.servlet.http.WebConnection;
-import org.glassfish.grizzly.http.server.Request;
 
 /**
  * Implementation of WebConnection for Servlet 3.1
@@ -40,11 +42,10 @@ public class WebConnectionImpl implements WebConnection {
     private final HttpServletRequestImpl request;
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    
+
     // ----------------------------------------------------------- Constructor
 
-    public WebConnectionImpl(HttpServletRequestImpl request,
-            ServletInputStream inputStream, ServletOutputStream outputStream) {
+    public WebConnectionImpl(HttpServletRequestImpl request, ServletInputStream inputStream, ServletOutputStream outputStream) {
         this.request = request;
         this.inputStream = inputStream;
         this.outputStream = outputStream;
@@ -70,7 +71,7 @@ public class WebConnectionImpl implements WebConnection {
      * @exception IOException if an I/O error occurs
      */
     @Override
-    public ServletOutputStream getOutputStream() throws IOException{
+    public ServletOutputStream getOutputStream() throws IOException {
         return outputStream;
     }
 
@@ -80,18 +81,17 @@ public class WebConnectionImpl implements WebConnection {
         if (isClosed.compareAndSet(false, true)) {
             final Request grizzlyRequest = request.getRequest();
 
-            HttpUpgradeHandler httpUpgradeHandler =
-                    request.getHttpUpgradeHandler();
+            HttpUpgradeHandler httpUpgradeHandler = request.getHttpUpgradeHandler();
             try {
                 httpUpgradeHandler.destroy();
             } finally {
                 try {
                     inputStream.close();
-                } catch(Exception ignored) {
+                } catch (Exception ignored) {
                 }
                 try {
                     outputStream.close();
-                } catch(Exception ignored) {
+                } catch (Exception ignored) {
                 }
 
                 grizzlyRequest.getResponse().resume();

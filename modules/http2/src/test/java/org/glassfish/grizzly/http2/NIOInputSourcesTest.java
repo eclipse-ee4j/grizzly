@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,31 +16,10 @@
 
 package org.glassfish.grizzly.http2;
 
-import java.io.EOFException;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.ReadHandler;
-import org.glassfish.grizzly.Transport;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.http.HttpContent;
-import org.glassfish.grizzly.http.HttpHeader;
-import org.glassfish.grizzly.http.HttpPacket;
-import org.glassfish.grizzly.http.HttpRequestPacket;
-import org.glassfish.grizzly.http.Protocol;
-import org.glassfish.grizzly.http.io.NIOInputStream;
-import org.glassfish.grizzly.http.io.NIOOutputStream;
-import org.glassfish.grizzly.http.io.NIOReader;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
-import org.glassfish.grizzly.memory.ByteBufferManager;
-import org.glassfish.grizzly.memory.CompositeBuffer;
-import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -52,25 +31,47 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.ReadHandler;
+import org.glassfish.grizzly.Transport;
 import org.glassfish.grizzly.WriteResult;
+import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.HttpHeader;
+import org.glassfish.grizzly.http.HttpPacket;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.Protocol;
+import org.glassfish.grizzly.http.io.NIOInputStream;
+import org.glassfish.grizzly.http.io.NIOOutputStream;
+import org.glassfish.grizzly.http.io.NIOReader;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.ByteBufferManager;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
+import org.glassfish.grizzly.memory.CompositeBuffer;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.threadpool.GrizzlyExecutorService;
 import org.glassfish.grizzly.utils.Exceptions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import static org.junit.Assert.*;
 
 /**
  * Test case to exercise <code>AsyncStreamReader</code>.
@@ -84,7 +85,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
     private final boolean isSecure;
     private final boolean priorKnowledge;
-    
+
     public NIOInputSourcesTest(final boolean isSecure, final boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
@@ -94,14 +95,13 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
     public static Collection<Object[]> configure() {
         return AbstractHttp2Test.configure();
     }
-    
+
     @Before
     public void setUp() throws Exception {
         ByteBufferWrapper.DEBUG_MODE = true;
     }
 
     // ------------------------------------------------------------ Test Methods
-
 
     /*
      * <em>POST</em> a message body with a length of 5000 bytes.
@@ -114,13 +114,11 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         final String expected = buildString(5000);
         final HttpPacket request = createRequest(PORT, "POST", expected, null);
         doTest(httpHandler, request, expected, testResult, null, 20);
-        
+
     }
 
-
     /*
-     * <em>POST</em> a message body with a length of 5000 bytes.
-     * HttpHandler calls {@link AsyncStreamReader#
+     * <em>POST</em> a message body with a length of 5000 bytes. HttpHandler calls {@link AsyncStreamReader#
      */
     @Test
     public void testBasicAsyncReadSpecifiedSize() throws Throwable {
@@ -132,7 +130,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         doTest(httpHandler, request, expected, testResult, null, 20);
 
     }
-
 
     @Test
     public void testBasicAsyncReadSlowClient() throws Throwable {
@@ -153,7 +150,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 ctx.write(request);
                 MemoryManager mm = ctx.getMemoryManager();
 
-                for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                for (int i = 0, count = 5000 / 1000; i < count; i++) {
                     int start = 0;
                     if (i != 0) {
                         start = i * 1000;
@@ -178,7 +175,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             }
         };
         doTest(httpHandler, request, expected, testResult, strategy, 60);
-        
+
     }
 
     @Test
@@ -200,7 +197,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 ctx.write(request);
                 MemoryManager mm = ctx.getMemoryManager();
 
-                for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                for (int i = 0, count = 5000 / 1000; i < count; i++) {
                     int start = 0;
                     if (i != 0) {
                         start = i * 1000;
@@ -247,7 +244,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 ctx.write(request);
                 MemoryManager mm = ctx.getMemoryManager();
 
-                for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                for (int i = 0, count = 5000 / 1000; i < count; i++) {
                     int start = 0;
                     if (i != 0) {
                         start = i * 1000;
@@ -281,7 +278,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         transport.setMemoryManager(memoryManager);
         doTest(httpServer, httpHandler, request, expected, testResult, strategy, 60);
     }
-    
+
     @Test
     public void testAsyncReadStartedOutsideHttpHandler() throws Throwable {
 
@@ -303,7 +300,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     ctx.write(request);
                     MemoryManager mm = ctx.getMemoryManager();
 
-                    for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                    for (int i = 0, count = 5000 / 1000; i < count; i++) {
                         int start = 0;
                         if (i != 0) {
                             start = i * 1000;
@@ -331,9 +328,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         } finally {
             threadPool.shutdownNow();
         }
-        
+
     }
-    
+
     /*
      * <em>POST</em> a message body with a length of 5000 bytes.
      */
@@ -347,7 +344,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         doTest(httpHandler, request, expected, testResult, null, 60);
 
     }
-
 
     /*
      * <em>POST</em> a message body with a length of 5000 bytes.
@@ -365,10 +361,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
     }
 
-
     /*
-     * <em>POST</em> a message body with a length of 5000 bytes.
-     * HttpHandler calls {@link AsyncStreamReader#
+     * <em>POST</em> a message body with a length of 5000 bytes. HttpHandler calls {@link AsyncStreamReader#
      */
     @Test
     public void testBasicAsyncReadCharSpecifiedSize() throws Throwable {
@@ -380,7 +374,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         doTest(httpHandler, request, expected, testResult, null, 20);
 
     }
-
 
     @Test
     public void testBasicAsyncReadCharSlowClient() throws Throwable {
@@ -394,7 +387,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         b.contentLength(expected.length());
         final HttpRequestPacket request = b.build();
 
-
         final WriteStrategy strategy = new WriteStrategy() {
             @Override
             public void doWrite(FilterChainContext ctx) throws IOException {
@@ -402,7 +394,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 ctx.write(request);
                 MemoryManager mm = ctx.getMemoryManager();
 
-                for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                for (int i = 0, count = 5000 / 1000; i < count; i++) {
                     int start = 0;
                     if (i != 0) {
                         start = i * 1000;
@@ -449,7 +441,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 ctx.write(request);
                 MemoryManager mm = ctx.getMemoryManager();
 
-                for (int i = 0, count = (5000 / 1000); i < count; i++) {
+                for (int i = 0, count = 5000 / 1000; i < count; i++) {
                     int start = 0;
                     if (i != 0) {
                         start = i * 1000;
@@ -478,10 +470,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
     }
 
     /**
-     * Test ReadHandler.onError to be notified, when client unexpectedly
-     * terminates the connection
+     * Test ReadHandler.onError to be notified, when client unexpectedly terminates the connection
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     @Test
     public void testDisconnect() throws Throwable {
 
@@ -490,12 +481,11 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         final CountDownLatch chunkReceivedLatch = new CountDownLatch(1);
         final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         clientTransport.setProcessor(createClientFilterChain(isSecure));
-        
+
         final HttpHandler httpHandler = new HttpHandler() {
 
             @Override
-            public void service(final Request request,
-                    final Response response) throws Exception {
+            public void service(final Request request, final Response response) throws Exception {
                 response.suspend();
                 final NIOInputStream inputStream = (NIOInputStream) request.getInputStream();
 
@@ -504,20 +494,19 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     @Override
                     public void onDataAvailable() throws IOException {
                         chunkReceivedLatch.countDown();
-                        
+
                         final int readyData = inputStream.readyData();
-                        //noinspection ResultOfMethodCallIgnored
+                        // noinspection ResultOfMethodCallIgnored
                         inputStream.skip(readyData);
                         bytesRead.addAndGet(readyData);
 
                         inputStream.notifyAvailable(this);
                     }
 
-
                     @Override
                     public void onAllDataRead() throws IOException {
                         final int readyData = inputStream.readyData();
-                        //noinspection ResultOfMethodCallIgnored
+                        // noinspection ResultOfMethodCallIgnored
                         inputStream.skip(readyData);
                         bytesRead.addAndGet(readyData);
                         resultFuture.failure(new IllegalStateException("Connection should have been terminated"));
@@ -528,7 +517,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     @Override
                     public void onError(Throwable t) {
                         resultFuture.failure(t);
-                        
+
                         response.resume();
                     }
                 });
@@ -550,15 +539,14 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 packet.setContentLength(5000);
                 connection.write(packet);
 
-                HttpContent content = HttpContent.builder(packet).content(
-                        Buffers.wrap(null, buildString(2500))).build();
+                HttpContent content = HttpContent.builder(packet).content(Buffers.wrap(null, buildString(2500))).build();
 
                 connection.write(content, new EmptyCompletionHandler<WriteResult>() {
 
                     @Override
                     public void completed(final WriteResult result) {
                         final Connection c = result.getConnection();
-                        
+
                         new Thread() {
                             @Override
                             public void run() {
@@ -576,9 +564,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     resultFuture.get(10, TimeUnit.SECONDS);
                     fail("Wrapped EOFException expected");
                 } catch (ExecutionException e) {
-                    assertEquals("NOT EOF Exception:\n" +
-                            Exceptions.getStackTraceAsString(e.getCause()),
-                            EOFException.class, e.getCause().getClass());
+                    assertEquals("NOT EOF Exception:\n" + Exceptions.getStackTraceAsString(e.getCause()), EOFException.class, e.getCause().getClass());
                 }
             } finally {
                 // Close the client connection
@@ -597,11 +583,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
     // --------------------------------------------------------- Private Methods
 
-
     private HttpServer createWebServer(final HttpHandler httpHandler) {
-        final HttpServer httpServer = createServer(null, PORT, isSecure,
-                HttpHandlerRegistration.of(httpHandler, "/path/*"));
-        
+        final HttpServer httpServer = createServer(null, PORT, isSecure, HttpHandlerRegistration.of(httpHandler, "/path/*"));
+
         final NetworkListener listener = httpServer.getListener("grizzly");
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
 
@@ -609,66 +593,35 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
     }
 
-    private void doTest(final EchoHandler httpHandler,
-            final HttpPacket request,
-            final String expectedResult,
-            final FutureImpl<String> testResult,
-            final WriteStrategy strategy,
-            final int timeoutSeconds)
-            throws Exception {
+    private void doTest(final EchoHandler httpHandler, final HttpPacket request, final String expectedResult, final FutureImpl<String> testResult,
+            final WriteStrategy strategy, final int timeoutSeconds) throws Exception {
 
-        doTest(httpHandler,
-                expectedResult,
-                testResult,
-                new ClientFilter(testResult, request, strategy),
-                timeoutSeconds);
+        doTest(httpHandler, expectedResult, testResult, new ClientFilter(testResult, request, strategy), timeoutSeconds);
 
     }
 
-    private void doTest(final HttpServer httpServer,
-            final EchoHandler httpHandler,
-            final HttpPacket request,
-            final String expectedResult,
-            final FutureImpl<String> testResult,
-            final WriteStrategy strategy,
-            final int timeoutSeconds)
-            throws Exception {
+    private void doTest(final HttpServer httpServer, final EchoHandler httpHandler, final HttpPacket request, final String expectedResult,
+            final FutureImpl<String> testResult, final WriteStrategy strategy, final int timeoutSeconds) throws Exception {
 
-        doTest(httpServer,
-                httpHandler,
-                expectedResult,
-                testResult,
-                new ClientFilter(testResult, request, strategy),
-                timeoutSeconds);
+        doTest(httpServer, httpHandler, expectedResult, testResult, new ClientFilter(testResult, request, strategy), timeoutSeconds);
 
     }
 
-    private void doTest(final EchoHandler httpHandler,
-            final String expectedResult,
-            final FutureImpl<String> testResult,
-            final ClientFilter filter,
-            final int timeoutSeconds)
-            throws Exception {
+    private void doTest(final EchoHandler httpHandler, final String expectedResult, final FutureImpl<String> testResult, final ClientFilter filter,
+            final int timeoutSeconds) throws Exception {
         doTest(createWebServer(httpHandler), httpHandler, expectedResult, testResult, filter, timeoutSeconds);
     }
 
-    private void doTest(final HttpServer server,
-            final EchoHandler httpHandler,
-            final String expectedResult,
-            final FutureImpl<String> testResult,
-            final ClientFilter filter,
-            final int timeoutSeconds)
-            throws Exception {
-        
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+    private void doTest(final HttpServer server, final EchoHandler httpHandler, final String expectedResult, final FutureImpl<String> testResult,
+            final ClientFilter filter, final int timeoutSeconds) throws Exception {
+
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
 
         try {
             server.start();
-            
-            FilterChain clientFilterChain =
-                    createClientFilterChainAsBuilder(isSecure, priorKnowledge, filter).build();
-            
+
+            FilterChain clientFilterChain = createClientFilterChainAsBuilder(isSecure, priorKnowledge, filter).build();
+
             clientTransport.setProcessor(clientFilterChain);
             clientTransport.start();
 
@@ -678,8 +631,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                 connection = connectFuture.get(timeoutSeconds, TimeUnit.SECONDS);
                 String res = testResult.get(timeoutSeconds, TimeUnit.SECONDS);
                 if (res != null) {
-                    assertEquals("Expected a return content length of " + expectedResult.length() + ", received: " + res.length(),
-                            expectedResult.length(),
+                    assertEquals("Expected a return content length of " + expectedResult.length() + ", received: " + res.length(), expectedResult.length(),
                             res.length());
                     assertEquals("Server echoed string=" + httpHandler.getEchoedString(), expectedResult, res);
                 } else {
@@ -696,7 +648,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             server.shutdownNow();
         }
     }
-
 
     private String buildString(int len) {
 
@@ -719,7 +670,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
     } // END WriteStrategy
 
-
     private static class EchoHttpHandler extends EchoHandler {
 
         private final FutureImpl<String> testResult;
@@ -729,7 +679,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         // -------------------------------------------------------- Constructors
 
-
         EchoHttpHandler(final FutureImpl<String> testResult, final int readSize) {
 
             this.testResult = testResult;
@@ -737,13 +686,10 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-
         // ----------------------------------------- Methods from HttpHandler
 
         @Override
-        public void service(final Request req,
-                            final Response res)
-                throws Exception {
+        public void service(final Request req, final Response res) throws Exception {
 
             try {
                 final NIOInputStream reader = req.getNIOInputStream();
@@ -786,9 +732,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-        private static void echo(NIOInputStream reader, NIOOutputStream writer,
-                StringBuffer sb) throws IOException {
-            
+        private static void echo(NIOInputStream reader, NIOOutputStream writer, StringBuffer sb) throws IOException {
+
             int available = reader.readyData();
             if (available > 0) {
                 byte[] b = new byte[available];
@@ -803,7 +748,6 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             return echoedString.toString();
         }
 
-
     } // END EchoHttpHandler
 
     private static class EchoHttpHandler2 extends EchoHandler {
@@ -816,9 +760,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         // -------------------------------------------------------- Constructors
 
-
-        EchoHttpHandler2(final FutureImpl<String> testResult, final int readSize,
-                final ExecutorService threadPool) {
+        EchoHttpHandler2(final FutureImpl<String> testResult, final int readSize, final ExecutorService threadPool) {
 
             this.testResult = testResult;
             this.readSize = readSize;
@@ -826,13 +768,10 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-
         // ----------------------------------------- Methods from HttpHandler
 
         @Override
-        public void service(final Request req,
-                            final Response res)
-                throws Exception {
+        public void service(final Request req, final Response res) throws Exception {
 
             try {
                 res.suspend();
@@ -843,7 +782,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     public void run() {
                         final NIOInputStream reader = req.getNIOInputStream();
                         final NIOOutputStream writer = res.getNIOOutputStream();
-                        
+
                         reader.notifyAvailable(new ReadHandler() {
 
                             @Override
@@ -881,9 +820,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-        private static void echo(NIOInputStream reader, NIOOutputStream writer,
-                StringBuffer sb) throws IOException {
-            
+        private static void echo(NIOInputStream reader, NIOOutputStream writer, StringBuffer sb) throws IOException {
+
             int available = reader.readyData();
             if (available > 0) {
                 byte[] b = new byte[available];
@@ -898,10 +836,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             return echoedString.toString();
         }
 
-
     } // END EchoHttpHandler
-    
-    
+
     private static class DirectBufferEchoHttpHandler extends EchoHandler {
 
         private final FutureImpl<String> testResult;
@@ -910,20 +846,16 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         // -------------------------------------------------------- Constructors
 
-
         DirectBufferEchoHttpHandler(final FutureImpl<String> testResult) {
 
             this.testResult = testResult;
 
         }
 
-
         // ----------------------------------------- Methods from HttpHandler
 
         @Override
-        public void service(final Request req,
-                            final Response res)
-                throws Exception {
+        public void service(final Request req, final Response res) throws Exception {
 
             try {
                 final NIOInputStream reader = req.getNIOInputStream();
@@ -966,15 +898,14 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-        private static void echo(NIOInputStream reader, NIOOutputStream writer,
-                StringBuffer sb) throws IOException {
+        private static void echo(NIOInputStream reader, NIOOutputStream writer, StringBuffer sb) throws IOException {
             final int readyData = reader.readyData();
             if (readyData > 0) {
                 final Buffer buffer = reader.readBuffer();
                 if (!buffer.isDirect()) {
                     throw new RuntimeException("Direct buffer is expected!");
                 }
-                
+
                 sb.append(buffer.toStringContent());
                 writer.write(buffer);
             }
@@ -985,9 +916,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             return echoedString.toString();
         }
 
-
     } // END EchoHttpHandler
-    
+
     private static class CharacterEchoHttpHandler extends EchoHandler {
 
         private final FutureImpl<String> testResult;
@@ -996,13 +926,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         private final StringBuffer echoedString = new StringBuffer();
 
-
         // -------------------------------------------------------- Constructors
 
-
-        CharacterEchoHttpHandler(final FutureImpl<String> testResult,
-                             final int readSize,
-                             final String encoding) {
+        CharacterEchoHttpHandler(final FutureImpl<String> testResult, final int readSize, final String encoding) {
 
             this.testResult = testResult;
             this.readSize = readSize;
@@ -1010,13 +936,10 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-
         // ----------------------------------------- Methods from HttpHandler
 
         @Override
-        public void service(final Request req,
-                            final Response res)
-                throws Exception {
+        public void service(final Request req, final Response res) throws Exception {
 
             try {
                 if (encoding != null) {
@@ -1033,7 +956,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
                     return;
                 }
                 res.suspend();
-                
+
                 final StringBuilder sb = new StringBuilder();
                 reader.notifyAvailable(new ReadHandler() {
 
@@ -1075,8 +998,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-        private static void buffer(NIOReader reader, StringBuilder sb)
-        throws IOException {
+        private static void buffer(NIOReader reader, StringBuilder sb) throws IOException {
             char[] c = new char[reader.readyData()];
             int read;
             try {
@@ -1116,13 +1038,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         private final WriteStrategy strategy;
 
-
         // -------------------------------------------------------- Constructors
 
-
-        public ClientFilter(FutureImpl<String> testFuture,
-                            HttpPacket request,
-                            WriteStrategy strategy) {
+        public ClientFilter(FutureImpl<String> testFuture, HttpPacket request, WriteStrategy strategy) {
 
             this.testFuture = testFuture;
             this.request = request;
@@ -1130,13 +1048,10 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
-
         @Override
-        public NextAction handleConnect(final FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
 
             final Http2Session c = Http2Session.get(ctx.getConnection());
             if (c != null) { // we're going over TLS
@@ -1174,7 +1089,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
             HttpHeader header;
             if (request.isHeader()) {
-                header = ((HttpHeader) request);
+                header = (HttpHeader) request;
             } else {
                 header = request.getHttpHeader();
             }
@@ -1184,10 +1099,8 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             }
         }
 
-
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
             try {
                 // Cast message to a HttpContent
                 final HttpContent httpContent = ctx.getMessage();
@@ -1209,11 +1122,9 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
 
                 if (httpContent.isLast()) {
                     if (logger.isLoggable(Level.FINE)) {
-                        logger.log(Level.FINE, "Response complete: {0} bytes",
-                                bytesDownloaded);
+                        logger.log(Level.FINE, "Response complete: {0} bytes", bytesDownloaded);
                     }
-                    final String encoding = parseCharacterEncoding(
-                            httpContent.getHttpHeader().getHeader(Header.ContentType));
+                    final String encoding = parseCharacterEncoding(httpContent.getHttpHeader().getHeader(Header.ContentType));
                     if (encoding != null) {
                         testFuture.result(buf.toStringContent(Charset.forName(encoding)));
                     } else {
@@ -1229,8 +1140,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -1238,7 +1148,7 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
@@ -1248,17 +1158,17 @@ public class NIOInputSourcesTest extends AbstractHttp2Test {
             if (contentType == null) {
                 return null;
             }
-            
+
             final int idx = contentType.indexOf("charset=");
             if (idx == -1) {
                 return null;
             }
-            
+
             int endIdx = contentType.indexOf(';', idx + 8);
             if (endIdx == -1) {
                 endIdx = contentType.length();
             }
-            
+
             return contentType.substring(idx + 8, endIdx);
         }
 

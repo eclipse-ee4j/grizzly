@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -19,6 +19,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
@@ -27,24 +28,18 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.Charsets;
 
 /**
- * Client implementation, which sends a message to a {@link Server} and checks
- * the response.
- * 
+ * Client implementation, which sends a message to a {@link Server} and checks the response.
+ *
  * Client and server exchange String based messages:
  *
- * (1)
- * MultiLinePacket = command
- *                   *(parameter LF)
- *                   LF
- * parameter = TEXT (ASCII)
+ * (1) MultiLinePacket = command *(parameter LF) LF parameter = TEXT (ASCII)
  *
  * Server filters are built in a following way:
  *
- * {@link TransportFilter} - reads/writes data from/to network
- * {@link MultiStringFilter} - translates Buffer <-> List&lt;String&gt;
- * {@link MultiLineFilter} - translates List&lt;String&gt; <-> MultiLinePacket (see 1)
- * {@link ClientAuthFilter} - checks, if client is authenticated. If not - initialize client authentication, and only then sends the message.
- * {@link ClientFilter} - client filter, which gets server echo and prints it out.
+ * {@link TransportFilter} - reads/writes data from/to network {@link MultiStringFilter} - translates Buffer <->
+ * List&lt;String&gt; {@link MultiLineFilter} - translates List&lt;String&gt; <-> MultiLinePacket (see 1)
+ * {@link ClientAuthFilter} - checks, if client is authenticated. If not - initialize client authentication, and only
+ * then sends the message. {@link ClientFilter} - client filter, which gets server echo and prints it out.
  *
  * @author Alexey Stashok
  */
@@ -63,33 +58,30 @@ public class Client {
             @Override
             protected List<String> createInList() {
                 // overwrite createInList to return LinkedList instead of ArrayList
-                return new LinkedList<String>();
+                return new LinkedList<>();
             }
         });
-        
+
         // MultiLineFilter is responsible for gathering parsed lines in a single multi line packet
         filterChainBuilder.add(new MultiLineFilter(""));
         // AuthFilter is responsible for client authentication
         filterChainBuilder.add(new ClientAuthFilter());
         // Client filter, which prints out the server echo message
         filterChainBuilder.add(new ClientFilter());
-        
+
         // Create TCP transport
-        final TCPNIOTransport transport =
-               TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
             // start the transport
             transport.start();
 
-            Future<Connection> connectFuture =
-                    transport.connect(Server.HOST, Server.PORT);
+            Future<Connection> connectFuture = transport.connect(Server.HOST, Server.PORT);
 
             final Connection connection = connectFuture.get(10, TimeUnit.SECONDS);
-            
-            BufferedReader reader  = new BufferedReader(new InputStreamReader(
-                    System.in, Charsets.ASCII_CHARSET));
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, Charsets.ASCII_CHARSET));
 
             while (true) {
                 System.out.print("Type the message (Empty line for quit): ");
@@ -105,7 +97,7 @@ public class Client {
 
                 connection.write(request);
             }
-            
+
         } finally {
             logger.info("Stopping transport...");
             // stop the transport

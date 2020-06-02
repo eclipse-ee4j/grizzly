@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,14 +19,12 @@ package org.glassfish.grizzly.filterchain;
 import org.glassfish.grizzly.Appender;
 
 /**
- * {@link NextAction} implementation, which instructs {@link FilterChain} to
- * process next {@link Filter} in chain.
+ * {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in chain.
  *
- * So any {@link Filter} implementation is free to change the {@link Filter}
- * execution sequence.
+ * So any {@link Filter} implementation is free to change the {@link Filter} execution sequence.
  *
  * @see NextAction
- * 
+ *
  * @author Alexey Stashok
  */
 final class InvokeAction extends AbstractNextAction {
@@ -34,9 +32,9 @@ final class InvokeAction extends AbstractNextAction {
 
     private Appender appender;
     private Object chunk;
-    
+
     private boolean isIncomplete;
-    
+
     InvokeAction() {
         super(TYPE);
     }
@@ -58,14 +56,13 @@ final class InvokeAction extends AbstractNextAction {
         appender = null;
         isIncomplete = false;
     }
-    
-    public <E> void setIncompleteChunk(final E incompleteChunk,
-            final Appender<E> appender) {
+
+    public <E> void setIncompleteChunk(final E incompleteChunk, final Appender<E> appender) {
         chunk = incompleteChunk;
         this.appender = appender;
         isIncomplete = true;
     }
-    
+
     void reset() {
         isIncomplete = false;
         chunk = null;

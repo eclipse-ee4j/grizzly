@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,10 @@
 
 package org.glassfish.grizzly.portunif;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,61 +29,62 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
-import org.glassfish.grizzly.filterchain.*;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.Filter;
+import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.EchoFilter;
 import org.glassfish.grizzly.utils.StringFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Simple port-unification test
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class BasicPUTest {
     public static final int PORT = 17400;
     public static final Charset CHARSET = Charset.forName("UTF-8");
-    
+
     @Test
     public void protocolsXYZ() throws Exception {
-        final String[] protocols = {"X", "Y", "Z"};
+        final String[] protocols = { "X", "Y", "Z" };
 
         Connection connection = null;
 
         final AtomicInteger blockingWritesCounter = new AtomicInteger();
         final AtomicInteger nonBlockingWritesCounter = new AtomicInteger();
-        
+
         int i = 0;
         final PUFilter puFilter = new PUFilter();
         for (final String protocol : protocols) {
-            final boolean isBlocking = (i++ % 2) == 0;
+            final boolean isBlocking = i++ % 2 == 0;
             puFilter.register(createProtocol(puFilter, protocol, isBlocking));
         }
 
-        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless()
-                .add(new TransportFilter())
-                .add(new BaseFilter() {
-                    @Override
-                    public NextAction handleWrite(FilterChainContext ctx) throws IOException {
-                        if (ctx.getTransportContext().isBlocking()) {
-                            blockingWritesCounter.incrementAndGet();
-                        } else {
-                            nonBlockingWritesCounter.incrementAndGet();
-                        }
-                        
-                        return super.handleWrite(ctx);
-                    }
-                })
-                .add(new StringFilter(CHARSET))
-                .add(puFilter);
+        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless().add(new TransportFilter()).add(new BaseFilter() {
+            @Override
+            public NextAction handleWrite(FilterChainContext ctx) throws IOException {
+                if (ctx.getTransportContext().isBlocking()) {
+                    blockingWritesCounter.incrementAndGet();
+                } else {
+                    nonBlockingWritesCounter.incrementAndGet();
+                }
+
+                return super.handleWrite(ctx);
+            }
+        }).add(new StringFilter(CHARSET)).add(puFilter);
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(puFilterChainBuilder.build());
@@ -96,11 +101,10 @@ public class BasicPUTest {
 
                 assertEquals(makeResponseMessage(protocol), resultFuture.get(10, TimeUnit.SECONDS));
             }
-            
-            final int expectedBlockingWrites = protocols.length / 2 + (protocols.length % 2);
+
+            final int expectedBlockingWrites = protocols.length / 2 + protocols.length % 2;
             assertEquals("Number of blocking writes doesn't match", expectedBlockingWrites, blockingWritesCounter.get());
             assertEquals("Number of non-blocking writes doesn't match", protocols.length - expectedBlockingWrites, nonBlockingWritesCounter.get());
-            
 
         } finally {
             if (connection != null) {
@@ -118,10 +122,7 @@ public class BasicPUTest {
         final PUFilter puFilter = new PUFilter(true);
         puFilter.register(createProtocol(puFilter, "X", false));
 
-        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless()
-                .add(new TransportFilter())
-                .add(new StringFilter(CHARSET))
-                .add(puFilter);
+        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless().add(new TransportFilter()).add(new StringFilter(CHARSET)).add(puFilter);
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(puFilterChainBuilder.build());
@@ -141,14 +142,14 @@ public class BasicPUTest {
             connection = openConnection(transport, resultFuture);
 
             connection.write("Y");
-            
+
             try {
                 resultFuture.get(10, TimeUnit.SECONDS);
                 fail("Exception is expected");
             } catch (ExecutionException e) {
                 assertTrue(e.getCause() instanceof EOFException);
             }
-            
+
         } finally {
             if (connection != null) {
                 connection.closeSilently();
@@ -157,29 +158,26 @@ public class BasicPUTest {
             transport.shutdownNow();
         }
     }
-    
+
     @Test
     public void unrecognizedConnectionCustomProcessing() throws Exception {
         final String notRecognizedProtocol = "Not-Recognized-Protocol";
-        
+
         Connection connection = null;
 
         final PUFilter puFilter = new PUFilter(false);
         puFilter.register(createProtocol(puFilter, "X", false));
 
-        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless()
-                .add(new TransportFilter())
-                .add(new StringFilter(CHARSET))
-                .add(puFilter)
+        FilterChainBuilder puFilterChainBuilder = FilterChainBuilder.stateless().add(new TransportFilter()).add(new StringFilter(CHARSET)).add(puFilter)
                 .add(new BaseFilter() {
-            @Override
-            public NextAction handleRead(FilterChainContext ctx) {
-                final String protocol = ctx.getMessage();
-                
-                ctx.write(notRecognizedProtocol + "-" + protocol);
-                return ctx.getStopAction();
-            }
-        });
+                    @Override
+                    public NextAction handleRead(FilterChainContext ctx) {
+                        final String protocol = ctx.getMessage();
+
+                        ctx.write(notRecognizedProtocol + "-" + protocol);
+                        return ctx.getStopAction();
+                    }
+                });
 
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(puFilterChainBuilder.build());
@@ -199,7 +197,7 @@ public class BasicPUTest {
             connection = openConnection(transport, resultFuture);
 
             connection.write("Y");
-            
+
             assertEquals(notRecognizedProtocol + "-Y", resultFuture.get(10, TimeUnit.SECONDS));
         } finally {
             if (connection != null) {
@@ -209,12 +207,12 @@ public class BasicPUTest {
             transport.shutdownNow();
         }
     }
-    
+
     @Test
     public void testGrizzly1031_001() throws Exception {
 
         final TestPUFilter puFilter = new TestPUFilter();
-        final TestFinder f1 =  new TestFinder() {
+        final TestFinder f1 = new TestFinder() {
             @Override
             public Result find(PUContext puContext, FilterChainContext ctx) {
                 invocationCount++;
@@ -307,7 +305,7 @@ public class BasicPUTest {
     public void testGrizzly1031_002() throws Exception {
 
         final TestPUFilter puFilter = new TestPUFilter();
-        final TestFinder f1 =  new TestFinder() {
+        final TestFinder f1 = new TestFinder() {
             @Override
             public Result find(PUContext puContext, FilterChainContext ctx) {
                 invocationCount++;
@@ -352,50 +350,36 @@ public class BasicPUTest {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-    private PUProtocol createProtocol(final PUFilter puFilter, final String name,
-            Filter... additionalFilters) {
+    private PUProtocol createProtocol(final PUFilter puFilter, final String name, Filter... additionalFilters) {
         return createProtocol(puFilter, name, false, additionalFilters);
     }
 
-    private PUProtocol createProtocol(final PUFilter puFilter, final String name,
-            final boolean isBlocking, Filter... additionalFilters) {
-        final FilterChainBuilder puFilterChainBuilder = 
-                puFilter.getPUFilterChainBuilder();
-        
+    private PUProtocol createProtocol(final PUFilter puFilter, final String name, final boolean isBlocking, Filter... additionalFilters) {
+        final FilterChainBuilder puFilterChainBuilder = puFilter.getPUFilterChainBuilder();
+
         for (Filter additionalFilter : additionalFilters) {
             puFilterChainBuilder.add(additionalFilter);
         }
-        
-        final FilterChain chain = puFilterChainBuilder
-                .add(new SimpleResponseFilter(name, isBlocking))
-                .build();
-        
+
+        final FilterChain chain = puFilterChainBuilder.add(new SimpleResponseFilter(name, isBlocking)).build();
+
         return new PUProtocol(new SimpleProtocolFinder(name), chain);
     }
 
-    private Connection openConnection(TCPNIOTransport transport,
-            final FutureImpl<String> resultFuture)
+    private Connection openConnection(TCPNIOTransport transport, final FutureImpl<String> resultFuture)
             throws TimeoutException, IOException, ExecutionException, InterruptedException {
-        
-        final FilterChain clientFilterChain =
-                FilterChainBuilder.stateless()
-                .add(new TransportFilter())
-                .add(new StringFilter(CHARSET))
-                .add(new ClientResultFilter(resultFuture))
-                .build();
-        
-        final SocketConnectorHandler connectorHandler =
-                TCPNIOConnectorHandler.builder(transport)
-                .processor(clientFilterChain)
-                .build();
-        
+
+        final FilterChain clientFilterChain = FilterChainBuilder.stateless().add(new TransportFilter()).add(new StringFilter(CHARSET))
+                .add(new ClientResultFilter(resultFuture)).build();
+
+        final SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
+
         Future<Connection> future = connectorHandler.connect("localhost", PORT);
         final Connection connection = future.get(10, TimeUnit.SECONDS);
         assertTrue(connection != null);
-        
+
         return connection;
     }
 
@@ -405,7 +389,6 @@ public class BasicPUTest {
         public SimpleProtocolFinder(final String name) {
             this.name = name;
         }
-
 
         @Override
         public Result find(PUContext puContext, FilterChainContext ctx) {
@@ -418,12 +401,12 @@ public class BasicPUTest {
     private static final class SimpleResponseFilter extends BaseFilter {
         private final String name;
         private final boolean isBlocking;
-        
+
         public SimpleResponseFilter(String name, boolean isBlocking) {
             this.name = name;
             this.isBlocking = isBlocking;
         }
-        
+
         @Override
         public NextAction handleRead(final FilterChainContext ctx) throws IOException {
             ctx.write(makeResponseMessage(name), isBlocking);
@@ -458,15 +441,13 @@ public class BasicPUTest {
         return "Protocol-" + protocolName;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class TestPUFilter extends PUFilter {
 
         @Override
         protected void findProtocol(PUContext puContext, FilterChainContext ctx) {
-            super.findProtocol(puContext, ctx);    //To change body of overridden methods use File | Settings | File Templates.
+            super.findProtocol(puContext, ctx); // To change body of overridden methods use File | Settings | File Templates.
         }
 
     }

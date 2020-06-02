@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,11 +16,6 @@
 
 package org.glassfish.grizzly.nio;
 
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.IOEvent;
-import org.glassfish.grizzly.IOStrategy;
-import org.glassfish.grizzly.Transport.State;
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedSelectorException;
@@ -35,31 +30,37 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.IOEvent;
+import org.glassfish.grizzly.IOStrategy;
+import org.glassfish.grizzly.Transport.State;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.threadpool.Threads;
 import org.glassfish.grizzly.utils.StateHolder;
 
 /**
  * Class is responsible for processing certain (single) {@link SelectorHandler}
- * 
+ *
  * @author Alexey Stashok
  */
 public final class SelectorRunner implements Runnable {
     private final static Logger LOGGER = Grizzly.logger(SelectorRunner.class);
-    
+
     private final static String THREAD_MARKER = " SelectorRunner";
-    
+
     private final NIOTransport transport;
     private final AtomicReference<State> stateHolder;
-    
+
     private final Queue<SelectorHandlerTask> pendingTasks;
-    
+
     private Queue<SelectorHandlerTask> currentPostponedTasks;
     private final Queue<SelectorHandlerTask> evenPostponedTasks;
     private final Queue<SelectorHandlerTask> oddPostponedTasks;
@@ -80,23 +81,20 @@ public final class SelectorRunner implements Runnable {
     private final AtomicBoolean selectorWakeupFlag = new AtomicBoolean();
     private final AtomicInteger runnerThreadActivityCounter = new AtomicInteger();
 
-    public static SelectorRunner create(final NIOTransport transport)
-            throws IOException {
-        return new SelectorRunner(transport,
-                Selectors.newSelector(transport.getSelectorProvider()));
+    public static SelectorRunner create(final NIOTransport transport) throws IOException {
+        return new SelectorRunner(transport, Selectors.newSelector(transport.getSelectorProvider()));
     }
-    
+
     volatile boolean hasPendingTasks;
-    
-    private SelectorRunner(final NIOTransport transport,
-            final Selector selector) {
+
+    private SelectorRunner(final NIOTransport transport, final Selector selector) {
         this.transport = transport;
         this.selector = selector;
-        stateHolder = new AtomicReference<State>(State.STOPPED);
+        stateHolder = new AtomicReference<>(State.STOPPED);
 
-        pendingTasks = new ConcurrentLinkedQueue<SelectorHandlerTask>();
-        evenPostponedTasks = new ArrayDeque<SelectorHandlerTask>();
-        oddPostponedTasks = new ArrayDeque<SelectorHandlerTask>();
+        pendingTasks = new ConcurrentLinkedQueue<>();
+        evenPostponedTasks = new ArrayDeque<>();
+        oddPostponedTasks = new ArrayDeque<>();
         currentPostponedTasks = evenPostponedTasks;
     }
 
@@ -109,8 +107,7 @@ public final class SelectorRunner implements Runnable {
 
     private void wakeupSelector() {
         final Selector localSelector = getSelector();
-        if (localSelector != null &&
-                selectorWakeupFlag.compareAndSet(false, true)) {
+        if (localSelector != null && selectorWakeupFlag.compareAndSet(false, true)) {
             try {
                 localSelector.wakeup();
             } catch (Exception e) {
@@ -132,10 +129,9 @@ public final class SelectorRunner implements Runnable {
     }
 
     /**
-     * Sets the {@link Selector}, associated with the runner.
-     * The method should be called from the runner thread.
-     * @param selector the new {@link Selector} to be associated with this
-     *                 {@link SelectorRunner}.
+     * Sets the {@link Selector}, associated with the runner. The method should be called from the runner thread.
+     * 
+     * @param selector the new {@link Selector} to be associated with this {@link SelectorRunner}.
      */
     void setSelector(final Selector selector) {
         this.selector = selector;
@@ -151,20 +147,20 @@ public final class SelectorRunner implements Runnable {
         if (dumbVolatile != 0) {
             return selectorRunnerThread;
         }
-        
+
         return null;
     }
 
     public State getState() {
         return stateHolder.get();
     }
-    
+
     public void postpone() {
         assert selectorRunnerThread != null;
         removeThreadNameMarker(selectorRunnerThread);
-        
+
         Threads.setService(false);
-        
+
         runnerThreadActivityCounter.compareAndSet(1, 0);
         selectorRunnerThread = null;
         isResume = true;
@@ -173,14 +169,13 @@ public final class SelectorRunner implements Runnable {
 
     public synchronized void start() {
         if (!stateHolder.compareAndSet(State.STOPPED, State.STARTING)) {
-            LOGGER.log(Level.WARNING,
-                    LogMessages.WARNING_GRIZZLY_SELECTOR_RUNNER_NOT_IN_STOPPED_STATE_EXCEPTION());
+            LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_SELECTOR_RUNNER_NOT_IN_STOPPED_STATE_EXCEPTION());
             return;
         }
-        
+
         transport.getKernelThreadPool().execute(this);
     }
-    
+
     public synchronized void stop() {
         stateHolder.set(State.STOPPING);
         wakeupSelector();
@@ -198,7 +193,7 @@ public final class SelectorRunner implements Runnable {
         if (localSelector != null) {
             try {
                 SelectionKey[] keys = new SelectionKey[0];
-                while(true) {
+                while (true) {
                     try {
                         keys = localSelector.keys().toArray(keys);
                         break;
@@ -207,9 +202,7 @@ public final class SelectorRunner implements Runnable {
                 }
 
                 for (final SelectionKey selectionKey : keys) {
-                    final Connection connection =
-                            transport.getSelectionKeyHandler().
-                            getConnectionForKey(selectionKey);
+                    final Connection connection = transport.getSelectionKeyHandler().getConnectionForKey(selectionKey);
                     connection.terminateSilently();
                 }
             } catch (ClosedSelectorException e) {
@@ -249,15 +242,13 @@ public final class SelectorRunner implements Runnable {
             final StateHolder<State> transportStateHolder = transport.getState();
 
             boolean isSkipping = false;
-        
+
             while (!isSkipping && !isStop()) {
                 if (transportStateHolder.getState() != State.PAUSED) {
                     isSkipping = !doSelect();
                 } else {
                     try {
-                        transportStateHolder
-                                .notifyWhenStateIsNotEqual(State.PAUSED, null)
-                                .get(5000, TimeUnit.MILLISECONDS);
+                        transportStateHolder.notifyWhenStateIsNotEqual(State.PAUSED, null).get(5000, TimeUnit.MILLISECONDS);
                     } catch (Exception ignored) {
                     }
                 }
@@ -279,29 +270,31 @@ public final class SelectorRunner implements Runnable {
     }
 
     /**
-     * This method handle the processing of all Selector's interest op
-     * (OP_ACCEPT,OP_READ,OP_WRITE,OP_CONNECT) by delegating to its Handler.
-     * By default, all java.nio.channels.Selector operations are implemented
-     * using SelectorHandler. All SelectionKey operations are implemented by
-     * SelectionKeyHandler. Finally, ProtocolChain creation/re-use are implemented
-     * by InstanceHandler.
+     * This method handle the processing of all Selector's interest op (OP_ACCEPT,OP_READ,OP_WRITE,OP_CONNECT) by delegating
+     * to its Handler. By default, all java.nio.channels.Selector operations are implemented using SelectorHandler. All
+     * SelectionKey operations are implemented by SelectionKeyHandler. Finally, ProtocolChain creation/re-use are
+     * implemented by InstanceHandler.
      */
     protected boolean doSelect() {
         final SelectorHandler selectorHandler = transport.getSelectorHandler();
-        
+
         try {
-            
+
             if (isResume) {
                 // If resume SelectorRunner - finish postponed keys
                 isResume = false;
-                
+
                 // readyKeySet==null means execution was suspended on preSelect(..)
                 if (readyKeySet != null) {
                     if (keyReadyOps != 0) {
-                        if (!iterateKeyEvents()) return false;
+                        if (!iterateKeyEvents()) {
+                            return false;
+                        }
                     }
 
-                    if (!iterateKeys()) return false;
+                    if (!iterateKeys()) {
+                        return false;
+                    }
                     readyKeySet.clear();
                 }
             }
@@ -315,13 +308,17 @@ public final class SelectorRunner implements Runnable {
             readyKeySet = selectorHandler.select(this);
             selectorWakeupFlag.set(false);
 
-            if (stateHolder.get() == State.STOPPING) return true;
-            
+            if (stateHolder.get() == State.STOPPING) {
+                return true;
+            }
+
             lastSelectedKeysCount = readyKeySet.size();
-            
+
             if (lastSelectedKeysCount != 0) {
                 iterator = readyKeySet.iterator();
-                if (!iterateKeys()) return false;
+                if (!iterateKeys()) {
+                    return false;
+                }
                 readyKeySet.clear();
             }
 
@@ -334,16 +331,12 @@ public final class SelectorRunner implements Runnable {
                     return true;
                 }
             }
-            
-            dropConnectionDueToException(key,
-                    "Selector was unexpectedly closed", e,
-                    Level.SEVERE, Level.FINE);
+
+            dropConnectionDueToException(key, "Selector was unexpectedly closed", e, Level.SEVERE, Level.FINE);
         } catch (Exception e) {
-            dropConnectionDueToException(key,
-                    "doSelect exception", e,
-                    Level.SEVERE, Level.FINE);
+            dropConnectionDueToException(key, "doSelect exception", e, Level.SEVERE, Level.FINE);
         } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE,"doSelect exception", t);
+            LOGGER.log(Level.SEVERE, "doSelect exception", t);
             transport.notifyTransportError(t);
         }
 
@@ -371,22 +364,19 @@ public final class SelectorRunner implements Runnable {
         return true;
     }
 
-
-    private boolean iterateKeyEvents()
-            throws IOException {
+    private boolean iterateKeyEvents() throws IOException {
 
         final SelectionKey keyLocal = key;
         final SelectionKeyHandler selectionKeyHandler = transport.getSelectionKeyHandler();
         final IOStrategy ioStrategy = transport.getIOStrategy();
         final IOEvent[] ioEvents = selectionKeyHandler.getIOEvents(keyReadyOps);
-        final NIOConnection connection =
-                selectionKeyHandler.getConnectionForKey(keyLocal);
+        final NIOConnection connection = selectionKeyHandler.getConnectionForKey(keyLocal);
 
         for (IOEvent ioEvent : ioEvents) {
             NIOConnection.notifyIOEventReady(connection, ioEvent);
-            
+
             final int interest = ioEvent.getSelectionKeyInterest();
-            keyReadyOps &= (~interest);
+            keyReadyOps &= ~interest;
             if (selectionKeyHandler.onProcessInterest(keyLocal, interest)) {
                 if (!ioStrategy.executeIoEvent(connection, ioEvent)) {
                     return false;
@@ -408,42 +398,37 @@ public final class SelectorRunner implements Runnable {
 
     public Queue<SelectorHandlerTask> obtainPostponedTasks() {
         final Queue<SelectorHandlerTask> tasksToReturn = currentPostponedTasks;
-        currentPostponedTasks = (currentPostponedTasks == evenPostponedTasks) ?
-                oddPostponedTasks : evenPostponedTasks;
+        currentPostponedTasks = currentPostponedTasks == evenPostponedTasks ? oddPostponedTasks : evenPostponedTasks;
         return tasksToReturn;
     }
-    
+
     boolean isStop() {
         final State state = stateHolder.get();
 
         return state == State.STOPPED || state == State.STOPPING;
     }
-    
+
     private boolean isRunning() {
         return stateHolder.get() == State.STARTED;
     }
 
     /**
-     * Notify transport about the {@link Exception} happened, log it and cancel
-     * the {@link SelectionKey}, if it is not null
-     * 
+     * Notify transport about the {@link Exception} happened, log it and cancel the {@link SelectionKey}, if it is not null
+     *
      * @param key {@link SelectionKey}, which was processed, when the {@link Exception} occured
      * @param description error description
      * @param e {@link Exception} occurred
      * @param runLogLevel logger {@link Level} to use, if transport is in running state
      * @param stoppedLogLevel logger {@link Level} to use, if transport is not in running state
      */
-    private void dropConnectionDueToException(final SelectionKey key,
-            final String description,
-            final Exception e, final Level runLogLevel,
+    private void dropConnectionDueToException(final SelectionKey key, final String description, final Exception e, final Level runLogLevel,
             final Level stoppedLogLevel) {
         if (isRunning()) {
             LOGGER.log(runLogLevel, description, e);
 
             if (key != null) {
                 try {
-                    final Connection connection =
-                            transport.getSelectionKeyHandler().getConnectionForKey(key);
+                    final Connection connection = transport.getSelectionKeyHandler().getConnectionForKey(key);
 
                     if (connection != null) {
                         connection.closeSilently();
@@ -453,8 +438,7 @@ public final class SelectorRunner implements Runnable {
                         channel.close();
                     }
                 } catch (IOException cancelException) {
-                    LOGGER.log(Level.FINE, "IOException during cancelling key",
-                            cancelException);
+                    LOGGER.log(Level.FINE, "IOException during cancelling key", cancelException);
                 }
             }
 
@@ -465,8 +449,7 @@ public final class SelectorRunner implements Runnable {
     }
 
     /**
-     * Number of {@link SelectionKey}s, which were selected last time.
-     * Operation is not thread-safe.
+     * Number of {@link SelectionKey}s, which were selected last time. Operation is not thread-safe.
      *
      * @return number of {@link SelectionKey}s, which were selected last time.
      */
@@ -474,22 +457,18 @@ public final class SelectorRunner implements Runnable {
         return lastSelectedKeysCount;
     }
 
-    protected final void switchToNewSelector() throws IOException {
+    protected void switchToNewSelector() throws IOException {
         final Selector oldSelector = selector;
         final Selector newSelector = Selectors.newSelector(transport.getSelectorProvider());
 
         final Set<SelectionKey> keys = oldSelector.keys();
-        final SelectionKeyHandler selectionKeyHandler =
-                transport.getSelectionKeyHandler();
-        
+        final SelectionKeyHandler selectionKeyHandler = transport.getSelectionKeyHandler();
+
         for (final SelectionKey selectionKey : keys) {
             if (selectionKey.isValid()) {
                 try {
-                    final NIOConnection nioConnection =
-                            selectionKeyHandler.getConnectionForKey(selectionKey);
-                    final SelectionKey newSelectionKey =
-                            selectionKey.channel().register(newSelector,
-                            selectionKey.interestOps(), selectionKey.attachment());
+                    final NIOConnection nioConnection = selectionKeyHandler.getConnectionForKey(selectionKey);
+                    final SelectionKey newSelectionKey = selectionKey.channel().register(newSelector, selectionKey.interestOps(), selectionKey.attachment());
 
                     nioConnection.onSelectionKeyUpdated(newSelectionKey);
                 } catch (Exception e) {
@@ -515,41 +494,38 @@ public final class SelectorRunner implements Runnable {
             }
         }
     }
-    
-    
+
     /********************** Selector spin discovering *************************/
-    
+
     private long lastSpinTimestamp;
     private int emptySpinCounter;
-    
-    private final Map<Selector, Long> spinnedSelectorsHistory =
-            new WeakHashMap<Selector, Long>();
 
-    final void resetSpinCounter() {
-        emptySpinCounter  = 0;
+    private final Map<Selector, Long> spinnedSelectorsHistory = new WeakHashMap<>();
+
+    void resetSpinCounter() {
+        emptySpinCounter = 0;
     }
 
     /**
      * Increments spin counter and returns current spin rate (emptyspins/sec).
-     * 
+     *
      * @return current spin rate (emptyspins/sec).
      */
-    final int incSpinCounter() {
-        if (emptySpinCounter++ == 0){
+    int incSpinCounter() {
+        if (emptySpinCounter++ == 0) {
             lastSpinTimestamp = System.nanoTime();
         } else if (emptySpinCounter == 1000) {
             long deltatime = System.nanoTime() - lastSpinTimestamp;
             int contspinspersec = (int) (1000 * 1000000000L / deltatime);
-            emptySpinCounter  = 0;
+            emptySpinCounter = 0;
             return contspinspersec;
         }
-        
+
         return 0;
     }
-    
-    final SelectionKey checkIfSpinnedKey(final SelectionKey key) {
-        if (!key.isValid() && key.channel().isOpen() &&
-                spinnedSelectorsHistory.containsKey(key.selector())) {
+
+    SelectionKey checkIfSpinnedKey(final SelectionKey key) {
+        if (!key.isValid() && key.channel().isOpen() && spinnedSelectorsHistory.containsKey(key.selector())) {
             final SelectionKey newKey = key.channel().keyFor(getSelector());
             newKey.attach(key.attachment());
             return newKey;
@@ -558,7 +534,7 @@ public final class SelectorRunner implements Runnable {
         return key;
     }
 
-    final void workaroundSelectorSpin() throws IOException {
+    void workaroundSelectorSpin() throws IOException {
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.log(Level.FINE, "Workaround selector spin. selector={0}", getSelector());
         }
@@ -567,8 +543,7 @@ public final class SelectorRunner implements Runnable {
         switchToNewSelector();
     }
 
-    final void checkSelectorSpin(final boolean hasSelectedKeys,
-            final int spinRateThreshold) throws IOException {
+    void checkSelectorSpin(final boolean hasSelectedKeys, final int spinRateThreshold) throws IOException {
         if (hasSelectedKeys) {
             resetSpinCounter();
         } else {
@@ -585,12 +560,11 @@ public final class SelectorRunner implements Runnable {
             currentThread.setName(name + THREAD_MARKER);
         }
     }
-    
+
     private void removeThreadNameMarker(final Thread currentThread) {
         final String name = currentThread.getName();
         if (name.endsWith(THREAD_MARKER)) {
-            currentThread.setName(
-                    name.substring(0, name.length() - THREAD_MARKER.length()));
+            currentThread.setName(name.substring(0, name.length() - THREAD_MARKER.length()));
         }
     }
 }

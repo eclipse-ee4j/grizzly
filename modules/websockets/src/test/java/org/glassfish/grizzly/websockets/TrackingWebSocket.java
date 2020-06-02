@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,17 +28,15 @@ import org.glassfish.grizzly.GrizzlyFuture;
 
 public class TrackingWebSocket extends WebSocketClient {
     final Set<String> sent = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    
+
     private final CountDownLatch received;
     private final String name;
 
-    public TrackingWebSocket(String address, Version version, int count, WebSocketListener... listeners)
-        throws IOException, URISyntaxException {
+    public TrackingWebSocket(String address, Version version, int count, WebSocketListener... listeners) throws IOException, URISyntaxException {
         this(address, null, version, count, listeners);
     }
 
-    public TrackingWebSocket(String address, String name, Version version, int count, WebSocketListener... listeners)
-        throws IOException, URISyntaxException {
+    public TrackingWebSocket(String address, String name, Version version, int count, WebSocketListener... listeners) throws IOException, URISyntaxException {
         super(address, version, listeners);
         this.name = name;
         received = new CountDownLatch(count);
@@ -64,7 +62,7 @@ public class TrackingWebSocket extends WebSocketClient {
     }
 
     public boolean waitOnMessages() throws InterruptedException {
-        return received.await(WebSocketEngine.DEFAULT_TIMEOUT*10, TimeUnit.SECONDS);
+        return received.await(WebSocketEngine.DEFAULT_TIMEOUT * 10, TimeUnit.SECONDS);
     }
 
     public String getName() {
@@ -74,7 +72,7 @@ public class TrackingWebSocket extends WebSocketClient {
     public CountDownLatch getReceived() {
         return received;
     }
-    
+
     @Override
     protected void buildTransport() {
         super.buildTransport();

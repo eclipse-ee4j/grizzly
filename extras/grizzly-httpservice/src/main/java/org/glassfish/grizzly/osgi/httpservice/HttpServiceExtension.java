@@ -16,59 +16,50 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.util.Dictionary;
+
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.ServletException;
-import java.util.Dictionary;
 
 /**
- * An extension to the OSGi {@link HttpService} interface allowing the
- * registration/unregistration of Servlet {@link Filter} instances.
+ * An extension to the OSGi {@link HttpService} interface allowing the registration/unregistration of Servlet
+ * {@link Filter} instances.
  *
  * @since 2.3.3
  */
 public interface HttpServiceExtension extends HttpService {
 
-
     /**
      * Registers a {@link Filter} and with the {@link HttpService}.
      *
-     * As this is an extension to the standard {@link HttpService} and there
-     * are no clear rules on how the mapping of filters should occur,
-     * this implementation follows the mapping rules as defined by the Servlet
-     * specification.
+     * As this is an extension to the standard {@link HttpService} and there are no clear rules on how the mapping of
+     * filters should occur, this implementation follows the mapping rules as defined by the Servlet specification.
      *
-     * Additionally, it should be noted that the registered {@link Filter}s are
-     * effectively associated with a particular {@link HttpContext}.  Therefore,
-     * if you wish to have multiple filters associated with a particular
-     * {@link jakarta.servlet.Servlet}, then you should use the same {@link HttpContext}
-     * instance to perform the registration.
+     * Additionally, it should be noted that the registered {@link Filter}s are effectively associated with a particular
+     * {@link HttpContext}. Therefore, if you wish to have multiple filters associated with a particular
+     * {@link jakarta.servlet.Servlet}, then you should use the same {@link HttpContext} instance to perform the
+     * registration.
      *
      * {@link Filter}s will be invoked in registration order.
      *
-     * This method will invoke {@link Filter#init(jakarta.servlet.FilterConfig)} during
-     * the registration process.
+     * This method will invoke {@link Filter#init(jakarta.servlet.FilterConfig)} during the registration process.
      *
-     * When registering a {@link Filter}, take care not to reuse the same Filter
-     * instance across multiple registration invocations.  This could cause issues
-     * when removing the Filter as it may remove more url matching possibilities
-     * than intended.
+     * When registering a {@link Filter}, take care not to reuse the same Filter instance across multiple registration
+     * invocations. This could cause issues when removing the Filter as it may remove more url matching possibilities than
+     * intended.
      *
      * @param filter the {@link Filter} to register.
      * @param urlPattern the url pattern that will invoke this {@link Filter}.
-     * @param initParams the initialization params that will be passed to the
-     *                   filter when {@link Filter#init(jakarta.servlet.FilterConfig)}
-     *                   is invoked.
+     * @param initParams the initialization params that will be passed to the filter when
+     * {@link Filter#init(jakarta.servlet.FilterConfig)} is invoked.
      * @param context the {@link HttpContext} associated with this {@link Filter}.
      *
      * @throws ServletException if an error occurs during {@link Filter} initialization.
      */
-    void registerFilter(final Filter filter,
-                        final String urlPattern,
-                        final Dictionary initParams,
-                        final HttpContext context) throws ServletException;
+    void registerFilter(final Filter filter, final String urlPattern, final Dictionary initParams, final HttpContext context) throws ServletException;
 
     /**
      * Removes the specified {@link Filter} from the service.

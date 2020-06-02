@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,14 +18,17 @@ package org.glassfish.grizzly.websockets;
 
 public abstract class BaseFrameType implements FrameType {
 
+    @Override
     public void setPayload(DataFrame frame, byte[] data) {
         frame.setPayload(data);
     }
 
+    @Override
     public byte[] getBytes(DataFrame dataFrame) {
         return dataFrame.getBytes();
     }
 
+    @Override
     public DataFrame create(boolean fin, byte[] data) {
         return new DataFrame(this, data, fin);
     }

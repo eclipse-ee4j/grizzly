@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,23 +16,21 @@
 
 package org.glassfish.grizzly.http.util;
 
-import org.glassfish.grizzly.utils.Charsets;
-
 import java.util.HashMap;
 import java.util.Map;
+
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.utils.Charsets;
 
 /**
- * This <code>enum</code> encapsulates the HTTP response status and
- * reason phrases as defined by <code>RFC 2616</code>.
- * 
+ * This <code>enum</code> encapsulates the HTTP response status and reason phrases as defined by <code>RFC 2616</code>.
+ *
  * @since 2.0
  */
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class HttpStatus {
-    private static final Map<Integer, HttpStatus> statusMessages =
-        new HashMap<Integer, HttpStatus>();
+    private static final Map<Integer, HttpStatus> statusMessages = new HashMap<>();
 
     public static final HttpStatus CONINTUE_100 = register(100, "Continue");
     public static final HttpStatus SWITCHING_PROTOCOLS_101 = register(101, "Switching Protocols");
@@ -88,7 +86,7 @@ public class HttpStatus {
     public static HttpStatus newHttpStatus(final int statusCode, final String reasonPhrase) {
         return new HttpStatus(statusCode, reasonPhrase);
     }
-    
+
     /**
      * @param statusCode HTTP status code
      *
@@ -102,7 +100,6 @@ public class HttpStatus {
 
         return status;
     }
-
 
     // ------------------------------------------------------------ Constructors
 
@@ -121,11 +118,10 @@ public class HttpStatus {
     // ---------------------------------------------------------- Public Methods
 
     /**
-     * @return <code>true</code> if the specified int status code matches
-     *  the status of this <code>HttpStatus</code>.
+     * @return <code>true</code> if the specified int status code matches the status of this <code>HttpStatus</code>.
      */
     public boolean statusMatches(final int status) {
-        return (status == this.status);
+        return status == this.status;
     }
 
     /**
@@ -145,10 +141,9 @@ public class HttpStatus {
     public String getReasonPhrase() {
         return reasonPhrase;
     }
-    
+
     /**
-     * @return the bytes containing the reason phrase as
-     *  defined by <code>RFC 2616</code>.
+     * @return the bytes containing the reason phrase as defined by <code>RFC 2616</code>.
      */
     public byte[] getReasonPhraseBytes() {
         return reasonPhraseBytes;
@@ -156,6 +151,7 @@ public class HttpStatus {
 
     /**
      * Sets the status and reason phrase on the specified response.
+     * 
      * @param response the response to set the status and reason phrase on.
      */
     public void setValues(final HttpResponsePacket response) {

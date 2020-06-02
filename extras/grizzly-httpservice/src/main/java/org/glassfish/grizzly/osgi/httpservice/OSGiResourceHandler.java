@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,21 +16,21 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
-import org.glassfish.grizzly.osgi.httpservice.util.Logger;
-import org.osgi.service.http.HttpContext;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.MimeType;
+import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.glassfish.grizzly.servlet.HttpServletRequestImpl;
 import org.glassfish.grizzly.servlet.HttpServletResponseImpl;
+import org.osgi.service.http.HttpContext;
 
 /**
  * OSGi Resource {@link HttpHandler}.
@@ -50,18 +50,14 @@ public class OSGiResourceHandler extends HttpHandler implements OSGiHandler {
     /**
      * Default constructor.
      *
-     * @param alias       Registered under this alias.
-     * @param prefix      Internal prefix.
+     * @param alias Registered under this alias.
+     * @param prefix Internal prefix.
      * @param httpContext Backing {@link org.osgi.service.http.HttpContext}.
-     * @param logger      Logger utility.
+     * @param logger Logger utility.
      */
-    public OSGiResourceHandler(String alias,
-                               String prefix,
-                               HttpContext httpContext,
-                               OSGiServletContext servletContext,
-                               Logger logger) {
+    public OSGiResourceHandler(String alias, String prefix, HttpContext httpContext, OSGiServletContext servletContext, Logger logger) {
         super();
-        //noinspection AccessingNonPublicFieldOfAnotherObject
+        // noinspection AccessingNonPublicFieldOfAnotherObject
 //        super.commitErrorResponse = false;
         this.alias = alias;
         this.prefix = prefix;
@@ -113,7 +109,7 @@ public class OSGiResourceHandler extends HttpHandler implements OSGiHandler {
             final InputStream is = urlConnection.getInputStream();
             final OutputStream os = response.getOutputStream();
 
-            byte buff[] = new byte[1024*8];
+            byte buff[] = new byte[1024 * 8];
             int read, total = 0;
             while ((read = is.read(buff)) != -1) {
                 total += read;
@@ -134,22 +130,20 @@ public class OSGiResourceHandler extends HttpHandler implements OSGiHandler {
      * <p/>
      * Calls {@link HttpContext#handleSecurity} to authenticate.
      *
-     * @param request  Request to authenticate.
+     * @param request Request to authenticate.
      * @param response Response to populate if authentication not performed but needed.
      * @param servletContext Context needed for proper HttpServletRequest creation.
      * @return <code>true</code> if authenticated and can proceed with processing, else <code>false</code>.
      * @throws IOException Propagate exception thrown by {@link HttpContext#handleSecurity}.
      */
-    private boolean authenticate(Request request, Response response,
-            OSGiServletContext servletContext) throws IOException {
-        
-        HttpServletRequestImpl servletRequest =
-                new OSGiHttpServletRequest(servletContext);
+    private boolean authenticate(Request request, Response response, OSGiServletContext servletContext) throws IOException {
+
+        HttpServletRequestImpl servletRequest = new OSGiHttpServletRequest(servletContext);
         HttpServletResponseImpl servletResponse = HttpServletResponseImpl.create();
-        
+
         servletResponse.initialize(response, servletRequest);
         servletRequest.initialize(request, servletResponse, servletContext);
-        
+
         return httpContext.handleSecurity(servletRequest, servletResponse);
     }
 
@@ -171,8 +165,7 @@ public class OSGiResourceHandler extends HttpHandler implements OSGiHandler {
 
     private static class OSGiHttpServletRequest extends HttpServletRequestImpl {
 
-        public OSGiHttpServletRequest(
-                OSGiServletContext context) throws IOException {
+        public OSGiHttpServletRequest(OSGiServletContext context) throws IOException {
             super();
             setContextImpl(context);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,10 @@
 
 package org.glassfish.grizzly.websockets;
 
-import org.glassfish.grizzly.utils.Charsets;
-
 import java.io.IOException;
 import java.io.OutputStream;
+
+import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * In memory representation of a websocket frame.
@@ -31,12 +31,12 @@ public class DataFrame {
     public static boolean isDataFrame(final Object o) {
         return o instanceof DataFrame;
     }
-    
+
     private String payload;
     private byte[] bytes;
     private final FrameType type;
     private boolean last = true;
-    
+
     public DataFrame(FrameType type) {
         this.type = type;
     }
@@ -96,14 +96,8 @@ public class DataFrame {
 
     @Override
     public String toString() {
-        return new StringBuilder("DataFrame")
-                .append("{")
-                .append("last=").append(last)
-                .append(", type=").append(type.getClass().getSimpleName())
-                .append(", payload='").append(getTextPayload()).append('\'')
-                .append(", bytes=").append(Utils.toString(bytes))
-                .append('}')
-                .toString();
+        return new StringBuilder("DataFrame").append("{").append("last=").append(last).append(", type=").append(type.getClass().getSimpleName())
+                .append(", payload='").append(getTextPayload()).append('\'').append(", bytes=").append(Utils.toString(bytes)).append('}').toString();
     }
 
     public boolean isLast() {

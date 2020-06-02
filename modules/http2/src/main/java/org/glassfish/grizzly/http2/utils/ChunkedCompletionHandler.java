@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,15 +30,14 @@ public class ChunkedCompletionHandler implements CompletionHandler<WriteResult> 
     protected int chunksCounter = 1;
     private long writtenSize;
 
-    public ChunkedCompletionHandler(
-            final CompletionHandler<WriteResult> parentCompletionHandler) {
+    public ChunkedCompletionHandler(final CompletionHandler<WriteResult> parentCompletionHandler) {
         this.parentCompletionHandler = parentCompletionHandler;
     }
 
     public void incChunks() {
         chunksCounter++;
     }
-    
+
     @Override
     public void cancelled() {
         if (done()) {
@@ -103,11 +102,11 @@ public class ChunkedCompletionHandler implements CompletionHandler<WriteResult> 
         }
 
         isDone = true;
-        
+
         done0();
         return true;
     }
-    
+
     protected void done0() {
     }
 }

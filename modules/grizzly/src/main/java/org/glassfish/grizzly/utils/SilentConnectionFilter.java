@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,21 +16,21 @@
 
 package org.glassfish.grizzly.utils;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
- * Filter, which determines silent connections and closes them.
- * The silent connection is a connection, which didn't send/receive any byte
- * since it was accepted during specified period of time.
- * 
+ * Filter, which determines silent connections and closes them. The silent connection is a connection, which didn't
+ * send/receive any byte since it was accepted during specified period of time.
+ *
  * @author Alexey Stashok
  */
 public final class SilentConnectionFilter extends BaseFilter {
@@ -39,20 +39,16 @@ public final class SilentConnectionFilter extends BaseFilter {
     public static final long UNLIMITED_TIMEOUT = -1;
     public static final long UNSET_TIMEOUT = 0;
 
-    private static final String ATTR_NAME =
-            SilentConnectionFilter.class.getName() + ".silent-connection-attr";
+    private static final String ATTR_NAME = SilentConnectionFilter.class.getName() + ".silent-connection-attr";
 
-    private static final Attribute<Long> silentConnectionAttr =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(ATTR_NAME);
+    private static final Attribute<Long> silentConnectionAttr = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(ATTR_NAME);
 
     private final long timeoutMillis;
     private final DelayedExecutor.DelayQueue<Connection> queue;
 
-    public SilentConnectionFilter(DelayedExecutor executor,
-            long timeout, TimeUnit timeunit) {
+    public SilentConnectionFilter(DelayedExecutor executor, long timeout, TimeUnit timeunit) {
         this.timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, timeunit);
-        queue = executor.createDelayQueue(
-                new DelayedExecutor.Worker<Connection>() {
+        queue = executor.createDelayQueue(new DelayedExecutor.Worker<Connection>() {
 
             @Override
             public boolean doWork(Connection connection) {
@@ -78,7 +74,7 @@ public final class SilentConnectionFilter extends BaseFilter {
     public NextAction handleRead(FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         queue.remove(connection);
-        
+
         return ctx.getInvokeAction();
     }
 

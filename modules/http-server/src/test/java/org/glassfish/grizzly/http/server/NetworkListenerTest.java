@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,13 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -25,21 +30,18 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.glassfish.grizzly.EmptyCompletionHandler;
 
+import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.PortRange;
 import org.glassfish.grizzly.http.server.util.Globals;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.Futures;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
-import static org.junit.Assert.*;
 /**
  * {@link NetworkListener} tests.
- * 
+ *
  * @author Alexey Stashok
  */
 public class NetworkListenerTest {
@@ -79,8 +81,7 @@ public class NetworkListenerTest {
     public void testPortRange() throws Exception {
         final int RANGE = 10;
         final PortRange portRange = new PortRange(PORT, PORT + RANGE);
-        NetworkListener listener = new NetworkListener("set-port", "0.0.0.0",
-                portRange);
+        NetworkListener listener = new NetworkListener("set-port", "0.0.0.0", portRange);
         HttpServer httpServer = new HttpServer();
         httpServer.addListener(listener);
 
@@ -110,15 +111,13 @@ public class NetworkListenerTest {
         final NetworkListener listener = server.getListener("grizzly");
         listener.setTransactionTimeout(5);
         final AtomicReference<Exception> timeoutFailed = new AtomicReference<>();
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @Override
-                    public void service(Request request, Response response) throws Exception {
-                        Thread.sleep(15000);
-                        timeoutFailed.compareAndSet(null, new IllegalStateException());
-                    }
-                }, "/test"
-        );
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                Thread.sleep(15000);
+                timeoutFailed.compareAndSet(null, new IllegalStateException());
+            }
+        }, "/test");
         try {
             server.start();
             URL url = new URL("http://localhost:" + PORT + "/test");
@@ -128,12 +127,12 @@ public class NetworkListenerTest {
             c.getResponseCode(); // cause the client to block
             final long stop = System.currentTimeMillis();
             assertNull(timeoutFailed.get());
-            assertTrue((stop - start) < 15000);
+            assertTrue(stop - start < 15000);
         } finally {
             server.shutdownNow();
         }
     }
-    
+
     @Test
     public void testImmediateGracefulShutdown() throws Exception {
         HttpServer server = HttpServer.createSimpleServer("/tmp", PORT);
@@ -154,27 +153,25 @@ public class NetworkListenerTest {
 
         future.get(10, TimeUnit.SECONDS);
     }
-    
+
     @Test
     public void testGracefulShutdown() throws Exception {
         final String msg = "Hello World";
         final byte[] msgBytes = msg.getBytes(Charsets.UTF8_CHARSET);
-        
+
         final HttpServer server = HttpServer.createSimpleServer("/tmp", PORT);
         addTestHandler(msgBytes, server);
         try {
             server.start();
             URL url = new URL("http://localhost:" + PORT + "/test");
             HttpURLConnection c = (HttpURLConnection) url.openConnection();
-            
+
             assertEquals(200, c.getResponseCode());
             assertEquals(msgBytes.length, c.getContentLength());
-            
+
             Future<HttpServer> gracefulFuture = server.shutdown();
-            
-            final BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(c.getInputStream(),
-                    Charsets.UTF8_CHARSET));
+
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(c.getInputStream(), Charsets.UTF8_CHARSET));
             final String content = reader.readLine();
             assertEquals(msg, content);
 
@@ -185,20 +182,18 @@ public class NetworkListenerTest {
     }
 
     private void addTestHandler(final byte[] msgBytes, final HttpServer server) {
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @SuppressWarnings("Duplicates")
-                    @Override
-                    public void service(Request request, Response response) throws Exception {
-                        response.setContentType("text/plain");
-                        response.setCharacterEncoding(Charsets.UTF8_CHARSET.name());
-                        response.setContentLength(msgBytes.length);
-                        response.flush();
-                        Thread.sleep(2000);
-                        response.getOutputStream().write(msgBytes);
-                    }
-                }, "/test"
-        );
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @SuppressWarnings("Duplicates")
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                response.setContentType("text/plain");
+                response.setCharacterEncoding(Charsets.UTF8_CHARSET.name());
+                response.setContentLength(msgBytes.length);
+                response.flush();
+                Thread.sleep(2000);
+                response.getOutputStream().write(msgBytes);
+            }
+        }, "/test");
     }
 
     @Test
@@ -218,9 +213,7 @@ public class NetworkListenerTest {
 
             Future<HttpServer> gracefulFuture = server.shutdown(3, TimeUnit.SECONDS);
 
-            final BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(c.getInputStream(),
-                                          Charsets.UTF8_CHARSET));
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(c.getInputStream(), Charsets.UTF8_CHARSET));
             final String content = reader.readLine();
             assertEquals(msg, content);
 
@@ -245,12 +238,9 @@ public class NetworkListenerTest {
             assertEquals(200, c.getResponseCode());
             assertEquals(msgBytes.length, c.getContentLength());
 
-            Future<HttpServer> gracefulFuture =
-                    server.shutdown(1, TimeUnit.SECONDS);
+            Future<HttpServer> gracefulFuture = server.shutdown(1, TimeUnit.SECONDS);
 
-            final BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(c.getInputStream(),
-                                          Charsets.UTF8_CHARSET));
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(c.getInputStream(), Charsets.UTF8_CHARSET));
             final String content = reader.readLine();
             assertNull(content);
 
@@ -264,6 +254,7 @@ public class NetworkListenerTest {
     public void testDefaultSessionCookieName() throws Exception {
         testCookeName(null);
     }
+
     @Test
     public void testCustomSessionCookieName() throws Exception {
         testCookeName("CookieMonster");
@@ -280,20 +271,17 @@ public class NetworkListenerTest {
             custom.setSessionCookieName(cookieName);
             server.getListener("grizzly").setSessionManager(custom);
         }
-        server.getServerConfiguration().addHttpHandler(
-                new HttpHandler() {
-                    @Override
-                    public void service(Request request, Response response)
-                            throws Exception {
-                        System.out.println(request.getSessionCookieName());
-                        if (cookieName != null) {
-                            passed.compareAndSet(false, request.getSessionCookieName().equals(cookieName));
-                        } else {
-                            passed.compareAndSet(false, Globals.SESSION_COOKIE_NAME.equals(request.getSessionCookieName()));
-                        }
-                    }
-                }, "/test"
-        );
+        server.getServerConfiguration().addHttpHandler(new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                System.out.println(request.getSessionCookieName());
+                if (cookieName != null) {
+                    passed.compareAndSet(false, request.getSessionCookieName().equals(cookieName));
+                } else {
+                    passed.compareAndSet(false, Globals.SESSION_COOKIE_NAME.equals(request.getSessionCookieName()));
+                }
+            }
+        }, "/test");
         try {
             server.start();
             URL url = new URL("http://localhost:" + PORT + "/test");
@@ -301,8 +289,7 @@ public class NetworkListenerTest {
             assertEquals(200, c.getResponseCode());
             assertTrue(passed.get());
 
-            Future<HttpServer> gracefulFuture =
-                    server.shutdown(1, TimeUnit.SECONDS);
+            Future<HttpServer> gracefulFuture = server.shutdown(1, TimeUnit.SECONDS);
 
             assertNotNull(gracefulFuture.get(5, TimeUnit.SECONDS));
         } finally {

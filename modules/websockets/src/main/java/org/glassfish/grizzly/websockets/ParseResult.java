@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,8 +27,7 @@ import org.glassfish.grizzly.ThreadCache;
  */
 public class ParseResult implements Cacheable {
     // thread-local object cache
-    private static final ThreadCache.CachedTypeIndex<ParseResult> CACHE_IDX =
-        ThreadCache.obtainIndex(ParseResult.class, 1);
+    private static final ThreadCache.CachedTypeIndex<ParseResult> CACHE_IDX = ThreadCache.obtainIndex(ParseResult.class, 1);
     // is complete
     private boolean isComplete;
     // remainder buffer (might not be null only if parsing was completed).
@@ -56,11 +55,11 @@ public class ParseResult implements Cacheable {
     }
 
     /**
-     * Get the parsing remainder {@link Buffer}. May not be null only in case, when parsing was completed, but some data
-     * is still ready for parsing.
+     * Get the parsing remainder {@link Buffer}. May not be null only in case, when parsing was completed, but some data is
+     * still ready for parsing.
      *
-     * @return the parsing remainder {@link Buffer}. May not be null only in case, when parsing was completed, but some
-     *         data is still ready for parsing.
+     * @return the parsing remainder {@link Buffer}. May not be null only in case, when parsing was completed, but some data
+     * is still ready for parsing.
      */
     public Buffer getRemainder() {
         return remainder;

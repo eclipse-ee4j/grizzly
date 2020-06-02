@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,50 +19,46 @@ package org.glassfish.grizzly.http.server;
 import org.glassfish.grizzly.http.Cookie;
 
 /**
- * HTTP session manager abstraction responsible for keeping track of HTTP session
- * associated with a user {@link Request}.
- * 
+ * HTTP session manager abstraction responsible for keeping track of HTTP session associated with a user
+ * {@link Request}.
+ *
  * @since 2.3.17
  */
 public interface SessionManager {
     /**
-     * Return the session associated with this Request, creating one
-     * if necessary and requested.
+     * Return the session associated with this Request, creating one if necessary and requested.
      *
      * @param request {@link Request}
      * @param requestedSessionId the session id associated with the {@link Request}
-     * 
+     *
      * @return {@link Session}
      */
-    Session getSession(final Request request,
-                       final String requestedSessionId);
+    Session getSession(final Request request, final String requestedSessionId);
 
     /**
      * Create a new {@link Session} associated with the {@link Request}.
-     * 
+     *
      * @param request {@link Request}
      * @return a new {@link Session} associated with the {@link Request}
      */
     Session createSession(final Request request);
-    
+
     /**
-     * Change the {@link Session} id and return the original id. 
+     * Change the {@link Session} id and return the original id.
      *
      * @param request {@link Request}
      * @param session {@link Session}
      * @return the old session id
      */
-    String changeSessionId(final Request request,
-                           final Session session);
-    
+    String changeSessionId(final Request request, final Session session);
+
     /**
      * Configure session cookie before adding it to the {@link Request#getResponse()}.
-     * 
+     *
      * @param request
-     * @param cookie 
+     * @param cookie
      */
-    void configureSessionCookie(final Request request,
-                                final Cookie cookie);
+    void configureSessionCookie(final Request request, final Cookie cookie);
 
     /**
      * Set the session cookie name that will be used by sessions created by this {@link SessionManager}.

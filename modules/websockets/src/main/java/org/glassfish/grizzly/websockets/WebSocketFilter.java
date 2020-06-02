@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,19 +16,17 @@
 
 package org.glassfish.grizzly.websockets;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
-
-import java.io.IOException;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 
 public class WebSocketFilter extends BaseWebSocketFilter {
 
-
     // ------------------------------------------------------------ Constructors
-
 
     public WebSocketFilter() {
         super();
@@ -37,7 +35,6 @@ public class WebSocketFilter extends BaseWebSocketFilter {
     public WebSocketFilter(long wsTimeoutInSeconds) {
         super(wsTimeoutInSeconds);
     }
-
 
     // ---------------------------------------- Methods from BaseWebSocketFilter
 
@@ -51,13 +48,11 @@ public class WebSocketFilter extends BaseWebSocketFilter {
     /**
      * Handle server-side websocket handshake
      *
-     * @param ctx            {@link FilterChainContext}
+     * @param ctx {@link FilterChainContext}
      * @param requestContent HTTP message
      * @throws {@link IOException}
      */
-    private NextAction handleServerHandshake(final FilterChainContext ctx,
-                                             final HttpContent requestContent)
-            throws IOException {
+    private NextAction handleServerHandshake(final FilterChainContext ctx, final HttpContent requestContent) throws IOException {
 
         // get HTTP request headers
         final HttpRequestPacket request = (HttpRequestPacket) requestContent.getHttpHeader();
@@ -76,17 +71,14 @@ public class WebSocketFilter extends BaseWebSocketFilter {
 
     }
 
-    protected boolean doServerUpgrade(final FilterChainContext ctx,
-                                      final HttpContent requestContent) throws IOException {
+    protected boolean doServerUpgrade(final FilterChainContext ctx, final HttpContent requestContent) throws IOException {
         return !WebSocketEngine.getEngine().upgrade(ctx, requestContent);
     }
-    
 
-    private static HttpResponsePacket composeHandshakeError(final HttpRequestPacket request,
-                                                            final HandshakeException e) {
+    private static HttpResponsePacket composeHandshakeError(final HttpRequestPacket request, final HandshakeException e) {
         final HttpResponsePacket response = request.getResponse();
         response.setStatus(e.getCode());
         response.setReasonPhrase(e.getMessage());
         return response;
-    }    
+    }
 }

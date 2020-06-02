@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Appendable;
 import org.glassfish.grizzly.Appender;
 import org.glassfish.grizzly.Buffer;
@@ -46,7 +47,7 @@ import org.glassfish.grizzly.utils.Holder;
  *
  * @see Context
  * @see FilterChain
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("deprecation")
@@ -61,15 +62,13 @@ public class FilterChainContext implements AttributeStorage {
         NONE, ACCEPT, CONNECT, READ, WRITE, EVENT, CLOSE
     }
 
-    private static final ThreadCache.CachedTypeIndex<FilterChainContext> CACHE_IDX =
-            ThreadCache.obtainIndex(FilterChainContext.class, 8);
+    private static final ThreadCache.CachedTypeIndex<FilterChainContext> CACHE_IDX = ThreadCache.obtainIndex(FilterChainContext.class, 8);
 
     public static FilterChainContext create(final Connection connection) {
         return create(connection, connection);
     }
 
-    public static FilterChainContext create(final Connection connection,
-            final Closeable closeable) {
+    public static FilterChainContext create(final Connection connection, final Closeable closeable) {
         FilterChainContext context = ThreadCache.takeFromCache(CACHE_IDX);
         if (context == null) {
             context = new FilterChainContext();
@@ -78,7 +77,7 @@ public class FilterChainContext implements AttributeStorage {
         context.setConnection(connection);
         context.setCloseable(closeable);
         context.getTransportContext().isBlocking = connection.isBlocking();
-        
+
         return context;
     }
 
@@ -105,7 +104,7 @@ public class FilterChainContext implements AttributeStorage {
     final InternalContextImpl internalContext = new InternalContextImpl(this);
 
     final TransportContext transportFilterContext = new TransportContext();
-    
+
     /**
      * Context task state
      */
@@ -114,19 +113,18 @@ public class FilterChainContext implements AttributeStorage {
     private Operation operation = Operation.NONE;
 
     /**
-     * {@link CompletionHandler}, which will be notified, when operation will be
-     * complete. For WRITE it means the data will be written on wire, for other
-     * operations - the last Filter has finished the processing.
+     * {@link CompletionHandler}, which will be notified, when operation will be complete. For WRITE it means the data will
+     * be written on wire, for other operations - the last Filter has finished the processing.
      */
     protected CompletionHandler<FilterChainContext> operationCompletionHandler;
-    
+
     private final Runnable contextRunnable;
 
     /**
      * Context associated message
      */
     private Object message;
-    
+
     /**
      * The {@link Closeable} object associated with the filter chain processing
      */
@@ -138,16 +136,14 @@ public class FilterChainContext implements AttributeStorage {
     protected FilterChainEvent event;
 
     /**
-     * {@link Holder}, which contains address, associated with the
-     * current {@link org.glassfish.grizzly.IOEvent} processing.
+     * {@link Holder}, which contains address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
      */
     private Holder<?> addressHolder;
 
     NextAction predefinedNextAction;
 
     /**
-     * Index of the currently executing {@link Filter} in
-     * the {@link FilterChainContext} list.
+     * Index of the currently executing {@link Filter} in the {@link FilterChainContext} list.
      */
     private int filterIdx;
 
@@ -155,15 +151,13 @@ public class FilterChainContext implements AttributeStorage {
     private int endIdx;
 
     private final StopAction cachedStopAction = new StopAction();
-    
+
     private final InvokeAction cachedInvokeAction = new InvokeAction();
 
-    private final List<CompletionListener> completionListeners =
-            new ArrayList<CompletionListener>(2);
+    private final List<CompletionListener> completionListeners = new ArrayList<>(2);
 
-    private final List<CopyListener> copyListeners =
-            new ArrayList<CopyListener>(2);
-    
+    private final List<CopyListener> copyListeners = new ArrayList<>(2);
+
     public FilterChainContext() {
         filterIdx = NO_FILTER_INDEX;
 
@@ -188,7 +182,7 @@ public class FilterChainContext implements AttributeStorage {
      */
     public Runnable suspend() {
         internalContext.suspend();
-        
+
         this.state = State.SUSPEND;
         return getRunnable();
     }
@@ -203,20 +197,18 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * Resume processing of the current task starting from the Filter, which
-     * follows the Filter, which suspend the processing.
+     * Resume processing of the current task starting from the Filter, which follows the Filter, which suspend the
+     * processing.
      */
     public void resumeNext() {
         resume(getInvokeAction());
     }
-    
+
     /**
-     * Resume the current FilterChain task processing by completing the current
-     * {@link Filter} (the Filter, which suspended the processing) with the
-     * passed {@link NextAction}.
+     * Resume the current FilterChain task processing by completing the current {@link Filter} (the Filter, which suspended
+     * the processing) with the passed {@link NextAction}.
      *
-     * @param nextAction the {@link NextAction}, based on which {@link FilterChain}
-     *                   will continue processing.
+     * @param nextAction the {@link NextAction}, based on which {@link FilterChain} will continue processing.
      */
     public void resume(final NextAction nextAction) {
         internalContext.resume();
@@ -233,28 +225,23 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * This method invocation suggests the {@link FilterChain} to create a
-     * copy of this {@link FilterChainContext} and resume/fork its execution
-     * starting from the current {@link Filter}.
+     * This method invocation suggests the {@link FilterChain} to create a copy of this {@link FilterChainContext} and
+     * resume/fork its execution starting from the current {@link Filter}.
      */
     public void fork() {
         fork(null);
     }
 
     /**
-     * This method invocation suggests the {@link FilterChain} to create a
-     * copy of this {@link FilterChainContext} and resume/fork its execution
-     * starting from the current {@link Filter}.
+     * This method invocation suggests the {@link FilterChain} to create a copy of this {@link FilterChainContext} and
+     * resume/fork its execution starting from the current {@link Filter}.
      * <p/>
-     * If <code>nextAction</code> parameter is not null - then its value is treated
-     * as a result of the current {@link Filter} execution on the forked
-     * {@link FilterChain} processing. So during the forked {@link FilterChain}
-     * processing the current {@link Filter} will not be invoked, but
-     * the processing will be continued as if the current {@link Filter}
-     * returned <code>nextAction</code> as a result.
-     * For example if we call <code>fork(ctx.getInvokeAction());</code> the forked
-     * {@link FilterChain} processing will start with the next {@link Filter} in
-     * chain.
+     * If <code>nextAction</code> parameter is not null - then its value is treated as a result of the current
+     * {@link Filter} execution on the forked {@link FilterChain} processing. So during the forked {@link FilterChain}
+     * processing the current {@link Filter} will not be invoked, but the processing will be continued as if the current
+     * {@link Filter} returned <code>nextAction</code> as a result. For example if we call
+     * <code>fork(ctx.getInvokeAction());</code> the forked {@link FilterChain} processing will start with the next
+     * {@link Filter} in chain.
      */
     public void fork(final NextAction nextAction) {
         try {
@@ -267,6 +254,7 @@ public class FilterChainContext implements AttributeStorage {
 
     /**
      * Get the current processing task state.
+     * 
      * @return the current processing task state.
      */
     public State state() {
@@ -333,12 +321,10 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * Get the {@link Closeable}, associated with the current processing.
-     * The {@link Closeable} object might be used to close/terminate an entity
-     * associated with the {@link FilterChain} processing in response to an
-     * error occurred during the processing.
-     * If not customized the {@link Closeable} object represents a {@link Connection}
-     * associated with the {@link FilterChain} processing.
+     * Get the {@link Closeable}, associated with the current processing. The {@link Closeable} object might be used to
+     * close/terminate an entity associated with the {@link FilterChain} processing in response to an error occurred during
+     * the processing. If not customized the {@link Closeable} object represents a {@link Connection} associated with the
+     * {@link FilterChain} processing.
      *
      * @return {@link Closeable} object, associated with the current processing.
      */
@@ -347,15 +333,13 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * Set the {@link Closeable}, associated with the current processing.
-     * The {@link Closeable} object might be used to close/terminate an entity
-     * associated with the {@link FilterChain} processing in response to an
-     * error occurred during the processing.
-     * If not customized the {@link Closeable} object represents a {@link Connection}
-     * associated with the {@link FilterChain} processing.
+     * Set the {@link Closeable}, associated with the current processing. The {@link Closeable} object might be used to
+     * close/terminate an entity associated with the {@link FilterChain} processing in response to an error occurred during
+     * the processing. If not customized the {@link Closeable} object represents a {@link Connection} associated with the
+     * {@link FilterChain} processing.
      *
-     * @param closeable {@link Closeable} object, associated with the current processing.
-     *          If <tt>null</tt> the {@link #getConnection()} value will be assigned
+     * @param closeable {@link Closeable} object, associated with the current processing. If <tt>null</tt> the
+     * {@link #getConnection()} value will be assigned
      */
     void setCloseable(final Closeable closeable) {
         this.closeable = closeable != null ? closeable : getConnection();
@@ -363,10 +347,9 @@ public class FilterChainContext implements AttributeStorage {
 
     /**
      * Get message object, associated with the current processing.
-     * 
-     * Usually {@link FilterChain} represents sequence of parser and process
-     * {@link Filter}s. Each parser can change the message representation until
-     * it will come to processor {@link Filter}.
+     *
+     * Usually {@link FilterChain} represents sequence of parser and process {@link Filter}s. Each parser can change the
+     * message representation until it will come to processor {@link Filter}.
      *
      * @return message object, associated with the current processing.
      */
@@ -378,9 +361,8 @@ public class FilterChainContext implements AttributeStorage {
     /**
      * Set message object, associated with the current processing.
      *
-     * Usually {@link FilterChain} represents sequence of parser and process
-     * {@link Filter}s. Each parser can change the message representation until
-     * it will come to processor {@link Filter}.
+     * Usually {@link FilterChain} represents sequence of parser and process {@link Filter}s. Each parser can change the
+     * message representation until it will come to processor {@link Filter}.
      *
      * @param message message object, associated with the current processing.
      */
@@ -389,46 +371,46 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * Get a {@link Holder}, which contains address, associated with the
-     * current {@link org.glassfish.grizzly.IOEvent} processing.
-     * 
-     * When we process {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address,
-     * or when process {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
-     * 
-     * @return {@link Holder}, which contains address, associated with the
-     * current {@link org.glassfish.grizzly.IOEvent} processing.
+     * Get a {@link Holder}, which contains address, associated with the current {@link org.glassfish.grizzly.IOEvent}
+     * processing.
+     *
+     * When we process {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address, or when process
+     * {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
+     *
+     * @return {@link Holder}, which contains address, associated with the current {@link org.glassfish.grizzly.IOEvent}
+     * processing.
      */
     public Holder<?> getAddressHolder() {
         return addressHolder;
     }
 
-
     /**
-     * Set address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
-     * When we process {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address,
-     * or when process {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
+     * Set address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing. When we process
+     * {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address, or when process
+     * {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
      *
-     * @param addressHolder {@link Holder}, which contains address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
+     * @param addressHolder {@link Holder}, which contains address, associated with the current
+     * {@link org.glassfish.grizzly.IOEvent} processing.
      */
     public void setAddressHolder(final Holder<?> addressHolder) {
         this.addressHolder = addressHolder;
     }
 
     /**
-     * Get address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
-     * When we process {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address,
-     * or when process {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
-     * 
+     * Get address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing. When we process
+     * {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address, or when process
+     * {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
+     *
      * @return address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
      */
     public Object getAddress() {
         return addressHolder != null ? addressHolder.get() : null;
     }
-    
+
     /**
-     * Set address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
-     * When we process {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address,
-     * or when process {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
+     * Set address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing. When we process
+     * {@link org.glassfish.grizzly.IOEvent#READ} event - it represents sender address, or when process
+     * {@link org.glassfish.grizzly.IOEvent#WRITE} - address of receiver.
      *
      * @param address address, associated with the current {@link org.glassfish.grizzly.IOEvent} processing.
      */
@@ -451,6 +433,7 @@ public class FilterChainContext implements AttributeStorage {
 
     /**
      * Get the general Grizzly {@link Context} this filter context wraps.
+     * 
      * @return the general Grizzly {@link Context} this filter context wraps.
      */
     public final Context getInternalContext() {
@@ -464,187 +447,158 @@ public class FilterChainContext implements AttributeStorage {
     void setOperation(Operation operation) {
         this.operation = operation;
     }
-    
+
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in chain.
      *
-     * Normally, after receiving this instruction from {@link Filter},
-     * {@link FilterChain} executes next filter.
+     * Normally, after receiving this instruction from {@link Filter}, {@link FilterChain} executes next filter.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in
+     * chain.
      */
     public NextAction getInvokeAction() {
         return INVOKE_ACTION;
     }
 
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in chain.
      *
-     * Normally, after receiving this instruction from {@link Filter},
-     * {@link FilterChain} executes next filter.
+     * Normally, after receiving this instruction from {@link Filter}, {@link FilterChain} executes next filter.
      *
-     * @param unparsedChunk signals, that there is some unparsed data remaining
-     * in the source message, so {@link FilterChain} could be rerun.
+     * @param unparsedChunk signals, that there is some unparsed data remaining in the source message, so
+     * {@link FilterChain} could be rerun.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in
+     * chain.
      */
     public NextAction getInvokeAction(final Object unparsedChunk) {
         if (unparsedChunk == null) {
             return INVOKE_ACTION;
         }
-        
+
         cachedInvokeAction.setUnparsedChunk(unparsedChunk);
         return cachedInvokeAction;
     }
 
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in chain.
      *
-     * Normally, after receiving this instruction from {@link Filter},
-     * {@link FilterChain} executes next filter.
-     * 
-     * @param incompleteChunk signals, that there is a data chunk remaining,
-     * which doesn't represent complete message. As more data becomes available
-     * but before {@link FilterChain} calls the current {@link Filter},
-     * it will check if the {@link Filter} has any data stored after the
-     * last invocation. If a remainder is present it will append the new data
+     * Normally, after receiving this instruction from {@link Filter}, {@link FilterChain} executes next filter.
+     *
+     * @param incompleteChunk signals, that there is a data chunk remaining, which doesn't represent complete message. As
+     * more data becomes available but before {@link FilterChain} calls the current {@link Filter}, it will check if the
+     * {@link Filter} has any data stored after the last invocation. If a remainder is present it will append the new data
      * to the stored one and pass the result as the FilterChainContext message.
-     * 
-     * @param appender the {@link org.glassfish.grizzly.Appender}, which knows
-     * how to append chunks of type <code>&lt;E&gt;</code>.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to
-     * process next {@link Filter} in chain.
-     * 
-     * @throws IllegalArgumentException if appender is <code>null</code> and
-     * remainder's type is not {@link Buffer} or {@link Appendable}.
+     * @param appender the {@link org.glassfish.grizzly.Appender}, which knows how to append chunks of type
+     * <code>&lt;E&gt;</code>.
+     *
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to process next {@link Filter} in
+     * chain.
+     *
+     * @throws IllegalArgumentException if appender is <code>null</code> and remainder's type is not {@link Buffer} or
+     * {@link Appendable}.
      */
     @SuppressWarnings("unchecked")
-    public <E> NextAction getInvokeAction(final E incompleteChunk,
-            org.glassfish.grizzly.Appender<E> appender) {
+    public <E> NextAction getInvokeAction(final E incompleteChunk, org.glassfish.grizzly.Appender<E> appender) {
 
         if (incompleteChunk == null) {
             return INVOKE_ACTION;
         }
-        
+
         if (appender == null) {
             if (incompleteChunk instanceof Buffer) {
                 appender = (Appender<E>) Buffers.getBufferAppender(true);
             } else if (!(incompleteChunk instanceof Appendable)) {
-                throw new IllegalArgumentException("Remainder has to be either "
-                        + Buffer.class.getName() + " or " + Appendable.class.getName() +
-                        " but was " + incompleteChunk.getClass().getName());
+                throw new IllegalArgumentException("Remainder has to be either " + Buffer.class.getName() + " or " + Appendable.class.getName() + " but was "
+                        + incompleteChunk.getClass().getName());
             }
         }
-        
+
         cachedInvokeAction.setIncompleteChunk(incompleteChunk, appender);
         return cachedInvokeAction;
     }
-    
+
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain}
-     * to stop executing phase.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} to stop executing phase.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain}
-     * to stop executing phase.
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to stop executing phase.
      */
     public NextAction getStopAction() {
         return STOP_ACTION;
     }
 
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain}
-     * stop executing phase.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} stop executing phase.
      *
-     * @param incompleteChunk signals, that there is a data chunk remaining,
-     * which doesn't represent complete message. As more data becomes available
-     * but before {@link FilterChain} calls the current {@link Filter},
-     * it will check if the {@link Filter} has any data stored after the
-     * last invocation. If a remainder is present it will append the new data
+     * @param incompleteChunk signals, that there is a data chunk remaining, which doesn't represent complete message. As
+     * more data becomes available but before {@link FilterChain} calls the current {@link Filter}, it will check if the
+     * {@link Filter} has any data stored after the last invocation. If a remainder is present it will append the new data
      * to the stored one and pass the result as the FilterChainContext message.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain}
-     * to stop executing phase.
-     * 
-     * @throws IllegalArgumentException if remainder's type is not {@link Buffer} or
-     * {@link Appendable}.
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to stop executing phase.
+     *
+     * @throws IllegalArgumentException if remainder's type is not {@link Buffer} or {@link Appendable}.
      */
     public NextAction getStopAction(final Object incompleteChunk) {
         if (incompleteChunk instanceof Buffer) {
-            return getStopAction((Buffer) incompleteChunk,
-                    Buffers.getBufferAppender(true));
+            return getStopAction((Buffer) incompleteChunk, Buffers.getBufferAppender(true));
         }
 
-        return getStopAction(incompleteChunk, null);            
+        return getStopAction(incompleteChunk, null);
     }
-    
+
     /**
-     * Get {@link NextAction} implementation, which instructs {@link FilterChain}
-     * stop executing phase.
-     * 
-     * @param incompleteChunk signals, that there is a data chunk remaining,
-     * which doesn't represent complete message. As more data becomes available
-     * but before {@link FilterChain} calls the current {@link Filter},
-     * it will check if the {@link Filter} has any data stored after the
-     * last invocation. If a remainder is present it will append the new data
-     * to the stored one and pass the result as the FilterChainContext message.
-     * 
-     * @param appender the {@link org.glassfish.grizzly.Appender}, which knows
-     * how to append chunks of type <code>&lt;E&gt;</code>.
+     * Get {@link NextAction} implementation, which instructs {@link FilterChain} stop executing phase.
      *
-     * @return {@link NextAction} implementation, which instructs {@link FilterChain}
-     * to stop executing phase.
-     * 
-     * @throws IllegalArgumentException if appender is <code>null</code> and
-     * remainder's type is not {@link Buffer} or {@link Appendable}.
+     * @param incompleteChunk signals, that there is a data chunk remaining, which doesn't represent complete message. As
+     * more data becomes available but before {@link FilterChain} calls the current {@link Filter}, it will check if the
+     * {@link Filter} has any data stored after the last invocation. If a remainder is present it will append the new data
+     * to the stored one and pass the result as the FilterChainContext message.
+     *
+     * @param appender the {@link org.glassfish.grizzly.Appender}, which knows how to append chunks of type
+     * <code>&lt;E&gt;</code>.
+     *
+     * @return {@link NextAction} implementation, which instructs {@link FilterChain} to stop executing phase.
+     *
+     * @throws IllegalArgumentException if appender is <code>null</code> and remainder's type is not {@link Buffer} or
+     * {@link Appendable}.
      */
-    public <E> NextAction getStopAction(final E incompleteChunk,
-            final org.glassfish.grizzly.Appender<E> appender) {
+    public <E> NextAction getStopAction(final E incompleteChunk, final org.glassfish.grizzly.Appender<E> appender) {
 
         if (incompleteChunk == null) {
             return STOP_ACTION;
         }
-        
+
         if (appender == null && !(incompleteChunk instanceof Appendable)) {
-                throw new IllegalArgumentException("Remainder has to be either "
-                        + Buffer.class.getName() + " or " + Appendable.class.getName() +
-                        " but was " + incompleteChunk.getClass().getName());
+            throw new IllegalArgumentException("Remainder has to be either " + Buffer.class.getName() + " or " + Appendable.class.getName() + " but was "
+                    + incompleteChunk.getClass().getName());
         }
-        
+
         cachedStopAction.setIncompleteChunk(incompleteChunk, appender);
         return cachedStopAction;
     }
 
     /**
-     * @return {@link NextAction} implementation, which suggests the {@link FilterChain}
-     *         to forget about the current {@link FilterChainContext}, create a copy of it
-     *         and continue/fork {@link FilterChain} processing using the copied
-     *         {@link FilterChainContext} starting from the current {@link Filter}.
+     * @return {@link NextAction} implementation, which suggests the {@link FilterChain} to forget about the current
+     * {@link FilterChainContext}, create a copy of it and continue/fork {@link FilterChain} processing using the copied
+     * {@link FilterChainContext} starting from the current {@link Filter}.
      */
     public NextAction getForkAction() {
         return getForkAction(null);
     }
 
     /**
-     * @return {@link NextAction} implementation, which suggests the {@link FilterChain}
-     *         to forget about the current {@link FilterChainContext}, create a copy of it
-     *         and continue/fork {@link FilterChain} processing using the copied
-     *         {@link FilterChainContext} starting from the current {@link Filter}.
-     *         <p/>
-     *         If <code>nextAction</code> parameter is not null - then its value is treated
-     *         as a result of the current {@link Filter} execution on the forked
-     *         {@link FilterChain} processing. So during the forked {@link FilterChain}
-     *         processing the current {@link Filter} will not be invoked, but
-     *         the processing will be continued as if the current {@link Filter}
-     *         returned <code>nextAction</code> as a result.
-     *         For example if we call <code>fork(ctx.getInvokeAction());</code> the forked
-     *         {@link FilterChain} processing will start with the next {@link Filter} in
-     *         chain.
+     * @return {@link NextAction} implementation, which suggests the {@link FilterChain} to forget about the current
+     * {@link FilterChainContext}, create a copy of it and continue/fork {@link FilterChain} processing using the copied
+     * {@link FilterChainContext} starting from the current {@link Filter}.
+     * <p/>
+     * If <code>nextAction</code> parameter is not null - then its value is treated as a result of the current
+     * {@link Filter} execution on the forked {@link FilterChain} processing. So during the forked {@link FilterChain}
+     * processing the current {@link Filter} will not be invoked, but the processing will be continued as if the current
+     * {@link Filter} returned <code>nextAction</code> as a result. For example if we call
+     * <code>fork(ctx.getInvokeAction());</code> the forked {@link FilterChain} processing will start with the next
+     * {@link Filter} in chain.
      */
     public NextAction getForkAction(final NextAction nextAction) {
         final FilterChainContext contextCopy = copy();
@@ -656,33 +610,30 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * @return {@link NextAction} implementation, which instructs the {@link FilterChain}
-     * to suspend the current {@link FilterChainContext} and invoke similar logic
-     * as instructed by {@link StopAction} with a clean {@link FilterChainContext}.
-     * 
+     * @return {@link NextAction} implementation, which instructs the {@link FilterChain} to suspend the current
+     * {@link FilterChainContext} and invoke similar logic as instructed by {@link StopAction} with a clean
+     * {@link FilterChainContext}.
+     *
      * @deprecated use {@link #getForkAction()}
      */
+    @Deprecated
     public NextAction getSuspendingStopAction() {
         return getForkAction();
     }
-    
+
     /**
-     * Get {@link NextAction}, which instructs {@link FilterChain} to suspend filter
-     * chain execution.
+     * Get {@link NextAction}, which instructs {@link FilterChain} to suspend filter chain execution.
      *
-     * @return {@link NextAction}, which instructs {@link FilterChain} to suspend
-     * filter chain execution.
+     * @return {@link NextAction}, which instructs {@link FilterChain} to suspend filter chain execution.
      */
     public NextAction getSuspendAction() {
         return SUSPEND_ACTION;
     }
 
     /**
-     * Get {@link NextAction}, which instructs {@link FilterChain} to rerun the
-     * filter.
+     * Get {@link NextAction}, which instructs {@link FilterChain} to rerun the filter.
      *
-     * @return {@link NextAction}, which instructs {@link FilterChain} to rerun the
-     * filter.
+     * @return {@link NextAction}, which instructs {@link FilterChain} to rerun the filter.
      */
     public NextAction getRerunFilterAction() {
         return RERUN_FILTER_ACTION;
@@ -698,9 +649,8 @@ public class FilterChainContext implements AttributeStorage {
      * @throws IOException if an I/O error occurs.
      */
     public ReadResult read() throws IOException {
-        final FilterChainContext newContext =
-                getFilterChain().obtainFilterChainContext(getConnection());
-        
+        final FilterChainContext newContext = getFilterChain().obtainFilterChainContext(getConnection());
+
         newContext.closeable = closeable;
         newContext.operation = Operation.READ;
         newContext.transportFilterContext.configureBlocking(true);
@@ -714,141 +664,75 @@ public class FilterChainContext implements AttributeStorage {
 
         return rr;
     }
-    
-    public void write(final Object message) {
-        write(null, message, null, null, null,
-                transportFilterContext.isBlocking());
-    }
 
+    public void write(final Object message) {
+        write(null, message, null, null, null, transportFilterContext.isBlocking());
+    }
 
     public void write(final Object message, final boolean blocking) {
         write(null, message, null, null, null, blocking);
     }
 
+    public void write(final Object message, final CompletionHandler<WriteResult> completionHandler) {
 
-    public void write(final Object message,
-                      final CompletionHandler<WriteResult> completionHandler) {
-
-        write(null,
-              message,
-              completionHandler,
-              null, null,
-              transportFilterContext.isBlocking());
+        write(null, message, completionHandler, null, null, transportFilterContext.isBlocking());
 
     }
 
-
-    public void write(final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final boolean blocking) {
+    public void write(final Object message, final CompletionHandler<WriteResult> completionHandler, final boolean blocking) {
 
         write(null, message, completionHandler, null, null, blocking);
 
     }
 
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler) {
 
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler) {
-
-        write(address,
-              message,
-              completionHandler,
-              null,
-              null,
-              transportFilterContext.isBlocking());
+        write(address, message, completionHandler, null, null, transportFilterContext.isBlocking());
 
     }
 
-
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final boolean blocking) {
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler, final boolean blocking) {
 
         write(address, message, completionHandler, null, null, blocking);
 
     }
 
     @Deprecated
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
-        
-        write(address,
-              message,
-              completionHandler,
-              pushBackHandler,
-              transportFilterContext.isBlocking());
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler,
+            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
+
+        write(address, message, completionHandler, pushBackHandler, transportFilterContext.isBlocking());
     }
 
     @Deprecated
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler,
-                      final boolean blocking) {
-        write(address,
-              message,
-              completionHandler,
-              pushBackHandler,
-              null,
-              blocking);
-        
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler,
+            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler, final boolean blocking) {
+        write(address, message, completionHandler, pushBackHandler, null, blocking);
+
     }
 
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final MessageCloner cloner) {
-        
-        write(address,
-              message,
-              completionHandler,
-              null,
-              cloner,
-              transportFilterContext.isBlocking());
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler, final MessageCloner cloner) {
+
+        write(address, message, completionHandler, null, cloner, transportFilterContext.isBlocking());
     }
 
     @Deprecated
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler,
-                      final MessageCloner cloner) {
-        
-        write(address,
-                message,
-                completionHandler,
-                pushBackHandler,
-                cloner,
-                transportFilterContext.isBlocking());
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler,
+            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler, final MessageCloner cloner) {
+
+        write(address, message, completionHandler, pushBackHandler, cloner, transportFilterContext.isBlocking());
     }
 
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final MessageCloner cloner,
-                      final boolean blocking) {
-        write(address,
-                message,
-                completionHandler,
-                null,
-                cloner,
-                blocking);
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler, final MessageCloner cloner,
+            final boolean blocking) {
+        write(address, message, completionHandler, null, cloner, blocking);
     }
 
     @Deprecated
-    public void write(final Object address,
-                      final Object message,
-                      final CompletionHandler<WriteResult> completionHandler,
-                      final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler,
-                      final MessageCloner cloner,
-                      final boolean blocking) {
+    public void write(final Object address, final Object message, final CompletionHandler<WriteResult> completionHandler,
+            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler, final MessageCloner cloner, final boolean blocking) {
 
-        final FilterChainContext newContext =
-                getFilterChain().obtainFilterChainContext(getConnection());
+        final FilterChainContext newContext = getFilterChain().obtainFilterChainContext(getConnection());
 
         newContext.operation = Operation.WRITE;
         newContext.transportFilterContext.configureBlocking(blocking);
@@ -867,8 +751,7 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     public void flush(final CompletionHandler completionHandler) {
-        final FilterChainContext newContext =
-                getFilterChain().obtainFilterChainContext(getConnection());
+        final FilterChainContext newContext = getFilterChain().obtainFilterChainContext(getConnection());
 
         newContext.operation = Operation.EVENT;
         newContext.closeable = closeable;
@@ -887,11 +770,9 @@ public class FilterChainContext implements AttributeStorage {
         notifyUpstream(event, null);
     }
 
-    public void notifyUpstream(final FilterChainEvent event,
-            final CompletionHandler<FilterChainContext> completionHandler) {
-        
-        final FilterChainContext newContext =
-                getFilterChain().obtainFilterChainContext(getConnection());
+    public void notifyUpstream(final FilterChainEvent event, final CompletionHandler<FilterChainContext> completionHandler) {
+
+        final FilterChainContext newContext = getFilterChain().obtainFilterChainContext(getConnection());
 
         newContext.setOperation(Operation.EVENT);
         newContext.event = event;
@@ -910,16 +791,14 @@ public class FilterChainContext implements AttributeStorage {
         notifyDownstream(event, null);
     }
 
-    public void notifyDownstream(final FilterChainEvent event,
-            final CompletionHandler<FilterChainContext> completionHandler) {
-        final FilterChainContext newContext =
-                getFilterChain().obtainFilterChainContext(getConnection());
+    public void notifyDownstream(final FilterChainEvent event, final CompletionHandler<FilterChainContext> completionHandler) {
+        final FilterChainContext newContext = getFilterChain().obtainFilterChainContext(getConnection());
 
         newContext.setOperation(Operation.EVENT);
         newContext.event = event;
         newContext.closeable = closeable;
         newContext.addressHolder = addressHolder;
-        newContext.startIdx =filterIdx - 1;
+        newContext.startIdx = filterIdx - 1;
         newContext.filterIdx = filterIdx - 1;
         newContext.endIdx = -1;
         getAttributes().copyTo(newContext.getAttributes());
@@ -927,7 +806,7 @@ public class FilterChainContext implements AttributeStorage {
 
         ProcessorExecutor.execute(newContext.internalContext);
     }
-    
+
     public void fail(final Throwable error) {
         getFilterChain().fail(this, error);
     }
@@ -941,11 +820,11 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     /**
-     * Add the {@link CompletionListener}, which will be notified, when
-     * this {@link FilterChainContext} processing will be completed.
+     * Add the {@link CompletionListener}, which will be notified, when this {@link FilterChainContext} processing will be
+     * completed.
      *
-     * @param listener the {@link CompletionListener}, which will be notified, when
-     * this {@link FilterChainContext} processing will be completed.
+     * @param listener the {@link CompletionListener}, which will be notified, when this {@link FilterChainContext}
+     * processing will be completed.
      */
     public final void addCompletionListener(final CompletionListener listener) {
         completionListeners.add(listener);
@@ -955,19 +834,18 @@ public class FilterChainContext implements AttributeStorage {
      * Remove the {@link CompletionListener}.
      *
      * @param listener the {@link CompletionListener} to be removed.
-     * @return <tt>true</tt>, if the listener was removed from the list, or
-     *          <tt>false</tt>, if the listener wasn't on the list.
+     * @return <tt>true</tt>, if the listener was removed from the list, or <tt>false</tt>, if the listener wasn't on the
+     * list.
      */
     public final boolean removeCompletionListener(final CompletionListener listener) {
         return completionListeners.remove(listener);
     }
 
     /**
-     * Add the {@link CopyListener}, which will be notified, right after
-     * this {@link FilterChainContext#copy()} is called.
+     * Add the {@link CopyListener}, which will be notified, right after this {@link FilterChainContext#copy()} is called.
      *
-     * @param listener the {@link CopyListener}, which will be notified, right
-     * after this {@link FilterChainContext#copy()} is called.
+     * @param listener the {@link CopyListener}, which will be notified, right after this {@link FilterChainContext#copy()}
+     * is called.
      */
     public final void addCopyListener(final CopyListener listener) {
         copyListeners.add(listener);
@@ -977,18 +855,18 @@ public class FilterChainContext implements AttributeStorage {
      * Remove the {@link CopyListener}.
      *
      * @param listener the {@link CopyListener} to be removed.
-     * @return <tt>true</tt>, if the listener was removed from the list, or
-     *          <tt>false</tt>, if the listener wasn't on the list.
+     * @return <tt>true</tt>, if the listener was removed from the list, or <tt>false</tt>, if the listener wasn't on the
+     * list.
      */
     public final boolean removeCopyListener(final CopyListener listener) {
         return copyListeners.remove(listener);
     }
-    
+
     /**
-     * <p>A simple alias for <code>FilterChainContext.getConnection().getMemoryManager()</code>.
+     * <p>
+     * A simple alias for <code>FilterChainContext.getConnection().getMemoryManager()</code>.
      *
-     * @return the {@link MemoryManager} associated with the {@link Connection}
-     *  of this <code>FilterChainContext</code>.
+     * @return the {@link MemoryManager} associated with the {@link Connection} of this <code>FilterChainContext</code>.
      */
     public final MemoryManager getMemoryManager() {
         return getConnection().getMemoryManager();
@@ -996,22 +874,21 @@ public class FilterChainContext implements AttributeStorage {
 
     public FilterChainContext copy() {
         final FilterChain p = getFilterChain();
-        final FilterChainContext newContext =
-                p.obtainFilterChainContext(getConnection());
+        final FilterChainContext newContext = p.obtainFilterChainContext(getConnection());
         newContext.setOperation(getOperation());
         newContext.setCloseable(getCloseable());
-        
+
         internalContext.softCopyTo(newContext.internalContext);
-        
+
         newContext.setStartIdx(getStartIdx());
         newContext.setEndIdx(getEndIdx());
         newContext.setFilterIdx(getFilterIdx());
         getAttributes().copyTo(newContext.getAttributes());
 
         notifyCopy(this, newContext, copyListeners);
-        return newContext;        
+        return newContext;
     }
-    
+
     /**
      * Release the context associated resources.
      */
@@ -1049,7 +926,7 @@ public class FilterChainContext implements AttributeStorage {
         sb.append("connection=").append(getConnection());
         sb.append(", closeable=").append(getCloseable());
         sb.append(", operation=").append(getOperation());
-        sb.append(", message=").append(String.valueOf((Object) getMessage()));
+        sb.append(", message=").append(String.valueOf(getMessage()));
         sb.append(", address=").append(getAddress());
         sb.append(']');
 
@@ -1057,13 +934,19 @@ public class FilterChainContext implements AttributeStorage {
     }
 
     static Operation ioEvent2Operation(final IOEvent ioEvent) {
-        switch(ioEvent) {
-            case READ: return Operation.READ;
-            case WRITE: return Operation.WRITE;
-            case ACCEPTED: return Operation.ACCEPT;
-            case CONNECTED: return Operation.CONNECT;
-            case CLOSED: return Operation.CLOSE;
-            default: return Operation.NONE;
+        switch (ioEvent) {
+        case READ:
+            return Operation.READ;
+        case WRITE:
+            return Operation.WRITE;
+        case ACCEPTED:
+            return Operation.ACCEPT;
+        case CONNECTED:
+            return Operation.CONNECT;
+        case CLOSED:
+            return Operation.CLOSE;
+        default:
+            return Operation.NONE;
         }
     }
 
@@ -1071,10 +954,10 @@ public class FilterChainContext implements AttributeStorage {
     public static final class TransportContext {
         private boolean isBlocking;
         CompletionHandler completionHandler;
-        
+
         @Deprecated
         org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler;
-        
+
         MessageCloner cloner;
 
         public void configureBlocking(boolean isBlocking) {
@@ -1102,7 +985,7 @@ public class FilterChainContext implements AttributeStorage {
         public void setPushBackHandler(org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
             this.pushBackHandler = pushBackHandler;
         }
-        
+
         public MessageCloner getMessageCloner() {
             return cloner;
         }
@@ -1119,58 +1002,51 @@ public class FilterChainContext implements AttributeStorage {
         }
     }
 
-    static void notifyComplete(
-            final FilterChainContext context,
-            final List<CompletionListener> completionListeners) {
+    static void notifyComplete(final FilterChainContext context, final List<CompletionListener> completionListeners) {
         final int size = completionListeners.size();
         for (int i = size - 1; i >= 0; i--) {
             completionListeners.get(i).onComplete(context);
         }
-        
+
         completionListeners.clear();
     }
-    
-    static void notifyCopy(
-            final FilterChainContext srcContext,
-            final FilterChainContext copiedContext,
-            final List<CopyListener> copyListeners) {
-        
+
+    static void notifyCopy(final FilterChainContext srcContext, final FilterChainContext copiedContext, final List<CopyListener> copyListeners) {
+
         final int size = copyListeners.size();
         for (int i = 0; i < size; i++) {
             copyListeners.get(i).onCopy(srcContext, copiedContext);
         }
     }
-    
+
     /**
-     * The interface, which represents a listener, which will be notified,
-     * once {@link FilterChainContext} processing is complete.
+     * The interface, which represents a listener, which will be notified, once {@link FilterChainContext} processing is
+     * complete.
      *
      * @see #addCompletionListener(org.glassfish.grizzly.filterchain.FilterChainContext.CompletionListener)
      */
     public interface CompletionListener {
         /**
-         * The method is called, when passed {@link FilterChainContext} processing
-         * is complete.
-         * 
+         * The method is called, when passed {@link FilterChainContext} processing is complete.
+         *
          * @param context
          */
         void onComplete(FilterChainContext context);
     }
+
     /**
-     * The interface, which represents a listener, which will be notified,
-     * after {@link FilterChainContext#copy()} is called.
+     * The interface, which represents a listener, which will be notified, after {@link FilterChainContext#copy()} is
+     * called.
      *
      * @see #addCopyListener(org.glassfish.grizzly.filterchain.FilterChainContext.CopyListener)
      */
     public interface CopyListener {
         /**
-         * The method is called, when passed {@link FilterChainContext}
-         * is copied.
-         * 
+         * The method is called, when passed {@link FilterChainContext} is copied.
+         *
          * @param srcContext source Context
          * @param copiedContext copied Context
          */
-        void onCopy(FilterChainContext srcContext,
-                    FilterChainContext copiedContext);
-    }    
+        void onCopy(FilterChainContext srcContext, FilterChainContext copiedContext);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.ajp.AjpAddOn;
 import org.glassfish.grizzly.http.server.HttpHandler;
@@ -24,17 +25,15 @@ import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 
 /**
- * Sample demonstrates how custom {@link HttpHandler}, rigistered on
- * Grizzly {@link HttpServer} may transparently process both HTTP
- * and AJP requests.
+ * Sample demonstrates how custom {@link HttpHandler}, rigistered on Grizzly {@link HttpServer} may transparently
+ * process both HTTP and AJP requests.
  *
  * (please check the readme.txt for apache configuration instructions).
- * 
+ *
  * @author Alexey Stashok
  */
 public class AjpHelloWorld {
     private static final Logger LOGGER = Grizzly.logger(AjpHelloWorld.class);
-
 
     public static void main(String[] args) {
 
@@ -42,12 +41,10 @@ public class AjpHelloWorld {
         final HttpServer server = new HttpServer();
 
         // Create plain HTTP listener, which will handle port 8080
-        final NetworkListener httpNetworkListener =
-                new NetworkListener("http-listener", "0.0.0.0", 8080);
+        final NetworkListener httpNetworkListener = new NetworkListener("http-listener", "0.0.0.0", 8080);
 
         // Create AJP listener, which will handle port 8009
-        final NetworkListener ajpNetworkListener =
-                new NetworkListener("ajp-listener", "0.0.0.0", 8009);
+        final NetworkListener ajpNetworkListener = new NetworkListener("ajp-listener", "0.0.0.0", 8009);
         // Register AJP addon on HttpServer's listener
         ajpNetworkListener.registerAddOn(new AjpAddOn());
 
@@ -81,8 +78,7 @@ public class AjpHelloWorld {
     public static class HelloWorldHandler extends HttpHandler {
 
         @Override
-        public void service(final Request request, final Response response)
-                throws Exception {
+        public void service(final Request request, final Response response) throws Exception {
             // Here we don't care if it's AJP or HTTP originated request
             // everything is transparent
             final Writer writer = response.getWriter();

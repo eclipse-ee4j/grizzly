@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,25 +17,20 @@
 package org.glassfish.grizzly;
 
 /**
- * {@link ProcessorSelector}, which doesn't add any {@link Processor} to process
- * occurred {@link IOEvent}.
- * {@link Connection} I/O events should be processed explicitly by calling
- * read/write/accept/connect methods.
+ * {@link ProcessorSelector}, which doesn't add any {@link Processor} to process occurred {@link IOEvent}.
+ * {@link Connection} I/O events should be processed explicitly by calling read/write/accept/connect methods.
  *
- * Setting {@link StandaloneProcessorSelector} has the same effect as setting
- * {@link StandaloneProcessor}, though if {@link StandaloneProcessorSelector} is
- * set - there is still possibility to overwrite processing logic by providing
+ * Setting {@link StandaloneProcessorSelector} has the same effect as setting {@link StandaloneProcessor}, though if
+ * {@link StandaloneProcessorSelector} is set - there is still possibility to overwrite processing logic by providing
  * custom {@link Processor}.
- * 
+ *
  * @author Alexey Stashok
  */
 public class StandaloneProcessorSelector implements ProcessorSelector {
-    public static final StandaloneProcessorSelector INSTANCE =
-            new StandaloneProcessorSelector();
+    public static final StandaloneProcessorSelector INSTANCE = new StandaloneProcessorSelector();
 
     /**
-     * Always return null, which means no {@link Processor} was found to process
-     * {@link IOEvent}.
+     * Always return null, which means no {@link Processor} was found to process {@link IOEvent}.
      */
     @Override
     public Processor select(IOEvent ioEvent, Connection connection) {

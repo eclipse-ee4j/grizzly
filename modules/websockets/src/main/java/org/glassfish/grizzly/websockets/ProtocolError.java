@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,22 +20,21 @@ public class ProtocolError extends FramingException {
 
     // ------------------------------------------------------------ Constructors
 
+    public ProtocolError(String s) {
+        super(s);
+    }
 
-        public ProtocolError(String s) {
-            super(s);
-        }
+    public ProtocolError(String s, Throwable throwable) {
+        super(s, throwable);
+    }
 
-        public ProtocolError(String s, Throwable throwable) {
-            super(s, throwable);
-        }
+    public ProtocolError(Throwable throwable) {
+        super(throwable);
+    }
 
-        public ProtocolError(Throwable throwable) {
-            super(throwable);
-        }
-
-        @Override
-        public int getClosingCode() {
-            return WebSocket.PROTOCOL_ERROR;
-        }
+    @Override
+    public int getClosingCode() {
+        return WebSocket.PROTOCOL_ERROR;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,16 +22,15 @@ import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.attributes.AttributeBuilder;
 import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringAware;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
-import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.grizzly.utils.StateHolder;
 
 /**
- * Abstract {@link Transport}.
- * Implements common transport functionality.
+ * Abstract {@link Transport}. Implements common transport functionality.
  *
  * @author Alexey Stashok
  */
@@ -111,8 +110,7 @@ public abstract class AbstractTransport implements Transport {
     /**
      * Transport probes
      */
-    protected final DefaultMonitoringConfig<TransportProbe> transportMonitoringConfig =
-            new DefaultMonitoringConfig<TransportProbe>(TransportProbe.class) {
+    protected final DefaultMonitoringConfig<TransportProbe> transportMonitoringConfig = new DefaultMonitoringConfig<TransportProbe>(TransportProbe.class) {
 
         @Override
         public Object createManagementObject() {
@@ -123,20 +121,18 @@ public abstract class AbstractTransport implements Transport {
     /**
      * Connection probes
      */
-    protected final DefaultMonitoringConfig<ConnectionProbe> connectionMonitoringConfig =
-            new DefaultMonitoringConfig<ConnectionProbe>(ConnectionProbe.class);
-    
+    protected final DefaultMonitoringConfig<ConnectionProbe> connectionMonitoringConfig = new DefaultMonitoringConfig<>(ConnectionProbe.class);
+
     /**
      * Thread pool probes
      */
-    protected final DefaultMonitoringConfig<ThreadPoolProbe> threadPoolMonitoringConfig =
-            new DefaultMonitoringConfig<ThreadPoolProbe>(ThreadPoolProbe.class);
+    protected final DefaultMonitoringConfig<ThreadPoolProbe> threadPoolMonitoringConfig = new DefaultMonitoringConfig<>(ThreadPoolProbe.class);
 
     public AbstractTransport(String name) {
         this.name = name;
-        state = new StateHolder<State>(State.STOPPED);
+        state = new StateHolder<>(State.STOPPED);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -227,13 +223,12 @@ public abstract class AbstractTransport implements Transport {
         return currentState == State.STOPPED || currentState == State.STOPPING;
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
     public boolean isPaused() {
-        return (state.getState() == State.PAUSED);
+        return state.getState() == State.PAUSED;
     }
 
     /**
@@ -375,7 +370,7 @@ public abstract class AbstractTransport implements Transport {
      */
     @Override
     public ThreadPoolConfig getKernelThreadPoolConfig() {
-        return ((isStopped()) ? kernelPoolConfig : kernelPoolConfig.copy());
+        return isStopped() ? kernelPoolConfig : kernelPoolConfig.copy();
     }
 
     /**
@@ -383,7 +378,7 @@ public abstract class AbstractTransport implements Transport {
      */
     @Override
     public ThreadPoolConfig getWorkerThreadPoolConfig() {
-        return ((isStopped()) ? workerPoolConfig : workerPoolConfig.copy());
+        return isStopped() ? workerPoolConfig : workerPoolConfig.copy();
     }
 
     /**
@@ -395,8 +390,7 @@ public abstract class AbstractTransport implements Transport {
         managedWorkerPool = false;
         if (threadPool instanceof MonitoringAware) {
             if (threadPoolMonitoringConfig.hasProbes()) {
-                ((MonitoringAware<ThreadPoolProbe>) threadPool).getMonitoringConfig()
-                        .addProbes(threadPoolMonitoringConfig.getProbes());
+                ((MonitoringAware<ThreadPoolProbe>) threadPool).getMonitoringConfig().addProbes(threadPoolMonitoringConfig.getProbes());
             }
         }
 
@@ -428,10 +422,10 @@ public abstract class AbstractTransport implements Transport {
         this.attributeBuilder = attributeBuilder;
         notifyProbesConfigChanged(this);
     }
-    
+
     /**
      * Close the connection, managed by Transport
-     * 
+     *
      * @param connection {@link org.glassfish.grizzly.nio.NIOConnection} to close
      * @throws IOException not used
      */
@@ -484,42 +478,40 @@ public abstract class AbstractTransport implements Transport {
             readTimeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
         }
     }
-    
-    /**
-         * {@inheritDoc}
-         */
-        @Override
-        public long getWriteTimeout(TimeUnit timeUnit) {
-            if (writeTimeout <= 0) {
-                return -1;
-            } else {
-                return timeUnit.convert(writeTimeout, TimeUnit.MILLISECONDS);
-            }
-        }
-    
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void setWriteTimeout(long timeout, TimeUnit timeUnit) {
-            if (timeout <= 0) {
-                writeTimeout = -1;
-            } else {
-                writeTimeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
-            }
-        }
 
     /**
      * {@inheritDoc}
-     * Notify registered {@link TransportProbe}s about the before-start event.
+     */
+    @Override
+    public long getWriteTimeout(TimeUnit timeUnit) {
+        if (writeTimeout <= 0) {
+            return -1;
+        } else {
+            return timeUnit.convert(writeTimeout, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setWriteTimeout(long timeout, TimeUnit timeUnit) {
+        if (timeout <= 0) {
+            writeTimeout = -1;
+        } else {
+            writeTimeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        }
+    }
+
+    /**
+     * {@inheritDoc} Notify registered {@link TransportProbe}s about the before-start event.
      *
      * @param transport the <tt>Transport</tt> event occurred on.
      *
      * @since 3.0
      */
     protected static void notifyProbesBeforeStart(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onBeforeStartEvent(transport);
@@ -535,8 +527,7 @@ public abstract class AbstractTransport implements Transport {
      * @since 3.0
      */
     protected static void notifyProbesBeforeStop(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onBeforeStopEvent(transport);
@@ -550,8 +541,7 @@ public abstract class AbstractTransport implements Transport {
      * @param transport the <tt>Transport</tt> event occurred on.
      */
     protected static void notifyProbesStop(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onStopEvent(transport);
@@ -560,16 +550,14 @@ public abstract class AbstractTransport implements Transport {
     }
 
     /**
-     * {@inheritDoc}
-     * Notify registered {@link TransportProbe}s about the before-pause event.
+     * {@inheritDoc} Notify registered {@link TransportProbe}s about the before-pause event.
      *
      * @param transport the <tt>Transport</tt> event occurred on.
      *
      * @since 3.0
      */
     protected static void notifyProbesBeforePause(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onBeforePauseEvent(transport);
@@ -583,8 +571,7 @@ public abstract class AbstractTransport implements Transport {
      * @param transport the <tt>Transport</tt> event occurred on.
      */
     protected static void notifyProbesPause(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onPauseEvent(transport);
@@ -600,8 +587,7 @@ public abstract class AbstractTransport implements Transport {
      * @since 3.0
      */
     protected static void notifyProbesBeforeResume(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onBeforeStartEvent(transport);
@@ -615,15 +601,14 @@ public abstract class AbstractTransport implements Transport {
      * @param transport the <tt>Transport</tt> event occurred on.
      */
     protected static void notifyProbesConfigChanged(final AbstractTransport transport) {
-        final TransportProbe[] probes =
-                transport.transportMonitoringConfig.getProbesUnsafe();
+        final TransportProbe[] probes = transport.transportMonitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (TransportProbe probe : probes) {
                 probe.onConfigChangeEvent(transport);
             }
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -632,7 +617,7 @@ public abstract class AbstractTransport implements Transport {
     public void stop() throws IOException {
         shutdownNow();
     }
-    
+
     /**
      * Create the Transport JMX management object.
      *

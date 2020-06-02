@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,14 @@
 package org.glassfish.grizzly.http.server.util;
 
 import java.util.List;
+
 import org.glassfish.grizzly.http.server.naming.DirContext;
 
 public class AlternateDocBase {
 
-    enum UrlPatternType { EXACT, WILDCARD, EXTENSION }
+    enum UrlPatternType {
+        EXACT, WILDCARD, EXTENSION
+    }
 
     private String pattern;
     private UrlPatternType patternType;
@@ -35,7 +38,6 @@ public class AlternateDocBase {
     private DirContext resources;
     private DirContext webappResources;
 
-
     /**
      * Sets the url pattern of this AlternateDocBase.
      *
@@ -47,8 +49,7 @@ public class AlternateDocBase {
         this.patternSlashCount = getSlashCount(urlPattern);
         if (urlPattern.endsWith("/*")) {
             this.patternType = UrlPatternType.WILDCARD;
-            this.wildcardPath = urlPattern.substring(
-                0, urlPattern.length()-1);
+            this.wildcardPath = urlPattern.substring(0, urlPattern.length() - 1);
         } else if (urlPattern.startsWith("*.")) {
             this.patternType = UrlPatternType.EXTENSION;
             this.patternSuffix = urlPattern.substring(1);
@@ -56,7 +57,6 @@ public class AlternateDocBase {
             this.patternType = UrlPatternType.EXACT;
         }
     }
-
 
     /**
      * Gets the url pattern of this AlternateDocBase.
@@ -67,18 +67,14 @@ public class AlternateDocBase {
         return pattern;
     }
 
-
     /**
-     * Gets the url pattern type (exact, wildcard, extension) of this
-     * AlternateDocBase.
+     * Gets the url pattern type (exact, wildcard, extension) of this AlternateDocBase.
      *
-     * @return The url pattern type (exact, wildcard, extension) of this
-     * AlternativeDocBase
+     * @return The url pattern type (exact, wildcard, extension) of this AlternativeDocBase
      */
     public UrlPatternType getUrlPatternType() {
         return patternType;
     }
-
 
     /**
      * Gets the number of slashes in the url pattern of this AlternateDocBase.
@@ -89,40 +85,35 @@ public class AlternateDocBase {
         return patternSlashCount;
     }
 
-
     /**
      * Gets the extension suffix of the url pattern of this AlternateDocBase.
      *
-     * @return The extension suffix of the url pattern of this
-     * AlternateDocBase, or null if the url pattern is not of type 'extension'
+     * @return The extension suffix of the url pattern of this AlternateDocBase, or null if the url pattern is not of type
+     * 'extension'
      */
     public String getUrlPatternSuffix() {
         return this.patternSuffix;
     }
 
-
     /**
-     * Gets the wildcard path of this AlternateDocBase (this is the path
-     * specified by the wildcard pattern, minus the trailing '*').
+     * Gets the wildcard path of this AlternateDocBase (this is the path specified by the wildcard pattern, minus the
+     * trailing '*').
      *
-     * @return The wildcard path of this AlternateDocBase, or null if the
-     * pattern associated with this AlternateDocBase is not a wildcard pattern
+     * @return The wildcard path of this AlternateDocBase, or null if the pattern associated with this AlternateDocBase is
+     * not a wildcard pattern
      */
     public String getUrlPatternWildcardPath() {
         return this.wildcardPath;
     }
 
-
     /**
      * Sets the (possibly relative) doc base path of this AlternateDocBase.
      *
-     * @param docBase The (possibly relative) doc base path of this
-     * AlternateDocBase
+     * @param docBase The (possibly relative) doc base path of this AlternateDocBase
      */
     public void setDocBase(String docBase) {
         this.docBase = docBase;
     }
-
 
     /**
      * Gets the (possibly relative) doc base path of this AlternateDocBase.
@@ -133,7 +124,6 @@ public class AlternateDocBase {
         return docBase;
     }
 
-
     /**
      * Sets the absolute doc base path of this AlternateDocBase.
      *
@@ -142,7 +132,6 @@ public class AlternateDocBase {
     public void setBasePath(String basePath) {
         this.basePath = basePath;
     }
-
 
     /**
      * Gets the absolute doc base path of this AlternateDocBase.
@@ -153,7 +142,6 @@ public class AlternateDocBase {
         return basePath;
     }
 
-
     /**
      * Sets the proxied resources of this AlternateDocBase.
      *
@@ -162,7 +150,6 @@ public class AlternateDocBase {
     public void setResources(DirContext resources) {
         this.resources = resources;
     }
-
 
     /**
      * Gets the proxied resources of this AlternateDocBase.
@@ -173,17 +160,14 @@ public class AlternateDocBase {
         return resources;
     }
 
-
     /**
      * Sets the non-proxied resources of this AlternateDocBase.
      *
-     * @param webappResources The non-proxied resources of this
-     * AlternateDocBase
+     * @param webappResources The non-proxied resources of this AlternateDocBase
      */
     public void setWebappResources(DirContext webappResources) {
         this.webappResources = webappResources;
     }
-
 
     /**
      * Gets the non-proxied resources of this AlternateDocBase.
@@ -194,17 +178,13 @@ public class AlternateDocBase {
         return webappResources;
     }
 
-
     /**
-     * Attempts to match the given request path against one of the given
-     * alternate doc bases.
+     * Attempts to match the given request path against one of the given alternate doc bases.
      *
-     * @return The alternate doc base whose url pattern matches the given path,
-     * or null if no matching alternate doc base could be found
+     * @return The alternate doc base whose url pattern matches the given path, or null if no matching alternate doc base
+     * could be found
      */
-    public static AlternateDocBase findMatch(
-                    String path,
-                    List<AlternateDocBase> alternateDocBases) {
+    public static AlternateDocBase findMatch(String path, List<AlternateDocBase> alternateDocBases) {
 
         if (alternateDocBases == null) {
             return null;
@@ -217,28 +197,24 @@ public class AlternateDocBase {
 
         int pathSlashCount = getSlashCount(path);
 
-        for (int i=0; i<alternateDocBases.size(); i++) {
+        for (int i = 0; i < alternateDocBases.size(); i++) {
 
             AlternateDocBase alternateDocBase = alternateDocBases.get(i);
             String pattern = alternateDocBase.getUrlPattern();
             int patternSlashCount = alternateDocBase.getUrlPatternSlashCount();
-            AlternateDocBase.UrlPatternType type =
-                alternateDocBase.getUrlPatternType();
+            AlternateDocBase.UrlPatternType type = alternateDocBase.getUrlPatternType();
             String wildcardPath = alternateDocBase.getUrlPatternWildcardPath();
 
             if (type == UrlPatternType.EXACT && path.equals(pattern)) {
                 // Exact match found
                 match = alternateDocBase;
                 break;
-            } else if (type == UrlPatternType.WILDCARD
-                    && pathSlashCount >= patternSlashCount
-                    && patternSlashCount > maxSlashCountMatch
+            } else if (type == UrlPatternType.WILDCARD && pathSlashCount >= patternSlashCount && patternSlashCount > maxSlashCountMatch
                     && path.startsWith(wildcardPath)) {
                 // We've found a longer wildcard match
                 wildcardMatch = alternateDocBase;
                 maxSlashCountMatch = patternSlashCount;
-            } else if (type == UrlPatternType.EXTENSION
-                    && path.endsWith(alternateDocBase.getUrlPatternSuffix())) {
+            } else if (type == UrlPatternType.EXTENSION && path.endsWith(alternateDocBase.getUrlPatternSuffix())) {
                 extensionMatch = alternateDocBase;
             }
         }
@@ -253,7 +229,6 @@ public class AlternateDocBase {
 
         return match;
     }
-
 
     /**
      * Determines the number for forward slashes in the given string.
@@ -270,7 +245,7 @@ public class AlternateDocBase {
             int index = s.indexOf('/');
             while (index >= 0) {
                 count++;
-                index = s.indexOf('/', index+1);
+                index = s.indexOf('/', index + 1);
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,12 +18,13 @@ package org.glassfish.grizzly.strategies;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.IOEvent;
 import org.glassfish.grizzly.IOEventLifeCycleListener;
 import org.glassfish.grizzly.Processor;
-import java.util.logging.Logger;
 
 /**
  * {@link org.glassfish.grizzly.IOStrategy}, which executes {@link Processor}s in worker thread.
@@ -36,28 +37,21 @@ public final class WorkerThreadIOStrategy extends AbstractIOStrategy {
 
     private static final Logger logger = Grizzly.logger(WorkerThreadIOStrategy.class);
 
-
     // ------------------------------------------------------------ Constructors
 
-
-    private WorkerThreadIOStrategy() { }
-
+    private WorkerThreadIOStrategy() {
+    }
 
     // ---------------------------------------------------------- Public Methods
-
 
     public static WorkerThreadIOStrategy getInstance() {
         return INSTANCE;
     }
 
-
     // ------------------------------------------------- Methods from IOStrategy
 
-
     @Override
-    public boolean executeIoEvent(final Connection connection,
-            final IOEvent ioEvent, final boolean isIoEventEnabled)
-            throws IOException {
+    public boolean executeIoEvent(final Connection connection, final IOEvent ioEvent, final boolean isIoEventEnabled) throws IOException {
 
         final boolean isReadOrWriteEvent = isReadWrite(ioEvent);
 
@@ -66,7 +60,7 @@ public final class WorkerThreadIOStrategy extends AbstractIOStrategy {
             if (isIoEventEnabled) {
                 connection.disableIOEvent(ioEvent);
             }
-            
+
             listener = ENABLE_INTEREST_LIFECYCLE_LISTENER;
         } else {
             listener = null;
@@ -74,8 +68,7 @@ public final class WorkerThreadIOStrategy extends AbstractIOStrategy {
 
         final Executor threadPool = getThreadPoolFor(connection, ioEvent);
         if (threadPool != null) {
-            threadPool.execute(
-                    new WorkerThreadRunnable(connection, ioEvent, listener));
+            threadPool.execute(new WorkerThreadRunnable(connection, ioEvent, listener));
         } else {
             run0(connection, ioEvent, listener);
         }
@@ -83,36 +76,30 @@ public final class WorkerThreadIOStrategy extends AbstractIOStrategy {
         return true;
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
-    private static void run0(final Connection connection,
-                             final IOEvent ioEvent,
-                             final IOEventLifeCycleListener lifeCycleListener) {
+    private static void run0(final Connection connection, final IOEvent ioEvent, final IOEventLifeCycleListener lifeCycleListener) {
 
         fireIOEvent(connection, ioEvent, lifeCycleListener, logger);
 
     }
-    
+
     private static final class WorkerThreadRunnable implements Runnable {
         final Connection connection;
         final IOEvent ioEvent;
         final IOEventLifeCycleListener lifeCycleListener;
-        
-        private WorkerThreadRunnable(final Connection connection,
-                final IOEvent ioEvent,
-                final IOEventLifeCycleListener lifeCycleListener) {
+
+        private WorkerThreadRunnable(final Connection connection, final IOEvent ioEvent, final IOEventLifeCycleListener lifeCycleListener) {
             this.connection = connection;
             this.ioEvent = ioEvent;
             this.lifeCycleListener = lifeCycleListener;
-            
+
         }
 
         @Override
         public void run() {
             run0(connection, ioEvent, lifeCycleListener);
-        }        
+        }
     }
 
 }

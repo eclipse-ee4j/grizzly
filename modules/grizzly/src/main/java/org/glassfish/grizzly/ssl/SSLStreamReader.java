@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,15 +16,14 @@
 
 package org.glassfish.grizzly.ssl;
 
-import org.glassfish.grizzly.streams.TransformerStreamReader;
 import org.glassfish.grizzly.streams.StreamReader;
+import org.glassfish.grizzly.streams.TransformerStreamReader;
 
 /**
- * SSL aware {@link StreamReader} implementation, which work like a wrapper over
- * existing {@link StreamReader}.
+ * SSL aware {@link StreamReader} implementation, which work like a wrapper over existing {@link StreamReader}.
  *
  * @see SSLStreamWriter
- * 
+ *
  * @author Alexey Stashok
  */
 public class SSLStreamReader extends TransformerStreamReader {

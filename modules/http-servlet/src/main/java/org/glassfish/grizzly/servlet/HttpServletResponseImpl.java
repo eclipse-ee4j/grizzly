@@ -29,17 +29,16 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+
 import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.http.server.Response;
 
-
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Facade class that wraps a {@link Response} object.
- * All methods are delegated to the wrapped response.
+ * Facade class that wraps a {@link Response} object. All methods are delegated to the wrapped response.
  *
  * @author Remy Maucherat
  * @author Jean-Francois Arcand
@@ -50,12 +49,11 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 
     private final ServletOutputStreamImpl outputStream;
     private ServletWriterImpl writer;
-    
+
     /**
      * Using output stream flag.
      */
     protected boolean usingOutputStream = false;
-
 
     /**
      * Using writer flag.
@@ -63,39 +61,35 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     protected boolean usingWriter = false;
 
     // ----------------------------------------------------------- DoPrivileged
-    
-    private final class SetContentTypePrivilegedAction
-            implements PrivilegedAction {
+
+    private final class SetContentTypePrivilegedAction implements PrivilegedAction {
 
         private final String contentType;
 
-        public SetContentTypePrivilegedAction(String contentType){
+        public SetContentTypePrivilegedAction(String contentType) {
             this.contentType = contentType;
         }
-        
+
         @Override
         public Object run() {
             response.setContentType(contentType);
             return null;
-        }            
+        }
     }
-     
-    private static final ThreadCache.CachedTypeIndex<HttpServletResponseImpl> CACHE_IDX =
-            ThreadCache.obtainIndex(HttpServletResponseImpl.class, 2);
+
+    private static final ThreadCache.CachedTypeIndex<HttpServletResponseImpl> CACHE_IDX = ThreadCache.obtainIndex(HttpServletResponseImpl.class, 2);
 
     // ------------- Factory ----------------
     public static HttpServletResponseImpl create() {
-        final HttpServletResponseImpl response =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final HttpServletResponseImpl response = ThreadCache.takeFromCache(CACHE_IDX);
         if (response != null) {
             return response;
         }
 
         return new HttpServletResponseImpl();
     }
-    
-    // ----------------------------------------------------------- Constructors
 
+    // ----------------------------------------------------------- Constructors
 
     /**
      * Construct a wrapper for the specified response.
@@ -103,7 +97,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     protected HttpServletResponseImpl() {
         outputStream = new ServletOutputStreamImpl(this);
     }
-
 
     // ----------------------------------------------- Class/Instance Variables
 
@@ -119,24 +112,22 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 
     // --------------------------------------------------------- Public Methods
 
-    public void initialize(final Response response,
-            final HttpServletRequestImpl servletRequest) throws IOException {
+    public void initialize(final Response response, final HttpServletRequestImpl servletRequest) throws IOException {
         this.response = response;
         this.servletRequest = servletRequest;
-        
+
         outputStream.initialize();
 
     }
+
     /**
-    * Prevent cloning the facade.
-    */
+     * Prevent cloning the facade.
+     */
     @Override
-    protected Object clone()
-        throws CloneNotSupportedException {
+    protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
-      
-    
+
     public void finish() throws IOException {
 
         if (response == null) {
@@ -147,7 +138,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         response.finish();
 
     }
-
 
 //    public boolean isFinished() {
 //
@@ -160,10 +150,8 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 //
 //    }
 
-
     // ------------------------------------------------ ServletResponse Methods
 
-    
     /**
      * {@inheritDoc}
      */
@@ -177,16 +165,15 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.getCharacterEncoding();
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public ServletOutputStream getOutputStream()
-        throws IOException {
+    public ServletOutputStream getOutputStream() throws IOException {
 
-        if (usingWriter)
+        if (usingWriter) {
             throw new IllegalStateException("Illegal attempt to call getOutputStream() after getWriter() has already been called.");
+        }
 
         usingOutputStream = true;
         return outputStream;
@@ -196,43 +183,43 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     void recycle() {
         response = null;
         servletRequest = null;
-        
+
         writer = null;
-        
+
         outputStream.recycle();
-        
+
         usingOutputStream = false;
         usingWriter = false;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public PrintWriter getWriter()
-        throws IOException {
+    public PrintWriter getWriter() throws IOException {
 
-        if (usingOutputStream)
+        if (usingOutputStream) {
             throw new IllegalStateException("Illegal attempt to call getWriter() after getOutputStream has already been called.");
+        }
 
         usingWriter = true;
         if (writer == null) {
             writer = new ServletWriterImpl(response.getWriter());
         }
-        
+
         return writer;
-        
+
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void setContentLength(int len) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setContentLength(len);
 
@@ -243,13 +230,13 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
      */
     @Override
     public void setContentLengthLong(long len) {
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setContentLengthLong(len);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -257,31 +244,31 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     @SuppressWarnings("unchecked")
     public void setContentType(String type) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
-        
-        if (System.getSecurityManager() != null){
+        }
+
+        if (System.getSecurityManager() != null) {
             AccessController.doPrivileged(new SetContentTypePrivilegedAction(type));
         } else {
-            response.setContentType(type);            
+            response.setContentType(type);
         }
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void setBufferSize(int size) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to adjust the buffer size after the response has already been committed.");
+        }
 
         response.setBufferSize(size);
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -295,61 +282,58 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.getBufferSize();
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void flushBuffer()
-        throws IOException {
+    public void flushBuffer() throws IOException {
 
 //        if (isFinished())
 //            //            throw new IllegalStateException
 //            //                (/*sm.getString("HttpServletResponseImpl.finished")*/);
 //            return;
-        
-        if (System.getSecurityManager() != null){
-            try{
-                AccessController.doPrivileged(new PrivilegedExceptionAction(){
+
+        if (System.getSecurityManager() != null) {
+            try {
+                AccessController.doPrivileged(new PrivilegedExceptionAction() {
 
                     @Override
-                    public Object run() throws IOException{
+                    public Object run() throws IOException {
 //                        response.setAppCommitted(true);
 
                         response.flush();
                         return null;
                     }
                 });
-            } catch(PrivilegedActionException e){
+            } catch (PrivilegedActionException e) {
                 Exception ex = e.getException();
-                if (ex instanceof IOException){
-                    throw (IOException)ex;
+                if (ex instanceof IOException) {
+                    throw (IOException) ex;
                 }
             }
         } else {
 //            response.setAppCommitted(true);
 
-            response.flush();            
+            response.flush();
         }
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void resetBuffer() {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to reset the buffer after the response has already been committed.");
+        }
 
         response.resetBuffer();
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -363,34 +347,33 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.isCommitted();
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void reset() {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to reset the response after it has already been committed.");
+        }
 
         response.reset();
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void setLocale(Locale loc) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setLocale(loc);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -404,22 +387,21 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.getLocale();
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void addCookie(Cookie cookie) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
-        CookieWrapper wrapper = new CookieWrapper(cookie.getName(),cookie.getValue());
+        }
+        CookieWrapper wrapper = new CookieWrapper(cookie.getName(), cookie.getValue());
         wrapper.setWrappedCookie(cookie);
         response.addCookie(wrapper);
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -433,7 +415,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.containsHeader(name);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -447,7 +428,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.encodeURL(url);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -461,7 +441,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.encodeRedirectURL(url);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -470,7 +449,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return encodeURL(url);
     }
 
-    
     /**
      * {@inheritDoc}
      */
@@ -479,16 +457,15 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return encodeRedirectURL(url);
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public void sendError(int sc, String msg)
-        throws IOException {
+    public void sendError(int sc, String msg) throws IOException {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to call sendError() after the response has been committed.");
+        }
 
 //        response.setAppCommitted(true);
 
@@ -496,16 +473,15 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public void sendError(int sc)
-        throws IOException {
+    public void sendError(int sc) throws IOException {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to call sendError() after the response has already been committed.");
+        }
 
 //        response.setAppCommitted(true);
 
@@ -513,16 +489,15 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public void sendRedirect(String location)
-        throws IOException {
+    public void sendRedirect(String location) throws IOException {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to redirect the response after it has been committed.");
+        }
 
 //        response.setAppCommitted(true);
 
@@ -553,135 +528,132 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     public Collection<String> getHeaders(String string) {
         return new ArrayList<>(Arrays.asList(response.getHeaderValues(string)));
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void setDateHeader(String name, long date) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setDateHeader(name, date);
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void addDateHeader(String name, long date) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addDateHeader(name, date);
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void setHeader(String name, String value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setHeader(name, value);
 
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void addHeader(String name, String value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addHeader(name, value);
 
     }
 
-   
     /**
      * {@inheritDoc}
      */
     @Override
     public void setIntHeader(String name, int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setIntHeader(name, value);
 
     }
 
-   
     /**
      * {@inheritDoc}
      */
     @Override
     public void addIntHeader(String name, int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addIntHeader(name, value);
 
     }
 
-   
     /**
      * {@inheritDoc}
      */
     @Override
     public void setStatus(int sc) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setStatus(sc);
 
     }
 
-   
     /**
      * {@inheritDoc}
      */
     @Override
     public void setStatus(int sc, String sm) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setStatus(sc, sm);
 
     }
 
-
     @Override
     public int getStatus() {
         return response.getStatus();
     }
-    
-    
+
     public String getMessage() {
         return response.getMessage();
     }
 
-    
 //    public void setSuspended(boolean suspended) {
 //        response.setSuspended(suspended);
 //    }
 
-    
 //    public void setAppCommitted(boolean appCommitted) {
 //        response.setAppCommitted(appCommitted);
 //    }
@@ -691,12 +663,10 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 //        return response.getContentCount();
 //    }
 
-    
     public boolean isError() {
         return response.isError();
     }
 
-   
     /**
      * {@inheritDoc}
      */
@@ -705,15 +675,13 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         return response.getContentType();
     }
 
-   
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public void setCharacterEncoding(String charEnc) {
         response.setCharacterEncoding(charEnc);
     }
-
 
     public Response getResponse() {
         return response;

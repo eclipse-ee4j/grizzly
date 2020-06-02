@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-
 import org.glassfish.grizzly.Buffer;
 
 abstract class IndexNameValueWriter implements BinaryRepresentationWriter {
@@ -29,9 +28,9 @@ abstract class IndexNameValueWriter implements BinaryRepresentationWriter {
 
     protected boolean indexedRepresentation;
 
-    private static final int NEW               = 0;
+    private static final int NEW = 0;
     private static final int NAME_PART_WRITTEN = 1;
-    private static final int VALUE_WRITTEN     = 2;
+    private static final int VALUE_WRITTEN = 2;
 
     private int state = NEW;
 

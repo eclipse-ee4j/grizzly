@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,8 +21,7 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
- * Minimalistic fixed thread pool to allow for nice scalability if a
- * good Queue impl is used.
+ * Minimalistic fixed thread pool to allow for nice scalability if a good Queue impl is used.
  *
  * @author gustav trede
  */
@@ -33,11 +32,9 @@ public class FixedThreadPool extends AbstractThreadPool {
     public FixedThreadPool(ThreadPoolConfig config) {
         super(config);
 
-        this.workQueue = config.getQueue() != null ?
-            (BlockingQueue<Runnable>) config.getQueue() :
-            (BlockingQueue<Runnable>) config.setQueue(
-                new LinkedTransferQueue<>()).getQueue();
-        
+        this.workQueue = config.getQueue() != null ? (BlockingQueue<Runnable>) config.getQueue()
+                : (BlockingQueue<Runnable>) config.setQueue(new LinkedTransferQueue<>()).getQueue();
+
         int poolSize = config.getMaxPoolSize();
 
         synchronized (stateLock) {
@@ -65,7 +62,7 @@ public class FixedThreadPool extends AbstractThreadPool {
                 if (!running && workQueue.remove(command)) {
                     throw new RejectedExecutionException("ThreadPool is not running");
                 }
-                
+
                 onTaskQueued(command);
                 return;
             }
@@ -77,7 +74,7 @@ public class FixedThreadPool extends AbstractThreadPool {
 
     private final class BasicWorker extends Worker {
         @Override
-        protected final Runnable getTask() throws InterruptedException {
+        protected Runnable getTask() throws InterruptedException {
             return workQueue.take();
         }
     }

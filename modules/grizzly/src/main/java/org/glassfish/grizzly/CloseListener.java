@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,14 +19,9 @@ package org.glassfish.grizzly;
 import java.io.IOException;
 
 /**
- * The listener, which is used to be notified, when <tt>Connection</tt> gets closed.
- * While this interface is public, it's not intended for public consumption at this time.
- * This interface will be changing in 3.0.
+ * The listener, which is used to be notified, when <tt>Connection</tt> gets closed. While this interface is public,
+ * it's not intended for public consumption at this time. This interface will be changing in 3.0.
  */
 public interface CloseListener<T extends Closeable, C extends ICloseType> {
     void onClosed(T closeable, C type) throws IOException;
 }
-
-
-
-

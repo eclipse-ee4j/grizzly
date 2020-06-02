@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -9,6 +9,14 @@
  */
 
 package org.glassfish.grizzly.samples.http.download;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -21,23 +29,15 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.DelayedExecutor;
 import org.glassfish.grizzly.utils.IdleTimeoutFilter;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * Simple asynchronous HTTP client implementation, which downloads HTTP resource
- * and saves its content in a local file.
- * 
+ * Simple asynchronous HTTP client implementation, which downloads HTTP resource and saves its content in a local file.
+ *
  * @author Alexey Stashok
  */
 public class Client {
     private static final Logger logger = Grizzly.logger(Client.class);
-    
+
     public static void main(String[] args) throws IOException, URISyntaxException {
         // Check command line parameters
         if (args.length < 1) {
@@ -73,8 +73,7 @@ public class Client {
         clientFilterChainBuilder.add(new ClientDownloadFilter(uri, completeFuture));
 
         // Initialize Transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         // Set filterchain as a Transport Processor
         transport.setProcessor(clientFilterChainBuilder.build());
 
@@ -83,7 +82,7 @@ public class Client {
             transport.start();
 
             Connection connection = null;
-            
+
             // Connecting to a remote Web server
             Future<Connection> connectFuture = transport.connect(host, port);
             try {

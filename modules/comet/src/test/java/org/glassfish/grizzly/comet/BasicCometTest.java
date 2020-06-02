@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,10 +27,15 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
- 
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.http.server.*;
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.NetworkListener;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+
+import junit.framework.TestCase;
 
 /**
  * Basic Comet Test.
@@ -40,7 +45,7 @@ import org.glassfish.grizzly.http.server.*;
  */
 public class BasicCometTest extends TestCase {
     private static final Logger LOGGER = Grizzly.logger(BasicCometTest.class);
-    
+
     private static final String TEST_TOPIC = "/test-topic";
 
     final static String onInitialize = "onInitialize";
@@ -135,9 +140,9 @@ public class BasicCometTest extends TestCase {
         cometContext.setExpirationDelay(10000);
         cometContext.setDetectClosedConnections(false);
         final String alias = "/testPipeline";
-        
+
         addHttpHandler(alias, true);
-        
+
         httpServer.getServerConfiguration().addHttpHandler(new HttpHandler() {
 
             @Override
@@ -164,16 +169,14 @@ public class BasicCometTest extends TestCase {
         OutputStream os = s.getOutputStream();
         String cometRequest = "GET " + alias + " HTTP/1.1\nHost: localhost:" + PORT + "\n\n";
         String staticRequest = "GET /static HTTP/1.1\nHost: localhost:" + PORT + "\n\n";
-        
-        
-        String lastCometRequest = "GET " + alias + " HTTP/1.1\n"+"Host: localhost:" + PORT + "\nConnection: close\n\n";
-        
-        
+
+        String lastCometRequest = "GET " + alias + " HTTP/1.1\n" + "Host: localhost:" + PORT + "\nConnection: close\n\n";
+
         String pipelinedRequest1 = cometRequest + staticRequest + cometRequest;
         String pipelinedRequest2 = cometRequest + staticRequest + lastCometRequest;
-        
-        String[] pipelineRequests = new String[] {pipelinedRequest1, pipelinedRequest2};
-        
+
+        String[] pipelineRequests = new String[] { pipelinedRequest1, pipelinedRequest2 };
+
         try {
             for (String piplineRequest : pipelineRequests) {
                 os.write(piplineRequest.getBytes());
@@ -184,8 +187,7 @@ public class BasicCometTest extends TestCase {
 
                 int numberOfPipelinedRequests = 3;
 
-                _outter:
-                for (int i = 0; i < numberOfPipelinedRequests; i++) {
+                _outter: for (int i = 0; i < numberOfPipelinedRequests; i++) {
                     boolean expectStatus = true;
 
                     if (i % 2 == 0) {
@@ -198,7 +200,7 @@ public class BasicCometTest extends TestCase {
                     boolean expectEmpty = false;
                     while (true) {
                         line = reader.readLine();
-                        //System.out.println(line);
+                        // System.out.println(line);
 
                         if (expectEmpty) {
                             assertEquals("", line);
@@ -222,14 +224,14 @@ public class BasicCometTest extends TestCase {
             s.close();
         }
     }
-    
+
     public void testHttpPipeline2() throws Exception {
         LOGGER.fine("testHttpPipeline2");
         cometContext.setExpirationDelay(10000);
         cometContext.setDetectClosedConnections(false);
         final String alias = "/testPipeline2";
         addHttpHandler(alias, true);
-        
+
         httpServer.getServerConfiguration().addHttpHandler(new HttpHandler() {
 
             @Override
@@ -250,36 +252,34 @@ public class BasicCometTest extends TestCase {
                 response.getWriter().flush();
             }
         }, "/static");
-        
+
         Socket s = new Socket("localhost", PORT);
         s.setSoTimeout(10 * 1000);
         OutputStream os = s.getOutputStream();
         String cometRequest = "GET " + alias + " HTTP/1.1\nHost: localhost:" + PORT + "\n\n";
         String staticRequest = "GET /static HTTP/1.1\nHost: localhost:" + PORT + "\n\n";
-        
-        
+
         try {
             os.write(cometRequest.getBytes());
             os.flush();
             Thread.sleep(1000);
             os.write(staticRequest.getBytes());
             os.flush();
-            
+
             new URL("http://localhost:" + PORT + "/notify").getContent();
-            
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
             String line;
 
             int numberOfPipelinedRequests = 2;
 
-            _outter:
-            for (int i = 0; i < numberOfPipelinedRequests; i++) {
+            _outter: for (int i = 0; i < numberOfPipelinedRequests; i++) {
                 boolean expectStatus = true;
 
                 boolean expectEmpty = false;
                 while (true) {
                     line = reader.readLine();
-                        // System.out.println(line);
+                    // System.out.println(line);
 
                     if (expectEmpty) {
                         assertEquals("", line);
@@ -302,7 +302,7 @@ public class BasicCometTest extends TestCase {
             s.close();
         }
     }
-    
+
     public void testOnEvent() throws Exception {
         System.out.println("testOnEvent ");
         final String alias = "/OnEvent";

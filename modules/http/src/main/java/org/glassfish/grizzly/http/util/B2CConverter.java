@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@
 
 package org.glassfish.grizzly.http.util;
 
-import org.glassfish.grizzly.utils.Charsets;
-import org.glassfish.grizzly.Grizzly;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -29,7 +27,11 @@ import java.nio.charset.CodingErrorAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Efficient conversion of bytes  to character .
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.utils.Charsets;
+
+/**
+ * Efficient conversion of bytes to character .
  *
  * Now uses NIO directly
  */
@@ -53,7 +55,8 @@ public class B2CConverter {
         init("US-ASCII");
     }
 
-    /** Create a converter, with bytes going to a byte buffer
+    /**
+     * Create a converter, with bytes going to a byte buffer
      */
     public B2CConverter(String encoding) throws IOException {
         init(encoding);
@@ -68,14 +71,12 @@ public class B2CConverter {
             }
         } else {
             Charset charset = Charsets.lookupCharset(encoding);
-            decoder = charset.newDecoder().
-                    onMalformedInput(CodingErrorAction.REPLACE).
-                    onUnmappableCharacter(CodingErrorAction.REPLACE);
+            decoder = charset.newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
         }
     }
 
-    /** Reset the internal state, empty the buffers.
-     *  The encoding remain in effect, the internal buffers remain allocated.
+    /**
+     * Reset the internal state, empty the buffers. The encoding remain in effect, the internal buffers remain allocated.
      */
     public void recycle() {
         if (IS_OLD_IO_MODE) {
@@ -83,15 +84,14 @@ public class B2CConverter {
         }
     }
 
-    /** Convert a buffer of bytes into a chars
+    /**
+     * Convert a buffer of bytes into a chars
      */
-    public void convert(ByteChunk bb, CharChunk cb)
-            throws IOException {
+    public void convert(ByteChunk bb, CharChunk cb) throws IOException {
         convert(bb, cb, cb.getBuffer().length - cb.getEnd());
     }
 
-    public void convert(ByteChunk bb, CharChunk cb, int limit)
-            throws IOException {
+    public void convert(ByteChunk bb, CharChunk cb, int limit) throws IOException {
         if (IS_OLD_IO_MODE) {
             blockingConverter.convert(bb, cb, limit);
             return;
@@ -203,7 +203,7 @@ public class B2CConverter {
     }
 
     private void flushRemainder(ByteBuffer tmp_bb, CharBuffer tmp_cb) {
-        while(remainder.position() > 0 && tmp_bb.hasRemaining()) {
+        while (remainder.position() > 0 && tmp_bb.hasRemaining()) {
             remainder.put(tmp_bb.get());
             remainder.flip();
             CoderResult cr = decoder.decode(remainder, tmp_cb, false);
@@ -221,4 +221,3 @@ public class B2CConverter {
         }
     }
 }
-

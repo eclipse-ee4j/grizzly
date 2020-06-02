@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,30 +17,27 @@
 package org.glassfish.grizzly.http.server;
 
 /**
- * Error page generator interface, which is responsible for generating of an
- * error page corresponding to the given response status.
- * 
+ * Error page generator interface, which is responsible for generating of an error page corresponding to the given
+ * response status.
+ *
  * The <tt>ErrorPageGenerator</tt> is mainly used by {@link Response#sendError(int)} and
  * {@link Response#sendError(int, java.lang.String)} methods.
- * 
- * The <tt>ErrorPageGenerator</tt> might be set per
- * 1) {@link HttpServer}: {@link HttpServer#getServerConfiguration()};
- * 2) {@link NetworkListener}: {@link NetworkListener#setDefaultErrorPageGenerator(org.glassfish.grizzly.http.server.ErrorPageGenerator)};
- * 3) {@link Response}: {@link Response#setErrorPageGenerator(org.glassfish.grizzly.http.server.ErrorPageGenerator)};
+ *
+ * The <tt>ErrorPageGenerator</tt> might be set per 1) {@link HttpServer}: {@link HttpServer#getServerConfiguration()};
+ * 2) {@link NetworkListener}:
+ * {@link NetworkListener#setDefaultErrorPageGenerator(org.glassfish.grizzly.http.server.ErrorPageGenerator)}; 3)
+ * {@link Response}: {@link Response#setErrorPageGenerator(org.glassfish.grizzly.http.server.ErrorPageGenerator)};
  */
 public interface ErrorPageGenerator {
     /**
-     * Returns the HTML representation of the error page corresponding to the
-     * given HTTP response status.
-     * 
+     * Returns the HTML representation of the error page corresponding to the given HTTP response status.
+     *
      * @param request {@link Request}
      * @param status response status
      * @param reasonPhrase response reason phrase
      * @param description extra description. Might be <tt>null</tt>
      * @param exception {@link Throwable}, that caused the error. Might be <tt>null</tt>
-     * @return 
+     * @return
      */
-    String generate(final Request request,
-                    final int status, final String reasonPhrase,
-                    final String description, final Throwable exception);
+    String generate(final Request request, final int status, final String reasonPhrase, final String description, final Throwable exception);
 }

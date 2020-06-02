@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -13,6 +13,7 @@ package org.glassfish.grizzly.samples.udpecho;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.UDPNIOTransport;
@@ -41,8 +42,7 @@ public class EchoServer {
         filterChainBuilder.add(new EchoFilter());
 
         // Create UDP transport
-        final UDPNIOTransport transport =
-                UDPNIOTransportBuilder.newInstance().build();
+        final UDPNIOTransport transport = UDPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {

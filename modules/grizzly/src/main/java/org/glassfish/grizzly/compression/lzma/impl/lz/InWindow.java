@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,9 @@
 
 package org.glassfish.grizzly.compression.lzma.impl.lz;
 
-import org.glassfish.grizzly.Buffer;
-
 import java.io.IOException;
+
+import org.glassfish.grizzly.Buffer;
 
 /**
  * InWindow
@@ -29,15 +29,15 @@ public class InWindow {
 
     public byte[] _bufferBase; // pointer to buffer with data
     Buffer _buffer;
-    int _posLimit;  // offset (from _buffer) of first byte when new block reading must be done
+    int _posLimit; // offset (from _buffer) of first byte when new block reading must be done
     boolean _streamEndWasReached; // if (true) then _streamPos shows real end of stream
     int _pointerToLastSafePosition;
     public int _bufferOffset;
-    public int _blockSize;  // Size of Allocated memory block
-    public int _pos;             // offset (from _buffer) of curent byte
-    int _keepSizeBefore;  // how many BYTEs must be kept in buffer before _pos
-    int _keepSizeAfter;   // how many BYTEs must be kept buffer after _pos
-    public int _streamPos;   // offset (from _buffer) of first not read byte from Stream
+    public int _blockSize; // Size of Allocated memory block
+    public int _pos; // offset (from _buffer) of curent byte
+    int _keepSizeBefore; // how many BYTEs must be kept in buffer before _pos
+    int _keepSizeAfter; // how many BYTEs must be kept buffer after _pos
+    public int _streamPos; // offset (from _buffer) of first not read byte from Stream
 
     public void moveBlock() {
         int offset = _bufferOffset + _pos - _keepSizeBefore;
@@ -58,7 +58,7 @@ public class InWindow {
             return;
         }
         while (true) {
-            int size = (0 - _bufferOffset) + _blockSize - _streamPos;
+            int size = 0 - _bufferOffset + _blockSize - _streamPos;
             if (size == 0) {
                 return;
             }
@@ -133,7 +133,7 @@ public class InWindow {
     // index + limit have not to exceed _keepSizeAfter;
     public int getMatchLen(int index, int distance, int limit) {
         if (_streamEndWasReached) {
-            if ((_pos + index) + limit > _streamPos) {
+            if (_pos + index + limit > _streamPos) {
                 limit = _streamPos - (_pos + index);
             }
         }
@@ -142,7 +142,9 @@ public class InWindow {
         int pby = _bufferOffset + _pos + index;
 
         int i;
-        for (i = 0; i < limit && _bufferBase[pby + i] == _bufferBase[pby + i - distance]; i++);
+        for (i = 0; i < limit && _bufferBase[pby + i] == _bufferBase[pby + i - distance]; i++) {
+            ;
+        }
         return i;
     }
 

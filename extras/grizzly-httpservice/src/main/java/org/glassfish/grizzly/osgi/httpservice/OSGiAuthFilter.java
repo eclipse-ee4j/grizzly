@@ -16,17 +16,18 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.io.IOException;
+
 import org.osgi.service.http.HttpContext;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * OSGi Authentication filter.
@@ -36,14 +37,14 @@ import jakarta.servlet.ServletResponse;
 public class OSGiAuthFilter implements Filter {
     private final HttpContext httpContext;
 
-    public OSGiAuthFilter(
-            final HttpContext httpContext) {
+    public OSGiAuthFilter(final HttpContext httpContext) {
         this.httpContext = httpContext;
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
         // nothing to do here
     }
@@ -51,13 +52,13 @@ public class OSGiAuthFilter implements Filter {
     /**
      * OSGi integration. Relies on {@link HttpContext#handleSecurity(HttpServletRequest, HttpServletResponse)}.
      * <p/>
-     * If {@link HttpContext#handleSecurity(HttpServletRequest, HttpServletResponse)} returns <code>true</code> proceed
-     * to next {@link Filter} in {@link FilterChain}, else do nothing so processing stops here.
+     * If {@link HttpContext#handleSecurity(HttpServletRequest, HttpServletResponse)} returns <code>true</code> proceed to
+     * next {@link Filter} in {@link FilterChain}, else do nothing so processing stops here.
      * <p/>
      * {@inheritDoc}
      */
-    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
-            throws IOException, ServletException {
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
         if (httpContext.handleSecurity((HttpServletRequest) request, (HttpServletResponse) response)) {
             chain.doFilter(request, response);
         }
@@ -66,6 +67,7 @@ public class OSGiAuthFilter implements Filter {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void destroy() {
         // nothing to do here
     }

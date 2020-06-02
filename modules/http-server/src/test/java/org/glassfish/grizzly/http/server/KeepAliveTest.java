@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,16 +18,17 @@ package org.glassfish.grizzly.http.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.SecureRandom;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.GenericCloseListener;
 import org.glassfish.grizzly.SocketConnectorHandler;
@@ -47,24 +48,35 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.Futures;
 
+import junit.framework.TestCase;
+
 /**
  * Testing HTTP keep-alive
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class KeepAliveTest extends TestCase {
-    private static final int PORT = 18895;
-    
+    private static final int PORT = PORT();
+
+    static int PORT() {
+        try {
+            int port = 18895 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public void testHttp11KeepAlive() throws Exception {
         final String msg = "Hello world #";
-        
+
         HttpServer server = createServer(new HttpHandler() {
             private final AtomicInteger ai = new AtomicInteger();
-            
+
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 response.getWriter().write(msg + ai.getAndIncrement());
             }
@@ -81,17 +93,15 @@ public class KeepAliveTest extends TestCase {
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             connectFuture.get(10, TimeUnit.SECONDS);
 
-            Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder().method("GET")
-                        .uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build());
+            Future<Buffer> resultFuture = client
+                    .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
             Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
             assertEquals("Hello world #0", buffer.toStringContent());
 
-            resultFuture = client.get(HttpRequestPacket.builder().method("GET")
-                        .uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build());
+            resultFuture = client
+                    .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
             buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
@@ -114,8 +124,7 @@ public class KeepAliveTest extends TestCase {
             private final AtomicInteger ai = new AtomicInteger();
 
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 response.getWriter().write(msg + ai.getAndIncrement());
             }
@@ -132,32 +141,23 @@ public class KeepAliveTest extends TestCase {
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             connectFuture.get(10, TimeUnit.SECONDS);
 
-            Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
-                    .method("GET")
-                        .uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Connection", "close")
-                        .header("Host", "localhost:" + PORT)
-                        .build());
+            Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1)
+                    .header("Connection", "close").header("Host", "localhost:" + PORT).build());
 
             Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
             assertEquals("Hello world #0", buffer.toStringContent());
 
             try {
-                resultFuture = client.get(HttpRequestPacket.builder()
-                        .method("GET")
-                        .uri("/path")
-                        .protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT)
-                        .build());
+                resultFuture = client
+                        .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
                 buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
                 fail("IOException expected");
             } catch (ExecutionException ee) {
                 final Throwable cause = ee.getCause();
-                assertTrue("IOException expected, but got" + cause.getClass() +
-                        " " + cause.getMessage(), cause instanceof IOException);
+                assertTrue("IOException expected, but got" + cause.getClass() + " " + cause.getMessage(), cause instanceof IOException);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -178,8 +178,7 @@ public class KeepAliveTest extends TestCase {
             private final AtomicInteger ai = new AtomicInteger();
 
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 response.getWriter().write(msg + ai.getAndIncrement());
             }
@@ -197,12 +196,9 @@ public class KeepAliveTest extends TestCase {
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             connectFuture.get(10, TimeUnit.SECONDS);
 
-            for (int i=0; i < maxKeepAliveRequests; i++) {
-                final Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
-                        .method("GET")
-                            .uri("/path").protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT)
-                            .build());
+            for (int i = 0; i < maxKeepAliveRequests; i++) {
+                final Future<Buffer> resultFuture = client
+                        .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
                 final Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
@@ -210,20 +206,15 @@ public class KeepAliveTest extends TestCase {
             }
 
             try {
-                final Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
-                        .method("GET")
-                        .uri("/path")
-                        .protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT)
-                        .build());
+                final Future<Buffer> resultFuture = client
+                        .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
                 final Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
                 fail("IOException expected");
             } catch (ExecutionException ee) {
                 final Throwable cause = ee.getCause();
-                assertTrue("IOException expected, but got" + cause.getClass() +
-                        " " + cause.getMessage(), cause instanceof IOException);
+                assertTrue("IOException expected, but got" + cause.getClass() + " " + cause.getMessage(), cause instanceof IOException);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -236,77 +227,68 @@ public class KeepAliveTest extends TestCase {
     }
 
     public void testHttp11KeepAliveUnlimitedMaxRequests() throws Exception {
-            final String msg = "Hello world #";
+        final String msg = "Hello world #";
 
-            final int maxKeepAliveRequests = 150;
+        final int maxKeepAliveRequests = 150;
 
-            HttpServer server = createServer(new HttpHandler() {
-                private final AtomicInteger ai = new AtomicInteger();
+        HttpServer server = createServer(new HttpHandler() {
+            private final AtomicInteger ai = new AtomicInteger();
 
-                @Override
-                public void service(Request request,
-                        Response response) throws Exception {
-                    response.setContentType("text/plain");
-                    response.getWriter().write(msg + ai.getAndIncrement());
-                }
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                response.setContentType("text/plain");
+                response.getWriter().write(msg + ai.getAndIncrement());
+            }
 
-            }, "/path");
-            server.getListener("grizzly").getKeepAlive().setMaxRequestsCount(-1);
+        }, "/path");
+        server.getListener("grizzly").getKeepAlive().setMaxRequestsCount(-1);
 
-            final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
-            final HttpClient client = new HttpClient(clientTransport);
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
+        final HttpClient client = new HttpClient(clientTransport);
+
+        try {
+            server.start();
+            clientTransport.start();
+
+            Future<Connection> connectFuture = client.connect("localhost", PORT);
+            connectFuture.get(10, TimeUnit.SECONDS);
+
+            for (int i = 0; i <= maxKeepAliveRequests; i++) {
+                final Future<Buffer> resultFuture = client
+                        .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
+
+                final Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
+
+                assertEquals("Hello world #" + i, buffer.toStringContent());
+            }
 
             try {
-                server.start();
-                clientTransport.start();
+                final Future<Buffer> resultFuture = client
+                        .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
-                Future<Connection> connectFuture = client.connect("localhost", PORT);
-                connectFuture.get(10, TimeUnit.SECONDS);
+                resultFuture.get(10, TimeUnit.SECONDS);
 
-                for (int i=0; i <= maxKeepAliveRequests; i++) {
-                    final Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
-                            .method("GET")
-                                .uri("/path").protocol(Protocol.HTTP_1_1)
-                                .header("Host", "localhost:" + PORT)
-                                .build());
-
-                    final Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
-
-                    assertEquals("Hello world #" + i, buffer.toStringContent());
-                }
-
-                try {
-                    final Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder()
-                            .method("GET")
-                            .uri("/path")
-                            .protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT)
-                            .build());
-
-                    resultFuture.get(10, TimeUnit.SECONDS);
-
-                } catch (ExecutionException ee) {
-                    final Throwable cause = ee.getCause();
-                    cause.printStackTrace();
-                    fail("Unexpected exception: " + cause);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                fail();
-            } finally {
-                client.close();
-                clientTransport.shutdownNow();
-                server.shutdownNow();
+            } catch (ExecutionException ee) {
+                final Throwable cause = ee.getCause();
+                cause.printStackTrace();
+                fail("Unexpected exception: " + cause);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            client.close();
+            clientTransport.shutdownNow();
+            server.shutdownNow();
         }
-    
+    }
+
     public void testIdleTimeoutAfterConnect() throws Exception {
         final int idleTimeoutSeconds = 2;
-        
+
         HttpServer server = createServer(new HttpHandler() {
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
             }
         }, "/path");
 
@@ -320,7 +302,7 @@ public class KeepAliveTest extends TestCase {
 
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             final Connection clientConnection = connectFuture.get(10, TimeUnit.SECONDS);
-            
+
             final CountDownLatch latch = new CountDownLatch(1);
             clientConnection.addCloseListener(new GenericCloseListener() {
 
@@ -329,7 +311,7 @@ public class KeepAliveTest extends TestCase {
                     latch.countDown();
                 }
             });
-            
+
             assertTrue(latch.await(idleTimeoutSeconds * 4, TimeUnit.SECONDS));
         } catch (Exception e) {
             e.printStackTrace();
@@ -344,13 +326,12 @@ public class KeepAliveTest extends TestCase {
     public void testIdleTimeoutBetweenRequests() throws Exception {
         final int idleTimeoutSeconds = 2;
         final String msg = "Hello world #";
-        
+
         HttpServer server = createServer(new HttpHandler() {
             private final AtomicInteger ai = new AtomicInteger();
-            
+
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 response.getWriter().write(msg + ai.getAndIncrement());
             }
@@ -362,6 +343,7 @@ public class KeepAliveTest extends TestCase {
         final HttpClient client = new HttpClient(clientTransport);
 
         try {
+            Thread.sleep(100);
             server.start();
             clientTransport.start();
 
@@ -377,9 +359,8 @@ public class KeepAliveTest extends TestCase {
                 }
             });
 
-            Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder().method("GET")
-                        .uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build());
+            Future<Buffer> resultFuture = client
+                    .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
             Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
@@ -399,11 +380,10 @@ public class KeepAliveTest extends TestCase {
 
     public void testInfiniteIdleTimeoutAfterConnect() throws Exception {
         final int idleTimeoutSeconds = -1;
-        
+
         HttpServer server = createServer(new HttpHandler() {
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
             }
         }, "/path");
 
@@ -417,7 +397,7 @@ public class KeepAliveTest extends TestCase {
 
             Future<Connection> connectFuture = client.connect("localhost", PORT);
             final Connection clientConnection = connectFuture.get(10, TimeUnit.SECONDS);
-            
+
             final CountDownLatch latch = new CountDownLatch(1);
             clientConnection.addCloseListener(new GenericCloseListener() {
 
@@ -426,7 +406,7 @@ public class KeepAliveTest extends TestCase {
                     latch.countDown();
                 }
             });
-            
+
             assertFalse(latch.await(5, TimeUnit.SECONDS));
         } catch (Exception e) {
             e.printStackTrace();
@@ -436,18 +416,17 @@ public class KeepAliveTest extends TestCase {
             clientTransport.shutdownNow();
             server.shutdownNow();
         }
-    }    
+    }
 
     public void testInfiniteIdleTimeoutBetweenRequests() throws Exception {
         final int idleTimeoutSeconds = -1;
         final String msg = "Hello world #";
-        
+
         HttpServer server = createServer(new HttpHandler() {
             private final AtomicInteger ai = new AtomicInteger();
-            
+
             @Override
-            public void service(Request request,
-                    Response response) throws Exception {
+            public void service(Request request, Response response) throws Exception {
                 response.setContentType("text/plain");
                 response.getWriter().write(msg + ai.getAndIncrement());
             }
@@ -474,9 +453,8 @@ public class KeepAliveTest extends TestCase {
                 }
             });
 
-            Future<Buffer> resultFuture = client.get(HttpRequestPacket.builder().method("GET")
-                        .uri("/path").protocol(Protocol.HTTP_1_1)
-                        .header("Host", "localhost:" + PORT).build());
+            Future<Buffer> resultFuture = client
+                    .get(HttpRequestPacket.builder().method("GET").uri("/path").protocol(Protocol.HTTP_1_1).header("Host", "localhost:" + PORT).build());
 
             Buffer buffer = resultFuture.get(10, TimeUnit.SECONDS);
 
@@ -493,7 +471,7 @@ public class KeepAliveTest extends TestCase {
             server.shutdownNow();
         }
     }
-    
+
     // --------------------------------------------------------- Private Methods
 
     private static class HttpClient {
@@ -511,23 +489,17 @@ public class KeepAliveTest extends TestCase {
             filterChainBuilder.add(new HttpClientFilter());
             filterChainBuilder.add(new HttpResponseFilter());
 
-            final SocketConnectorHandler connector =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(filterChainBuilder.build())
-                    .build();
+            final SocketConnectorHandler connector = TCPNIOConnectorHandler.builder(transport).processor(filterChainBuilder.build()).build();
 
-            final FutureImpl<Connection> future =
-                    Futures.createSafeFuture();
-            connector.connect(new InetSocketAddress(host, port),
-                    Futures.toCompletionHandler(future,
-                    new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> future = Futures.createSafeFuture();
+            connector.connect(new InetSocketAddress(host, port), Futures.toCompletionHandler(future, new EmptyCompletionHandler<Connection>() {
 
-                        @Override
-                        public void completed(Connection result) {
-                            connection = result;
-                        }
-                    }));
-            
+                @Override
+                public void completed(Connection result) {
+                    connection = result;
+                }
+            }));
+
             return future;
         }
 
@@ -545,8 +517,7 @@ public class KeepAliveTest extends TestCase {
             connection.addCloseListener(new GenericCloseListener() {
 
                 @Override
-                public void onClosed(final Closeable connection,
-                        final CloseType closeType) throws IOException {
+                public void onClosed(final Closeable connection, final CloseType closeType) throws IOException {
                     localFuture.failure(new IOException());
                 }
             });
@@ -576,14 +547,10 @@ public class KeepAliveTest extends TestCase {
         }
     }
 
-    private HttpServer createServer(final HttpHandler httpHandler,
-                                          final String... mappings) {
+    private HttpServer createServer(final HttpHandler httpHandler, final String... mappings) {
 
         HttpServer server = new HttpServer();
-        NetworkListener listener =
-                new NetworkListener("grizzly",
-                                    NetworkListener.DEFAULT_NETWORK_HOST,
-                                    PORT);
+        NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         server.addListener(listener);
         if (httpHandler != null) {
             server.getServerConfiguration().addHttpHandler(httpHandler, mappings);

@@ -17,13 +17,14 @@
 package org.glassfish.grizzly.websockets;
 
 import java.io.IOException;
+
+import org.glassfish.grizzly.http.HttpRequestPacket;
+
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.glassfish.grizzly.http.HttpRequestPacket;
 
 public class EchoServlet extends HttpServlet {
     public static final String RESPONSE_TEXT = "Nothing to see";
@@ -36,6 +37,7 @@ public class EchoServlet extends HttpServlet {
                 return "/echo".equals(request.getRequestURI());
             }
 
+            @Override
             public void onMessage(WebSocket socket, String data) {
                 socket.send(data);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,27 +16,24 @@
 
 package org.glassfish.grizzly;
 
-
 /**
- * Callback notification mechanism that signals the developer it's possible
- * to write content.
+ * Callback notification mechanism that signals the developer it's possible to write content.
  *
  * @since 2.2
  */
 public interface WriteHandler {
 
     /**
-     * This callback will be invoked when the requirements as dictated
-     * by writer are met.
-     * 
-     * @throws Exception {@link Exception} might be thrown by the custom
-     *  handler code. This exception will be delegated for processing to
-     *  {@link #onError(java.lang.Throwable)}.
+     * This callback will be invoked when the requirements as dictated by writer are met.
+     *
+     * @throws Exception {@link Exception} might be thrown by the custom handler code. This exception will be delegated for
+     * processing to {@link #onError(java.lang.Throwable)}.
      */
     void onWritePossible() throws Exception;
 
     /**
      * Invoked when an error occurs processing the request asynchronously.
+     * 
      * @param t cause of error
      */
     void onError(final Throwable t);

@@ -1,6 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2007, 2018 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
     terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,30 +17,34 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-bom</artifactId>
         <version>3.0.0-SNAPSHOT</version>
-        <relativePath>bom/pom.xml</relativePath>
+        <relativePath>boms/bom/pom.xml</relativePath>
     </parent>
 
-    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-project</artifactId>
-    <packaging>pom</packaging>
-    <name>grizzly-project</name>
     <version>3.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>grizzly-project</name>
     <url>https://projects.eclipse.org/projects/ee4j.grizzly</url>
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/eclipse-ee4j/grizzly/issues</url>
-    </issueManagement>
-    <mailingLists>
-        <mailingList>
-            <name>Grizzly Discussion Group</name>
-            <archive>https://javaee.groups.io/g/grizzly</archive>
-        </mailingList>
-    </mailingLists>
+    <organization>
+        <name>Oracle Corporation</name>
+        <url>http://www.oracle.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>EPL-2.0</name>
+            <url>http://www.eclipse.org/legal/epl-2.0</url>
+        </license>
+    </licenses>
+
     <developers>
         <developer>
             <id>oleksiys</id>
@@ -86,377 +91,51 @@
             <name>Matt Swift</name>
         </contributor>
     </contributors>
-    <licenses>
-        <license>
-            <name>EPL-2.0</name>
-            <url>http://www.eclipse.org/legal/epl-2.0</url>
-        </license>
-    </licenses>
-    <scm>
-        <connection>scm:git:https://github.com/eclipse-ee4j/grizzly.git</connection>
-        <developerConnection>
-            scm:git:git@github.com:eclipse-ee4j/grizzly.git
-        </developerConnection>
-        <url>https://github.com/eclipse-ee4j/grizzly</url>
-      <tag>HEAD</tag>
-  </scm>
-    <organization>
-        <name>Oracle Corporation</name>
-        <url>http://www.oracle.com</url>
-    </organization>
-    <build>
-        <extensions>
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ssh-external</artifactId>
-                <version>1.0-beta-2</version>
-            </extension>
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-webdav</artifactId>
-                <version>1.0-beta-2</version>
-            </extension>
-        </extensions>
-        <defaultGoal>install</defaultGoal>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>src/test/resources/</directory>
-            </testResource>
-        </testResources>
-        <directory>target</directory>
-        <finalName>${project.artifactId}-${project.version}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.3.1</version>
-                <executions>
-                    <execution>
-                        <id>enforce-versions</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireJavaVersion>
-                                    <version>[${jdk.compile.version},)</version>
-                                    <message>You need JDK ${jdk.compile.version} and above to compile Grizzly! JDK 1.8 could be still used at runtime</message>
-                                </requireJavaVersion>
-                                <requireMavenVersion>
-                                    <version>[3.3.9,)</version>
-                                    <message>You need Maven 3.3.9 or above!</message>
-                                </requireMavenVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-maven-plugin</artifactId>
-                <version>2.0.6</version>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <compilerArgument>${maven.compiler.argument}
-                    </compilerArgument>
-                </configuration>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <preparationGoals>clean install</preparationGoals>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <pushChanges>false</pushChanges>
-                    <arguments>${release.arguments}</arguments>
-                </configuration>
-             </plugin>
-             <plugin>
-                 <groupId>org.sonatype.plugins</groupId>
-                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                     <version>1.6.8</version>
-                     <configuration>
-                         <serverId>ossrh</serverId>
-                         <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                         <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                         <!-- Skip based on the maven.deploy.skip property -->
-                         <skipNexusStagingDeployMojo>${maven.deploy.skip}</skipNexusStagingDeployMojo>
-                     </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
-                <configuration>
-                    <retryFailedDeploymentCount>10</retryFailedDeploymentCount>
-                </configuration>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <mode>development</mode>
-                            <url>${project.url}</url>
-                            <implementation-version>${project.version}
-                            </implementation-version>
-                            <package>org.glassfish.grizzly</package>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.glassfish.copyright</groupId>
-                <artifactId>glassfish-copyright-maven-plugin</artifactId>
-                <version>1.46</version>
-                <configuration>
-                    <excludeFile>copyright-exclude</excludeFile>
-                    <scm>git</scm>
-                    <scmOnly>true</scmOnly>
-                    <warn>false</warn>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
-                <configuration>
-                    <threshold>low</threshold>
-                    <excludeFilterFile>${findbugs.common}
-                    </excludeFilterFile>
-                    <xmlOutputDirectory>
-                        ${project.reporting.outputDirectory}
-                    </xmlOutputDirectory>
-                    <skip>${findbugs.skip}</skip>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    <profiles>
-        <profile>
-            <id>release-sign-artifacts</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-maven</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireMavenVersion>
-                                            <version>[3.0.4,)</version>
-                                            <message>Maven 3.0 through 3.0.3 inclusive does not pass
-                                                correct settings.xml to Maven Release Plugin.</message>
-                                        </requireMavenVersion>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <inherited>true</inherited>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>add-source</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>src/main/webapp</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <inherited>true</inherited>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <aggregate>true</aggregate>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+
+    <mailingLists>
+        <mailingList>
+            <name>Grizzly Discussion Group</name>
+            <archive>https://javaee.groups.io/g/grizzly</archive>
+        </mailingList>
+    </mailingLists>
+
     <modules>
-        <module>bom</module>
+        <module>boms/bom/</module>
         <module>modules/</module>
         <module>samples/</module>
         <module>extras/</module>
     </modules>
-    <reporting>
-        <outputDirectory>target/site</outputDirectory>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <debug>true</debug>
-                    <links>
-                        <link>http://download.oracle.com/javaee/7/api/</link>
-                        <link>http://download.oracle.com/javase/8/docs/api/
-                        </link>
-                    </links>
-                    <additionalOptions>
-                        <additionalOption>-Xdoclint:none</additionalOption>
-                    </additionalOptions>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.1.2</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>project-team</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.1</version>
-                <configuration>
-                    <forkMode>always</forkMode>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.22.1</version>
-                <configuration>
-                    <linkXRef>false</linkXRef>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
+
+    <scm>
+        <connection>scm:git:https://github.com/eclipse-ee4j/grizzly.git</connection>
+        <developerConnection>scm:git:git@github.com:eclipse-ee4j/grizzly.git</developerConnection>
+        <url>https://github.com/eclipse-ee4j/grizzly</url>
+        <tag>HEAD</tag>
+    </scm>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/eclipse-ee4j/grizzly/issues</url>
+    </issueManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit-version>4.13</junit-version>
+        <maven-plugin.version>1.0.0</maven-plugin.version>
+        <servlet-version>5.0.0-M1</servlet-version>
+        <felix-version>4.2.1</felix-version>
+        <cobertura.version>2.4</cobertura.version>
+        <gmbal.version>4.0.0</gmbal.version>
+        <osgi.version>4.2.0</osgi.version>
+        <grizzly.alpn.version>1.9</grizzly.alpn.version>
+        <release.arguments></release.arguments>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.glassfish.gmbal</groupId>
                 <artifactId>gmbal</artifactId>
                 <version>${gmbal.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-plugin-tools-api</artifactId>
-                <version>2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.felix</groupId>
@@ -469,20 +148,25 @@
                 <version>${servlet-version}</version>
             </dependency>
             <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>3.0.0-RC2</version>
+            </dependency>
+            <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.core</artifactId>
-                <version>${osgi.version}</version>
+                <version>6.0.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.compendium</artifactId>
-                <version>${osgi.version}</version>
+                <version>5.0.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.osgi.foundation</artifactId>
-                <version>1.0.0</version>
+                <version>1.2.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -494,22 +178,111 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit-version>4.12</junit-version>
-        <maven-plugin.version>1.0.0</maven-plugin.version>
-        <servlet-version>5.0.0-M1</servlet-version>
-        <felix-version>3.5.0</felix-version>
-        <cobertura.version>2.4</cobertura.version>
-        <gmbal.version>4.0.0</gmbal.version>
-        <osgi.version>4.2.0</osgi.version>
-        <maven.compiler.argument>
-            -Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides
-        </maven.compiler.argument>
-        <findbugs.skip>false</findbugs.skip>
-        <findbugs.common>exclude-common.xml</findbugs.common>
-        <jdk.compile.version>1.8</jdk.compile.version>
-        <grizzly.alpn.version>1.9</grizzly.alpn.version>
-        <release.arguments></release.arguments>
-    </properties>
+
+    <build>
+        <defaultGoal>install</defaultGoal>
+        <directory>target</directory>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources/</directory>
+            </testResource>
+        </testResources>
+        <plugins>
+            <!-- Sets minimal Maven version to 3.5.4 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[1.8,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>3.5.4</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Restricts the Java version to 1.8 -->
+            <plugin>
+                <inherited>true</inherited>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <compilerArgument>-Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</compilerArgument>
+                </configuration>
+            </plugin>
+            
+            <plugin><inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <mode>development</mode>
+                            <url>${project.url}</url>
+                            <implementation-version>${project.version}</implementation-version>
+                            <package>org.glassfish.grizzly</package>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            
+            <plugin><inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Configure the jar with the javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <javadocVersion>1.8</javadocVersion>
+                    <notimestamp>true</notimestamp>
+                    <splitindex>true</splitindex>
+                    <doctitle>${project.name} ${project.version}</doctitle>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.glassfish.copyright</groupId>
+                <artifactId>glassfish-copyright-maven-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <excludeFile>copyright-exclude</excludeFile>
+                    <scm>git</scm>
+                    <scmOnly>true</scmOnly>
+                    <warn>false</warn>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,12 @@
 
 package org.glassfish.grizzly.http2;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -25,6 +31,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -50,8 +57,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import static org.junit.Assert.*;
-
 /**
  * Test cases to validate the behaviors of {@link org.glassfish.grizzly.http.io.NIOInputStream} and
  * {@link org.glassfish.grizzly.http.io.NIOReader}.
@@ -64,7 +69,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     private final boolean isSecure;
     private final boolean priorKnowledge;
-    
+
     public HttpInputStreamsTest(final boolean isSecure, final boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
@@ -74,16 +79,15 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
     public static Collection<Object[]> configure() {
         return AbstractHttp2Test.configure();
     }
-    
-    // ----------------------------------------------------- Binary Test Methods
 
+    // ----------------------------------------------------- Binary Test Methods
 
     @Test
     public void testBinaryWithGet() throws Throwable {
 
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
 
                 // test issues a GET, so the InputStream should be inert
                 InputStream in = request.getInputStream();
@@ -101,14 +105,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinaryResetNoMark() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 try {
                     in.reset();
@@ -124,14 +127,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinaryMarkReset001() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-            throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(expected.length());
                 InputStream in = request.getInputStream();
 
@@ -164,14 +166,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinaryMarkReset002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 InputStream in = request.getInputStream();
 
@@ -200,15 +201,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinaryMarkReset003() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override 
-            public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 InputStream in = request.getInputStream();
 
@@ -251,15 +250,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinarySkip001() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(16);
                 InputStream in = request.getInputStream();
                 long skipped = in.skip(0);
@@ -284,15 +281,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinarySkip002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 long skipped = in.skip(100);
                 assertEquals(26, skipped);
@@ -308,15 +303,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 byte[] b = new byte[expected.length()];
                 assertEquals(26, in.read(b));
@@ -338,8 +331,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         final String content = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 byte[] b = new byte[14];
                 assertEquals(5, in.read(b, 2, 5));
@@ -354,15 +346,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary004() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 byte[] b = new byte[expected.length() - 2];
                 assertEquals(24, in.read(b));
@@ -380,7 +370,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testBinary005() throws Throwable {
 
@@ -392,10 +381,9 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
             }
         }
 
-
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 StringBuilder sb = new StringBuilder();
                 byte[] buf = new byte[512];
@@ -412,7 +400,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         doTest(createRequest("POST", b.toString()), reader, 1024);
 
     }
-
 
     @Test
     public void testBinary006() throws Throwable {
@@ -426,10 +413,9 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
             }
         }
 
-
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 InputStream in = request.getInputStream();
                 StringBuilder sb = new StringBuilder();
                 byte[] buf = new byte[512];
@@ -447,17 +433,15 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     // -------------------------------------------------- Character Test Methods
-
 
     @Test
     public void testCharacterResetNoMark() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 try {
                     in.reset();
@@ -473,14 +457,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacterMarkReset001() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-            throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(expected.length());
                 Reader in = request.getReader();
 
@@ -518,8 +501,8 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
         final String expected = "\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-            throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(expected.length());
                 Reader in = request.getReader();
 
@@ -552,14 +535,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacterMarkReset002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 Reader in = request.getReader();
 
@@ -587,14 +569,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testMultiByteCharacterMarkReset002() throws Throwable {
 
         final String expected = "\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 Reader in = request.getReader();
 
@@ -621,7 +602,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         doTest(createRequest("POST", expected, "UTF-16"), reader, 1024);
 
     }
-
 
     @Test
     public void testCharacterMarkReset003() throws Throwable {
@@ -629,8 +609,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 Reader in = request.getReader();
 
@@ -672,15 +651,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testMultiByteCharacterMarkReset003() throws Throwable {
 
         final String expected = "\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(5);
                 Reader in = request.getReader();
 
@@ -722,14 +699,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter001() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(26);
                 Reader in = request.getReader();
                 for (int i = in.read(); i != -1; i = in.read()) {
@@ -746,15 +722,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         doTest(createRequest("POST", expected), reader, 2);
     }
 
-
     @Test
     public void testCharacter002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 char[] b = new char[expected.length()];
                 assertEquals(26, in.read(b));
@@ -768,15 +742,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         doTest(createRequest("POST", expected), reader, 1024);
     }
 
-
     @Test
     public void testCharacter003() throws Throwable {
 
         final String content = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 char[] b = new char[14];
                 assertEquals(5, in.read(b, 2, 5));
@@ -790,15 +762,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter004() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 char[] b = new char[expected.length() - 2];
                 assertEquals(24, in.read(b));
@@ -815,7 +785,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter005() throws Throwable {
 
@@ -830,8 +799,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 StringBuilder sb = new StringBuilder();
                 char[] buf = new char[512];
@@ -849,7 +817,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter006() throws Throwable {
 
@@ -862,11 +829,9 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
             }
         }
 
-
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 StringBuilder sb = new StringBuilder();
                 char[] buf = new char[512];
@@ -883,7 +848,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter007() throws Throwable {
 
@@ -896,11 +860,9 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
             }
         }
 
-
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 StringBuilder sb = new StringBuilder();
                 char[] buf = new char[1024 * 9];
@@ -918,15 +880,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter008() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 CharBuffer cbuf = CharBuffer.allocate(52);
                 Reader in = request.getReader();
                 int read = in.read(cbuf);
@@ -943,15 +903,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter009() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 CharBuffer cbuf = CharBuffer.allocate(expected.length() / 2);
                 StringBuilder sb = new StringBuilder(expected.length());
@@ -970,7 +928,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacter010() throws Throwable {
 
@@ -985,8 +942,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 CharBuffer cbuf = CharBuffer.allocate(1024 / 2);
                 StringBuilder sb = new StringBuilder(len);
@@ -1005,13 +961,12 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testMultiByteCharacter01() throws Throwable {
         final String expected = "\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771\u0041\u00DF\u6771";
         ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-                    throws IOException {
+            @Override
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(26);
                 Reader in = request.getReader();
                 for (int i = in.read(); i != -1; i = in.read()) {
@@ -1029,15 +984,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacterReady001() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(26);
                 Reader in = request.getReader();
                 for (int i = in.read(); i != -1; i = in.read()) {
@@ -1056,55 +1009,27 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-    /*  TODO REVISIT:  This test relies on the underlying behavior
-           of the NIOReader implementation, however, once the
-           test was changed to use Request to read, the
-           Reader is now wrapped by a BufferedReader which changes
-           the dynamics of the test.
-
-    public void testCharacterReady002() throws Throwable {
-
-        final int len = 1024 * 8;
-        final StringBuilder b = new StringBuilder(len);
-        for (int i = 0, let = 'a'; i < len; i++, let++) {
-            b.append((char) let);
-            if (let == 'z') {
-                let = 'a' - 1;
-            }
-        }
-
-        ReadStrategy reader = new ReadStrategy() {
-            @Override public boolean doRead(Request request)
-            throws IOException {
-                try {
-                    Reader in = request.getReader();
-                    StringBuilder sb = new StringBuilder();
-                    char[] buf = new char[1024];
-                    for (int i = in.read(buf), count = 0; i != -1; i = in.read(buf), count++) {
-                        if (count < 7) {
-                            assertTrue(in.ready());
-                        } else {
-                            assertFalse(in.ready());
-                        }
-                        sb.append(new String(buf, 0, i));
-                    }
-                    assertEquals(sb.toString(), b.toString());
-                    assertFalse(in.ready());
-                    assertEquals(-1, in.read(buf));
-                    in.close();
-                    return true;
-                } catch (Throwable t) {
-                    exception.result(t);
-                    return false;
-                }
-            }
-        };
-
-        doTest(createRequest("POST", b.toString()), reader, len);
-
-    }
-    */
-
+    /*
+     * TODO REVISIT: This test relies on the underlying behavior of the NIOReader implementation, however, once the test was
+     * changed to use Request to read, the Reader is now wrapped by a BufferedReader which changes the dynamics of the test.
+     * 
+     * public void testCharacterReady002() throws Throwable {
+     * 
+     * final int len = 1024 * 8; final StringBuilder b = new StringBuilder(len); for (int i = 0, let = 'a'; i < len; i++,
+     * let++) { b.append((char) let); if (let == 'z') { let = 'a' - 1; } }
+     * 
+     * ReadStrategy reader = new ReadStrategy() {
+     * 
+     * @Override public boolean doRead(Request request) throws IOException { try { Reader in = request.getReader();
+     * StringBuilder sb = new StringBuilder(); char[] buf = new char[1024]; for (int i = in.read(buf), count = 0; i != -1; i
+     * = in.read(buf), count++) { if (count < 7) { assertTrue(in.ready()); } else { assertFalse(in.ready()); } sb.append(new
+     * String(buf, 0, i)); } assertEquals(sb.toString(), b.toString()); assertFalse(in.ready()); assertEquals(-1,
+     * in.read(buf)); in.close(); return true; } catch (Throwable t) { exception.result(t); return false; } } };
+     * 
+     * doTest(createRequest("POST", b.toString()), reader, len);
+     * 
+     * }
+     */
 
     @Test
     public void testCharacterSkip001() throws Throwable {
@@ -1113,14 +1038,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         ReadStrategy reader = new ReadStrategy() {
 
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 StringBuilder sb = new StringBuilder(16);
                 Reader in = request.getReader();
                 long skipped = in.skip(0);
                 assertEquals(0, skipped);
                 try {
-                    //noinspection ResultOfMethodCallIgnored
+                    // noinspection ResultOfMethodCallIgnored
                     in.skip(-1000);
                     fail();
                 } catch (IllegalArgumentException iae) {
@@ -1143,15 +1067,13 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     @Test
     public void testCharacterSkip002() throws Throwable {
 
         final String expected = "abcdefghijklmnopqrstuvwxyz";
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 Reader in = request.getReader();
                 long skipped = in.skip(100);
                 assertEquals(26, skipped);
@@ -1165,7 +1087,6 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         doTest(createRequest("POST", expected), reader, 1024);
 
     }
-
 
     @Test
     public void testCharacterSkip003() throws Throwable {
@@ -1181,8 +1102,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
         ReadStrategy reader = new ReadStrategy() {
             @Override
-            public boolean doRead(Request request)
-                    throws IOException {
+            public boolean doRead(Request request) throws IOException {
                 int skipLen = 9000;
                 Reader in = request.getReader();
                 long skipped = in.skip(skipLen);
@@ -1206,39 +1126,31 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-    private HttpPacket createRequest(final String method,
-                                     final String content) {
+    private HttpPacket createRequest(final String method, final String content) {
         return createRequest(method, content, "ISO-8859-1");
     }
 
-    @SuppressWarnings({"unchecked"})
-    private HttpPacket createRequest(final String method,
-                                     final String content,
-                                     final String encoding) {
+    @SuppressWarnings({ "unchecked" })
+    private HttpPacket createRequest(final String method, final String content, final String encoding) {
         return createRequest(PORT, method, content, encoding);
     }
 
-    private void doTest(HttpPacket request,
-                        ReadStrategy strategy,
-                        int chunkSize) throws Throwable{
+    private void doTest(HttpPacket request, ReadStrategy strategy, int chunkSize) throws Throwable {
 
         final FutureImpl<Boolean> testResult = SafeFutureImpl.create();
         final Filter clientFilter = new ClientFilter(request, chunkSize, testResult);
-        
-        final HttpServer server = createServer("/tmp", PORT, isSecure,
-                HttpHandlerRegistration.of(new SimpleResponseHttpHandler(strategy, testResult), "/*"));
-        
+
+        final HttpServer server = createServer("/tmp", PORT, isSecure, HttpHandlerRegistration.of(new SimpleResponseHttpHandler(strategy, testResult), "/*"));
+
         TCPNIOTransport ctransport = TCPNIOTransportBuilder.newInstance().build();
 
         try {
             server.start();
-            
-            final FilterChain clientFilterChain =
-                    createClientFilterChainAsBuilder(isSecure, priorKnowledge, clientFilter).build();
-            
+
+            final FilterChain clientFilterChain = createClientFilterChainAsBuilder(isSecure, priorKnowledge, clientFilter).build();
+
             ctransport.setProcessor(clientFilterChain);
 
             ctransport.start();
@@ -1262,30 +1174,24 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
     // ---------------------------------------------------------- Nested Classes
 
-
     private interface ReadStrategy {
 
         boolean doRead(Request request) throws IOException;
 
     }
 
-
     private static final class SimpleResponseHttpHandler extends HttpHandler {
         private final FutureImpl<Boolean> testResult;
         private final ReadStrategy strategy;
 
-
         // -------------------------------------------------------- Constructors
-
 
         public SimpleResponseHttpHandler(ReadStrategy strategy, FutureImpl<Boolean> testResult) {
             this.strategy = strategy;
             this.testResult = testResult;
         }
 
-
         // ----------------------------------------- Methods from HttpHandler
-
 
         @Override
         public void service(Request req, Response res) throws Exception {
@@ -1302,14 +1208,12 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
                 t = e;
             }
 
-            //noinspection ThrowableInstanceNeverThrown
+            // noinspection ThrowableInstanceNeverThrown
             testResult.failure(t != null ? t : new IllegalStateException("Strategy returned false"));
             res.addHeader("Status", "Failed");
         }
 
     } // END SimpleResponseHttpHandler
-
-
 
     private static class ClientFilter extends BaseFilter {
         private static final Logger LOGGER = Grizzly.logger(ClientFilter.class);
@@ -1318,9 +1222,8 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         protected final FutureImpl<Boolean> testResult;
 
         protected final int chunkSize;
-        
-        // -------------------------------------------------------- Constructors
 
+        // -------------------------------------------------------- Constructors
 
         public ClientFilter(HttpPacket request, int chunkSize, FutureImpl<Boolean> testResult) {
 
@@ -1330,13 +1233,10 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
 
         }
 
-
         // ------------------------------------------------ Methods from Filters
 
-
         @Override
-        public NextAction handleConnect(final FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
 
             final Http2Session c = Http2Session.get(ctx.getConnection());
             if (c != null) { // we're going over TLS
@@ -1359,24 +1259,17 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
                 LOGGER.log(Level.FINE, "Connected... Sending the request: {0}", request);
             }
 
-            if (HttpContent.isContent(request) &&
-                    ((HttpContent) request).getContent().remaining() > chunkSize) {
+            if (HttpContent.isContent(request) && ((HttpContent) request).getContent().remaining() > chunkSize) {
 
                 final HttpHeader httpHeader = request.getHttpHeader();
                 final HttpContent entireContent = (HttpContent) request;
                 Buffer workingBuffer = entireContent.getContent();
 
-
                 while (workingBuffer.hasRemaining()) {
-                    final int chunkSize0 =
-                            Math.min(chunkSize, workingBuffer.remaining());
-                    final Buffer remainder = workingBuffer.split(
-                            workingBuffer.position() + chunkSize0);
+                    final int chunkSize0 = Math.min(chunkSize, workingBuffer.remaining());
+                    final Buffer remainder = workingBuffer.split(workingBuffer.position() + chunkSize0);
 
-                    ctx.write(HttpContent.builder(httpHeader)
-                            .content(workingBuffer)
-                            .last(!remainder.hasRemaining())
-                            .build());
+                    ctx.write(HttpContent.builder(httpHeader).content(workingBuffer).last(!remainder.hasRemaining()).build());
 
                     workingBuffer = remainder;
                 }
@@ -1385,26 +1278,22 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
             }
         }
 
-
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             final HttpContent httpContent = ctx.getMessage();
 
             final Buffer buffer = httpContent.getContent();
 
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "HTTP content size: {0}, isLast: {1}", new Object[] {buffer.remaining(), httpContent.isLast()});
+                LOGGER.log(Level.FINE, "HTTP content size: {0}, isLast: {1}", new Object[] { buffer.remaining(), httpContent.isLast() });
             }
 
             if (httpContent.isLast()) {
                 try {
                     final HttpHeader httpHeader = httpContent.getHttpHeader();
                     assertNotNull("HttpHeader is null", httpHeader);
-                    assertEquals("OK",
-                                 "OK",
-                                 httpHeader.getHeader("Status"));
+                    assertEquals("OK", "OK", httpHeader.getHeader("Status"));
                 } catch (Throwable t) {
                     testResult.failure(t);
                 } finally {
@@ -1416,8 +1305,7 @@ public class HttpInputStreamsTest extends AbstractHttp2Test {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             return ctx.getStopAction();
         }
 

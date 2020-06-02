@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
@@ -23,15 +24,13 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
 /**
- * Sample {@link org.glassfish.grizzly.filterchain.Filter}, which tracks the connections
- * lifecycle.  The new connections could be either accepted if we have server,
- * or connected, if we establish client connection.
+ * Sample {@link org.glassfish.grizzly.filterchain.Filter}, which tracks the connections lifecycle. The new connections
+ * could be either accepted if we have server, or connected, if we establish client connection.
  *
  * @author Alexey Stashok
  */
 public class LifeCycleFilter extends BaseFilter {
-    private final Attribute<Integer> connectionIdAttribute =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("connection-id");
+    private final Attribute<Integer> connectionIdAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("connection-id");
 
     private final AtomicInteger totalConnectionNumber;
     private final Map<Connection, Integer> activeConnectionsMap;
@@ -42,8 +41,7 @@ public class LifeCycleFilter extends BaseFilter {
     }
 
     /**
-     * Method is called, when new {@link Connection} was
-     * accepted by a {@link org.glassfish.grizzly.Transport}
+     * Method is called, when new {@link Connection} was accepted by a {@link org.glassfish.grizzly.Transport}
      *
      * @param ctx the filter chain context
      * @return the next action to be executed by chain
@@ -56,10 +54,8 @@ public class LifeCycleFilter extends BaseFilter {
         return ctx.getInvokeAction();
     }
 
-
     /**
-     * Method is called, when new client {@link Connection} was
-     * connected to some endpoint
+     * Method is called, when new client {@link Connection} was connected to some endpoint
      *
      * @param ctx the filter chain context
      * @return the next action to be executed by chain
@@ -97,11 +93,9 @@ public class LifeCycleFilter extends BaseFilter {
     }
 
     /**
-     * Returns the total number of connections ever
-     * created by the {@link org.glassfish.grizzly.Transport}
+     * Returns the total number of connections ever created by the {@link org.glassfish.grizzly.Transport}
      *
-     * @return the total number of connections ever
-     * created by the {@link org.glassfish.grizzly.Transport}
+     * @return the total number of connections ever created by the {@link org.glassfish.grizzly.Transport}
      */
     public int getTotalConnections() {
         return totalConnectionNumber.get();

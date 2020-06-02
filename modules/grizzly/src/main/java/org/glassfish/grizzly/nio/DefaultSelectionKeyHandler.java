@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,13 +16,14 @@
 
 package org.glassfish.grizzly.nio;
 
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.IOEvent;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.IOEvent;
 
 /**
  *
@@ -88,11 +89,16 @@ public final class DefaultSelectionKeyHandler implements SelectionKeyHandler {
     @Override
     public int ioEvent2SelectionKeyInterest(IOEvent ioEvent) {
         switch (ioEvent) {
-            case READ: return SelectionKey.OP_READ;
-            case WRITE: return SelectionKey.OP_WRITE;
-            case SERVER_ACCEPT: return SelectionKey.OP_ACCEPT;
-            case CLIENT_CONNECTED: return SelectionKey.OP_CONNECT;
-            default: return 0;
+        case READ:
+            return SelectionKey.OP_READ;
+        case WRITE:
+            return SelectionKey.OP_WRITE;
+        case SERVER_ACCEPT:
+            return SelectionKey.OP_ACCEPT;
+        case CLIENT_CONNECTED:
+            return SelectionKey.OP_CONNECT;
+        default:
+            return 0;
         }
     }
 
@@ -117,8 +123,7 @@ public final class DefaultSelectionKeyHandler implements SelectionKeyHandler {
     }
 
     @Override
-    public boolean onProcessInterest(SelectionKey key, int interest)
-            throws IOException {
+    public boolean onProcessInterest(SelectionKey key, int interest) throws IOException {
         return true;
     }
 
@@ -128,8 +133,7 @@ public final class DefaultSelectionKeyHandler implements SelectionKeyHandler {
     }
 
     @Override
-    public void setConnectionForKey(NIOConnection connection,
-            SelectionKey selectionKey) {
+    public void setConnectionForKey(NIOConnection connection, SelectionKey selectionKey) {
         selectionKey.attach(connection);
     }
 }

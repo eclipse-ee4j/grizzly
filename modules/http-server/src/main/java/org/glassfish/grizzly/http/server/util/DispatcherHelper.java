@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,12 +21,11 @@ import org.glassfish.grizzly.http.util.DataChunk;
 
 /**
  * Interface simplifies by path or name mapping.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface DispatcherHelper {
-    void mapPath(HttpRequestPacket requestPacket, DataChunk path, MappingData mappingData)
-            throws Exception;
+    void mapPath(HttpRequestPacket requestPacket, DataChunk path, MappingData mappingData) throws Exception;
 
     void mapName(DataChunk name, MappingData mappingData) throws Exception;
 }

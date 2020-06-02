@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,19 +20,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.glassfish.grizzly.utils.NullaryFunction;
 
 /**
  * Default {@link AttributeBuilder} implementation.
  *
  * @see AttributeBuilder
- * 
+ *
  * @author Alexey Stashok
  */
 public class DefaultAttributeBuilder implements AttributeBuilder {
-    protected final List<Attribute> attributes = new ArrayList<Attribute>();
-    protected final Map<String, Attribute> name2Attribute = new HashMap<String, Attribute>();
-    
+    protected final List<Attribute> attributes = new ArrayList<>();
+    protected final Map<String, Attribute> name2Attribute = new HashMap<>();
+
     /**
      * {@inheritDoc}
      */
@@ -46,15 +47,14 @@ public class DefaultAttributeBuilder implements AttributeBuilder {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public synchronized <T> Attribute<T> createAttribute(final String name,
-            final T defaultValue) {
+    public synchronized <T> Attribute<T> createAttribute(final String name, final T defaultValue) {
         Attribute<T> attribute = name2Attribute.get(name);
         if (attribute == null) {
-            attribute = new Attribute<T>(this, name, attributes.size(), defaultValue);
+            attribute = new Attribute<>(this, name, attributes.size(), defaultValue);
             attributes.add(attribute);
             name2Attribute.put(name, attribute);
         }
-        
+
         return attribute;
     }
 
@@ -63,37 +63,33 @@ public class DefaultAttributeBuilder implements AttributeBuilder {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public synchronized <T> Attribute<T> createAttribute(final String name,
-            final NullaryFunction<T> initializer) {
+    public synchronized <T> Attribute<T> createAttribute(final String name, final NullaryFunction<T> initializer) {
         Attribute<T> attribute = name2Attribute.get(name);
         if (attribute == null) {
-            attribute = new Attribute<T>(this, name, attributes.size(), initializer);
+            attribute = new Attribute<>(this, name, attributes.size(), initializer);
             attributes.add(attribute);
             name2Attribute.put(name, attribute);
         }
-        
+
         return attribute;
     }
 
     @Override
-    public <T> Attribute<T> createAttribute(final String name,
-            final org.glassfish.grizzly.attributes.NullaryFunction<T> initializer) {
-        return createAttribute(name, initializer == null ?
-                null :
-                new NullaryFunction<T>() {
+    public <T> Attribute<T> createAttribute(final String name, final org.glassfish.grizzly.attributes.NullaryFunction<T> initializer) {
+        return createAttribute(name, initializer == null ? null : new NullaryFunction<T>() {
 
-                    @Override
-                    public T evaluate() {
-                        return initializer.evaluate();
-                    }
-                });
+            @Override
+            public T evaluate() {
+                return initializer.evaluate();
+            }
+        });
     }
 
     @Override
     public AttributeHolder createSafeAttributeHolder() {
         return new IndexedAttributeHolder(this);
     }
-    
+
     @Override
     public AttributeHolder createUnsafeAttributeHolder() {
         return new UnsafeAttributeHolder(this);

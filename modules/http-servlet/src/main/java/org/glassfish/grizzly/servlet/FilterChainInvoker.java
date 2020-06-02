@@ -16,14 +16,14 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.io.IOException;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import java.io.IOException;
 
 public interface FilterChainInvoker {
 
-    void invokeFilterChain(ServletRequest request, ServletResponse response)
-            throws IOException, ServletException;
+    void invokeFilterChain(ServletRequest request, ServletResponse response) throws IOException, ServletException;
 
 }

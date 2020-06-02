@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.grizzly.filterchain;
 
-
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,8 +23,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An event that {@link Filter} implementations may listen for if special processing is required
- * during a graceful shutdown.
+ * An event that {@link Filter} implementations may listen for if special processing is required during a graceful
+ * shutdown.
  *
  * @since 2.4.0
  */
@@ -36,9 +35,7 @@ public class ShutdownEvent implements FilterChainEvent {
     private long gracePeriod;
     private TimeUnit timeUnit;
 
-
     // ----------------------------------------------------------- Constructors
-
 
     /**
      * Create a new {@link ShutdownEvent} with the grace period for the shutdown.
@@ -56,10 +53,9 @@ public class ShutdownEvent implements FilterChainEvent {
         return TYPE;
     }
 
-
     /**
-     * Adds a task to this event.  Tasks should be called on separate threads after all {@link Filter}s in the
-     * chain have been notified of the impending shutdown.
+     * Adds a task to this event. Tasks should be called on separate threads after all {@link Filter}s in the chain have
+     * been notified of the impending shutdown.
      */
     public void addShutdownTask(final Callable<Filter> future) {
         if (future == null) {
@@ -72,11 +68,11 @@ public class ShutdownEvent implements FilterChainEvent {
     }
 
     /**
-     * @return a {@link Set} of {@link Callable<Filter>} instances that need to be
-     *  checked in order to proceed with terminating processing.
+     * @return a {@link Set} of {@link Callable<Filter>} instances that need to be checked in order to proceed with
+     * terminating processing.
      */
     public Set<Callable<Filter>> getShutdownTasks() {
-        return ((shutdownFutures != null) ? shutdownFutures : Collections.emptySet());
+        return shutdownFutures != null ? shutdownFutures : Collections.emptySet();
     }
 
     /**

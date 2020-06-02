@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,12 @@
 
 package org.glassfish.grizzly.http.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MimeHeadersTest {
 
@@ -43,9 +43,7 @@ public class MimeHeadersTest {
 
     @Test
     public void testNames() throws Exception {
-        final String[] expectedNames = {
-                "custom-before", "custom-before-2", "custom-after", "custom-after-2"
-        };
+        final String[] expectedNames = { "custom-before", "custom-before-2", "custom-after", "custom-after-2" };
         Iterable<String> result = mimeHeaders.names();
         List<String> list = new ArrayList<>();
         for (String s : result) {
@@ -56,9 +54,7 @@ public class MimeHeadersTest {
 
     @Test
     public void testTrailerNames() throws Exception {
-        final String[] expectedNames = {
-                "custom-after", "custom-after-2"
-        };
+        final String[] expectedNames = { "custom-after", "custom-after-2" };
         Iterable<String> result = mimeHeaders.trailerNames();
         List<String> list = new ArrayList<>();
         for (String s : result) {
@@ -69,12 +65,8 @@ public class MimeHeadersTest {
 
     @Test
     public void testValues() throws Exception {
-        final String[] expectedValuesSet1 = {
-                "one", "two", "three"
-        };
-        final String[] expectedValuesSet2 = {
-                "one"
-        };
+        final String[] expectedValuesSet1 = { "one", "two", "three" };
+        final String[] expectedValuesSet2 = { "one" };
         Iterable<String> result = mimeHeaders.values("custom-before");
         List<String> list = new ArrayList<>();
         for (String s : result) {
@@ -106,12 +98,8 @@ public class MimeHeadersTest {
 
     @Test
     public void testTrailerValues() throws Exception {
-        final String[] expectedValuesSet1 = {
-                "one", "two", "three"
-        };
-        final String[] expectedValuesSet2 = {
-                "one"
-        };
+        final String[] expectedValuesSet1 = { "one", "two", "three" };
+        final String[] expectedValuesSet2 = { "one" };
         final String[] emptySet = {};
 
         Iterable<String> result = mimeHeaders.trailerValues("custom-before");

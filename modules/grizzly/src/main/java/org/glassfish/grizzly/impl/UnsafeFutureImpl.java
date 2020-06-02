@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,8 +20,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.ThreadCache;
@@ -30,13 +32,12 @@ import org.glassfish.grizzly.ThreadCache;
  * Simple thread-unsafe {@link Future} implementation.
  *
  * @see Future
- * 
+ *
  * @author Alexey Stashok
  */
 public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
 
-    private static final ThreadCache.CachedTypeIndex<UnsafeFutureImpl> CACHE_IDX =
-            ThreadCache.obtainIndex(UnsafeFutureImpl.class, 4);
+    private static final ThreadCache.CachedTypeIndex<UnsafeFutureImpl> CACHE_IDX = ThreadCache.obtainIndex(UnsafeFutureImpl.class, 4);
 
     /**
      * Construct {@link Future}.
@@ -48,7 +49,7 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
             return future;
         }
 
-        return new UnsafeFutureImpl<R>();
+        return new UnsafeFutureImpl<>();
     }
 
     protected boolean isDone;
@@ -73,18 +74,17 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
             notifyCompletionHandler(completionHandler);
         } else {
             if (completionHandlers == null) {
-                completionHandlers = new HashSet<CompletionHandler<R>>(2);
+                completionHandlers = new HashSet<>(2);
             }
-            
+
             completionHandlers.add(completionHandler);
         }
-        
-    }
 
+    }
 
     /**
      * Get current result value without any blocking.
-     * 
+     *
      * @return current result value without any blocking.
      */
     @Override
@@ -94,7 +94,7 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
 
     /**
      * Set the result value and notify about operation completion.
-     * 
+     *
      * @param result the result value
      */
     @Override
@@ -151,14 +151,13 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
      * {@inheritDoc}
      */
     @Override
-    public R get(long timeout, TimeUnit unit) throws
-            InterruptedException, ExecutionException, TimeoutException {
+    public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return get();
     }
 
     /**
      * Notify about the failure, occured during asynchronous operation execution.
-     * 
+     *
      * @param failure
      */
     @Override
@@ -187,11 +186,11 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
             for (CompletionHandler<R> completionHandler : completionHandlers) {
                 notifyCompletionHandler(completionHandler);
             }
-            
+
             completionHandlers = null;
         }
     }
-    
+
     /**
      * Notify single {@link CompletionHandler} about the result.
      */
@@ -207,7 +206,7 @@ public final class UnsafeFutureImpl<R> implements FutureImpl<R> {
         } catch (Exception ignored) {
         }
     }
-    
+
     @Override
     public void markForRecycle(boolean recycleResult) {
         if (isDone) {

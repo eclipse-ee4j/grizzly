@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -17,8 +17,6 @@
 
 package org.glassfish.grizzly;
 
-import org.glassfish.grizzly.asyncqueue.WritableMessage;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,26 +24,26 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 
+import org.glassfish.grizzly.asyncqueue.WritableMessage;
+
 /**
- * A simple class that abstracts {@link FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}
- * for use with Grizzly 2.0 {@link org.glassfish.grizzly.asyncqueue.AsyncQueueWriter}.
+ * A simple class that abstracts {@link FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)} for
+ * use with Grizzly 2.0 {@link org.glassfish.grizzly.asyncqueue.AsyncQueueWriter}.
  *
  * @since 2.2
  */
 public class FileTransfer implements WritableMessage {
-    
+
     private FileChannel fileChannel;
     private long len;
     private long pos;
-    
-    
+
     // ------------------------------------------------------------ Constructors
 
-
     /**
-     * Constructs a new <code>FileTransfer</code> instance backed by the specified
-     * {@link File}.  This simply calls <code>this(f, 0, f.length)</code>.
-     * 
+     * Constructs a new <code>FileTransfer</code> instance backed by the specified {@link File}. This simply calls
+     * <code>this(f, 0, f.length)</code>.
+     *
      * @param f the {@link File} to transfer.
      *
      * @throws NullPointerException if f is null.
@@ -56,23 +54,19 @@ public class FileTransfer implements WritableMessage {
         this(f, 0, f.length());
     }
 
-
     /**
-     * Constructs a new <code>FileTransfer</code> instance backed by the specified
-     * {@link File}.  The content to transfer will begin at the specified offset,
-     * <code>pos</code> with the total transfer length being specified by 
+     * Constructs a new <code>FileTransfer</code> instance backed by the specified {@link File}. The content to transfer
+     * will begin at the specified offset, <code>pos</code> with the total transfer length being specified by
      * <code>len</code>.
-     * 
+     *
      * @param f the {@link File} to transfer.
      * @param pos the offset within the File to start the transfer.
      * @param len the total number of bytes to transfer.
      *
-     * @throws IllegalArgumentException if <code>f</code> is null, does not exist, is
-     *  not readable, or is a directory.
-     * @throws IllegalArgumentException if <code>pos</code> or <code>len</code>
-     *  are negative.
-     * @throws IllegalArgumentException if len exceeds the number of bytes that
-     *  may be transferred based on the provided offset and file length.
+     * @throws IllegalArgumentException if <code>f</code> is null, does not exist, is not readable, or is a directory.
+     * @throws IllegalArgumentException if <code>pos</code> or <code>len</code> are negative.
+     * @throws IllegalArgumentException if len exceeds the number of bytes that may be transferred based on the provided
+     * offset and file length.
      */
     public FileTransfer(final File f, final long pos, final long len) {
         if (f == null) {
@@ -99,7 +93,7 @@ public class FileTransfer implements WritableMessage {
         if (f.length() - pos < len) {
             throw new IllegalArgumentException("Specified length exceeds available bytes to transfer.");
         }
-        
+
         this.pos = pos;
         this.len = len;
         try {
@@ -108,19 +102,16 @@ public class FileTransfer implements WritableMessage {
             throw new IllegalStateException(fnfe);
         }
     }
-    
-    
+
     // ---------------------------------------------------------- Public Methods
 
-
     /**
-     * Transfers the File backing this <code>FileTransfer</code> to the specified
-     * {@link WritableByteChannel}.
-     * 
+     * Transfers the File backing this <code>FileTransfer</code> to the specified {@link WritableByteChannel}.
+     *
      * @param c the {@link WritableByteChannel}
      * @return the number of bytes that have been transferred
      * @throws IOException if an error occurs while processing
-     * @see java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel) 
+     * @see java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)
      */
     public long writeTo(final WritableByteChannel c) throws IOException {
         final long written = fileChannel.transferTo(pos, len, c);
@@ -128,28 +119,24 @@ public class FileTransfer implements WritableMessage {
         len -= written;
         return written;
     }
-    
-    
-    // ------------------------------------------ Methods from WritableMessage
 
+    // ------------------------------------------ Methods from WritableMessage
 
     /**
      * {@inheritDoc}
      */
     @Override
     public boolean hasRemaining() {
-        return (len != 0);
+        return len != 0;
     }
-
 
     /**
      * {@inheritDoc}
      */
     @Override
     public int remaining() {
-        return ((len > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) len);
+        return len > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) len;
     }
-
 
     /**
      * {@inheritDoc}
@@ -164,7 +151,6 @@ public class FileTransfer implements WritableMessage {
         }
         return true;
     }
-
 
     /**
      * {@inheritDoc}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +41,7 @@ public interface SSLSupport {
      */
     String CERTIFICATE_KEY = "jakarta.servlet.request.X509Certificate";
     /**
-     * The Request attribute key for the session id.
-     * This one is a Tomcat extension to the Servlet spec.
+     * The Request attribute key for the session id. This one is a Tomcat extension to the Servlet spec.
      */
     String SESSION_ID_KEY = "jakarta.servlet.request.ssl_session_id";
 
@@ -54,44 +53,36 @@ public interface SSLSupport {
     /**
      * The client certificate chain (if any).
      */
-    Object[] getPeerCertificateChain()
-            throws IOException;
+    Object[] getPeerCertificateChain() throws IOException;
 
     /**
      * The client certificate chain (if any).
-     * @param force If <tt>true</tt>, then re-negotiate the
-     *              connection if necessary.
+     * 
+     * @param force If <tt>true</tt>, then re-negotiate the connection if necessary.
      */
-    Object[] getPeerCertificateChain(boolean force)
-            throws IOException;
+    Object[] getPeerCertificateChain(boolean force) throws IOException;
 
     /**
      * Get the keysize.
      *
-     * What we're supposed to put here is ill-defined by the
-     * Servlet spec (S 4.7 again). There are at least 4 potential
+     * What we're supposed to put here is ill-defined by the Servlet spec (S 4.7 again). There are at least 4 potential
      * values that might go here:
      *
-     * (a) The size of the encryption key
-     * (b) The size of the MAC key
-     * (c) The size of the key-exchange key
-     * (d) The size of the signature key used by the server
+     * (a) The size of the encryption key (b) The size of the MAC key (c) The size of the key-exchange key (d) The size of
+     * the signature key used by the server
      *
      * Unfortunately, all of these values are nonsensical.
      **/
-    Integer getKeySize()
-            throws IOException;
+    Integer getKeySize() throws IOException;
 
     /**
      * The current session Id.
      */
-    String getSessionId()
-            throws IOException;
+    String getSessionId() throws IOException;
 
     /**
-     * Simple data class that represents the cipher being used, along with the
-     * corresponding effective key size.  The specified phrase must appear in the
-     * name of the cipher suite to be recognized.
+     * Simple data class that represents the cipher being used, along with the corresponding effective key size. The
+     * specified phrase must appear in the name of the cipher suite to be recognized.
      */
     final class CipherData {
 

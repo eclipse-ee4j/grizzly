@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,48 +17,40 @@
 package org.glassfish.grizzly.http.server;
 
 /**
- * Class representing {@link HttpHandler} registration information on a
- * {@link HttpServer}.
- * An instance of the class could be created either from {@link String} using
- * {@link #fromString(java.lang.String)} method, or builder {@link #builder()}.
- * 
+ * Class representing {@link HttpHandler} registration information on a {@link HttpServer}. An instance of the class
+ * could be created either from {@link String} using {@link #fromString(java.lang.String)} method, or builder
+ * {@link #builder()}.
+ *
  * @author Alexey Stashok
  */
 public class HttpHandlerRegistration {
-    public static final HttpHandlerRegistration ROOT =
-            HttpHandlerRegistration.builder()
-            .contextPath("")
-            .urlPattern("/")
-            .build();
-    
+    public static final HttpHandlerRegistration ROOT = HttpHandlerRegistration.builder().contextPath("").urlPattern("/").build();
+
     /**
      * @return the <tt>HttpHandlerRegistration</tt> builder.
      */
     public static Builder builder() {
         return new Builder();
     }
-    
+
     /**
      * @return the <tt>HttpHandlerRegistration</tt> builder.
-     * 
+     *
      * @deprecated typo :(
      */
+    @Deprecated
     public static Builder bulder() {
         return builder();
     }
 
     /**
-     * Create a registration from the mapping {@link String}.
-     * The part of the <tt>mapping</tt> before the second slash '/' occurrence will
-     * be treated as <tt>context-path</tt> and the remainder will be treated as
-     * a <tt>url-pattern</tt>.
-     * For example:
-     *      1) "" will be treated as context-path("") and url-pattern("");
-     *      2) "/" will be treated as context-path("") and url-pattern("/");
-     *      3) "/a/b/c" will be treated as context-path("/a") and url-pattern("/b/c");
-     *      4) "/*" will be treated as context-path("") and url-pattern("/*")
-     *      5) "*.jpg" will be treated as context-path("") and url-pattern("*.jpg")
-     * 
+     * Create a registration from the mapping {@link String}. The part of the <tt>mapping</tt> before the second slash '/'
+     * occurrence will be treated as <tt>context-path</tt> and the remainder will be treated as a <tt>url-pattern</tt>. For
+     * example: 1) "" will be treated as context-path("") and url-pattern(""); 2) "/" will be treated as context-path("")
+     * and url-pattern("/"); 3) "/a/b/c" will be treated as context-path("/a") and url-pattern("/b/c"); 4) "/*" will be
+     * treated as context-path("") and url-pattern("/*") 5) "*.jpg" will be treated as context-path("") and
+     * url-pattern("*.jpg")
+     *
      * @param mapping the {@link String}
      * @return {@link HttpHandlerRegistration}
      */
@@ -66,28 +58,26 @@ public class HttpHandlerRegistration {
         if (mapping == null) {
             return ROOT;
         }
-        
+
         final String contextPath = getContextPath(mapping);
-        return new HttpHandlerRegistration(contextPath,
-                getWrapperPath(contextPath, mapping));
+        return new HttpHandlerRegistration(contextPath, getWrapperPath(contextPath, mapping));
     }
-    
+
     private final String contextPath;
     private final String urlPattern;
 
-    private HttpHandlerRegistration(final String contextPath,
-            final String urlPattern) {
+    private HttpHandlerRegistration(final String contextPath, final String urlPattern) {
         this.contextPath = contextPath;
         this.urlPattern = urlPattern;
     }
-    
+
     /**
      * @return <tt>context-path</tt> part of the registration
      */
     public String getContextPath() {
         return contextPath;
     }
-    
+
     /**
      * @return <tt>url-pattern</tt> part of the registration
      */
@@ -111,13 +101,12 @@ public class HttpHandlerRegistration {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        
+
         final HttpHandlerRegistration other = (HttpHandlerRegistration) obj;
-        
-        return this.contextPath.equals(other.contextPath) &&
-                this.urlPattern.equals(other.urlPattern);
+
+        return this.contextPath.equals(other.contextPath) && this.urlPattern.equals(other.urlPattern);
     }
-    
+
     private static String getWrapperPath(String ctx, String mapping) {
 
         if (mapping.indexOf("*.") > 0) {
@@ -151,7 +140,7 @@ public class HttpHandlerRegistration {
 
         return ctx;
     }
-    
+
     public static class Builder {
         private String contextPath;
         private String urlPattern;
@@ -165,16 +154,16 @@ public class HttpHandlerRegistration {
             this.urlPattern = urlPattern;
             return this;
         }
-        
+
         public HttpHandlerRegistration build() {
             if (contextPath == null) {
                 contextPath = "";
             }
-            
+
             if (urlPattern == null) {
                 urlPattern = "/";
             }
-            
+
             return new HttpHandlerRegistration(contextPath, urlPattern);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,20 +17,20 @@
 package org.glassfish.grizzly.http.util;
 
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.memory.Buffers;
 
 /**
- * {@link Buffer} chunk representation.
- * Helps HTTP module to avoid redundant String creation.
+ * {@link Buffer} chunk representation. Helps HTTP module to avoid redundant String creation.
  *
  * @author Alexey Stashok
  */
 public class BufferChunk implements Chunk {
-    /** Default encoding used to convert to strings. It should be UTF8,
-	as most standards seem to converge, but the servlet API requires
-	8859_1, and this object is used mostly for servlets.
-    */
+    /**
+     * Default encoding used to convert to strings. It should be UTF8, as most standards seem to converge, but the servlet
+     * API requires 8859_1, and this object is used mostly for servlets.
+     */
     private static final Charset DEFAULT_CHARSET = Constants.DEFAULT_HTTP_CHARSET;
 
     private Buffer buffer;
@@ -40,20 +40,15 @@ public class BufferChunk implements Chunk {
 
     // the last byte available for this BufferChunk
     private int limit;
-    
+
     String cachedString;
     Charset cachedStringCharset;
 
-    public void setBufferChunk(final Buffer buffer,
-                               final int start,
-                               final int end) {
+    public void setBufferChunk(final Buffer buffer, final int start, final int end) {
         setBufferChunk(buffer, start, end, end);
     }
 
-    public void setBufferChunk(final Buffer buffer,
-                               final int start,
-                               final int end,
-                               final int limit) {
+    public void setBufferChunk(final Buffer buffer, final int start, final int end, final int limit) {
         this.buffer = buffer;
         this.start = start;
         this.end = end;
@@ -102,7 +97,7 @@ public class BufferChunk implements Chunk {
     }
 
     public void allocate(final int size) {
-        if (isNull() || (limit - start) < size) {
+        if (isNull() || limit - start < size) {
             setBufferChunk(Buffers.wrap(null, new byte[size]), 0, 0, size);
         }
 
@@ -135,12 +130,11 @@ public class BufferChunk implements Chunk {
 
         resetStringCache();
     }
-    
+
     public void append(final BufferChunk bc) {
         final int oldPos = buffer.position();
         final int oldLim = buffer.limit();
-        final int srcLen = bc.getLength()
-                ;
+        final int srcLen = bc.getLength();
         Buffers.setPositionLimit(buffer, end, end + srcLen);
         buffer.put(bc.getBuffer(), bc.getStart(), srcLen);
         Buffers.setPositionLimit(buffer, oldPos, oldLim);
@@ -152,7 +146,6 @@ public class BufferChunk implements Chunk {
         final int idx = indexOf(buffer, start + fromIndex, end, c);
         return idx >= start ? idx - start : -1;
     }
-
 
     @Override
     public final int indexOf(final String s, final int fromIndex) {
@@ -193,13 +186,11 @@ public class BufferChunk implements Chunk {
     }
 
     /**
-     * Returns the starting index of the specified byte sequence within this
-     * <code>Buffer</code>.
+     * Returns the starting index of the specified byte sequence within this <code>Buffer</code>.
      *
      * @param b byte sequence to search for.
      *
-     * @return the starting index of the specified byte sequence within this
-     *  <code>Buffer</code>
+     * @return the starting index of the specified byte sequence within this <code>Buffer</code>
      */
     public int findBytesAscii(byte[] b) {
 
@@ -211,7 +202,9 @@ public class BufferChunk implements Chunk {
         int srcEnd = b.length;
 
         for (int i = from; i <= to - srcEnd; i++) {
-            if (Ascii.toLower(buffer.get(i)) != first) continue;
+            if (Ascii.toLower(buffer.get(i)) != first) {
+                continue;
+            }
             // found first char, now look for a match
             int myPos = i + 1;
             for (int srcPos = 1; srcPos < srcEnd;) {
@@ -223,7 +216,7 @@ public class BufferChunk implements Chunk {
                 }
             }
         }
-        
+
         return -1;
     }
 
@@ -231,9 +224,9 @@ public class BufferChunk implements Chunk {
     public int hashCode() {
         return hash();
     }
-    
+
     public int hash() {
-        int code=0;
+        int code = 0;
         for (int i = start; i < end; i++) {
             code = code * 31 + buffer.get(i);
         }
@@ -245,18 +238,18 @@ public class BufferChunk implements Chunk {
         if (!(o instanceof BufferChunk)) {
             return false;
         }
-        
+
         final BufferChunk anotherBC = (BufferChunk) o;
-        
+
         final int len = getLength();
-        
+
         if (len != anotherBC.getLength()) {
             return false;
         }
 
         int offs1 = start;
         int offs2 = anotherBC.start;
-        
+
         for (int i = 0; i < len; i++) {
             if (buffer.get(offs1++) != anotherBC.buffer.get(offs2++)) {
                 return false;
@@ -265,7 +258,7 @@ public class BufferChunk implements Chunk {
 
         return true;
     }
-    
+
     public boolean equals(CharSequence s) {
         if (getLength() != s.length()) {
             return false;
@@ -282,7 +275,7 @@ public class BufferChunk implements Chunk {
 
     /**
      * Compares the message Buffer to the specified byte array.
-
+     * 
      * @param b the <code>byte[]</code> to compare
      *
      * @return true if the comparison succeeded, false otherwise
@@ -292,14 +285,14 @@ public class BufferChunk implements Chunk {
     public boolean equals(final byte[] b) {
         return equals(b, 0, b.length);
     }
-    
+
     /**
      * Compares the message Buffer to the specified byte array.
-
+     * 
      * @param b the <code>byte[]</code> to compare
      * @param offset the offset in the array
      * @param len number of bytes to check
-     * 
+     *
      * @return true if the comparison succeeded, false otherwise
      *
      * @since 2.3
@@ -318,8 +311,7 @@ public class BufferChunk implements Chunk {
         return true;
     }
 
-    public static boolean equals(final byte[] c, final int cOff, final int cLen,
-                                 final Buffer t, final int tOff, final int tLen) {
+    public static boolean equals(final byte[] c, final int cOff, final int cLen, final Buffer t, final int tOff, final int tLen) {
         // XXX ENCODING - this only works if encoding is UTF8-compat
         // ( ok for tomcat, where we compare ascii - header names, etc )!!!
 
@@ -338,14 +330,14 @@ public class BufferChunk implements Chunk {
         }
         return true;
     }
-    
+
     /**
      * Compares the message Buffer to the specified char array.
-
+     * 
      * @param b the <code>char[]</code> to compare
      * @param offset the offset in the array
      * @param len number of chars to check
-     * 
+     *
      * @return true if the comparison succeeded, false otherwise
      *
      * @since 2.3
@@ -363,23 +355,23 @@ public class BufferChunk implements Chunk {
 
         return true;
     }
-    
+
     public boolean equalsIgnoreCase(final Object o) {
         if (!(o instanceof BufferChunk)) {
             return false;
         }
-        
+
         final BufferChunk anotherBC = (BufferChunk) o;
-        
+
         final int len = getLength();
-        
+
         if (len != anotherBC.getLength()) {
             return false;
         }
 
         int offs1 = start;
         int offs2 = anotherBC.start;
-        
+
         for (int i = 0; i < len; i++) {
             if (Ascii.toLower(buffer.get(offs1++)) != Ascii.toLower(anotherBC.buffer.get(offs2++))) {
                 return false;
@@ -388,7 +380,7 @@ public class BufferChunk implements Chunk {
 
         return true;
     }
-    
+
     public boolean equalsIgnoreCase(CharSequence s) {
         if (getLength() != s.length()) {
             return false;
@@ -406,7 +398,7 @@ public class BufferChunk implements Chunk {
     public boolean equalsIgnoreCase(final byte[] b) {
         return equalsIgnoreCase(b, 0, b.length);
     }
-    
+
     public boolean equalsIgnoreCase(final byte[] b, final int offset, final int len) {
         if (getLength() != len) {
             return false;
@@ -414,7 +406,7 @@ public class BufferChunk implements Chunk {
 
         int offs1 = start;
         int offs2 = offset;
-        
+
         for (int i = 0; i < len; i++) {
             if (Ascii.toLower(buffer.get(offs1++)) != Ascii.toLower(b[offs2++])) {
                 return false;
@@ -423,14 +415,14 @@ public class BufferChunk implements Chunk {
 
         return true;
     }
-    
+
     /**
      * Compares the message Buffer to the specified char array ignoring case considerations.
-
+     * 
      * @param b the <code>char[]</code> to compare
      * @param offset the offset in the array
      * @param len number of chars to check
-     * 
+     *
      * @return true if the comparison succeeded, false otherwise
      *
      * @since 2.3
@@ -448,10 +440,9 @@ public class BufferChunk implements Chunk {
 
         return true;
     }
-    
+
     /**
-     * Compares the buffer chunk to the specified byte array representing
-     * lower-case ASCII characters.
+     * Compares the buffer chunk to the specified byte array representing lower-case ASCII characters.
      *
      * @param b the <code>byte[]</code> to compare
      *
@@ -469,7 +460,9 @@ public class BufferChunk implements Chunk {
     }
 
     public String toString(Charset charset) {
-        if (charset == null) charset = DEFAULT_CHARSET;
+        if (charset == null) {
+            charset = DEFAULT_CHARSET;
+        }
 
         if (cachedString != null && charset.equals(cachedStringCharset)) {
             return cachedString;
@@ -484,23 +477,22 @@ public class BufferChunk implements Chunk {
 
     @Override
     public String toString(final int start, final int end) {
-        return buffer.toStringContent(DEFAULT_CHARSET, this.start + start,
-                this.start + end);
+        return buffer.toStringContent(DEFAULT_CHARSET, this.start + start, this.start + end);
     }
 
     protected final void resetStringCache() {
         cachedString = null;
         cachedStringCharset = null;
     }
-    
+
     protected final void reset() {
-        buffer = null;        
+        buffer = null;
         start = -1;
         end = -1;
         limit = -1;
         resetStringCache();
     }
-    
+
     public final void recycle() {
         reset();
     }
@@ -520,7 +512,7 @@ public class BufferChunk implements Chunk {
             }
             off++;
         }
-        
+
         return -1;
     }
 
@@ -531,7 +523,9 @@ public class BufferChunk implements Chunk {
             return off;
         }
 
-        if (strLen > (end - off)) return -1;
+        if (strLen > end - off) {
+            return -1;
+        }
 
         int strOffs = 0;
         final int lastOffs = end - strLen;
@@ -559,10 +553,10 @@ public class BufferChunk implements Chunk {
         int result = 0;
 
         int len = compareTo.length();
-        if ((end - start) < len) {
+        if (end - start < len) {
             len = end - start;
         }
-        for (int i = 0; (i < len) && (result == 0); i++) {
+        for (int i = 0; i < len && result == 0; i++) {
             if (Ascii.toLower(buffer.get(i + start)) > Ascii.toLower(compareTo.charAt(i))) {
                 result = 1;
             } else if (Ascii.toLower(buffer.get(i + start)) < Ascii.toLower(compareTo.charAt(i))) {
@@ -570,15 +564,14 @@ public class BufferChunk implements Chunk {
             }
         }
         if (result == 0) {
-            if (compareTo.length() > (end - start)) {
+            if (compareTo.length() > end - start) {
                 result = -1;
-            } else if (compareTo.length() < (end - start)) {
+            } else if (compareTo.length() < end - start) {
                 result = 1;
             }
         }
         return result;
     }
-
 
     /**
      * @return -1, 0 or +1 if inferior, equal, or superior to the String.
@@ -586,10 +579,10 @@ public class BufferChunk implements Chunk {
     public int compare(int start, int end, String compareTo) {
         int result = 0;
         int len = compareTo.length();
-        if ((end - start) < len) {
+        if (end - start < len) {
             len = end - start;
         }
-        for (int i = 0; (i < len) && (result == 0); i++) {
+        for (int i = 0; i < len && result == 0; i++) {
             if (buffer.get(i + start) > compareTo.charAt(i)) {
                 result = 1;
             } else if (buffer.get(i + start) < compareTo.charAt(i)) {
@@ -597,18 +590,17 @@ public class BufferChunk implements Chunk {
             }
         }
         if (result == 0) {
-            if (compareTo.length() > (end - start)) {
+            if (compareTo.length() > end - start) {
                 result = -1;
-            } else if (compareTo.length() < (end - start)) {
+            } else if (compareTo.length() < end - start) {
                 result = 1;
             }
         }
         return result;
     }
-    
+
     /**
-     * Compares the buffer chunk to the specified byte array representing
-     * lower-case ASCII characters.
+     * Compares the buffer chunk to the specified byte array representing lower-case ASCII characters.
      *
      * @param buffer the <code>byte[]</code> to compare
      * @param start buffer start
@@ -619,8 +611,7 @@ public class BufferChunk implements Chunk {
      *
      * @since 2.1.2
      */
-    public static boolean equalsIgnoreCaseLowerCase(final Buffer buffer,
-            final int start, final int end, final byte[] cmpTo) {
+    public static boolean equalsIgnoreCaseLowerCase(final Buffer buffer, final int start, final int end, final byte[] cmpTo) {
         final int len = end - start;
         if (len != cmpTo.length) {
             return false;
@@ -632,13 +623,12 @@ public class BufferChunk implements Chunk {
             }
         }
 
-        return true;        
+        return true;
     }
-    
-    public static boolean startsWith(final Buffer buffer, final int start,
-            final int end, final byte[] cmpTo) {
+
+    public static boolean startsWith(final Buffer buffer, final int start, final int end, final byte[] cmpTo) {
         final int len = end - start;
-        
+
         if (len < cmpTo.length) {
             return false;
         }

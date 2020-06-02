@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,23 +28,21 @@ import org.glassfish.grizzly.http.util.Header;
  */
 class Http2Request extends HttpRequestPacket implements Http2Header {
 
-    private static final ThreadCache.CachedTypeIndex<Http2Request> CACHE_IDX =
-            ThreadCache.obtainIndex(Http2Request.class, 2);
+    private static final ThreadCache.CachedTypeIndex<Http2Request> CACHE_IDX = ThreadCache.obtainIndex(Http2Request.class, 2);
 
     public static Http2Request create() {
-        Http2Request http2Request =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        Http2Request http2Request = ThreadCache.takeFromCache(CACHE_IDX);
         if (http2Request == null) {
             http2Request = new Http2Request();
         }
 
         return http2Request.init();
     }
-    
+
     private final ProcessingState processingState = new ProcessingState();
-    
+
     private final Http2Response response;
-    
+
     /**
      * Char encoding parsed flag.
      */
@@ -62,10 +60,10 @@ class Http2Request extends HttpRequestPacket implements Http2Header {
     private Http2Request init() {
         setResponse(response);
         response.setRequest(this);
-        
+
         setChunkingAllowed(true);
         response.setChunkingAllowed(true);
-        
+
         return this;
     }
 
@@ -118,16 +116,16 @@ class Http2Request extends HttpRequestPacket implements Http2Header {
         if (Http2Stream.HTTP2_STREAM_ATTRIBUTE.equals(name)) {
             return response.getHttp2Stream();
         }
-        
+
         return super.getAttribute(name);
     }
-    
+
     @Override
     protected void reset() {
         contentTypeParsed = false;
-        
+
         processingState.recycle();
-        
+
         super.reset();
     }
 
@@ -144,8 +142,7 @@ class Http2Request extends HttpRequestPacket implements Http2Header {
     }
 
     @Override
-    protected void requiresAcknowledgement(
-            final boolean requiresAcknowledgement) {
+    protected void requiresAcknowledgement(final boolean requiresAcknowledgement) {
         super.requiresAcknowledgement(requiresAcknowledgement);
     }
 

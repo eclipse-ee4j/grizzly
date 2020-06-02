@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.strategies;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.IOEvent;
 import org.glassfish.grizzly.IOStrategy;
@@ -27,16 +28,13 @@ import org.glassfish.grizzly.nio.NIOTransport;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 
 /**
- * Simple dynamic strategy, which switches I/O processing strategies, basing
- * on statistics. This implementation takes in consideration number of
- * {@link java.nio.channels.SelectionKey}s, which were selected last time by
+ * Simple dynamic strategy, which switches I/O processing strategies, basing on statistics. This implementation takes in
+ * consideration number of {@link java.nio.channels.SelectionKey}s, which were selected last time by
  * {@link java.nio.channels.Selector}.
  *
- * <tt>SimpleDynamicIOStrategy</tt> is able to use 2 strategies underneath:
- * {@link SameThreadIOStrategy}, {@link WorkerThreadIOStrategy}.
- * And is able to switch between them basing on corresponding threshold
- * (threshold represents the number of selected
- * {@link java.nio.channels.SelectionKey}s).
+ * <tt>SimpleDynamicIOStrategy</tt> is able to use 2 strategies underneath: {@link SameThreadIOStrategy},
+ * {@link WorkerThreadIOStrategy}. And is able to switch between them basing on corresponding threshold (threshold
+ * represents the number of selected {@link java.nio.channels.SelectionKey}s).
  *
  * So the strategy is getting applied following way:
  *
@@ -53,7 +51,6 @@ public final class SimpleDynamicNIOStrategy implements IOStrategy {
 
     private static final int WORKER_THREAD_THRESHOLD = 1;
 
-
     // ------------------------------------------------------------ Constructors
 
     private SimpleDynamicNIOStrategy() {
@@ -61,9 +58,7 @@ public final class SimpleDynamicNIOStrategy implements IOStrategy {
         workerThreadStrategy = WorkerThreadIOStrategy.getInstance();
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     public static SimpleDynamicNIOStrategy getInstance() {
 
@@ -76,30 +71,23 @@ public final class SimpleDynamicNIOStrategy implements IOStrategy {
         return executeIoEvent(connection, ioEvent, true);
     }
 
-
     // ------------------------------------------------- Methods from IOStrategy
 
-
     @Override
-    public Executor getThreadPoolFor(final Connection connection,
-            final IOEvent ioEvent) {
+    public Executor getThreadPoolFor(final Connection connection, final IOEvent ioEvent) {
         final int lastSelectedKeysCount = getLastSelectedKeysCount(connection);
 
-        return lastSelectedKeysCount <= WORKER_THREAD_THRESHOLD ?
-                     sameThreadStrategy.getThreadPoolFor(connection, ioEvent) :
-                     workerThreadStrategy.getThreadPoolFor(connection, ioEvent);
+        return lastSelectedKeysCount <= WORKER_THREAD_THRESHOLD ? sameThreadStrategy.getThreadPoolFor(connection, ioEvent)
+                : workerThreadStrategy.getThreadPoolFor(connection, ioEvent);
     }
 
     @Override
-    public boolean executeIoEvent(final Connection connection,
-            final IOEvent ioEvent, final boolean isIoEventEnabled)
-            throws IOException {
-        
+    public boolean executeIoEvent(final Connection connection, final IOEvent ioEvent, final boolean isIoEventEnabled) throws IOException {
+
         final int lastSelectedKeysCount = getLastSelectedKeysCount(connection);
 
-        return ((lastSelectedKeysCount <= WORKER_THREAD_THRESHOLD)
-                     ? sameThreadStrategy.executeIoEvent(connection, ioEvent, isIoEventEnabled)
-                     : workerThreadStrategy.executeIoEvent(connection, ioEvent, isIoEventEnabled));
+        return lastSelectedKeysCount <= WORKER_THREAD_THRESHOLD ? sameThreadStrategy.executeIoEvent(connection, ioEvent, isIoEventEnabled)
+                : workerThreadStrategy.executeIoEvent(connection, ioEvent, isIoEventEnabled);
     }
 
     @Override
@@ -114,9 +102,7 @@ public final class SimpleDynamicNIOStrategy implements IOStrategy {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private static int getLastSelectedKeysCount(final Connection c) {
         return ((NIOConnection) c).getSelectorRunner().getLastSelectedKeysCount();

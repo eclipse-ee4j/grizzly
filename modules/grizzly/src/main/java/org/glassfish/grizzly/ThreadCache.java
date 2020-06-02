@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,11 @@
 
 package org.glassfish.grizzly;
 
-import org.glassfish.grizzly.threadpool.DefaultWorkerThread;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.glassfish.grizzly.threadpool.DefaultWorkerThread;
 
 /**
  *
@@ -27,27 +28,24 @@ import java.util.Map;
  */
 public final class ThreadCache {
     private static final ObjectCacheElement[] INITIAL_OBJECT_ARRAY = new ObjectCacheElement[16];
-    
-    private static final Map<String, CachedTypeIndex> typeIndexMap =
-            new HashMap<String, CachedTypeIndex>();
-    
+
+    private static final Map<String, CachedTypeIndex> typeIndexMap = new HashMap<>();
+
     private static int indexCounter;
 
-    private static final ThreadLocal<ObjectCache> genericCacheAttr = new ThreadLocal<ObjectCache>();
+    private static final ThreadLocal<ObjectCache> genericCacheAttr = new ThreadLocal<>();
 
-    public static synchronized <E> CachedTypeIndex<E> obtainIndex(
-            Class<E> clazz, int size) {
+    public static synchronized <E> CachedTypeIndex<E> obtainIndex(Class<E> clazz, int size) {
         return obtainIndex(clazz.getName(), clazz, size);
 
     }
 
     @SuppressWarnings("unchecked")
-    public static synchronized <E> CachedTypeIndex<E> obtainIndex(String name,
-            Class<E> clazz, int size) {
+    public static synchronized <E> CachedTypeIndex<E> obtainIndex(String name, Class<E> clazz, int size) {
 
         CachedTypeIndex<E> typeIndex = typeIndexMap.get(name);
         if (typeIndex == null) {
-            typeIndex = new CachedTypeIndex<E>(indexCounter++, name, clazz, size);
+            typeIndex = new CachedTypeIndex<>(indexCounter++, name, clazz, size);
             typeIndexMap.put(name, typeIndex);
         }
 
@@ -57,9 +55,8 @@ public final class ThreadCache {
     public static <E> boolean putToCache(final CachedTypeIndex<E> index, final E o) {
         return putToCache(Thread.currentThread(), index, o);
     }
-    
-    public static <E> boolean putToCache(final Thread currentThread,
-            final CachedTypeIndex<E> index, final E o) {
+
+    public static <E> boolean putToCache(final Thread currentThread, final CachedTypeIndex<E> index, final E o) {
         if (currentThread instanceof DefaultWorkerThread) {
             return ((DefaultWorkerThread) currentThread).putToCache(index, o);
         } else {
@@ -68,15 +65,14 @@ public final class ThreadCache {
                 genericCache = new ObjectCache();
                 genericCacheAttr.set(genericCache);
             }
-            
+
             return genericCache.put(index, o);
         }
     }
-    
+
     /**
-     * Get the cached object with the given type index from cache.
-     * Unlike {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-     * object won't be removed from cache.
+     * Get the cached object with the given type index from cache. Unlike
+     * {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object won't be removed from cache.
      *
      * @param <E> cached object type
      * @param index the cached object type index.
@@ -85,21 +81,19 @@ public final class ThreadCache {
     public static <E> E getFromCache(final CachedTypeIndex<E> index) {
         return getFromCache(Thread.currentThread(), index);
     }
-    
+
     /**
-     * Get the cached object with the given type index from cache.
-     * Unlike {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-     * object won't be removed from cache.
+     * Get the cached object with the given type index from cache. Unlike
+     * {@link #takeFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object won't be removed from cache.
      *
      * @param <E> cached object type
      * @param currentThread current {@link Thread}
      * @param index the cached object type index.
      * @return cached object.
      */
-    public static <E> E getFromCache(final Thread currentThread,
-            final CachedTypeIndex<E> index) {
+    public static <E> E getFromCache(final Thread currentThread, final CachedTypeIndex<E> index) {
         assert currentThread == Thread.currentThread();
-        
+
         if (currentThread instanceof DefaultWorkerThread) {
             return ((DefaultWorkerThread) currentThread).getFromCache(index);
         } else {
@@ -113,9 +107,8 @@ public final class ThreadCache {
     }
 
     /**
-     * Take the cached object with the given type index from cache.
-     * Unlike {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-     * object will be removed from cache.
+     * Take the cached object with the given type index from cache. Unlike
+     * {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object will be removed from cache.
      *
      * @param <E> cached object type
      * @param index the cached object type index
@@ -124,19 +117,17 @@ public final class ThreadCache {
     public static <E> E takeFromCache(final CachedTypeIndex<E> index) {
         return takeFromCache(Thread.currentThread(), index);
     }
-    
+
     /**
-     * Take the cached object with the given type index from cache.
-     * Unlike {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-     * object will be removed from cache.
+     * Take the cached object with the given type index from cache. Unlike
+     * {@link #getFromCache(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object will be removed from cache.
      *
      * @param <E> cached object type
      * @param currentThread current {@link Thread}
      * @param index the cached object type index
      * @return cached object
      */
-    public static <E> E takeFromCache(final Thread currentThread,
-            final CachedTypeIndex<E> index) {
+    public static <E> E takeFromCache(final Thread currentThread, final CachedTypeIndex<E> index) {
         if (currentThread instanceof DefaultWorkerThread) {
             return ((DefaultWorkerThread) currentThread).takeFromCache(index);
         } else {
@@ -153,8 +144,7 @@ public final class ThreadCache {
         private ObjectCacheElement[] objectCacheElements;
 
         public boolean put(final CachedTypeIndex index, final Object o) {
-            if (objectCacheElements != null &&
-                    index.getIndex() < objectCacheElements.length) {
+            if (objectCacheElements != null && index.getIndex() < objectCacheElements.length) {
                 ObjectCacheElement objectCache = objectCacheElements[index.getIndex()];
                 if (objectCache == null) {
                     objectCache = new ObjectCacheElement(index.size);
@@ -164,11 +154,8 @@ public final class ThreadCache {
                 return objectCache.put(o);
             }
 
-            final ObjectCacheElement[] arrayToGrow =
-                    (objectCacheElements != null) ?
-                        objectCacheElements : INITIAL_OBJECT_ARRAY;
-            final int newSize = Math.max(index.getIndex() + 1,
-                    (arrayToGrow.length * 3) / 2 + 1);
+            final ObjectCacheElement[] arrayToGrow = objectCacheElements != null ? objectCacheElements : INITIAL_OBJECT_ARRAY;
+            final int newSize = Math.max(index.getIndex() + 1, arrayToGrow.length * 3 / 2 + 1);
 
             objectCacheElements = Arrays.copyOf(arrayToGrow, newSize);
 
@@ -178,10 +165,9 @@ public final class ThreadCache {
         }
 
         /**
-         * Get the cached object with the given type index from cache.
-         * Unlike {@link #take(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-         * object won't be removed from cache.
-         * 
+         * Get the cached object with the given type index from cache. Unlike
+         * {@link #take(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object won't be removed from cache.
+         *
          * @param <E> cached object type
          * @param index the cached object type index.
          * @return cached object.
@@ -189,11 +175,12 @@ public final class ThreadCache {
         @SuppressWarnings("unchecked")
         public <E> E get(final CachedTypeIndex<E> index) {
             final int idx;
-            if (objectCacheElements != null &&
-                    (idx = index.getIndex()) < objectCacheElements.length) {
+            if (objectCacheElements != null && (idx = index.getIndex()) < objectCacheElements.length) {
 
                 final ObjectCacheElement objectCache = objectCacheElements[idx];
-                if (objectCache == null) return null;
+                if (objectCache == null) {
+                    return null;
+                }
 
                 return (E) objectCache.get();
             }
@@ -202,9 +189,8 @@ public final class ThreadCache {
         }
 
         /**
-         * Take the cached object with the given type index from cache.
-         * Unlike {@link #get(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the
-         * object will be removed from cache.
+         * Take the cached object with the given type index from cache. Unlike
+         * {@link #get(org.glassfish.grizzly.ThreadCache.CachedTypeIndex)}, the object will be removed from cache.
          *
          * @param <E> cached object type
          * @param index the cached object type index.
@@ -213,11 +199,12 @@ public final class ThreadCache {
         @SuppressWarnings("unchecked")
         public <E> E take(final CachedTypeIndex<E> index) {
             final int idx;
-            if (objectCacheElements != null &&
-                    (idx = index.getIndex()) < objectCacheElements.length) {
+            if (objectCacheElements != null && (idx = index.getIndex()) < objectCacheElements.length) {
 
                 final ObjectCacheElement objectCache = objectCacheElements[idx];
-                if (objectCache == null) return null;
+                if (objectCache == null) {
+                    return null;
+                }
 
                 return (E) objectCache.take();
             }
@@ -225,12 +212,12 @@ public final class ThreadCache {
             return null;
         }
     }
-    
+
     public static final class ObjectCacheElement {
         private final int size;
         private final Object[] cache;
         private int index;
-        
+
         public ObjectCacheElement(int size) {
             this.size = size;
             cache = new Object[size];
@@ -246,8 +233,7 @@ public final class ThreadCache {
         }
 
         /**
-         * Get (peek) the object from cache.
-         * Unlike {@link #take()} the object will not be removed from cache.
+         * Get (peek) the object from cache. Unlike {@link #take()} the object will not be removed from cache.
          *
          * @return object from cache.
          */
@@ -261,15 +247,14 @@ public final class ThreadCache {
         }
 
         /**
-         * Take (poll) the object from cache.
-         * Unlike {@link #get()} the object will be removed from cache.
+         * Take (poll) the object from cache. Unlike {@link #get()} the object will be removed from cache.
          *
          * @return object from cache.
          */
         public Object take() {
             if (index > 0) {
                 index--;
-                
+
                 final Object o = cache[index];
                 cache[index] = null;
                 return o;
@@ -278,15 +263,14 @@ public final class ThreadCache {
             return null;
         }
     }
-    
+
     public static final class CachedTypeIndex<E> {
         private final int index;
         private final Class clazz;
         private final int size;
         private final String name;
 
-        public CachedTypeIndex(final int index, final String name,
-                final Class<E> clazz, final int size) {
+        public CachedTypeIndex(final int index, final String name, final Class<E> clazz, final int size) {
             this.index = index;
             this.name = name;
             this.clazz = clazz;

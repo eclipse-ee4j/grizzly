@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,18 @@
 
 package org.glassfish.grizzly;
 
+import static org.junit.Assert.assertTrue;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Random;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.glassfish.grizzly.compression.zip.GZipFilter;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -33,24 +45,13 @@ import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.glassfish.grizzly.utils.DelayFilter;
 import org.glassfish.grizzly.utils.EchoFilter;
 import org.glassfish.grizzly.utils.StringFilter;
-import org.glassfish.grizzly.compression.zip.GZipFilter;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Random;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static org.junit.Assert.assertTrue;
-
 /**
  * Test set for {@link GZipFilter}.
- * 
+ *
  * @author Alexey Stashok
  */
 @RunWith(Parameterized.class)
@@ -64,10 +65,7 @@ public class GZipTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getLazySslInit() {
-        return Arrays.asList(new Object[][]{
-                {new HeapMemoryManager()},
-                {new ByteBufferManager()},
-        });
+        return Arrays.asList(new Object[][] { { new HeapMemoryManager() }, { new ByteBufferManager() }, });
     }
 
     @Test
@@ -126,7 +124,7 @@ public class GZipTest {
             serverChainBuilder.add(new ChunkingFilter(2));
             serverChainBuilder.add(new DelayFilter(50, 50));
         }
-        
+
         serverChainBuilder.add(new GZipFilter());
         serverChainBuilder.add(new StringFilter());
         serverChainBuilder.add(new EchoFilter());
@@ -147,9 +145,8 @@ public class GZipTest {
             clientChainBuilder.add(new StringFilter());
             clientChainBuilder.add(new ClientEchoCheckFilter(completeFuture, messages));
 
-            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport)
-                .processor(clientChainBuilder.build()).build();
-            
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientChainBuilder.build()).build();
+
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
 
             connection = future.get(10, TimeUnit.SECONDS);
@@ -194,9 +191,8 @@ public class GZipTest {
                     ctx.write(messages[currentIdx + 1]);
                 }
             } else {
-                future.failure(new IllegalStateException("Message #" +
-                        currentIdx + " is incorrect. Expected: " +
-                        messageToCompare + " received: " + echoedMessage));
+                future.failure(
+                        new IllegalStateException("Message #" + currentIdx + " is incorrect. Expected: " + messageToCompare + " received: " + echoedMessage));
             }
 
             return ctx.getStopAction();

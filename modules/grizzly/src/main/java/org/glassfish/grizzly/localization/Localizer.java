@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,8 +24,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Localizes the {@link Localizable} into a message
- * by using a configured {@link Locale}.
+ * Localizes the {@link Localizable} into a message by using a configured {@link Locale}.
  *
  * @author WS Development Team
  */
@@ -40,7 +39,7 @@ public class Localizer {
 
     public Localizer(Locale l) {
         _locale = l;
-        _resourceBundles = new HashMap<String, ResourceBundle>();
+        _resourceBundles = new HashMap<>();
     }
 
     public Locale getLocale() {
@@ -56,29 +55,24 @@ public class Localizer {
         String bundlename = l.getResourceBundleName();
 
         try {
-            ResourceBundle bundle =
-                    _resourceBundles.get(bundlename);
+            ResourceBundle bundle = _resourceBundles.get(bundlename);
 
             if (bundle == null) {
                 try {
                     bundle = ResourceBundle.getBundle(bundlename, _locale);
                 } catch (MissingResourceException e) {
                     // work around a bug in the com.sun.enterprise.deployment.WebBundleArchivist:
-                    //   all files with an extension different from .class (hence all the .properties files)
-                    //   get copied to the top level directory instead of being in the package where they
-                    //   are defined
+                    // all files with an extension different from .class (hence all the .properties files)
+                    // get copied to the top level directory instead of being in the package where they
+                    // are defined
                     // so, since we can't find the bundle under its proper name, we look for it under
-                    //   the top-level package
+                    // the top-level package
 
                     int i = bundlename.lastIndexOf('.');
                     if (i != -1) {
-                        String alternateBundleName =
-                            bundlename.substring(i + 1);
+                        String alternateBundleName = bundlename.substring(i + 1);
                         try {
-                            bundle =
-                                ResourceBundle.getBundle(
-                                    alternateBundleName,
-                                    _locale);
+                            bundle = ResourceBundle.getBundle(alternateBundleName, _locale);
                         } catch (MissingResourceException e2) {
                             // give up
                             return getDefaultMessage(l);
@@ -93,8 +87,9 @@ public class Localizer {
                 return getDefaultMessage(l);
             }
 
-            if (key == null)
+            if (key == null) {
                 key = "undefined";
+            }
 
             String msg;
             try {
@@ -107,8 +102,9 @@ public class Localizer {
             // localize all arguments to the given localizable object
             Object[] args = l.getArguments();
             for (int i = 0; i < args.length; ++i) {
-                if (args[i] instanceof Localizable)
+                if (args[i] instanceof Localizable) {
                     args[i] = localize((Localizable) args[i]);
+                }
             }
 
             return MessageFormat.format(msg, args);
@@ -128,8 +124,9 @@ public class Localizer {
         if (args != null) {
             sb.append('(');
             for (int i = 0; i < args.length; ++i) {
-                if (i != 0)
+                if (i != 0) {
                     sb.append(", ");
+                }
                 sb.append(String.valueOf(args[i]));
             }
             sb.append(')');

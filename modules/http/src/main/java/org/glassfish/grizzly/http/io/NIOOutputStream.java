@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.grizzly.http.io;
 
-
 import java.io.OutputStream;
 
 /**
@@ -24,7 +23,6 @@ import java.io.OutputStream;
  *
  * @since 2.0
  */
-public abstract class NIOOutputStream extends OutputStream
-        implements BinaryNIOOutputSink {
+public abstract class NIOOutputStream extends OutputStream implements BinaryNIOOutputSink {
 
 }

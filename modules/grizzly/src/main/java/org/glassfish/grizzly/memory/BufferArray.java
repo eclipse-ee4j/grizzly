@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,9 +25,8 @@ import org.glassfish.grizzly.ThreadCache;
  */
 public final class BufferArray extends AbstractBufferArray<Buffer> {
 
-    private static final ThreadCache.CachedTypeIndex<BufferArray> CACHE_IDX =
-            ThreadCache.obtainIndex(BufferArray.class,
-                    Integer.getInteger(BufferArray.class.getName() + "ba-cache-size", 4));
+    private static final ThreadCache.CachedTypeIndex<BufferArray> CACHE_IDX = ThreadCache.obtainIndex(BufferArray.class,
+            Integer.getInteger(BufferArray.class.getName() + "ba-cache-size", 4));
 
     public static BufferArray create() {
         final BufferArray array = ThreadCache.takeFromCache(CACHE_IDX);
@@ -50,8 +49,7 @@ public final class BufferArray extends AbstractBufferArray<Buffer> {
     }
 
     @Override
-    protected void setPositionLimit(final Buffer buffer,
-            final int position, final int limit) {
+    protected void setPositionLimit(final Buffer buffer, final int position, final int limit) {
         Buffers.setPositionLimit(buffer, position, limit);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,7 +29,9 @@ import org.glassfish.grizzly.localization.LogMessages;
  * Main class allowing Comet support on top of Grizzly Asynchronous Request Processing mechanism. This class is the
  * entry point to any component interested to execute Comet request style. Components can be Servlets, JSP, JSF or pure
  * Java class. A component interested to support Comet request must do:
- * <pre><code>
+ * 
+ * <pre>
+ * <code>
  * (1) First, register the topic on which Comet support will be applied:
  *     CometEngine cometEngine = CometEngine.getEngine()
  *     CometContext cometContext = cometEngine.register(topic)
@@ -41,15 +43,18 @@ import org.glassfish.grizzly.localization.LogMessages;
  *     to share information between {@link CometHandler}. When notified,
  *     {@link CometHandler} can decides to push back the data, resume the
  *     response, or simply ignore the content of the notification.
- * </code></pre>
- * You can also select the stage where the suspension of the response happens when registering the {@link
- * CometContext}'s topic (see {@link #register}), which can be before, during or after invoking a <code>Servlet</code>
- *
- * There is known limitation related to <tt>HTTP pipelining</tt>, it can't work
- * properly when {@link CometContext#isDetectClosedConnections()} is enabled.
- * So if you want to support <tt>HTTP pipelining</tt>, the closed connection
- * detection mechanism should be disabled via {@link CometContext#setDetectClosedConnections(boolean)}.
+ * </code>
+ * </pre>
  * 
+ * You can also select the stage where the suspension of the response happens when registering the
+ * {@link CometContext}'s topic (see {@link #register}), which can be before, during or after invoking a
+ * <code>Servlet</code>
+ *
+ * There is known limitation related to <tt>HTTP pipelining</tt>, it can't work properly when
+ * {@link CometContext#isDetectClosedConnections()} is enabled. So if you want to support <tt>HTTP pipelining</tt>, the
+ * closed connection detection mechanism should be disabled via
+ * {@link CometContext#setDetectClosedConnections(boolean)}.
+ *
  * @author Jeanfrancois Arcand
  * @author Gustav Trede
  */
@@ -157,14 +162,15 @@ public class CometEngine {
      * @return CometContext a configured {@link CometContext}.
      * @deprecated Use {@link #register(String)} instead
      */
+    @Deprecated
     public <E> CometContext<E> register(String topic, int type) {
         return register(topic);
     }
 
     /**
      * Register a context path with this {@link CometEngine}. The {@link CometContext} returned will be of type
-     * AFTER_SERVLET_PROCESSING, which means the request target (most probably a Servlet) will be executed first and
-     * then polled.
+     * AFTER_SERVLET_PROCESSING, which means the request target (most probably a Servlet) will be executed first and then
+     * polled.
      *
      * @param topic the context path used to create the {@link CometContext}
      *
@@ -174,16 +180,15 @@ public class CometEngine {
         return register(topic, DefaultNotificationHandler.class);
     }
 
-
     /**
      * Instantiate a new {@link CometContext}.
      *
      * @param topic the topic the new {@link CometContext} will represent.
      * @return a new {@link CometContext} if not already created, or the existing one.
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public <E> CometContext<E> register(String topic, Class<? extends NotificationHandler> notificationClass) {
-        // Double checked locking used used to prevent the otherwise static/global 
+        // Double checked locking used used to prevent the otherwise static/global
         // locking, cause example code does heavy usage of register calls
         // for existing topics from http get calls etc.
         CometContext<E> cometContext = activeContexts.get(topic);
@@ -191,15 +196,14 @@ public class CometEngine {
             synchronized (activeContexts) {
                 cometContext = activeContexts.get(topic);
                 if (cometContext == null) {
-                    cometContext = new CometContext<E>(topic);
+                    cometContext = new CometContext<>(topic);
                     NotificationHandler notificationHandler;
                     try {
                         notificationHandler = notificationClass.newInstance();
                     } catch (Throwable t) {
                         if (logger.isLoggable(Level.SEVERE)) {
-                            logger.log(Level.SEVERE,
-                                LogMessages.SEVERE_GRIZZLY_COMET_ENGINE_INVALID_NOTIFICATION_HANDLER_ERROR(
-                                    notificationClass.getName()), t);
+                            logger.log(Level.SEVERE, LogMessages.SEVERE_GRIZZLY_COMET_ENGINE_INVALID_NOTIFICATION_HANDLER_ERROR(notificationClass.getName()),
+                                    t);
                         }
                         notificationHandler = new DefaultNotificationHandler();
                     }
@@ -220,7 +224,7 @@ public class CometEngine {
      *
      * @param topic the topic used to creates the {@link CometContext}
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public <E> CometContext<E> getCometContext(String topic) {
         return activeContexts.get(topic);
     }
@@ -234,7 +238,8 @@ public class CometEngine {
      * @see CometContext#interrupt(CometHandler, boolean)
      * @deprecated use the CometContext version
      */
-    @SuppressWarnings({"deprecation"})
+    @Deprecated
+    @SuppressWarnings({ "deprecation" })
     protected boolean interrupt(CometHandler handler, boolean finishExecution) throws IOException {
         final CometContext cometContext = handler.getCometContext();
         final boolean removed = cometContext.removeCometHandler(handler, finishExecution);
@@ -245,9 +250,9 @@ public class CometEngine {
     }
 
     /**
-     * Interrupt logic in its own method, so it can be executed either async or sync.<br> cometHandler.onInterrupt is
-     * performed async due to its functionality is unknown, hence not safe to run in the performance critical selector
-     * thread.
+     * Interrupt logic in its own method, so it can be executed either async or sync.<br>
+     * cometHandler.onInterrupt is performed async due to its functionality is unknown, hence not safe to run in the
+     * performance critical selector thread.
      *
      * @param handler The {@link CometHandler} encapsulating the suspended connection.
      * @param finishExecution Finish the current execution.
@@ -255,6 +260,7 @@ public class CometEngine {
      * @see CometContext#interrupt0(CometHandler, boolean)
      * @deprecated use the CometContext version
      */
+    @Deprecated
     protected void interrupt0(CometHandler handler, boolean finishExecution) throws IOException {
         if (finishExecution) {
             try {

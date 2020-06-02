@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -57,8 +57,7 @@ public class LifecycleTest extends BaseWebSocketTestUtilities {
             checkSend(client);
             client.close();
             Assert.assertTrue(client.waitForClosed());
-            Assert.assertTrue("Should get the close event",
-                closeLatch.await(WebSocketEngine.DEFAULT_TIMEOUT, TimeUnit.SECONDS));
+            Assert.assertTrue("Should get the close event", closeLatch.await(WebSocketEngine.DEFAULT_TIMEOUT, TimeUnit.SECONDS));
             Assert.assertEquals("There should be 0 clients connected", 0, serverApp.getWebSockets().size());
         } finally {
             server.stop();

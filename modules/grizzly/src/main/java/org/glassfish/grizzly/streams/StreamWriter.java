@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.streams;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -25,8 +26,8 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.Transformer;
 
 /**
- * Write the primitive Java types and arrays of primitives to some data sink.
- * This may include internal buffering for efficiency reasons.
+ * Write the primitive Java types and arrays of primitives to some data sink. This may include internal buffering for
+ * efficiency reasons.
  *
  * Note, that <tt>StreamWriter</tt> implementation may not be thread-safe.
  *
@@ -35,36 +36,30 @@ import org.glassfish.grizzly.Transformer;
  */
 public interface StreamWriter extends Stream {
     /**
-     * Returns <tt>true</tt>, if <tt>StreamReader</tt> has been closed,
-     * or <tt>false</tt> otherwise.
+     * Returns <tt>true</tt>, if <tt>StreamReader</tt> has been closed, or <tt>false</tt> otherwise.
      *
-     * @return <tt>true</tt>, if <tt>StreamReader</tt> has been closed,
-     * or <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if <tt>StreamReader</tt> has been closed, or <tt>false</tt> otherwise.
      */
     boolean isClosed();
-    
+
     /**
-     * Make sure that all data that has been written is
-     * flushed from the stream to its destination.
+     * Make sure that all data that has been written is flushed from the stream to its destination.
      */
     GrizzlyFuture<Integer> flush() throws IOException;
 
     /**
-     * Make sure that all data that has been written is
-     * flushed from the stream to its destination.
+     * Make sure that all data that has been written is flushed from the stream to its destination.
      */
-    GrizzlyFuture<Integer> flush(
-            CompletionHandler<Integer> completionHandler) throws IOException;
+    GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler) throws IOException;
 
     /**
      * Close the {@link StreamWriter} and make sure all data was flushed.
      */
-    GrizzlyFuture<Integer> close(
-            CompletionHandler<Integer> completionHandler) throws IOException;
+    GrizzlyFuture<Integer> close(CompletionHandler<Integer> completionHandler) throws IOException;
 
     /**
      * Write the <tt>boolean</tt> value to the <tt>StreamWriter</tt>.
-     * 
+     *
      * @param data <tt>boolean</tt> value.
      * @throws java.io.IOException
      */
@@ -143,17 +138,16 @@ public interface StreamWriter extends Stream {
     void writeByteArray(final byte[] data) throws IOException;
 
     /**
-     * Write the part of array of <tt>byte</tt> values to the
-     * <tt>StreamWriter</tt>, using specific offset and length values.
+     * Write the part of array of <tt>byte</tt> values to the <tt>StreamWriter</tt>, using specific offset and length
+     * values.
      *
      * @param data array of <tt>byte</tt> values.
      * @param offset array offset to start from.
      * @param length number of bytes to write.
-     * 
+     *
      * @throws java.io.IOException
      */
-    void writeByteArray(final byte[] data, int offset, int length)
-            throws IOException;
+    void writeByteArray(final byte[] data, int offset, int length) throws IOException;
 
     /**
      * Write the array of <tt>char</tt> values to the <tt>StreamWriter</tt>.
@@ -207,17 +201,14 @@ public interface StreamWriter extends Stream {
      * Write the {@link Buffer} to the <tt>StreamWriter</tt>.
      *
      * @param buffer {@link Buffer}.
-     * 
+     *
      * @throws java.io.IOException
      */
     void writeBuffer(Buffer buffer) throws IOException;
 
-    <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder,
-                                     E object) throws IOException;
+    <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder, E object) throws IOException;
 
-    <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder,
-                                     E object, CompletionHandler<Stream> completionHandler)
-            throws IOException;
+    <E> GrizzlyFuture<Stream> encode(Transformer<E, Buffer> encoder, E object, CompletionHandler<Stream> completionHandler) throws IOException;
 
     /**
      * Get the {@link Connection} this <tt>StreamWriter</tt> belongs to.
@@ -226,7 +217,6 @@ public interface StreamWriter extends Stream {
      */
     @Override
     Connection getConnection();
-
 
     /**
      * Get the timeout for <tt>StreamWriter</tt> I/O operations.
@@ -244,4 +234,3 @@ public interface StreamWriter extends Stream {
      */
     void setTimeout(long timeout, TimeUnit timeunit);
 }
-

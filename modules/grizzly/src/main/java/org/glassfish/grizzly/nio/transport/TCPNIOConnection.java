@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,7 +24,14 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.glassfish.grizzly.*;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CloseReason;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.asyncqueue.AsyncQueueWriter;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.nio.NIOConnection;
@@ -33,8 +40,7 @@ import org.glassfish.grizzly.utils.Holder;
 import org.glassfish.grizzly.utils.NullaryFunction;
 
 /**
- * {@link org.glassfish.grizzly.Connection} implementation
- * for the {@link TCPNIOTransport}
+ * {@link org.glassfish.grizzly.Connection} implementation for the {@link TCPNIOTransport}
  *
  * @author Alexey Stashok
  */
@@ -50,10 +56,9 @@ public class TCPNIOConnection extends NIOConnection {
 
     private AtomicReference<ConnectResultHandler> connectHandlerRef;
 
-    public TCPNIOConnection(TCPNIOTransport transport,
-            SelectableChannel channel) {
+    public TCPNIOConnection(TCPNIOTransport transport, SelectableChannel channel) {
         super(transport);
-        
+
         this.channel = channel;
     }
 
@@ -72,28 +77,25 @@ public class TCPNIOConnection extends NIOConnection {
         checkConnectFailed(null);
         super.preClose();
     }
-    
+
     protected boolean notifyReady() {
-        return connectCloseSemaphoreUpdater.compareAndSet(this, null,
-                NOTIFICATION_INITIALIZED);
+        return connectCloseSemaphoreUpdater.compareAndSet(this, null, NOTIFICATION_INITIALIZED);
     }
-    
+
     /**
-     * Returns the address of the endpoint this <tt>Connection</tt> is
-     * connected to, or <tt>null</tt> if it is unconnected.
-     * @return the address of the endpoint this <tt>Connection</tt> is
-     *         connected to, or <tt>null</tt> if it is unconnected.
+     * Returns the address of the endpoint this <tt>Connection</tt> is connected to, or <tt>null</tt> if it is unconnected.
+     * 
+     * @return the address of the endpoint this <tt>Connection</tt> is connected to, or <tt>null</tt> if it is unconnected.
      */
     @Override
     public SocketAddress getPeerAddress() {
         return peerSocketAddressHolder.get();
     }
-    
+
     /**
-     * Returns the local address of this <tt>Connection</tt>,
-     * or <tt>null</tt> if it is unconnected.
-     * @return the local address of this <tt>Connection</tt>,
-     *      or <tt>null</tt> if it is unconnected.
+     * Returns the local address of this <tt>Connection</tt>, or <tt>null</tt> if it is unconnected.
+     * 
+     * @return the local address of this <tt>Connection</tt>, or <tt>null</tt> if it is unconnected.
      */
     @Override
     public SocketAddress getLocalAddress() {
@@ -105,30 +107,24 @@ public class TCPNIOConnection extends NIOConnection {
             setReadBufferSize(transport.getReadBufferSize());
             setWriteBufferSize(transport.getWriteBufferSize());
 
-            final int transportMaxAsyncWriteQueueSize =
-                    ((TCPNIOTransport) transport).getAsyncQueueIO()
-                    .getWriter().getMaxPendingBytesPerConnection();
-            
+            final int transportMaxAsyncWriteQueueSize = ((TCPNIOTransport) transport).getAsyncQueueIO().getWriter().getMaxPendingBytesPerConnection();
+
             setMaxAsyncWriteQueueSize(
-                    transportMaxAsyncWriteQueueSize == AsyncQueueWriter.AUTO_SIZE
-                    ? getWriteBufferSize() * 4
-                    : transportMaxAsyncWriteQueueSize);
+                    transportMaxAsyncWriteQueueSize == AsyncQueueWriter.AUTO_SIZE ? getWriteBufferSize() * 4 : transportMaxAsyncWriteQueueSize);
 
-            localSocketAddressHolder = Holder.lazyHolder(
-                    new NullaryFunction<SocketAddress>() {
-                        @Override
-                        public SocketAddress evaluate() {
-                            return ((SocketChannel) channel).socket().getLocalSocketAddress();
-                        }
-                    });
+            localSocketAddressHolder = Holder.lazyHolder(new NullaryFunction<SocketAddress>() {
+                @Override
+                public SocketAddress evaluate() {
+                    return ((SocketChannel) channel).socket().getLocalSocketAddress();
+                }
+            });
 
-            peerSocketAddressHolder = Holder.lazyHolder(
-                    new NullaryFunction<SocketAddress>() {
-                        @Override
-                        public SocketAddress evaluate() {
-                            return ((SocketChannel) channel).socket().getRemoteSocketAddress();
-                        }
-                    });
+            peerSocketAddressHolder = Holder.lazyHolder(new NullaryFunction<SocketAddress>() {
+                @Override
+                public SocketAddress evaluate() {
+                    return ((SocketChannel) channel).socket().getRemoteSocketAddress();
+                }
+            });
         }
     }
 
@@ -144,9 +140,7 @@ public class TCPNIOConnection extends NIOConnection {
         try {
             readBufferSize = ((SocketChannel) channel).socket().getReceiveBufferSize();
         } catch (IOException e) {
-            LOGGER.log(Level.FINE,
-                    LogMessages.WARNING_GRIZZLY_CONNECTION_GET_READBUFFER_SIZE_EXCEPTION(),
-                    e);
+            LOGGER.log(Level.FINE, LogMessages.WARNING_GRIZZLY_CONNECTION_GET_READBUFFER_SIZE_EXCEPTION(), e);
             readBufferSize = 0;
         }
 
@@ -164,12 +158,10 @@ public class TCPNIOConnection extends NIOConnection {
                 if (readBufferSize > currentReadBufferSize) {
                     ((SocketChannel) channel).socket().setReceiveBufferSize(readBufferSize);
                 }
-                
+
                 this.readBufferSize = readBufferSize;
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_CONNECTION_SET_READBUFFER_SIZE_EXCEPTION(),
-                        e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_CONNECTION_SET_READBUFFER_SIZE_EXCEPTION(), e);
             }
         }
     }
@@ -186,9 +178,7 @@ public class TCPNIOConnection extends NIOConnection {
         try {
             writeBufferSize = ((SocketChannel) channel).socket().getSendBufferSize();
         } catch (IOException e) {
-            LOGGER.log(Level.FINE,
-                    LogMessages.WARNING_GRIZZLY_CONNECTION_GET_WRITEBUFFER_SIZE_EXCEPTION(),
-                    e);
+            LOGGER.log(Level.FINE, LogMessages.WARNING_GRIZZLY_CONNECTION_GET_WRITEBUFFER_SIZE_EXCEPTION(), e);
             writeBufferSize = 0;
         }
 
@@ -208,50 +198,44 @@ public class TCPNIOConnection extends NIOConnection {
                 }
                 this.writeBufferSize = writeBufferSize;
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_CONNECTION_SET_WRITEBUFFER_SIZE_EXCEPTION(),
-                        e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_CONNECTION_SET_WRITEBUFFER_SIZE_EXCEPTION(), e);
             }
         }
     }
-    
-    protected final void setConnectResultHandler(
-            final ConnectResultHandler connectHandler) {
-        connectHandlerRef =
-                new AtomicReference<ConnectResultHandler>(connectHandler);
+
+    protected final void setConnectResultHandler(final ConnectResultHandler connectHandler) {
+        connectHandlerRef = new AtomicReference<>(connectHandler);
     }
 
     /**
      * Method will be called, when the connection gets connected.
+     * 
      * @throws IOException
      */
     protected final void onConnect() throws IOException {
         final AtomicReference<ConnectResultHandler> localRef = connectHandlerRef;
         final ConnectResultHandler localConnectHandler;
-        
-        if (localRef != null &&
-                (localConnectHandler = localRef.getAndSet(null)) != null) {
+
+        if (localRef != null && (localConnectHandler = localRef.getAndSet(null)) != null) {
             localConnectHandler.connected();
             connectHandlerRef = null;
         }
-        
+
         notifyProbesConnect(this);
     }
 
     /**
-     * Method will be called in order to check if failure happened before
-     * {@link Connection} was reported as connected.
+     * Method will be called in order to check if failure happened before {@link Connection} was reported as connected.
      */
     protected final void checkConnectFailed(Throwable failure) {
         final AtomicReference<ConnectResultHandler> localRef = connectHandlerRef;
         final ConnectResultHandler localConnectHandler;
-        
-        if (localRef != null &&
-                (localConnectHandler = localRef.getAndSet(null)) != null) {
+
+        if (localRef != null && (localConnectHandler = localRef.getAndSet(null)) != null) {
             if (failure == null) {
                 failure = new IOException("closed");
             }
-            
+
             localConnectHandler.failed(failure);
             connectHandlerRef = null;
         }
@@ -261,13 +245,10 @@ public class TCPNIOConnection extends NIOConnection {
      * {@inheritDoc}
      */
     @Override
-    protected void terminate0(
-            final CompletionHandler<Closeable> completionHandler,
-            final CloseReason closeReason) {
+    protected void terminate0(final CompletionHandler<Closeable> completionHandler, final CloseReason closeReason) {
         super.terminate0(completionHandler, closeReason);
     }
 
-    
     /**
      * Method will be called, when some data was read on the connection
      */
@@ -282,7 +263,7 @@ public class TCPNIOConnection extends NIOConnection {
     protected void enableInitialOpRead() throws IOException {
         super.enableInitialOpRead();
     }
-    
+
     /**
      * Method will be called, when some data was written on the connection
      */
@@ -333,14 +314,13 @@ public class TCPNIOConnection extends NIOConnection {
         sb.append('}');
         return sb.toString();
     }
-    
+
     /**
-     * This interface implementations can be used to be notified about the
-     * <tt>TCPNIOConnection</tt> connect state. 
+     * This interface implementations can be used to be notified about the <tt>TCPNIOConnection</tt> connect state.
      */
     protected interface ConnectResultHandler {
         void connected() throws IOException;
+
         void failed(final Throwable t);
-    }    
+    }
 }
-    

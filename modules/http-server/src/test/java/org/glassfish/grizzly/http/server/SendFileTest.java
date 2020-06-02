@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,20 @@
 
 package org.glassfish.grizzly.http.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import junit.framework.TestCase;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -29,44 +39,33 @@ import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.CompressionConfig.CompressionMode;
 import org.glassfish.grizzly.http.HttpClientFilter;
 import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.Protocol;
-import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.channels.FileChannel;
-import java.security.MessageDigest;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.http.CompressionConfig.CompressionMode;
+import junit.framework.TestCase;
 
 public class SendFileTest extends TestCase {
-    
+
     private static final Logger LOGGER = Grizzly.logger(SendFileTest.class);
-    
+
     private static final int PORT = 9669;
 
-
     // ------------------------------------------------------------ Test Methods
-
 
     @SuppressWarnings("unchecked")
     public void testSimpleSendFileViaStaticResourceAdapter() throws Exception {
         HttpServer server = createServer(null, false, false);
         File control = generateTempFile(1024, "tmp2");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
@@ -83,16 +82,12 @@ public class SendFileTest extends TestCase {
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
             for (int i = 0; i < 5; i++) {
-                HttpRequestPacket request =
-                        HttpRequestPacket.builder().uri("/" + control.getName())
-                            .method(Method.GET)
-                            .protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                        .header("Host", "localhost:" + PORT).build();
                 c.write(request);
                 File fResult = result.get(20, TimeUnit.SECONDS);
                 BigInteger resultSum = getMDSum(fResult);
-                assertTrue("MD5Sum between control and test files differ.",
-                           controlSum.equals(resultSum));
+                assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
                 result.reset();
             }
             c.close();
@@ -107,7 +102,7 @@ public class SendFileTest extends TestCase {
         File control = generateTempFile(1024);
         HttpServer server = createServer(new SendFileApiHandler(control, null), false, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
@@ -122,16 +117,12 @@ public class SendFileTest extends TestCase {
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
             for (int i = 0; i < 5; i++) {
-                HttpRequestPacket request =
-                        HttpRequestPacket.builder().uri("/" + control.getName())
-                                .method(Method.GET)
-                                .protocol(Protocol.HTTP_1_1)
-                                .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                        .header("Host", "localhost:" + PORT).build();
                 c.write(request);
                 File fResult = result.get(20, TimeUnit.SECONDS);
                 BigInteger resultSum = getMDSum(fResult);
-                assertTrue("MD5Sum between control and test files differ.",
-                           controlSum.equals(resultSum));
+                assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
                 result.reset();
             }
             c.close();
@@ -141,13 +132,12 @@ public class SendFileTest extends TestCase {
         }
     }
 
-
     @SuppressWarnings("unchecked")
     public void testSimpleSendFileViaAPIMultiArgExplicitMimeType() throws Exception {
         File control = generateTempFile(1024);
         HttpServer server = createServer(new SendFileApiHandler(511, 512, "application/tmp"), false, false); // send half
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
@@ -162,11 +152,8 @@ public class SendFileTest extends TestCase {
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
             for (int i = 0; i < 5; i++) {
-                HttpRequestPacket request =
-                        HttpRequestPacket.builder().uri("/" + control.getName())
-                                .method(Method.GET)
-                                .protocol(Protocol.HTTP_1_1)
-                                .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                        .header("Host", "localhost:" + PORT).build();
                 c.write(request);
                 File fResult = result.get(20, TimeUnit.SECONDS);
                 assertEquals(512, fResult.length());
@@ -186,9 +173,9 @@ public class SendFileTest extends TestCase {
         h.setSendExtraContent(true);
         HttpServer server = createServer(h, false, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
         BigInteger controlSum = getMDSum(control);
-        
+
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
             public void validate(HttpResponsePacket response) {
@@ -202,16 +189,12 @@ public class SendFileTest extends TestCase {
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
             for (int i = 0; i < 5; i++) {
-                HttpRequestPacket request =
-                        HttpRequestPacket.builder().uri("/" + control.getName())
-                                .method(Method.GET)
-                                .protocol(Protocol.HTTP_1_1)
-                                .header("Host", "localhost:" + PORT).build();
+                HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                        .header("Host", "localhost:" + PORT).build();
                 c.write(request);
                 File fResult = result.get(20, TimeUnit.SECONDS);
                 BigInteger resultSum = getMDSum(fResult);
-                assertTrue("MD5Sum between control and test files differ.",
-                           controlSum.equals(resultSum));
+                assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
                 result.reset();
             }
             c.close();
@@ -227,7 +210,7 @@ public class SendFileTest extends TestCase {
         HttpHandler h = new SendFileRequestAttributeHandler(control);
         HttpServer server = createServer(h, false, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
         BigInteger controlSum = getMDSum(control);
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
@@ -242,16 +225,12 @@ public class SendFileTest extends TestCase {
             server.start();
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
-            HttpRequestPacket request =
-                    HttpRequestPacket.builder().uri("/" + control.getName())
-                            .method(Method.GET)
-                            .protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT).build();
+            HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                    .header("Host", "localhost:" + PORT).build();
             c.write(request);
             File fResult = result.get(20, TimeUnit.SECONDS);
             BigInteger resultSum = getMDSum(fResult);
-            assertTrue("MD5Sum between control and test files differ.",
-                    controlSum.equals(resultSum));
+            assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
             result.reset();
             c.close();
         } finally {
@@ -259,8 +238,7 @@ public class SendFileTest extends TestCase {
             server.shutdownNow();
         }
     }
-    
-    
+
     @SuppressWarnings("unchecked")
     public void testSimpleSendFileViaRequestAttributeCustomThread() throws Exception {
         File control = generateTempFile(1024);
@@ -269,7 +247,7 @@ public class SendFileTest extends TestCase {
         h.setExecutor(e);
         HttpServer server = createServer(h, false, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
         BigInteger controlSum = getMDSum(control);
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
@@ -284,16 +262,12 @@ public class SendFileTest extends TestCase {
             server.start();
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
-            HttpRequestPacket request =
-                    HttpRequestPacket.builder().uri("/" + control.getName())
-                            .method(Method.GET)
-                            .protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT).build();
+            HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                    .header("Host", "localhost:" + PORT).build();
             c.write(request);
             File fResult = result.get(20, TimeUnit.SECONDS);
             BigInteger resultSum = getMDSum(fResult);
-            assertTrue("MD5Sum between control and test files differ.",
-                    controlSum.equals(resultSum));
+            assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
             result.reset();
             c.close();
         } finally {
@@ -309,7 +283,7 @@ public class SendFileTest extends TestCase {
         HttpHandler h = new SendFileRequestAttributeHandler(511, 512);
         HttpServer server = createServer(h, false, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
 
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
@@ -323,11 +297,8 @@ public class SendFileTest extends TestCase {
             server.start();
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
-            HttpRequestPacket request =
-                    HttpRequestPacket.builder().uri("/" + control.getName())
-                            .method(Method.GET)
-                            .protocol(Protocol.HTTP_1_1)
-                            .header("Host", "localhost:" + PORT).build();
+            HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                    .header("Host", "localhost:" + PORT).build();
             c.write(request);
             File fResult = result.get(20, TimeUnit.SECONDS);
             assertEquals(512, fResult.length());
@@ -339,14 +310,13 @@ public class SendFileTest extends TestCase {
         }
     }
 
-
     @SuppressWarnings("unchecked")
     public void testSimpleSendFileCompressionDisabled() throws Exception {
         File control = generateTempFile(1024);
         HttpHandler h = new SendFileRequestAttributeHandler(control);
         HttpServer server = createServer(h, true, false);
         MimeType.add("tmp", "text/temp");
-        final ReusableFuture<File> result = new ReusableFuture<File>();
+        final ReusableFuture<File> result = new ReusableFuture<>();
         BigInteger controlSum = getMDSum(control);
         TCPNIOTransport client = createClient(result, new ResponseValidator() {
             @Override
@@ -363,18 +333,13 @@ public class SendFileTest extends TestCase {
             client.start();
             Connection c = client.connect("localhost", PORT).get(10, TimeUnit.SECONDS);
             for (int i = 0; i < 5; i++) {
-                HttpRequestPacket request =
-                        HttpRequestPacket.builder().uri("/" + control.getName())
-                                .method(Method.GET)
-                                .protocol(Protocol.HTTP_1_1)
-                                .header(Header.Host, "localhost:" + PORT)
-                                .header(Header.AcceptEncoding, "gzip").build();
+                HttpRequestPacket request = HttpRequestPacket.builder().uri("/" + control.getName()).method(Method.GET).protocol(Protocol.HTTP_1_1)
+                        .header(Header.Host, "localhost:" + PORT).header(Header.AcceptEncoding, "gzip").build();
 
                 c.write(request);
                 File fResult = result.get(20, TimeUnit.SECONDS);
                 BigInteger resultSum = getMDSum(fResult);
-                assertTrue("MD5Sum between control and test files differ.",
-                        controlSum.equals(resultSum));
+                assertTrue("MD5Sum between control and test files differ.", controlSum.equals(resultSum));
                 result.reset();
             }
             c.close();
@@ -384,15 +349,12 @@ public class SendFileTest extends TestCase {
         }
     }
 
-
     // --------------------------------------------------------- Private Methods
-    
-    
+
     private static final class SendFileRequestAttributeHandler extends HttpHandler {
         private final long pos;
         private final long len;
         private ScheduledExecutorService executor;
-
 
         // -------------------------------------------------------- Constructors
 
@@ -407,7 +369,6 @@ public class SendFileTest extends TestCase {
         }
 
         // -------------------------------------------- Methods from HttpHandler
-
 
         public void setExecutor(ScheduledExecutorService executor) {
             this.executor = executor;
@@ -441,15 +402,13 @@ public class SendFileTest extends TestCase {
             }
         }
     } // END SendFileRequestAttributeHandler
-    
-    
+
     private static final class SendFileApiHandler extends HttpHandler {
-        
+
         private final long pos;
         private final long len;
         private final String contentType;
         private boolean sendExtraContent;
-
 
         // -------------------------------------------------------- Constructors
 
@@ -465,9 +424,7 @@ public class SendFileTest extends TestCase {
             this.contentType = contentType;
         }
 
-
         // -------------------------------------------- Methods from HttpHandler
-
 
         @Override
         public void service(final Request request, final Response response) throws Exception {
@@ -503,7 +460,7 @@ public class SendFileTest extends TestCase {
                 }
             });
         }
-        
+
         // ------------------------------------------------------ Public Methods
 
         public void setSendExtraContent(boolean sendExtraContent) {
@@ -511,10 +468,8 @@ public class SendFileTest extends TestCase {
         }
 
     } // END SendFileApiHandler
-    
-    
-    private static TCPNIOTransport createClient(final ReusableFuture<File> result,
-                                                final ResponseValidator validator) {
+
+    private static TCPNIOTransport createClient(final ReusableFuture<File> result, final ResponseValidator validator) {
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         FilterChainBuilder builder = FilterChainBuilder.stateless();
         builder.add(new TransportFilter());
@@ -536,8 +491,7 @@ public class SendFileTest extends TestCase {
                     }
                     try {
                         out.close();
-                        LOGGER.log(Level.INFO, "Client received file ({0} bytes) in {1}ms.",
-                                new Object[]{f.length(), stop - start});
+                        LOGGER.log(Level.INFO, "Client received file ({0} bytes) in {1}ms.", new Object[] { f.length(), stop - start });
                         // result.result(f) should be the last operation in handleRead
                         // otherwise NPE may occur in handleWrite asynchronously
                         result.result(f);
@@ -567,20 +521,14 @@ public class SendFileTest extends TestCase {
                 return super.handleWrite(ctx);
             }
         });
-        
+
         transport.setProcessor(builder.build());
         return transport;
     }
-    
-    
-    private static HttpServer createServer(HttpHandler handler,
-                                           boolean enableCompression,
-                                           boolean enableFileCache) {
+
+    private static HttpServer createServer(HttpHandler handler, boolean enableCompression, boolean enableFileCache) {
         final HttpServer server = new HttpServer();
-        final NetworkListener listener = 
-                new NetworkListener("test", 
-                                    NetworkListener.DEFAULT_NETWORK_HOST, 
-                                    PORT);
+        final NetworkListener listener = new NetworkListener("test", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         if (enableCompression) {
             listener.getCompressionConfig().setCompressionMode(CompressionMode.FORCE);
         }
@@ -605,11 +553,10 @@ public class SendFileTest extends TestCase {
         return new BigInteger(digest.digest());
     }
 
-
     private static File generateTempFile(final int size) throws IOException {
         return generateTempFile(size, "tmp");
     }
-    
+
     private static File generateTempFile(final int size, final String ext) throws IOException {
         final File f = File.createTempFile("grizzly-temp-" + size, "." + ext);
         Random r = new Random();
@@ -619,7 +566,7 @@ public class SendFileTest extends TestCase {
         int total = 0;
         int remaining = size;
         while (total < size) {
-            int len = ((remaining > 8192) ? 8192 : remaining);
+            int len = remaining > 8192 ? 8192 : remaining;
             out.write(data, 0, len);
             total += len;
             remaining -= len;
@@ -628,14 +575,12 @@ public class SendFileTest extends TestCase {
         return f;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-    
-    
+
     private interface ResponseValidator {
-        
+
         void validate(HttpResponsePacket response);
-        
+
     }
 
 }

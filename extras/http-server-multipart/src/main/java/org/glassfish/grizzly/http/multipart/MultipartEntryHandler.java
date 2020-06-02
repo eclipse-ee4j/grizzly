@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,16 +18,15 @@ package org.glassfish.grizzly.http.multipart;
 
 /**
  * General interface for processing {@link MultipartEntry}s, one by one.
- * 
+ *
  * @since 2.0.1
  *
  * @author Alexey Stashok
  */
 public interface MultipartEntryHandler {
     /**
-     * The method is called once {@link MultipartEntry} header is ready to be
-     * processed by user code.
-     * 
+     * The method is called once {@link MultipartEntry} header is ready to be processed by user code.
+     *
      * @param multipartEntry {@link MultipartEntry}
      * @throws Exception
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,15 +18,16 @@ package org.glassfish.grizzly.memory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.Buffer;
 
 /**
- * {@link MemoryManager}s, which implement this interface, are able to convert
- * frequently used Java buffer types to Grizzly {@link Buffer}.
+ * {@link MemoryManager}s, which implement this interface, are able to convert frequently used Java buffer types to
+ * Grizzly {@link Buffer}.
  *
  * @see MemoryUtils
  * @see MemoryManager
- * 
+ *
  * @author Alexey Stashok
  */
 public interface WrapperAware {
@@ -40,8 +41,7 @@ public interface WrapperAware {
     Buffer wrap(byte[] data);
 
     /**
-     * Returns {@link Buffer}, which wraps the part of byte array with
-     * specific offset and length.
+     * Returns {@link Buffer}, which wraps the part of byte array with specific offset and length.
      *
      * @param data byte array to wrap
      * @param offset byte buffer offset
@@ -50,7 +50,7 @@ public interface WrapperAware {
      * @return {@link Buffer} wrapper on top of passed byte array.
      */
     Buffer wrap(byte[] data, int offset, int length);
-    
+
     /**
      * Returns {@link Buffer}, which wraps the {@link String}.
      *
@@ -61,12 +61,10 @@ public interface WrapperAware {
     Buffer wrap(String s);
 
     /**
-     * Returns {@link Buffer}, which wraps the {@link String} with the specific
-     * {@link Charset}.
+     * Returns {@link Buffer}, which wraps the {@link String} with the specific {@link Charset}.
      *
      * @param s {@link String}
-     * @param charset {@link Charset}, which will be used, when converting
-     * {@link String} to byte array.
+     * @param charset {@link Charset}, which will be used, when converting {@link String} to byte array.
      *
      * @return {@link Buffer} wrapper on top of passed {@link String}.
      */

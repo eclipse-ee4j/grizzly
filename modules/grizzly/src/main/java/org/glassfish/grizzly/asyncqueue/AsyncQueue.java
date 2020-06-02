@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,21 +22,18 @@ import org.glassfish.grizzly.ProcessorResult;
 
 /**
  * Common interface for {@link AsyncQueue} processors.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface AsyncQueue {
-    String EXPECTING_MORE_OPTION =
-            AsyncQueue.class.getName() + ".expectingMore";
-    
+    String EXPECTING_MORE_OPTION = AsyncQueue.class.getName() + ".expectingMore";
+
     enum AsyncResult {
-        COMPLETE(ProcessorResult.createLeave()),
-        INCOMPLETE(ProcessorResult.createComplete()),
-        EXPECTING_MORE(ProcessorResult.createComplete(EXPECTING_MORE_OPTION)),
-        TERMINATE(ProcessorResult.createTerminate());
+        COMPLETE(ProcessorResult.createLeave()), INCOMPLETE(ProcessorResult.createComplete()),
+        EXPECTING_MORE(ProcessorResult.createComplete(EXPECTING_MORE_OPTION)), TERMINATE(ProcessorResult.createTerminate());
 
         private final ProcessorResult result;
-        
+
         AsyncResult(final ProcessorResult result) {
             this.result = result;
         }
@@ -44,37 +41,34 @@ public interface AsyncQueue {
         public ProcessorResult toProcessorResult() {
             return result;
         }
-        
+
     }
-    
+
     /**
-     * Checks whether there is ready data in {@link AsyncQueue},
-     * associated with the {@link Connection}.
-     * 
+     * Checks whether there is ready data in {@link AsyncQueue}, associated with the {@link Connection}.
+     *
      * @param connection {@link Connection}
-     * @return <tt>true</tt>, if there is ready data,
-     *         or <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if there is ready data, or <tt>false</tt> otherwise.
      */
     boolean isReady(Connection connection);
-    
+
     /**
-     * Callback method, which is called async. to process ready
-     * {@link AsyncQueue}, which are associated with the given
+     * Callback method, which is called async. to process ready {@link AsyncQueue}, which are associated with the given
      * {@link Connection}
-     * 
+     *
      * @param context {@link Context}
      * @return {@link AsyncResult}, depending on async queue status.
      */
     AsyncResult processAsync(Context context);
-    
+
     /**
-     * Callback method, which is called, when {@link Connection} has been closed,
-     * to let processor release a connection associated resources.
-     * 
+     * Callback method, which is called, when {@link Connection} has been closed, to let processor release a connection
+     * associated resources.
+     *
      * @param connection {@link Connection}
      */
     void onClose(Connection connection);
-    
+
     /**
      * Close <tt>AsyncQueueProcessor</tt> and release associated resources
      */

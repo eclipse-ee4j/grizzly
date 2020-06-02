@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.memory.Buffers;
 
@@ -31,16 +32,14 @@ public class BufferInputStream extends InputStream {
     private final Buffer buffer;
 
     private final boolean isMovingPosition;
-    
+
     private int position;
     private final int limit;
-    
+
     /**
-     * Create the {@link InputStream} over Grizzly {@link Buffer}.
-     * Constructed <tt>BufferInputStream</tt> read operations will affect the
-     * passed {@link Buffer} position, which means each <tt>BufferInputStream</tt>
-     * read operation will shift {@link Buffer}'s position by number of bytes,
-     * which were read.
+     * Create the {@link InputStream} over Grizzly {@link Buffer}. Constructed <tt>BufferInputStream</tt> read operations
+     * will affect the passed {@link Buffer} position, which means each <tt>BufferInputStream</tt> read operation will shift
+     * {@link Buffer}'s position by number of bytes, which were read.
      *
      * @param buffer
      */
@@ -52,21 +51,18 @@ public class BufferInputStream extends InputStream {
     }
 
     /**
-     * Create the {@link InputStream} over Grizzly {@link Buffer}.
-     * Constructed <tt>BufferInputStream</tt> read operations will *not* affect
-     * the passed {@link Buffer} position, which means the passed {@link Buffer}
-     * position will never be changed during <tt>BufferInputStream</tt>
+     * Create the {@link InputStream} over Grizzly {@link Buffer}. Constructed <tt>BufferInputStream</tt> read operations
+     * will *not* affect the passed {@link Buffer} position, which means the passed {@link Buffer} position will never be
+     * changed during <tt>BufferInputStream</tt>
      *
      * @param buffer
      */
-    public BufferInputStream(final Buffer buffer, final int position,
-            final int limit) {
+    public BufferInputStream(final Buffer buffer, final int position, final int limit) {
         isMovingPosition = false;
         this.buffer = buffer;
         this.position = position;
         this.limit = limit;
     }
-
 
     /**
      * {@inheritDoc}
@@ -90,8 +86,7 @@ public class BufferInputStream extends InputStream {
      * {@inheritDoc}
      */
     @Override
-    public int read(final byte[] b, final int off, final int len)
-            throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         if (position >= limit) {
             return -1;
         }
@@ -104,7 +99,7 @@ public class BufferInputStream extends InputStream {
         if (!isMovingPosition) {
             Buffers.setPositionLimit(buffer, position, limit);
         }
-        
+
         try {
             buffer.get(b, off, length);
         } finally {
@@ -137,7 +132,7 @@ public class BufferInputStream extends InputStream {
         if (isMovingPosition) {
             buffer.position(position);
         }
-        
+
         return skipped;
     }
 }

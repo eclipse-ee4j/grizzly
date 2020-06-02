@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,6 +15,17 @@
  */
 
 package org.glassfish.grizzly.http2;
+
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
+import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
@@ -38,17 +49,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
-
 @RunWith(Parameterized.class)
 public class Http2SemanticsTest extends AbstractHttp2Test {
 
@@ -57,18 +57,14 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
     private HttpServer httpServer;
     private static final int PORT = 18893;
 
-
     // ----------------------------------------------------------- Constructors
-
 
     public Http2SemanticsTest(final boolean isSecure, final boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
     }
 
-
     // -------------------------------------------------- Junit Support Methods
-
 
     @Parameterized.Parameters
     public static Collection<Object[]> configure() {
@@ -85,9 +81,7 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
         httpServer.shutdownNow();
     }
 
-
     // ----------------------------------------------------------- Test Methods
-
 
     @Test
     public void invalidHeaderCharactersTest() throws Exception {
@@ -102,14 +96,11 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
         byte[] headerName = "test".getBytes();
         byte[] temp = new byte[headerName.length + 1];
         System.arraycopy(headerName, 0, temp, 0, headerName.length);
-        temp[temp.length - 1] = 0x7; //visual bell
+        temp[temp.length - 1] = 0x7; // visual bell
 
         final Connection c = getConnection("localhost", PORT, null);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        HttpRequestPacket request = builder.method(Method.GET)
-                .uri("/path")
-                .protocol(Protocol.HTTP_1_1)
-                .host("localhost:" + PORT).build();
+        HttpRequestPacket request = builder.method(Method.GET).uri("/path").protocol(Protocol.HTTP_1_1).host("localhost:" + PORT).build();
         request.setHeader(new String(temp, Charsets.ASCII_CHARSET), "value");
         c.write(HttpContent.builder(request).content(Buffers.EMPTY_BUFFER).last(true).build());
         Thread.sleep(1000);
@@ -117,7 +108,6 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
         assertThat(stream, notNullValue());
         assertThat(stream.isOpen(), is(false));
     }
-
 
     @Test
     public void testHeaderHandling() throws Throwable {
@@ -139,15 +129,8 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
 
         final Connection c = getConnection("localhost", PORT, null);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        HttpRequestPacket request = builder.method(Method.GET)
-                .uri("/path")
-                .protocol(Protocol.HTTP_1_1)
-                .header(Header.Cookie, "a=b")
-                .header(Header.Cookie, "c=d")
-                .header(Header.Cookie, "e=f")
-                .header("test", "a")
-                .header("test", "b")
-                .host("localhost:" + PORT).build();
+        HttpRequestPacket request = builder.method(Method.GET).uri("/path").protocol(Protocol.HTTP_1_1).header(Header.Cookie, "a=b")
+                .header(Header.Cookie, "c=d").header(Header.Cookie, "e=f").header("test", "a").header("test", "b").host("localhost:" + PORT).build();
         c.write(HttpContent.builder(request).content(Buffers.EMPTY_BUFFER).last(true).build());
         latch.await(5, TimeUnit.SECONDS);
         final Throwable t = error.get();
@@ -156,9 +139,7 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
         }
     }
 
-
     // -------------------------------------------------------- Private Methods
-
 
     private void configureHttpServer() throws Exception {
         httpServer = createServer(null, PORT, isSecure, true);
@@ -170,27 +151,20 @@ public class Http2SemanticsTest extends AbstractHttp2Test {
         httpServer.start();
     }
 
-    private Connection getConnection(final String host,
-                                     int port,
-                                     final Filter filter)
-            throws Exception {
+    private Connection getConnection(final String host, int port, final Filter filter) throws Exception {
 
-        final FilterChain clientChain =
-                createClientFilterChainAsBuilder(isSecure, priorKnowledge).build();
+        final FilterChain clientChain = createClientFilterChainAsBuilder(isSecure, priorKnowledge).build();
 
         if (filter != null) {
             clientChain.add(filter);
         }
 
         final int idx = clientChain.indexOfType(Http2ClientFilter.class);
-        assert (idx != -1);
+        assert idx != -1;
         final Http2ClientFilter clientFilter = (Http2ClientFilter) clientChain.get(idx);
         clientFilter.getConfiguration().setPriorKnowledge(true);
 
-
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(clientChain)
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(clientChain)
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect(host, port);

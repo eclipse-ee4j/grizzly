@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -12,6 +12,7 @@ package org.glassfish.grizzly.samples.filterchain;
 
 import java.io.IOException;
 import java.util.logging.Filter;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -19,8 +20,7 @@ import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * Example of parser {@link Filter},
- * which is response for Buffer <-> GIOPMessage transformation.
+ * Example of parser {@link Filter}, which is response for Buffer <-> GIOPMessage transformation.
  *
  * @author Alexey Stashok
  */
@@ -29,11 +29,10 @@ public final class GIOPFilter extends BaseFilter {
     private static final int HEADER_SIZE = 12;
 
     /**
-     * Method is called, when new data was read from the Connection and ready
-     * to be processed.
+     * Method is called, when new data was read from the Connection and ready to be processed.
      *
      * We override this method to perform Buffer -> GIOPMessage transformation.
-     * 
+     *
      * @param ctx Context of {@link FilterChainContext} processing
      * @return the next action
      * @throws java.io.IOException
@@ -56,7 +55,7 @@ public final class GIOPFilter extends BaseFilter {
         final int bodyLength = sourceBuffer.getInt(HEADER_SIZE - 4);
         // The complete message length
         final int completeMessageLength = HEADER_SIZE + bodyLength;
-        
+
         // If the source message doesn't contain entire body
         if (sourceBufferLength < completeMessageLength) {
             // stop the filterchain processing and store sourceBuffer to be
@@ -66,15 +65,13 @@ public final class GIOPFilter extends BaseFilter {
 
         // Check if the source buffer has more than 1 complete GIOP message
         // If yes - split up the first message and the remainder
-        final Buffer remainder = sourceBufferLength > completeMessageLength ? 
-            sourceBuffer.split(completeMessageLength) : null;
+        final Buffer remainder = sourceBufferLength > completeMessageLength ? sourceBuffer.split(completeMessageLength) : null;
 
         // Construct a GIOP message
         final GIOPMessage giopMessage = new GIOPMessage();
 
         // Set GIOP header bytes
-        giopMessage.setGIOPHeader(sourceBuffer.get(), sourceBuffer.get(),
-                sourceBuffer.get(), sourceBuffer.get());
+        giopMessage.setGIOPHeader(sourceBuffer.get(), sourceBuffer.get(), sourceBuffer.get(), sourceBuffer.get());
 
         // Set major version
         giopMessage.setMajor(sourceBuffer.get());
@@ -123,15 +120,14 @@ public final class GIOPFilter extends BaseFilter {
         final int size = HEADER_SIZE + giopMessage.getBodyLength();
 
         // Retrieve the memory manager
-        final MemoryManager memoryManager =
-                ctx.getConnection().getTransport().getMemoryManager();
+        final MemoryManager memoryManager = ctx.getConnection().getTransport().getMemoryManager();
 
         // allocate the buffer of required size
         final Buffer output = memoryManager.allocate(size);
 
         // Allow Grizzly core to dispose the buffer, once it's written
         output.allowBufferDispose(true);
-        
+
         // GIOP header
         output.put(giopMessage.getGIOPHeader());
 

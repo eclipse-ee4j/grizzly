@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,8 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Processor;
 import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.Processor;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.http.HttpClientFilter;
@@ -93,11 +93,10 @@ public class WebSocketClient extends SimpleWebSocket {
                     super.preConfigure(conn);
 //                    final ProtocolHandler handler = version.createHandler(true);
                     /*
-                    holder.handshake = handshake;
+                     * holder.handshake = handshake;
                      */
                     protocolHandler.setConnection(conn);
-                    final WebSocketHolder holder = WebSocketHolder.set(conn, protocolHandler,
-                            WebSocketClient.this);
+                    final WebSocketHolder holder = WebSocketHolder.set(conn, protocolHandler, WebSocketClient.this);
                     holder.handshake = protocolHandler.createClientHandShake(address);
                 }
             };
@@ -109,37 +108,34 @@ public class WebSocketClient extends SimpleWebSocket {
                     completeFuture.result(Boolean.TRUE);
                 }
             });
-            
-            
+
             connectorHandler.setProcessor(createFilterChain(completeFuture));
             // start connect
-            connectorHandler.connect(new InetSocketAddress(
-                    address.getHost(), address.getPort()),
-                    new EmptyCompletionHandler<Connection>() {
+            connectorHandler.connect(new InetSocketAddress(address.getHost(), address.getPort()), new EmptyCompletionHandler<Connection>() {
 
-                        @Override
-                        public void failed(Throwable throwable) {
-                            completeFuture.failure(throwable);
-                        }
+                @Override
+                public void failed(Throwable throwable) {
+                    completeFuture.failure(throwable);
+                }
 
-                        @Override
-                        public void cancelled() {
-                            completeFuture.failure(new CancellationException());
-                        }
-                        
-                    });
-            
+                @Override
+                public void cancelled() {
+                    completeFuture.failure(new CancellationException());
+                }
+
+            });
+
             completeFuture.get(timeout, unit);
             return this;
         } catch (Throwable e) {
             if (e instanceof ExecutionException) {
                 e = e.getCause();
             }
-            
+
             if (e instanceof HandshakeException) {
                 throw (HandshakeException) e;
             }
-            
+
             throw new HandshakeException(e.getMessage());
         }
     }
@@ -148,9 +144,8 @@ public class WebSocketClient extends SimpleWebSocket {
         transport = TCPNIOTransportBuilder.newInstance().build();
     }
 
-    private static Processor createFilterChain(
-            final FutureImpl<Boolean> completeFuture) {
-        
+    private static Processor createFilterChain(final FutureImpl<Boolean> completeFuture) {
+
         FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
         clientFilterChainBuilder.add(new TransportFilter());
         clientFilterChainBuilder.add(new HttpClientFilter());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,19 +16,26 @@
 
 package org.glassfish.grizzly;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.glassfish.grizzly.filterchain.*;
+
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
 import org.glassfish.grizzly.nio.transport.UDPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.UDPNIOTransport;
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Unit test for {@link UDPNIOTransport}
@@ -49,13 +56,10 @@ public class UDPNIOTransportTest {
 
         final AtomicInteger connectCounter = new AtomicInteger();
         final AtomicInteger closeCounter = new AtomicInteger();
-        
-        FilterChainBuilder serverFilterChainBuilder = FilterChainBuilder.stateless()
-            .add(new TransportFilter());
 
-        FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless()
-            .add(new TransportFilter())
-            .add(new BaseFilter() {
+        FilterChainBuilder serverFilterChainBuilder = FilterChainBuilder.stateless().add(new TransportFilter());
+
+        FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless().add(new TransportFilter()).add(new BaseFilter() {
             @Override
             public NextAction handleConnect(FilterChainContext ctx) throws IOException {
                 connectCounter.incrementAndGet();
@@ -70,21 +74,17 @@ public class UDPNIOTransportTest {
         });
 
         transport.setProcessor(serverFilterChainBuilder.build());
-        
-        SocketConnectorHandler connectorHandler = UDPNIOConnectorHandler
-                .builder(transport)
-                .processor(clientFilterChainBuilder.build())
-                .build();
+
+        SocketConnectorHandler connectorHandler = UDPNIOConnectorHandler.builder(transport).processor(clientFilterChainBuilder.build()).build();
 
         try {
             transport.bind(PORT);
             transport.start();
 
             final int connectionsNum = 100;
-            
+
             for (int i = 0; i < connectionsNum; i++) {
-                final Future<Connection> connectFuture = connectorHandler.connect(
-                        new InetSocketAddress("localhost", PORT));
+                final Future<Connection> connectFuture = connectorHandler.connect(new InetSocketAddress("localhost", PORT));
                 if (!connectFuture.cancel(false)) {
                     assertTrue("Future is not done", connectFuture.isDone());
                     final Connection c = connectFuture.get();
@@ -93,12 +93,12 @@ public class UDPNIOTransportTest {
                     c.closeSilently();
                 }
             }
-            
+
             Thread.sleep(50);
-            
+
             assertEquals("Number of connected and closed connections doesn't match", connectCounter.get(), closeCounter.get());
         } finally {
             transport.shutdownNow();
         }
-    }    
+    }
 }

@@ -16,18 +16,18 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+
 import jakarta.servlet.ServletRequestEvent;
 import jakarta.servlet.ServletRequestListener;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 
 public class ListenersTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18088;
-
+    public static final int PORT = PORT();
 
     // ------------------------------------------------------------ Test Methods
 
@@ -40,6 +40,7 @@ public class ListenersTest extends HttpServerAbstractTest {
         ctx.addListener(RequestListener.class.getName());
         addServlet(ctx, "TestServlet", "/servletPath/*");
         ctx.deploy(httpServer);
+        Thread.sleep(10);
         httpServer.start();
         HttpURLConnection conn = getConnection("/contextPath/servletPath/pathInfo", PORT);
         conn.getResponseCode();
@@ -48,34 +49,26 @@ public class ListenersTest extends HttpServerAbstractTest {
 
     }
 
-
     // --------------------------------------------------------- Private Methods
 
+    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias) {
+        final ServletRegistration reg = ctx.addServlet(name, new HttpServlet() {
 
-    private ServletRegistration addServlet(final WebappContext ctx,
-                                               final String name,
-                                               final String alias) {
-            final ServletRegistration reg = ctx.addServlet(name, new HttpServlet() {
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setHeader("Path-Info", req.getPathInfo());
+                resp.setHeader("Request-Was", req.getRequestURI());
+                resp.setHeader("Servlet-Name", getServletName());
+                resp.getWriter().write(alias);
+            }
+        });
+        reg.addMapping(alias);
 
-                @Override
-                protected void doGet(
-                        HttpServletRequest req, HttpServletResponse resp)
-                        throws IOException {
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                    resp.setHeader("Path-Info", req.getPathInfo());
-                    resp.setHeader("Request-Was", req.getRequestURI());
-                    resp.setHeader("Servlet-Name", getServletName());
-                    resp.getWriter().write(alias);
-                }
-            });
-            reg.addMapping(alias);
-
-            return reg;
-        }
-
+        return reg;
+    }
 
     // ---------------------------------------------------------- Nested Classes
-
 
     public static final class RequestListener implements ServletRequestListener {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,9 +19,8 @@ package org.glassfish.grizzly;
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
 
 /**
- * Processor implementations are responsible for processing I/O events, which
- * occur on connection.
- * 
+ * Processor implementations are responsible for processing I/O events, which occur on connection.
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("deprecation")
@@ -30,53 +29,41 @@ public interface Processor<E extends Context> {
      * Creates {@link Context}
      *
      * @param connection {@link Connection} to obtain processor for.
-     * @return {@link Context}, or <tt>null</tt>, if default {@link Context}
-     *         could be used.
+     * @return {@link Context}, or <tt>null</tt>, if default {@link Context} could be used.
      */
     E obtainContext(Connection connection);
 
     /**
-     * Method will be called by framework to process some event, which
-     * occurred on a connection
-     * 
+     * Method will be called by framework to process some event, which occurred on a connection
+     *
      * @param context processing context
      * @return the result of I/O event processing
      */
     ProcessorResult process(E context);
 
-    void read(Connection connection,
-            CompletionHandler<ReadResult> completionHandler);
+    void read(Connection connection, CompletionHandler<ReadResult> completionHandler);
 
-    void write(Connection connection,
-            Object dstAddress, Object message,
-            CompletionHandler<WriteResult> completionHandler);
-    
-    void write(Connection connection,
-            Object dstAddress, Object message,
-            CompletionHandler<WriteResult> completionHandler,
-            MessageCloner messageCloner);
-    
+    void write(Connection connection, Object dstAddress, Object message, CompletionHandler<WriteResult> completionHandler);
+
+    void write(Connection connection, Object dstAddress, Object message, CompletionHandler<WriteResult> completionHandler, MessageCloner messageCloner);
+
     @Deprecated
-    void write(Connection connection,
-            Object dstAddress, Object message,
-            CompletionHandler<WriteResult> completionHandler,
+    void write(Connection connection, Object dstAddress, Object message, CompletionHandler<WriteResult> completionHandler,
             org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler);
-    
+
     /**
      * Is this {@link Processor} interested in processing the i/o event
-     * 
+     *
      * @param ioEvent the event to check if the Processor is interested in
-     * @return true, if this {@link Processor} is interested and execution
-     * process will start, false otherwise.
+     * @return true, if this {@link Processor} is interested and execution process will start, false otherwise.
      */
     boolean isInterested(IOEvent ioEvent);
 
     /**
      * Set the the i/o event, this {@link Processor} is interested in
-     * 
+     *
      * @param ioEvent {@link IOEvent}
-     * @param isInterested true, if {@link Processor} is interested in
-     *                     processing of the I/O event, or false otherwise.
+     * @param isInterested true, if {@link Processor} is interested in processing of the I/O event, or false otherwise.
      */
     void setInterested(IOEvent ioEvent, boolean isInterested);
 }

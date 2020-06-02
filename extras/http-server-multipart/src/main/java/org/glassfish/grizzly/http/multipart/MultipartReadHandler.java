@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,22 +17,22 @@
 package org.glassfish.grizzly.http.multipart;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.ReadHandler;
-import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.io.NIOInputStream;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.util.Ascii;
 import org.glassfish.grizzly.http.util.Constants;
 import org.glassfish.grizzly.http.util.Header;
 
 /**
- * {@link ReadHandler}, which implements the miltipart message parsing logic
- * and delegates control to a {@link MultipartEntryHandler}, when {@link MultipartEntry}
- * data becomes available.
- * 
+ * {@link ReadHandler}, which implements the miltipart message parsing logic and delegates control to a
+ * {@link MultipartEntryHandler}, when {@link MultipartEntry} data becomes available.
+ *
  * @since 2.0.1
- * 
+ *
  * @author Alexey Stashok
  */
 public class MultipartReadHandler implements ReadHandler {
@@ -43,12 +43,12 @@ public class MultipartReadHandler implements ReadHandler {
 
     private final Request request;
     private final CompletionHandler<Request> requestCompletionHandler;
-    
+
     private final MultipartEntry multipartMixedEntry;
     private final CompletionHandler<MultipartEntry> multipartMixedCompletionHandler;
 
     private final NIOInputStream parentInputStream;
-    
+
     private final MultipartEntryHandler multipartHandler;
     private final MultipartContext multipartContext;
     private final String boundary;
@@ -56,16 +56,14 @@ public class MultipartReadHandler implements ReadHandler {
     private final Line line = new Line();
 
     private final MultipartEntry multipartEntry;
-    
+
     private State state = State.PREAMBLE;
 
     private boolean isFinished;
 
     private boolean isMultipartMixed;
-    
-    public MultipartReadHandler(final Request request,
-            final MultipartEntryHandler multipartHandler,
-            final CompletionHandler<Request> completionHandler,
+
+    public MultipartReadHandler(final Request request, final MultipartEntryHandler multipartHandler, final CompletionHandler<Request> completionHandler,
             final MultipartContext multipartContext) {
         this.request = request;
         this.multipartHandler = multipartHandler;
@@ -76,14 +74,12 @@ public class MultipartReadHandler implements ReadHandler {
 
         multipartMixedCompletionHandler = null;
         multipartMixedEntry = null;
-        
+
         multipartEntry = new MultipartEntry(multipartContext);
     }
 
-    public MultipartReadHandler(final MultipartEntry parentMultipartEntry,
-            final MultipartEntryHandler multipartHandler,
-            final CompletionHandler<MultipartEntry> completionHandler,
-            final MultipartContext multipartContext) {
+    public MultipartReadHandler(final MultipartEntry parentMultipartEntry, final MultipartEntryHandler multipartHandler,
+            final CompletionHandler<MultipartEntry> completionHandler, final MultipartContext multipartContext) {
         this.multipartMixedEntry = parentMultipartEntry;
         this.multipartHandler = multipartHandler;
         this.multipartMixedCompletionHandler = completionHandler;
@@ -102,8 +98,7 @@ public class MultipartReadHandler implements ReadHandler {
     @Override
     public void onDataAvailable() throws Exception {
         if (!process()) {
-            final int totalBytesAvailable =  multipartEntry.getReservedBytes() +
-                    multipartEntry.availableBytes() + line.len;
+            final int totalBytesAvailable = multipartEntry.getReservedBytes() + multipartEntry.availableBytes() + line.len;
 
             parentInputStream.notifyAvailable(this, totalBytesAvailable + 1);
         } else {
@@ -127,16 +122,14 @@ public class MultipartReadHandler implements ReadHandler {
         }
     }
 
-    private void checkMultipartMixedComplete(
-            final CompletionHandler<MultipartEntry> multipartMixedCompletionHandler) {
-        
+    private void checkMultipartMixedComplete(final CompletionHandler<MultipartEntry> multipartMixedCompletionHandler) {
+
         if (multipartMixedCompletionHandler != null) {
             multipartMixedCompletionHandler.completed(multipartMixedEntry);
         }
     }
 
-    private void checkRequestComplete(
-            final CompletionHandler<Request> requestCompletionHandler) {
+    private void checkRequestComplete(final CompletionHandler<Request> requestCompletionHandler) {
 
         if (requestCompletionHandler != null) {
             requestCompletionHandler.completed(request);
@@ -155,32 +148,29 @@ public class MultipartReadHandler implements ReadHandler {
 
     private boolean process() throws Exception {
         do {
-            switch(state) {
-                case PREAMBLE:
-                {
-                    if (!skipPreamble()) {
-                        return false;
-                    }
-
-                    if (isFinished) {
-                        return true;
-                    }
+            switch (state) {
+            case PREAMBLE: {
+                if (!skipPreamble()) {
+                    return false;
                 }
 
-                case PARSE_MULTIPART_ENTRY_HEADERS:
-                {
-                    if (!parseHeaders()) {
-                        return false;
-                    }
-                    
-                    finishHeadersParsing();
+                if (isFinished) {
+                    return true;
+                }
+            }
+
+            case PARSE_MULTIPART_ENTRY_HEADERS: {
+                if (!parseHeaders()) {
+                    return false;
                 }
 
-                case START_BODY:
-                {
-                    state = State.BODY;
+                finishHeadersParsing();
+            }
+
+            case START_BODY: {
+                state = State.BODY;
 //                    feedMultipartEntry();
-                    multipartHandler.handle(multipartEntry);
+                multipartHandler.handle(multipartEntry);
 
 //                    if (!multipartEntry.isFinished()) {
 //                        return false;
@@ -188,38 +178,36 @@ public class MultipartReadHandler implements ReadHandler {
 //
 //                    state = State.RESET;
 //                    break;
+            }
+
+            case BODY: {
+                feedMultipartEntry();
+                if (!multipartEntry.isFinished()) {
+                    return false;
                 }
 
-                case BODY:
-                {
-                    feedMultipartEntry();
-                    if (!multipartEntry.isFinished()) {
-                        return false;
-                    }
+                state = State.RESET;
+                break;
+            }
 
-                    state = State.RESET;
-                    break;
+            case RESET: {
+                multipartEntry.reset();
+
+                if (isFinished) {
+                    return true;
                 }
 
-                case RESET:
-                {
-                    multipartEntry.reset();
-
-                    if (isFinished) {
-                        return true;
-                    }
-                    
-                    state = State.PARSE_MULTIPART_ENTRY_HEADERS;
-                }
+                state = State.PARSE_MULTIPART_ENTRY_HEADERS;
+            }
             }
         } while (true);
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored"})
+    @SuppressWarnings({ "ResultOfMethodCallIgnored" })
     private void feedMultipartEntry() throws Exception {
 //        int available = 0;
         boolean isComplete;
-        
+
         do {
             line.offset = multipartEntry.availableBytes() + multipartEntry.getReservedBytes();
 
@@ -227,18 +215,17 @@ public class MultipartReadHandler implements ReadHandler {
 
             isComplete = line.isComplete;
 //            System.out.println("Line=" + line.toString() + " " + isComplete);
-            
+
             if (isComplete) {
                 if (line.isBoundary()) {
                     isFinished = line.isFinalBoundary;
-                    
+
                     multipartEntry.onFinished();
 
                     try {
                         // Skip the boundary + all the leftovers from the prev.
                         // multipart entry
-                        parentInputStream.skip(multipartEntry.availableBytes()
-                                + multipartEntry.getReservedBytes() + line.len);
+                        parentInputStream.skip(multipartEntry.availableBytes() + multipartEntry.getReservedBytes() + line.len);
                     } catch (IOException ignored) {
                         // should never happen
                     }
@@ -249,8 +236,7 @@ public class MultipartReadHandler implements ReadHandler {
                 } else {
                     final int lineTerminatorLength = line.getLineTerminatorLength();
 
-                    multipartEntry.addAvailableBytes(line.len +
-                            multipartEntry.getReservedBytes() - lineTerminatorLength);
+                    multipartEntry.addAvailableBytes(line.len + multipartEntry.getReservedBytes() - lineTerminatorLength);
 
                     multipartEntry.setReservedBytes(lineTerminatorLength);
 //                    available += line.len;
@@ -261,8 +247,7 @@ public class MultipartReadHandler implements ReadHandler {
                 // bytes (cause the last byte can be CR).
                 // Also we have to make sure the incomplete line is not a boundary
                 if (line.len > 1 && !line.couldBeBoundary()) {
-                    multipartEntry.addAvailableBytes((line.len - 1) +
-                            multipartEntry.getReservedBytes());
+                    multipartEntry.addAvailableBytes(line.len - 1 + multipartEntry.getReservedBytes());
 
                     line.len = 1;
                     multipartEntry.setReservedBytes(0);
@@ -284,14 +269,14 @@ public class MultipartReadHandler implements ReadHandler {
             isFinished = line.isFinalBoundary;
 
             line.skip();
-            
+
             line.reset();
-            
+
             if (isSectionBoundary) {
                 state = State.PARSE_MULTIPART_ENTRY_HEADERS;
                 return true;
             }
-        } while(true);
+        } while (true);
 
         return false;
     }
@@ -314,7 +299,7 @@ public class MultipartReadHandler implements ReadHandler {
             setHeader();
             line.skip();
             line.reset();
-            
+
         } while (true);
     }
 
@@ -326,7 +311,7 @@ public class MultipartReadHandler implements ReadHandler {
         } else {
             multipartEntry.initialize(request.getNIOInputStream());
         }
-        
+
         final String contentType = multipartEntry.getHeader(Header.ContentType);
         if (contentType != null) {
             multipartEntry.setContentType(contentType);
@@ -334,8 +319,7 @@ public class MultipartReadHandler implements ReadHandler {
 
         final String contentDisposition = multipartEntry.getHeader(Header.ContentDisposition);
         if (contentDisposition != null) {
-            multipartEntry.setContentDisposition(
-                    new ContentDisposition(contentDisposition));
+            multipartEntry.setContentDisposition(new ContentDisposition(contentDisposition));
         }
     }
 
@@ -344,26 +328,23 @@ public class MultipartReadHandler implements ReadHandler {
         final int position = buffer.position();
         final int contentLength = line.len - line.getLineTerminatorLength();
 
-        final int colonIdx = findEndOfHeaderName(buffer, position,
-                position + contentLength);
+        final int colonIdx = findEndOfHeaderName(buffer, position, position + contentLength);
 
         final String name;
         final String value;
-        
+
         if (colonIdx == -1) {
-            name = trim(buffer, position,
-                    position + contentLength);
+            name = trim(buffer, position, position + contentLength);
             value = null;
         } else {
             name = trim(buffer, position, colonIdx);
-            value = trim(buffer, colonIdx + 1,
-                    position + contentLength);
+            value = trim(buffer, colonIdx + 1, position + contentLength);
         }
 
         if (name == null) {
             return;
         }
-        
+
         multipartEntry.setHeader(name, value);
     }
 
@@ -375,12 +356,11 @@ public class MultipartReadHandler implements ReadHandler {
         final int limit = buffer.position() + parentInputStream.readyData();
         int offset = position + line.len;
 
-        while(offset < limit) {
+        while (offset < limit) {
             final byte b = buffer.get(offset++);
 
             if (b == Constants.LF) {
-                line.isCrLf = position <= offset - 2 &&
-                        buffer.get(offset - 2) == Constants.CR;
+                line.isCrLf = position <= offset - 2 && buffer.get(offset - 2) == Constants.CR;
                 line.isComplete = true;
                 break;
             }
@@ -389,8 +369,7 @@ public class MultipartReadHandler implements ReadHandler {
         line.len = offset - position;
     }
 
-    private int findEndOfHeaderName(final Buffer buffer, int position,
-            final int limit) {
+    private int findEndOfHeaderName(final Buffer buffer, int position, final int limit) {
         while (position < limit) {
             final byte b = buffer.get(position);
             if (b == ':') {
@@ -406,12 +385,12 @@ public class MultipartReadHandler implements ReadHandler {
     }
 
     private String trim(final Buffer buffer, int position, int limit) {
-        while(position < limit) {
+        while (position < limit) {
             // skip whitespaces left
             if (buffer.get(position) > 32) {
                 break;
             }
-            
+
             position++;
         }
 
@@ -433,7 +412,7 @@ public class MultipartReadHandler implements ReadHandler {
 
     private class Line {
         boolean isCrLf;
-        
+
         boolean isComplete;
         int len;
         int offset;
@@ -455,7 +434,7 @@ public class MultipartReadHandler implements ReadHandler {
         }
 
         public boolean hasContent() {
-            return (isCrLf && len > 2) || (!isCrLf && len > 1);
+            return isCrLf && len > 2 || !isCrLf && len > 1;
         }
 
         private boolean isBoundary() {
@@ -466,8 +445,8 @@ public class MultipartReadHandler implements ReadHandler {
             final int lineTerminatorLength = getLineTerminatorLength();
             final int boundaryLength = boundary.length();
             // '+ 2' for additional '--' prefix
-            final boolean isLookingSectionBoundary = (len == boundaryLength + 2 + lineTerminatorLength);
-            final boolean isLookingFinalBoundary =  (len == boundaryLength + 2 + lineTerminatorLength + 2);
+            final boolean isLookingSectionBoundary = len == boundaryLength + 2 + lineTerminatorLength;
+            final boolean isLookingFinalBoundary = len == boundaryLength + 2 + lineTerminatorLength + 2;
             if (!isLookingSectionBoundary && !isLookingFinalBoundary) {
                 return false;
             }
@@ -495,14 +474,13 @@ public class MultipartReadHandler implements ReadHandler {
             }
 
             isBoundary = true;
-            
+
             if (isLookingFinalBoundary) {
-                if (buffer.get(position + 2 + boundaryLength) == '-' &&
-                        buffer.get(position + 2 + boundaryLength + 1) == '-') {
+                if (buffer.get(position + 2 + boundaryLength) == '-' && buffer.get(position + 2 + boundaryLength + 1) == '-') {
                     isFinalBoundary = true;
                 }
             }
-            
+
             return true;
         }
 
@@ -511,7 +489,7 @@ public class MultipartReadHandler implements ReadHandler {
             if (len > boundary.length() + 2 + 4) {
                 return false;
             }
-            
+
             final Buffer buffer = parentInputStream.getBuffer();
             final int position = buffer.position();
 
@@ -530,12 +508,12 @@ public class MultipartReadHandler implements ReadHandler {
 
             return true;
         }
-        
+
         private int getLineTerminatorLength() {
             return 1 + (isCrLf ? 1 : 0);
         }
 
-        @SuppressWarnings({"ResultOfMethodCallIgnored"})
+        @SuppressWarnings({ "ResultOfMethodCallIgnored" })
         private void skip() {
             try {
                 parentInputStream.skip(line.len);
@@ -550,7 +528,7 @@ public class MultipartReadHandler implements ReadHandler {
             if (len > 0) {
                 final Buffer buffer = parentInputStream.getBuffer();
                 final int start = buffer.position() + offset;
-                
+
                 sb.append(buffer.toStringContent(null, start, start + len));
             }
 

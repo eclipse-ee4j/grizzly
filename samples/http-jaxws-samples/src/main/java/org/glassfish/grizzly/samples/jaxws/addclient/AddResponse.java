@@ -15,12 +15,13 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-
 /**
- * <p>Java class for addResponse complex type.
- * 
- * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
+ * Java class for addResponse complex type.
+ *
+ * <p>
+ * The following schema fragment specifies the expected content contained within this class.
+ *
  * <pre>
  * &lt;complexType name="addResponse">
  *   &lt;complexContent>
@@ -32,13 +33,11 @@ import jakarta.xml.bind.annotation.XmlType;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
+ *
+ *
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "addResponse", propOrder = {
-    "_return"
-})
+@XmlType(name = "addResponse", propOrder = { "_return" })
 public class AddResponse {
 
     @XmlElement(name = "return")
@@ -46,7 +45,7 @@ public class AddResponse {
 
     /**
      * Gets the value of the return property.
-     * 
+     *
      */
     public int getReturn() {
         return _return;
@@ -54,7 +53,7 @@ public class AddResponse {
 
     /**
      * Sets the value of the return property.
-     * 
+     *
      */
     public void setReturn(int value) {
         this._return = value;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -27,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
-import junit.framework.AssertionFailedError;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.Grizzly;
@@ -48,17 +50,17 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.ssl.SSLFilter;
 import org.glassfish.grizzly.utils.Futures;
 import org.junit.After;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import junit.framework.AssertionFailedError;
+
 /**
- * Units test that exercise the {@link Response#suspend() }, {@link Response#resume() }
- * and {@link Response#cancel() } API.
+ * Units test that exercise the {@link Response#suspend() }, {@link Response#resume() } and {@link Response#cancel() }
+ * API.
  *
  * @author Jeanfrancois Arcand
  * @author gustav trede
@@ -67,7 +69,7 @@ import org.junit.runners.Parameterized.Parameters;
 public class SuspendTest {
 
     private static final Logger LOGGER = Grizzly.logger(SuspendTest.class);
-    
+
     public static final int PORT = 18890;
     private ScheduledThreadPoolExecutor scheduledThreadPool;
     private final String testString = "blabla test.";
@@ -81,10 +83,7 @@ public class SuspendTest {
 
     @Parameters
     public static Collection<Object[]> getSslParameter() {
-        return Arrays.asList(new Object[][]{
-                    {Boolean.FALSE},
-                    {Boolean.TRUE}
-                });
+        return Arrays.asList(new Object[][] { { Boolean.FALSE }, { Boolean.TRUE } });
     }
 
     @Before
@@ -104,10 +103,7 @@ public class SuspendTest {
 
     private void configureHttpServer() throws Exception {
         httpServer = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                                    NetworkListener.DEFAULT_NETWORK_HOST,
-                                    PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         if (isSslEnabled) {
             listener.setSecure(true);
             listener.setSSLEngineConfig(createSSLConfig(true));
@@ -117,8 +113,7 @@ public class SuspendTest {
     }
 
     private static SSLEngineConfigurator createSSLConfig(boolean isServer) throws Exception {
-        final SSLContextConfigurator sslContextConfigurator =
-                new SSLContextConfigurator();
+        final SSLContextConfigurator sslContextConfigurator = new SSLContextConfigurator();
         final ClassLoader cl = SuspendTest.class.getClassLoader();
         // override system properties
         final URL cacertsUrl = cl.getResource("ssltest-cacerts.jks");
@@ -134,8 +129,7 @@ public class SuspendTest {
             sslContextConfigurator.setKeyStorePass("changeit");
         }
 
-        return new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(),
-                !isServer, false, false);
+        return new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(), !isServer, false, false);
     }
 
     private void startHttpServer(HttpHandler httpHandler) throws Exception {
@@ -223,7 +217,6 @@ public class SuspendTest {
     public void testResumeAfterClose() throws Exception {
         final FutureImpl<Boolean> resultFuture = Futures.createSafeFuture();
 
-        
         startHttpServer(new TestStaticHttpHandler() {
 
             @Override
@@ -244,11 +237,11 @@ public class SuspendTest {
                 }, 2, TimeUnit.SECONDS);
             }
         });
-        
+
         runClient(testString, false, null);
         assertTrue(resultFuture.get(10, TimeUnit.SECONDS));
     }
-    
+
     @Test
     public void testSuspendResumedCompletionHandler() throws Exception {
         startHttpServer(new TestStaticHttpHandler() {
@@ -353,7 +346,7 @@ public class SuspendTest {
 
     @Test
     public void testSuspendTimeoutTimeoutHandler() throws Exception {
-        final AtomicReference<byte[]> responseData = new AtomicReference<byte[]>();
+        final AtomicReference<byte[]> responseData = new AtomicReference<>();
         responseData.set("bad response".getBytes());
 
         startHttpServer(new TestStaticHttpHandler() {
@@ -590,22 +583,18 @@ public class SuspendTest {
         }
     }
 
-    private Connection runClient(String testString, boolean checkResponse,
-            FutureImpl<Boolean> resultFuture) throws Exception {
+    private Connection runClient(String testString, boolean checkResponse, FutureImpl<Boolean> resultFuture) throws Exception {
         final FilterChainBuilder builder = FilterChainBuilder.stateless();
         builder.add(new TransportFilter());
         if (isSslEnabled) {
-            final SSLFilter sslFilter = new SSLFilter(createSSLConfig(true),
-                    createSSLConfig(false));
+            final SSLFilter sslFilter = new SSLFilter(createSSLConfig(true), createSSLConfig(false));
             builder.add(sslFilter);
         }
 
         builder.add(new HttpClientFilter());
         builder.add(new ClientFilter(testString, checkResponse, resultFuture));
 
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(builder.build())
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(builder.build())
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect("localhost", PORT);
@@ -687,8 +676,7 @@ public class SuspendTest {
         private final boolean checkResponse;
         private final FutureImpl<Boolean> resultFuture;
 
-        public ClientFilter(String testString, boolean checkResponse,
-                FutureImpl<Boolean> resultFuture) {
+        public ClientFilter(String testString, boolean checkResponse, FutureImpl<Boolean> resultFuture) {
             this.testString = testString;
             this.checkResponse = checkResponse;
             this.resultFuture = resultFuture;
@@ -696,12 +684,8 @@ public class SuspendTest {
 
         @Override
         public NextAction handleConnect(FilterChainContext ctx) throws IOException {
-            final HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method("GET")
-                    .uri("/non-static")
-                    .protocol("HTTP/1.1")
-                    .header("Host", "localhost:" + PORT)
-                    .build();
+            final HttpRequestPacket request = HttpRequestPacket.builder().method("GET").uri("/non-static").protocol("HTTP/1.1")
+                    .header("Host", "localhost:" + PORT).build();
 
             ctx.write(request);
             return ctx.getStopAction();
@@ -719,8 +703,7 @@ public class SuspendTest {
             if (testString.equals(strContent)) {
                 resultFuture.result(Boolean.TRUE);
             } else {
-                resultFuture.failure(new IllegalStateException(
-                        "Response doesn't match. Expected=" + testString + " got=" + strContent));
+                resultFuture.failure(new IllegalStateException("Response doesn't match. Expected=" + testString + " got=" + strContent));
             }
 
             return ctx.getStopAction();

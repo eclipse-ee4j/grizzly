@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -47,26 +47,28 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 
+import junit.framework.TestCase;
+
 /**
  * Checking the request-uri passed to HttpHandler
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class RequestURITest extends TestCase {
     private static final int PORT = 8040;
 
-    public void testSimpleURI () throws Exception {
+    public void testSimpleURI() throws Exception {
         final HttpHandler httpHandler = new RequestURIHttpHandler();
         final HttpPacket request = createRequest("/index.html;jsessionid=123456", null);
         final HttpContent response = doTest(request, 10, httpHandler);
 
         final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(line, 2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -77,7 +79,7 @@ public class RequestURITest extends TestCase {
         assertEquals("/index.html", uri);
     }
 
-    public void testEncodedSimpleURI () throws Exception {
+    public void testEncodedSimpleURI() throws Exception {
         final String rusURI = "/\u043F\u0440\u0438\u0432\u0435\u0442\u043C\u0438\u0440";
         final String rusEncodedURI = URLEncoder.encode(rusURI, "UTF-8");
 
@@ -87,11 +89,11 @@ public class RequestURITest extends TestCase {
         final HttpContent response = doTest(request, 10, httpHandler);
 
         final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -102,18 +104,17 @@ public class RequestURITest extends TestCase {
         assertEquals(rusEncodedURI, uri);
     }
 
-    public void testCompleteURI () throws Exception {
+    public void testCompleteURI() throws Exception {
         final HttpHandler httpHandler = new RequestURIHttpHandler();
-        final HttpPacket request = createRequest("http://localhost:" + PORT +
-                "/index.html;jsessionid=123456", null);
+        final HttpPacket request = createRequest("http://localhost:" + PORT + "/index.html;jsessionid=123456", null);
         final HttpContent response = doTest(request, 10, httpHandler);
 
         final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -124,20 +125,18 @@ public class RequestURITest extends TestCase {
         assertEquals("/index.html", uri);
     }
 
-    public void testDecodedParamsPlusMapping () throws Exception {
+    public void testDecodedParamsPlusMapping() throws Exception {
         // In order to test mapping, register 2 HttpHandlers
         final String param = ";myparam=123456";
         final HttpPacket request = createRequest("/1" + param, null);
-        final HttpContent response = doTest(request, 10,
-                new DecodedURLIndexOfHttpHandler(param),
-                new DecodedURLIndexOfHttpHandler(param));
+        final HttpContent response = doTest(request, 10, new DecodedURLIndexOfHttpHandler(param), new DecodedURLIndexOfHttpHandler(param));
 
         final String responseContent = response.getContent().toStringContent();
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, String> props = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new StringReader(responseContent));
         String line;
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             String[] nameValue = line.split("=");
             assertEquals(2, nameValue.length);
             props.put(nameValue[0], nameValue[1]);
@@ -161,14 +160,9 @@ public class RequestURITest extends TestCase {
         return b.build();
     }
 
-    private HttpContent doTest(
-            final HttpPacket request,
-            final int timeout,
-            final HttpHandler... httpHandlers)
-            throws Exception {
+    private HttpContent doTest(final HttpPacket request, final int timeout, final HttpHandler... httpHandlers) throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         final HttpServer server = createWebServer(httpHandlers);
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
@@ -204,10 +198,7 @@ public class RequestURITest extends TestCase {
     private HttpServer createWebServer(final HttpHandler... httpHandlers) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandlers[0], "/");
@@ -216,13 +207,12 @@ public class RequestURITest extends TestCase {
             // associate handlers with random context-roots
             server.getServerConfiguration().addHttpHandler(httpHandlers[i], "/" + i + "/*");
         }
-        
+
         server.getHttpHandler().setAllowEncodedSlash(true);
-        
+
         return server;
 
     }
-
 
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
@@ -231,19 +221,16 @@ public class RequestURITest extends TestCase {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -267,8 +254,7 @@ public class RequestURITest extends TestCase {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -276,7 +262,7 @@ public class RequestURITest extends TestCase {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
@@ -303,9 +289,7 @@ public class RequestURITest extends TestCase {
 
         @Override
         public void service(Request request, Response response) throws Exception {
-            response.getWriter().write("result=" +
-                    request.getRequest().getRequestURIRef().getDecodedURI().contains(match) +
-                    "\n");
+            response.getWriter().write("result=" + request.getRequest().getRequestURIRef().getDecodedURI().contains(match) + "\n");
         }
 
     }

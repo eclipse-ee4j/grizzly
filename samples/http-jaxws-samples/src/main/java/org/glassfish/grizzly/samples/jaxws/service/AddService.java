@@ -10,19 +10,19 @@
 
 package org.glassfish.grizzly.samples.jaxws.service;
 
-import jakarta.jws.WebService;
 import jakarta.jws.WebMethod;
 import jakarta.jws.WebParam;
+import jakarta.jws.WebService;
 
 /**
  * Simple "add" web service implementation.
- * 
+ *
  * @author Alexey Stashok
  */
 @WebService
 public class AddService {
     @WebMethod
-    public int add(@WebParam(name="value1") int value1, @WebParam(name="value2") int value2) {
+    public int add(@WebParam(name = "value1") int value1, @WebParam(name = "value2") int value2) {
         return value1 + value2;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,38 +17,35 @@
 
 package org.glassfish.grizzly.http;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Set;
-import org.glassfish.grizzly.http.util.Constants;
 
+import org.glassfish.grizzly.http.util.Constants;
 import org.glassfish.grizzly.http.util.DataChunk;
-import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.http.util.UEncoder;
-
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
-
+import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
 
 public class ParametersTest {
 
-    private static final Parameter SIMPLE =
-        new Parameter("foo1", "bar1");
-    private static final Parameter SIMPLE_MULTIPLE =
-        new Parameter("foo2", "bar1", "bar2");
-    private static final Parameter NO_VALUE =
-        new Parameter("foo3");
-    private static final Parameter EMPTY_VALUE =
-        new Parameter("foo4", "");
-    private static final Parameter EMPTY =
-        new Parameter("");
-    private static final Parameter UTF8 =
-            new Parameter("\ufb6b\ufb6a\ufb72", "\uffee\uffeb\uffe2");
+    private static final Parameter SIMPLE = new Parameter("foo1", "bar1");
+    private static final Parameter SIMPLE_MULTIPLE = new Parameter("foo2", "bar1", "bar2");
+    private static final Parameter NO_VALUE = new Parameter("foo3");
+    private static final Parameter EMPTY_VALUE = new Parameter("foo4", "");
+    private static final Parameter EMPTY = new Parameter("");
+    private static final Parameter UTF8 = new Parameter("\ufb6b\ufb6a\ufb72", "\uffee\uffeb\uffe2");
 
     @Test
     public void testProcessParametersByteArrayIntInt() {
@@ -58,27 +55,17 @@ public class ParametersTest {
         doTestProcessParametersByteArrayIntInt(-1, EMPTY_VALUE);
         doTestProcessParametersByteArrayIntInt(-1, EMPTY);
         doTestProcessParametersByteArrayIntInt(-1, UTF8);
-        doTestProcessParametersByteArrayIntInt(-1,
-                SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY, UTF8);
-        doTestProcessParametersByteArrayIntInt(-1,
-                SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY, UTF8, SIMPLE);
-        doTestProcessParametersByteArrayIntInt(-1,
-                NO_VALUE, EMPTY_VALUE, EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE);
-        doTestProcessParametersByteArrayIntInt(-1,
-                EMPTY_VALUE, EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE);
-        doTestProcessParametersByteArrayIntInt(-1,
-                EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE);
-        doTestProcessParametersByteArrayIntInt(-1,
-                UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY);
+        doTestProcessParametersByteArrayIntInt(-1, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY, UTF8);
+        doTestProcessParametersByteArrayIntInt(-1, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY, UTF8, SIMPLE);
+        doTestProcessParametersByteArrayIntInt(-1, NO_VALUE, EMPTY_VALUE, EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE);
+        doTestProcessParametersByteArrayIntInt(-1, EMPTY_VALUE, EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE);
+        doTestProcessParametersByteArrayIntInt(-1, EMPTY, UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE);
+        doTestProcessParametersByteArrayIntInt(-1, UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY);
 
-        doTestProcessParametersByteArrayIntInt(1,
-                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-        doTestProcessParametersByteArrayIntInt(2,
-                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-        doTestProcessParametersByteArrayIntInt(3,
-                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-        doTestProcessParametersByteArrayIntInt(4,
-                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
+        doTestProcessParametersByteArrayIntInt(1, SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
+        doTestProcessParametersByteArrayIntInt(2, SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
+        doTestProcessParametersByteArrayIntInt(3, SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
+        doTestProcessParametersByteArrayIntInt(4, SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
     }
 
     // Make sure the inner Parameter class behaves correctly
@@ -105,35 +92,33 @@ public class ParametersTest {
         // p%C3%A4rameter=%C3%A4
         testEncodedQueryParameter(paramName, paramValue, Charsets.UTF8_CHARSET);
     }
-    
+
     @Test
     public void testQueryParameterEncodingReset() throws UnsupportedEncodingException {
         String paramName = "\u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442";
         String paramValue = "\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435";
-        
+
         UEncoder encoder = new UEncoder();
         encoder.setEncoding(Charsets.UTF8_CHARSET.name());
         String encodedQueryString = encoder.encodeURL(paramName) + "=" + encoder.encodeURL(paramValue);
-        
+
         Parameters parameters = new Parameters();
         parameters.setQueryStringEncoding(Constants.DEFAULT_HTTP_CHARSET);
         DataChunk queryStringDataChunk = DataChunk.newInstance();
-        queryStringDataChunk.setBuffer(
-                Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, encodedQueryString));
+        queryStringDataChunk.setBuffer(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, encodedQueryString));
         parameters.setQuery(queryStringDataChunk);
         parameters.handleQueryParameters();
-        
+
         // the parameter should not be found
         assertNull(parameters.getParameter(paramName));
-        
+
         // reset the query encoding
         parameters.recycle();
         parameters.setQueryStringEncoding(Charsets.UTF8_CHARSET);
         parameters.handleQueryParameters();
-        
+
         assertEquals(paramValue, parameters.getParameter(paramName));
     }
-    
 
     public void testEncodedQueryParameter(String paramName, String paramValue, Charset charset) throws UnsupportedEncodingException {
         String charsetName = charset.name();
@@ -150,8 +135,7 @@ public class ParametersTest {
         assertEquals(paramValue, storedValue);
     }
 
-    private long doTestProcessParametersByteArrayIntInt(int limit,
-            Parameter... parameters) {
+    private long doTestProcessParametersByteArrayIntInt(int limit, Parameter... parameters) {
 
         // Build the byte array
         StringBuilder input = new StringBuilder();
@@ -198,7 +182,6 @@ public class ParametersTest {
         String[] values = p.getParameterValues("foo");
         assertNull(values);
     }
-
 
     @Test
     public void testAddParameters() {
@@ -317,8 +300,7 @@ public class ParametersTest {
         params.setQueryStringEncoding(Charset.forName("UTF-8"));
 
         try {
-            params.processParameters(request.toCharArray(), 0,
-                                     request.length());
+            params.processParameters(request.toCharArray(), 0, request.length());
         } catch (IllegalStateException e) {
 
         }
@@ -326,8 +308,7 @@ public class ParametersTest {
         // the buffer not being recycled
         request = "test=test";
         params.setQueryStringEncoding(Charset.forName("UTF-8"));
-        params.processParameters(request.toCharArray(), 0,
-                                 request.length());
+        params.processParameters(request.toCharArray(), 0, request.length());
     }
 
     @Test
@@ -369,7 +350,7 @@ public class ParametersTest {
                     match = true;
                     if (parameter.values.length == 0) {
                         // Special case
-                        assertArrayEquals(new String[] {""}, values);
+                        assertArrayEquals(new String[] { "" }, values);
                     } else {
                         assertArrayEquals(parameter.getValues(), values);
                     }

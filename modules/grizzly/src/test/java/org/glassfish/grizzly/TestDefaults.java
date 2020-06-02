@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,21 +16,21 @@
 
 package org.glassfish.grizzly;
 
-import org.glassfish.grizzly.attributes.Attribute;
-import org.glassfish.grizzly.attributes.AttributeBuilder;
-import org.glassfish.grizzly.utils.NullaryFunction;
-import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.NIOConnection;
-import org.glassfish.grizzly.nio.SelectionKeyHandler;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static junit.framework.Assert.assertEquals;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import org.glassfish.grizzly.monitoring.MonitoringConfig;
 
-import static junit.framework.Assert.assertEquals;
+import org.glassfish.grizzly.attributes.Attribute;
+import org.glassfish.grizzly.attributes.AttributeBuilder;
 import org.glassfish.grizzly.attributes.AttributeHolder;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.monitoring.MonitoringConfig;
+import org.glassfish.grizzly.nio.NIOConnection;
+import org.glassfish.grizzly.nio.SelectionKeyHandler;
+import org.glassfish.grizzly.utils.NullaryFunction;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class TestDefaults {
 
@@ -39,26 +39,21 @@ public class TestDefaults {
         System.setProperty("org.glassfish.grizzly.DEFAULT_SELECTION_KEY_HANDLER", TestHandler.class.getName());
         System.setProperty("org.glassfish.grizzly.DEFAULT_MEMORY_MANAGER", TestManager.class.getName());
         System.setProperty("org.glassfish.grizzly.DEFAULT_ATTRIBUTE_BUILDER", TestBuilder.class.getName());
-                
+
     }
-    
-    
+
     // ------------------------------------------------------------ Test Methods
 
-    
     @Test
     public void testDefaults() throws Exception {
-    
+
         assertEquals(SelectionKeyHandler.DEFAULT_SELECTION_KEY_HANDLER.getClass(), TestHandler.class);
         assertEquals(MemoryManager.DEFAULT_MEMORY_MANAGER.getClass(), TestManager.class);
         assertEquals(AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.getClass(), TestBuilder.class);
 
-
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     public static class TestHandler implements SelectionKeyHandler {
         @Override
@@ -80,7 +75,7 @@ public class TestDefaults {
 
         @Override
         public NIOConnection getConnectionForKey(SelectionKey selectionKey) {
-            return null; 
+            return null;
         }
 
         @Override
@@ -89,7 +84,7 @@ public class TestDefaults {
 
         @Override
         public int ioEvent2SelectionKeyInterest(IOEvent ioEvent) {
-            return 0; 
+            return 0;
         }
 
         @Override
@@ -99,25 +94,25 @@ public class TestDefaults {
 
         @Override
         public IOEvent[] getIOEvents(int interest) {
-            return new IOEvent[0]; 
+            return new IOEvent[0];
         }
     } // END TestHandler
-    
+
     public static final class TestManager implements MemoryManager {
 
         @Override
         public Buffer allocate(int size) {
-            return null;  
+            return null;
         }
 
         @Override
         public Buffer allocateAtLeast(int size) {
-            return null;  
+            return null;
         }
 
         @Override
         public Buffer reallocate(Buffer oldBuffer, int newSize) {
-            return null;  
+            return null;
         }
 
         @Override
@@ -131,26 +126,26 @@ public class TestDefaults {
 
         @Override
         public MonitoringConfig getMonitoringConfig() {
-            return null; 
+            return null;
         }
-        
+
     } // END TestManager
-    
+
     public static final class TestBuilder implements AttributeBuilder {
-        
+
         @Override
         public <T> Attribute<T> createAttribute(String name) {
-            return null;  
+            return null;
         }
 
         @Override
         public <T> Attribute<T> createAttribute(String name, T defaultValue) {
-            return null;  
+            return null;
         }
 
         @Override
         public <T> Attribute<T> createAttribute(String name, NullaryFunction<T> initializer) {
-            return null;  
+            return null;
         }
 
         @Override
@@ -162,7 +157,7 @@ public class TestDefaults {
         public AttributeHolder createSafeAttributeHolder() {
             return null;
         }
-        
+
         @Override
         public AttributeHolder createUnsafeAttributeHolder() {
             return null;
