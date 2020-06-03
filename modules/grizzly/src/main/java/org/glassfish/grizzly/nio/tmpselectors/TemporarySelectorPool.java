@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.grizzly.nio.tmpselectors;
 
-import org.glassfish.grizzly.Grizzly;
 import java.io.IOException;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
@@ -26,6 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.nio.Selectors;
 
@@ -35,18 +36,18 @@ import org.glassfish.grizzly.nio.Selectors;
  */
 public class TemporarySelectorPool {
     private static final Logger LOGGER = Grizzly.logger(TemporarySelectorPool.class);
-    
+
     public static final int DEFAULT_SELECTORS_COUNT = 32;
 
     private static final int MISS_THRESHOLD = 10000;
-    
+
     /**
      * The max number of <code>Selector</code> to create.
      */
     private volatile int maxPoolSize;
-    
+
     private final AtomicBoolean isClosed;
-    
+
     /**
      * Cache of <code>Selector</code>
      */
@@ -61,19 +62,18 @@ public class TemporarySelectorPool {
      * Number of times poll execution didn't find the available selector in the pool.
      */
     private final AtomicInteger missesCounter;
-    
+
     private final SelectorProvider selectorProvider;
-    
+
     public TemporarySelectorPool(final SelectorProvider selectorProvider) {
         this(selectorProvider, DEFAULT_SELECTORS_COUNT);
     }
-    
-    public TemporarySelectorPool(final SelectorProvider selectorProvider,
-            final int selectorsCount) {
+
+    public TemporarySelectorPool(final SelectorProvider selectorProvider, final int selectorsCount) {
         this.selectorProvider = selectorProvider;
         this.maxPoolSize = selectorsCount;
         isClosed = new AtomicBoolean();
-        selectors = new ConcurrentLinkedQueue<Selector>();
+        selectors = new ConcurrentLinkedQueue<>();
         poolSize = new AtomicInteger();
         missesCounter = new AtomicInteger();
     }
@@ -94,7 +94,7 @@ public class TemporarySelectorPool {
     public SelectorProvider getSelectorProvider() {
         return selectorProvider;
     }
-    
+
     public Selector poll() throws IOException {
         Selector selector = selectors.poll();
 
@@ -104,15 +104,12 @@ public class TemporarySelectorPool {
             try {
                 selector = Selectors.newSelector(selectorProvider);
             } catch (IOException e) {
-               LOGGER.log(Level.WARNING,
-                       LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_CREATE_SELECTOR_EXCEPTION(),
-                       e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_CREATE_SELECTOR_EXCEPTION(), e);
             }
 
             final int missesCount = missesCounter.incrementAndGet();
             if (missesCount % MISS_THRESHOLD == 0) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_MISSES_EXCEPTION(missesCount, maxPoolSize));
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_MISSES_EXCEPTION(missesCount, maxPoolSize));
             }
         }
 
@@ -123,21 +120,20 @@ public class TemporarySelectorPool {
         if (selector == null) {
             return;
         }
-        
+
         final boolean wasReturned;
 
-        if (poolSize.getAndIncrement() < maxPoolSize
-                && (selector = checkSelector(selector)) != null) {
+        if (poolSize.getAndIncrement() < maxPoolSize && (selector = checkSelector(selector)) != null) {
 
             selectors.offer(selector);
             wasReturned = true;
         } else {
             poolSize.decrementAndGet();
-            
+
             if (selector == null) {
                 return;
             }
-            
+
             wasReturned = false;
         }
 
@@ -149,7 +145,7 @@ public class TemporarySelectorPool {
             closeSelector(selector);
         }
     }
-    
+
     public synchronized void close() {
         if (!isClosed.getAndSet(true)) {
             Selector selector;
@@ -164,8 +160,7 @@ public class TemporarySelectorPool {
             selector.close();
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "TemporarySelectorFactory: error " +
-                        "occurred when trying to close the Selector", e);
+                LOGGER.log(Level.FINE, "TemporarySelectorFactory: error " + "occurred when trying to close the Selector", e);
             }
         }
     }
@@ -175,15 +170,11 @@ public class TemporarySelectorPool {
             selector.selectNow();
             return selector;
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING,
-                    LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_SELECTOR_FAILURE_EXCEPTION(),
-                    e);
+            LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_SELECTOR_FAILURE_EXCEPTION(), e);
             try {
                 return Selectors.newSelector(selectorProvider);
             } catch (IOException ee) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_CREATE_SELECTOR_EXCEPTION(),
-                        ee);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_TEMPORARY_SELECTOR_POOL_CREATE_SELECTOR_EXCEPTION(), ee);
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,46 +23,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.osgi.service.http.HttpContext;
 
-import javax.servlet.Servlet;
-import java.util.concurrent.locks.ReentrantLock;
-import org.glassfish.grizzly.http.server.HttpHandler;
+import jakarta.servlet.Servlet;
 
 /**
- * Context mapper.
- * Supports complex context.
+ * Context mapper. Supports complex context.
  *
  * @author Hubert Iwaniuk
  */
 class OSGiCleanMapper {
 
     private static final ReentrantLock lock = new ReentrantLock();
-    private static final TreeSet<String> aliasTree = new TreeSet<String>();
-    private static final Map<String, HttpHandler> registrations = new HashMap<String, HttpHandler>(16);
-    private static final Set<Servlet> registeredServlets = new HashSet<Servlet>(16);
+    private static final TreeSet<String> aliasTree = new TreeSet<>();
+    private static final Map<String, HttpHandler> registrations = new HashMap<>(16);
+    private static final Set<Servlet> registeredServlets = new HashSet<>(16);
 
-    private final Set<String> localAliases = new HashSet<String>(4);
-    private final HashMap<HttpContext, List<OSGiServletHandler>> contextServletHandlerMap =
-            new HashMap<HttpContext, List<OSGiServletHandler>>(3);
+    private final Set<String> localAliases = new HashSet<>(4);
+    private final HashMap<HttpContext, List<OSGiServletHandler>> contextServletHandlerMap = new HashMap<>(3);
     private final Logger logger;
 
-    protected final Map<HttpContext, OSGiServletContext> httpContextToServletContextMap =
-                new HashMap<HttpContext, OSGiServletContext>();
-
+    protected final Map<HttpContext, OSGiServletContext> httpContextToServletContextMap = new HashMap<>();
 
     // ------------------------------------------------------------ Constructors
-
 
     protected OSGiCleanMapper(final Logger logger) {
         this.logger = logger;
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     /**
      * Performs mapping of requested URI to registered alias if any.
@@ -70,11 +63,11 @@ class OSGiCleanMapper {
      * Works in two modes:
      * <ul>
      * <li>Full match - Checks for full match of resource (cutAfterSlash == false),</li>
-     * <li>Reducing match - Checks {@link String#substring(int, int)} (0, {@link String#lastIndexOf(String)} ('/'))
-     * for match (cutAfterSlash == true).</li>
+     * <li>Reducing match - Checks {@link String#substring(int, int)} (0, {@link String#lastIndexOf(String)} ('/')) for
+     * match (cutAfterSlash == true).</li>
      * </ul>
      *
-     * @param resource      Resource to be mapped.
+     * @param resource Resource to be mapped.
      * @param cutAfterSlash Should cut off after last '/' before looking up.
      * @return First matching alias, or <code>null</code> if no match has been found.
      */
@@ -89,10 +82,11 @@ class OSGiCleanMapper {
                     result = null;
                     break;
                 } else {
-                    if (i == 0)
+                    if (i == 0) {
                         match = "/";
-                    else
+                    } else {
                         match = resource.substring(0, i);
+                    }
                 }
             }
             if (containsAlias(match)) {
@@ -168,7 +162,7 @@ class OSGiCleanMapper {
      * Add {@link HttpHandler}.
      * <p/>
      *
-     * @param alias   Registration alias.
+     * @param alias Registration alias.
      * @param handler HttpHandler handling requests for <code>alias</code>.
      */
     public void addHttpHandler(String alias, HttpHandler handler) {
@@ -192,10 +186,10 @@ class OSGiCleanMapper {
     }
 
     /**
-     * Executes unregistering of <code>alias</code> optionally calling {@link javax.servlet.Servlet#destroy()}.
+     * Executes unregistering of <code>alias</code> optionally calling {@link jakarta.servlet.Servlet#destroy()}.
      *
-     * @param alias                Alias to unregister.
-     * @param callDestroyOnServlet If <code>true</code> call {@link javax.servlet.Servlet#destroy()}, else don't call.
+     * @param alias Alias to unregister.
+     * @param callDestroyOnServlet If <code>true</code> call {@link jakarta.servlet.Servlet#destroy()}, else don't call.
      */
     public void doUnregister(String alias, boolean callDestroyOnServlet) {
         if (containsAlias(alias)) {
@@ -230,9 +224,10 @@ class OSGiCleanMapper {
      *
      * @return {@link Set} of all registered aliases.
      */
-    /*package*/ static Set<String> getAllAliases() {
+    /* package */ static Set<String> getAllAliases() {
         return aliasTree;
     }
+
     /**
      * Checks if {@link HttpContext} has been registered..
      *
@@ -247,22 +242,19 @@ class OSGiCleanMapper {
         return contextServletHandlerMap.get(httpContext);
     }
 
-    public void addContext(final HttpContext httpContext,
-            final List<OSGiServletHandler> servletHandlers) {
+    public void addContext(final HttpContext httpContext, final List<OSGiServletHandler> servletHandlers) {
         addContext(httpContext, null, servletHandlers);
     }
 
-    public void addContext(final HttpContext httpContext,
-            OSGiServletContext servletCtx,
-            final List<OSGiServletHandler> servletHandlers) {
+    public void addContext(final HttpContext httpContext, OSGiServletContext servletCtx, final List<OSGiServletHandler> servletHandlers) {
         if (servletCtx == null) {
             servletCtx = new OSGiServletContext(httpContext, logger);
         }
-        
+
         contextServletHandlerMap.put(httpContext, servletHandlers);
         httpContextToServletContextMap.put(httpContext, servletCtx);
     }
-    
+
     public OSGiServletContext getServletContext(final HttpContext httpContext) {
         return httpContextToServletContextMap.get(httpContext);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,15 @@ import java.io.CharConversionException;
 import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.servlet.DispatcherType;
+
 import org.glassfish.grizzly.http.util.URLDecoder;
 
+import jakarta.servlet.DispatcherType;
+
 /**
- * Representation of a filter mapping for a web application, as represented
- * in a <code>&lt;filter-mapping&gt;</code> element in the deployment
- * descriptor.  Each filter mapping must contain a filter name plus either
- * a URL pattern or a servlet name.
+ * Representation of a filter mapping for a web application, as represented in a <code>&lt;filter-mapping&gt;</code>
+ * element in the deployment descriptor. Each filter mapping must contain a filter name plus either a URL pattern or a
+ * servlet name.
  *
  * @author Craig R. McClanahan
  * @version $Revision: 1.3 $ $Date: 2007/01/23 00:06:56 $
@@ -36,14 +37,12 @@ import org.glassfish.grizzly.http.util.URLDecoder;
 
 public class FilterMap implements Serializable {
 
-    private static final EnumSet<DispatcherType> DEFAULT_DISPATCHER =
-        EnumSet.of(DispatcherType.REQUEST);
-
+    private static final EnumSet<DispatcherType> DEFAULT_DISPATCHER = EnumSet.of(DispatcherType.REQUEST);
 
     /**
      * The name of the filter with which this filter mapping is associated
      */
-    private String filterName = null;    
+    private String filterName = null;
 
     /**
      * The servlet name for which this filter mapping applies
@@ -60,11 +59,10 @@ public class FilterMap implements Serializable {
      */
     private Set<DispatcherType> dispatcherTypes;
 
-
     // ------------------------------------------------------------- Properties
 
     public String getFilterName() {
-        return (this.filterName);
+        return this.filterName;
     }
 
     public void setFilterName(String filterName) {
@@ -72,7 +70,7 @@ public class FilterMap implements Serializable {
     }
 
     public String getServletName() {
-        return (this.servletName);
+        return this.servletName;
     }
 
     public void setServletName(String servletName) {
@@ -80,7 +78,7 @@ public class FilterMap implements Serializable {
     }
 
     public String getURLPattern() {
-        return (this.urlPattern);
+        return this.urlPattern;
     }
 
     public void setURLPattern(String urlPattern) {
@@ -90,24 +88,23 @@ public class FilterMap implements Serializable {
             throw new IllegalStateException(e);
         }
     }
-    
+
     public Set<DispatcherType> getDispatcherTypes() {
         // Per the SRV.6.2.5 absence of any dispatcher elements is
         // equivelant to a REQUEST value
-        return (dispatcherTypes == null || dispatcherTypes.isEmpty()) ?
-            DEFAULT_DISPATCHER : dispatcherTypes;
+        return dispatcherTypes == null || dispatcherTypes.isEmpty() ? DEFAULT_DISPATCHER : dispatcherTypes;
     }
 
     public void setDispatcherTypes(Set<DispatcherType> dispatcherTypes) {
         this.dispatcherTypes = dispatcherTypes;
     }
 
-
     // --------------------------------------------------------- Public Methods
 
     /**
      * Render a String representation of this object.
      */
+    @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder("FilterMap[");
@@ -122,7 +119,7 @@ public class FilterMap implements Serializable {
             sb.append(urlPattern);
         }
         sb.append("]");
-        return (sb.toString());
+        return sb.toString();
     }
 
 }

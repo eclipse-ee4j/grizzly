@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,13 +27,11 @@ import org.glassfish.grizzly.Transformer;
  *
  * @author Alexey Stashok
  */
-public abstract class AbstractCodecFilter<K, L> extends BaseFilter
-        implements CodecFilter<K, L> {
+public abstract class AbstractCodecFilter<K, L> extends BaseFilter implements CodecFilter<K, L> {
     private final Transformer<K, L> decoder;
     private final Transformer<L, K> encoder;
 
-    public AbstractCodecFilter(final Transformer<K, L> decoder,
-                               final Transformer<L, K> encoder) {
+    public AbstractCodecFilter(final Transformer<K, L> decoder, final Transformer<L, K> encoder) {
         this.decoder = decoder;
         this.encoder = encoder;
     }
@@ -44,25 +42,19 @@ public abstract class AbstractCodecFilter<K, L> extends BaseFilter
         final Connection connection = ctx.getConnection();
         final K message = ctx.getMessage();
 
-        final TransformationResult<K, L> result =
-                decoder.transform(connection, message);
+        final TransformationResult<K, L> result = decoder.transform(connection, message);
 
-        switch(result.getStatus()) {
-            case COMPLETE:
-                final K remainder = result.getExternalRemainder();
-                final boolean hasRemaining =
-                        decoder.hasInputRemaining(connection, remainder);
-                decoder.release(connection);
-                ctx.setMessage(result.getMessage());
-                return hasRemaining
-                        ? ctx.getInvokeAction(remainder)
-                        : ctx.getInvokeAction();
-            case INCOMPLETE:
-                return ctx.getStopAction(message);
-            case ERROR:
-                throw new TransformationException(getClass().getName() +
-                        " transformation error: (" + result.getErrorCode() + ") " +
-                        result.getErrorDescription());
+        switch (result.getStatus()) {
+        case COMPLETE:
+            final K remainder = result.getExternalRemainder();
+            final boolean hasRemaining = decoder.hasInputRemaining(connection, remainder);
+            decoder.release(connection);
+            ctx.setMessage(result.getMessage());
+            return hasRemaining ? ctx.getInvokeAction(remainder) : ctx.getInvokeAction();
+        case INCOMPLETE:
+            return ctx.getStopAction(message);
+        case ERROR:
+            throw new TransformationException(getClass().getName() + " transformation error: (" + result.getErrorCode() + ") " + result.getErrorDescription());
         }
 
         return ctx.getInvokeAction();
@@ -76,27 +68,21 @@ public abstract class AbstractCodecFilter<K, L> extends BaseFilter
 
         final TransformationResult<L, K> result = encoder.transform(connection, message);
 
-        switch(result.getStatus()) {
-            case COMPLETE:
-                ctx.setMessage(result.getMessage());
-                final L remainder = result.getExternalRemainder();
-                final boolean hasRemaining =
-                        encoder.hasInputRemaining(connection, remainder);
-                encoder.release(connection);
-                return hasRemaining
-                        ? ctx.getInvokeAction(remainder)
-                        : ctx.getInvokeAction();
-            case INCOMPLETE:
-                return ctx.getStopAction(message);
-            case ERROR:
-                throw new TransformationException(getClass().getName() +
-                        " transformation error: (" + result.getErrorCode() + ") " +
-                        result.getErrorDescription());
+        switch (result.getStatus()) {
+        case COMPLETE:
+            ctx.setMessage(result.getMessage());
+            final L remainder = result.getExternalRemainder();
+            final boolean hasRemaining = encoder.hasInputRemaining(connection, remainder);
+            encoder.release(connection);
+            return hasRemaining ? ctx.getInvokeAction(remainder) : ctx.getInvokeAction();
+        case INCOMPLETE:
+            return ctx.getStopAction(message);
+        case ERROR:
+            throw new TransformationException(getClass().getName() + " transformation error: (" + result.getErrorCode() + ") " + result.getErrorDescription());
         }
 
         return ctx.getInvokeAction();
     }
-
 
     @Override
     public Transformer<K, L> getDecoder() {

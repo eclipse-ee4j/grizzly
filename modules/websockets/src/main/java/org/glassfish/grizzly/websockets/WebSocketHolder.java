@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,8 +31,7 @@ public final class WebSocketHolder {
     public volatile Buffer buffer;
     public volatile ProtocolHandler handler;
 
-    private static final Attribute<WebSocketHolder> webSocketAttribute =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("web-socket");
+    private static final Attribute<WebSocketHolder> webSocketAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("web-socket");
 
     private WebSocketHolder(final ProtocolHandler handler, final WebSocket socket) {
         this.handler = handler;
@@ -40,7 +39,7 @@ public final class WebSocketHolder {
     }
 
     public static boolean isWebSocketInProgress(final Connection connection) {
-        return (get(connection) != null);
+        return get(connection) != null;
     }
 
     public static WebSocket getWebSocket(Connection connection) {
@@ -52,9 +51,7 @@ public final class WebSocketHolder {
         return webSocketAttribute.get(connection);
     }
 
-    public static WebSocketHolder set(final Connection connection,
-                                      final ProtocolHandler handler,
-                                      final WebSocket socket) {
+    public static WebSocketHolder set(final Connection connection, final ProtocolHandler handler, final WebSocket socket) {
         final WebSocketHolder holder = new WebSocketHolder(handler, socket);
         webSocketAttribute.set(connection, holder);
         return holder;

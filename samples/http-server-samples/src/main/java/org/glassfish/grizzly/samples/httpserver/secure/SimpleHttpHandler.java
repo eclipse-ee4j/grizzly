@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -17,13 +17,12 @@ import org.glassfish.grizzly.http.server.Response;
 /**
  * Simple {@link HttpHandler} implementation.
  */
-public class SimpleHttpHandler extends HttpHandler{
+public class SimpleHttpHandler extends HttpHandler {
 
     @Override
-    public void service(final Request request, final Response response)
-            throws Exception {
+    public void service(final Request request, final Response response) throws Exception {
         response.setContentType("text/plain");
         response.getWriter().write("Hello world!");
     }
-    
+
 }

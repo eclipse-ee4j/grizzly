@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,10 @@
 
 package org.glassfish.grizzly.http.server.jmxbase;
 
+import org.glassfish.grizzly.http.server.HttpServer;
+
 /**
- * Notify implementations when JMX is enabled on a {@link HttpServer}
- * instance.
+ * Notify implementations when JMX is enabled on a {@link HttpServer} instance.
  *
  * @since 2.0
  */
@@ -37,5 +38,5 @@ public interface JmxEventListener {
      * @see org.glassfish.grizzly.http.server.ServerConfiguration#setJmxEnabled(boolean)
      */
     void jmxDisabled();
-    
+
 }

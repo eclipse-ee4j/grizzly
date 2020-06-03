@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,13 @@
 
 package org.glassfish.grizzly.http;
 
-import junit.framework.TestCase;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.filterchain.BaseFilter;
@@ -32,29 +38,20 @@ import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import junit.framework.TestCase;
 
 public class ClientRequestPipeliningTest extends TestCase {
 
     private static final int PORT = 9933;
 
-
     // ------------------------------------------------------------ Test Methods
 
-
     /*
-     * This test merely ensures that it's possible to rapidly fire requests
-     * without waiting for a response.  The code will now poll() a queue
-     * to associate a request with a response.  This *does not* however mean
-     * that we do any validation of the connect (i.e., keep-alive), error
-     * handling or other pipeline semantics (yet).
+     * This test merely ensures that it's possible to rapidly fire requests without waiting for a response. The code will
+     * now poll() a queue to associate a request with a response. This *does not* however mean that we do any validation of
+     * the connect (i.e., keep-alive), error handling or other pipeline semantics (yet).
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void testPipelinedRequests() throws Exception {
 
         final int requestCount = 5;
@@ -67,13 +64,11 @@ public class ClientRequestPipeliningTest extends TestCase {
             serverTransport.start();
             clientTransport.start();
 
-            final GrizzlyFuture<Connection> connFuture =
-                    clientTransport.connect("localhost", PORT);
+            final GrizzlyFuture<Connection> connFuture = clientTransport.connect("localhost", PORT);
 
             final Connection c = connFuture.get(15, TimeUnit.SECONDS);
             for (int i = 0; i < requestCount; i++) {
-                final HttpRequestPacket.Builder reqBuilder =
-                        HttpRequestPacket.builder();
+                final HttpRequestPacket.Builder reqBuilder = HttpRequestPacket.builder();
                 reqBuilder.method(Method.GET);
                 reqBuilder.uri("/");
                 reqBuilder.protocol(Protocol.HTTP_1_1);
@@ -93,14 +88,11 @@ public class ClientRequestPipeliningTest extends TestCase {
         }
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private TCPNIOTransport createClientTransport(final Filter clientFilter) {
 
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         final FilterChainBuilder b = FilterChainBuilder.stateless();
         b.add(new TransportFilter());
         b.add(new HttpClientFilter());
@@ -112,8 +104,7 @@ public class ClientRequestPipeliningTest extends TestCase {
 
     private TCPNIOTransport createServerTransport() {
 
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         final FilterChainBuilder b = FilterChainBuilder.stateless();
         b.add(new TransportFilter());
         b.add(new HttpServerFilter());
@@ -122,14 +113,12 @@ public class ClientRequestPipeliningTest extends TestCase {
         return transport;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
-
 
     private static final class ResponseCollectingFilter extends BaseFilter {
 
         private final CountDownLatch latch;
-        final List<Integer> responses = new ArrayList<Integer>();
+        final List<Integer> responses = new ArrayList<>();
 
         ResponseCollectingFilter(CountDownLatch latch) {
             this.latch = latch;
@@ -152,11 +141,9 @@ public class ClientRequestPipeliningTest extends TestCase {
 
     } // END ResponseCollectingFilter
 
-
     private static final class SimpleResponseFilter extends BaseFilter {
 
         private final AtomicInteger counter = new AtomicInteger();
-
 
         @Override
         public NextAction handleRead(FilterChainContext ctx) throws IOException {
@@ -165,9 +152,8 @@ public class ClientRequestPipeliningTest extends TestCase {
             HttpRequestPacket request = (HttpRequestPacket) ((HttpContent) ctx.getMessage()).getHttpHeader();
             HttpResponsePacket response = request.getResponse();
             response.setStatus(HttpStatus.OK_200);
-            final HttpContent content = response.httpContentBuilder().content(
-                    Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER,
-                                 Integer.toString(count))).build();
+            final HttpContent content = response.httpContentBuilder().content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, Integer.toString(count)))
+                    .build();
             content.setLast(true);
             ctx.write(content);
             return ctx.getStopAction();

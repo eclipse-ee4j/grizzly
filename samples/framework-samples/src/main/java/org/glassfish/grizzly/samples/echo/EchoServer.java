@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -13,6 +13,7 @@ package org.glassfish.grizzly.samples.echo;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
@@ -43,13 +44,12 @@ public class EchoServer {
 
         // EchoFilter is responsible for echoing received messages
         filterChainBuilder.add(new EchoFilter());
-        
+
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
-        
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
+
         transport.setProcessor(filterChainBuilder.build());
-        
+
         try {
             // binding transport to start listen on certain host and port
             transport.bind(HOST, PORT);

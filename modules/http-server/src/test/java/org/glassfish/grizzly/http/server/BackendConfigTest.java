@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,10 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -26,11 +30,21 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.filterchain.*;
-import org.glassfish.grizzly.http.*;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.HttpClientFilter;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.HttpPacket;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
@@ -38,11 +52,10 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * {@link BackendConfiguration} related tests.
- * 
+ *
  * @author Alexey Stashok
  */
 public class BackendConfigTest {
@@ -67,7 +80,7 @@ public class BackendConfigTest {
         assertNotNull(scheme);
         assertEquals("https", scheme);
     }
-    
+
     @Test
     public void testMappedSchemeNull() throws Exception {
         final BackendConfiguration backendConfiguration = new BackendConfiguration();
@@ -94,8 +107,7 @@ public class BackendConfigTest {
         final BackendConfiguration backendConfiguration = new BackendConfiguration();
         backendConfiguration.setSchemeMapping("my-scheme");
 
-        final HttpPacket request = createRequest("/test",
-                Collections.singletonMap("my-scheme", "https"));
+        final HttpPacket request = createRequest("/test", Collections.singletonMap("my-scheme", "https"));
 
         Map<String, String> props = doTest(new HttpHandler() {
 
@@ -138,8 +150,7 @@ public class BackendConfigTest {
         final BackendConfiguration backendConfiguration = new BackendConfiguration();
         backendConfiguration.setRemoteUserMapping("my-user");
 
-        final HttpPacket request = createRequest("/test",
-                Collections.singletonMap("my-user", "grizzly"));
+        final HttpPacket request = createRequest("/test", Collections.singletonMap("my-user", "grizzly"));
 
         Map<String, String> props = doTest(new HttpHandler() {
 
@@ -157,16 +168,14 @@ public class BackendConfigTest {
         assertEquals("grizzly", remoteUser);
     }
 
-    private Map<String, String> doTest(final HttpHandler httpHandler,
-            final BackendConfiguration backendConfiguration,
-            final HttpPacket request
-            ) throws Exception {
+    private Map<String, String> doTest(final HttpHandler httpHandler, final BackendConfiguration backendConfiguration, final HttpPacket request)
+            throws Exception {
         final HttpServer server = createWebServer(httpHandler);
 
         // Override the scheme
         server.getListeners().iterator().next().setBackendConfiguration(backendConfiguration);
-		
-		// Set the default query encoding.
+
+        // Set the default query encoding.
         server.getServerConfiguration().setDefaultQueryEncoding(Charsets.UTF8_CHARSET);
         try {
             server.start();
@@ -175,15 +184,11 @@ public class BackendConfigTest {
             server.shutdownNow();
         }
     }
-    
-    @SuppressWarnings("unchecked")
-    private Map<String, String> runRequest(
-            final HttpPacket request,
-            final int timeout)
-            throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+    @SuppressWarnings("unchecked")
+    private Map<String, String> runRequest(final HttpPacket request, final int timeout) throws Exception {
+
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
 
@@ -202,9 +207,9 @@ public class BackendConfigTest {
                 connection = connectFuture.get(timeout, TimeUnit.SECONDS);
                 connection.write(request);
                 HttpContent response = testResultFuture.get(timeout, TimeUnit.SECONDS);
-                
+
                 final String responseContent = response.getContent().toStringContent(Charsets.UTF8_CHARSET);
-                Map<String, String> props = new HashMap<String, String>();
+                Map<String, String> props = new HashMap<>();
 
                 BufferedReader reader = new BufferedReader(new StringReader(responseContent));
                 String line;
@@ -213,7 +218,7 @@ public class BackendConfigTest {
                     assertEquals(2, nameValue.length);
                     props.put(nameValue[0], nameValue[1]);
                 }
-                
+
                 return props;
             } finally {
                 // Close the client connection
@@ -238,14 +243,11 @@ public class BackendConfigTest {
 
         return b.build();
     }
-    
+
     private HttpServer createWebServer(final HttpHandler... httpHandlers) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandlers[0], "/");
@@ -258,7 +260,6 @@ public class BackendConfigTest {
 
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -266,19 +267,16 @@ public class BackendConfigTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -302,8 +300,7 @@ public class BackendConfigTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -311,13 +308,12 @@ public class BackendConfigTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
         }
 
     } // END ClientFilter
-    
-    
+
 }

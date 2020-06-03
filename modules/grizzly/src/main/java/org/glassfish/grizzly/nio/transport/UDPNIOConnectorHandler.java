@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,9 +20,19 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
-import org.glassfish.grizzly.*;
+
+import org.glassfish.grizzly.AbstractSocketConnectorHandler;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Context;
+import org.glassfish.grizzly.EmptyCompletionHandler;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.GrizzlyFuture;
+import org.glassfish.grizzly.IOEvent;
+import org.glassfish.grizzly.IOEventLifeCycleListener;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.ReadyFutureImpl;
 import org.glassfish.grizzly.nio.NIOChannelDistributor;
@@ -31,7 +41,7 @@ import org.glassfish.grizzly.utils.Futures;
 
 /**
  * UDP NIO transport client side ConnectorHandler implementation
- * 
+ *
  * @author Alexey Stashok
  */
 public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
@@ -57,9 +67,7 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
     }
 
     @Override
-    public void connect(final SocketAddress remoteAddress,
-            final SocketAddress localAddress,
-            final CompletionHandler<Connection> completionHandler) {
+    public void connect(final SocketAddress remoteAddress, final SocketAddress localAddress, final CompletionHandler<Connection> completionHandler) {
 
         if (!transport.isBlocking()) {
             connectAsync(remoteAddress, localAddress, completionHandler, false);
@@ -68,34 +76,26 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         }
     }
 
-    protected void connectSync(final SocketAddress remoteAddress,
-            final SocketAddress localAddress,
-            final CompletionHandler<Connection> completionHandler) {
-        
-        final FutureImpl<Connection> future = connectAsync(remoteAddress,
-                localAddress, completionHandler, true);
-        
+    protected void connectSync(final SocketAddress remoteAddress, final SocketAddress localAddress, final CompletionHandler<Connection> completionHandler) {
+
+        final FutureImpl<Connection> future = connectAsync(remoteAddress, localAddress, completionHandler, true);
+
         waitNIOFuture(future, completionHandler);
     }
 
     @Override
-    protected FutureImpl<Connection> connectAsync(
-            final SocketAddress remoteAddress,
-            final SocketAddress localAddress,
-            final CompletionHandler<Connection> completionHandler,
-            final boolean needFuture) {
+    protected FutureImpl<Connection> connectAsync(final SocketAddress remoteAddress, final SocketAddress localAddress,
+            final CompletionHandler<Connection> completionHandler, final boolean needFuture) {
 
         final UDPNIOTransport nioTransport = (UDPNIOTransport) transport;
         UDPNIOConnection newConnection = null;
 
         try {
-            
-            final DatagramChannel datagramChannel =
-                    nioTransport.getSelectorProvider().openDatagramChannel();
 
-            nioTransport.getChannelConfigurator().preConfigure(
-                    nioTransport, datagramChannel);
-            
+            final DatagramChannel datagramChannel = nioTransport.getSelectorProvider().openDatagramChannel();
+
+            nioTransport.getChannelConfigurator().preConfigure(nioTransport, datagramChannel);
+
             final DatagramSocket socket = datagramChannel.socket();
             newConnection = nioTransport.obtainNIOConnection(datagramChannel);
 
@@ -103,38 +103,34 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
             if (reuseAddr != nioTransport.isReuseAddress()) {
                 socket.setReuseAddress(reuseAddr);
             }
-            
+
             socket.bind(localAddress);
 
             if (remoteAddress != null) {
                 datagramChannel.connect(remoteAddress);
             }
 
-            nioTransport.getChannelConfigurator().postConfigure(
-                    nioTransport, datagramChannel);
-            
+            nioTransport.getChannelConfigurator().postConfigure(nioTransport, datagramChannel);
+
             preConfigure(newConnection);
 
             newConnection.setProcessor(getProcessor());
             newConnection.setProcessorSelector(getProcessorSelector());
 
-            final NIOChannelDistributor nioChannelDistributor =
-                    nioTransport.getNIOChannelDistributor();
+            final NIOChannelDistributor nioChannelDistributor = nioTransport.getNIOChannelDistributor();
 
             if (nioChannelDistributor == null) {
-                throw new IllegalStateException(
-                        "NIOChannelDistributor is null. Is Transport running?");
+                throw new IllegalStateException("NIOChannelDistributor is null. Is Transport running?");
             }
-            
+
             final CompletionHandler<Connection> completionHandlerToPass;
             final FutureImpl<Connection> futureToReturn;
-            
+
             if (needFuture) {
                 futureToReturn = makeCancellableFuture(newConnection);
-                
-                completionHandlerToPass = Futures.toCompletionHandler(
-                        futureToReturn, completionHandler);
-                
+
+                completionHandlerToPass = Futures.toCompletionHandler(futureToReturn, completionHandler);
+
             } else {
                 completionHandlerToPass = completionHandler;
                 futureToReturn = null;
@@ -142,10 +138,8 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
 
             // if connected immediately - register channel on selector with NO_INTEREST
             // interest
-            nioChannelDistributor.registerChannelAsync(datagramChannel,
-                    0, newConnection,
-                    new ConnectHandler(newConnection, completionHandlerToPass));
-            
+            nioChannelDistributor.registerChannelAsync(datagramChannel, 0, newConnection, new ConnectHandler(newConnection, completionHandlerToPass));
+
             return futureToReturn;
         } catch (Exception e) {
             if (newConnection != null) {
@@ -155,7 +149,7 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
             if (completionHandler != null) {
                 completionHandler.failed(e);
             }
-            
+
             return needFuture ? ReadyFutureImpl.<Connection>create(e) : null;
         }
 
@@ -177,23 +171,19 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         this.connectionTimeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
     }
 
-    protected void waitNIOFuture(final FutureImpl<Connection> future,
-            final CompletionHandler<Connection> completionHandler) {
-        
+    protected void waitNIOFuture(final FutureImpl<Connection> future, final CompletionHandler<Connection> completionHandler) {
+
         try {
             future.get(connectionTimeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Futures.notifyFailure(future, completionHandler, e);
         } catch (TimeoutException e) {
-            Futures.notifyFailure(future, completionHandler,
-                    new IOException("Channel registration on Selector timeout!"));
+            Futures.notifyFailure(future, completionHandler, new IOException("Channel registration on Selector timeout!"));
         } catch (Exception ingored) {
         }
     }
 
-    private static void abortConnection(final UDPNIOConnection connection,
-            final CompletionHandler<Connection> completionHandler,
-            final Throwable failure) {
+    private static void abortConnection(final UDPNIOConnection connection, final CompletionHandler<Connection> completionHandler, final Throwable failure) {
 
         connection.closeSilently();
 
@@ -207,16 +197,14 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         private final UDPNIOConnection connection;
         private final CompletionHandler<Connection> completionHandler;
 
-        private ConnectHandler(final UDPNIOConnection connection,
-                final CompletionHandler<Connection> completionHandler) {
+        private ConnectHandler(final UDPNIOConnection connection, final CompletionHandler<Connection> completionHandler) {
             this.connection = connection;
             this.completionHandler = completionHandler;
         }
 
         @Override
         public void completed(RegisterChannelResult result) {
-            final UDPNIOTransport transport =
-                    (UDPNIOTransport) UDPNIOConnectorHandler.this.transport;
+            final UDPNIOTransport transport = (UDPNIOTransport) UDPNIOConnectorHandler.this.transport;
 
             transport.registerChannelCompletionHandler.completed(result);
 
@@ -227,10 +215,9 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
 //                LOGGER.log(Level.FINE, "Exception happened, when "
 //                        + "trying to connect the channel", e);
             }
-            
+
             if (connection.notifyReady()) {
-                transport.fireIOEvent(IOEvent.CONNECTED, connection,
-                        new EnableReadHandler(completionHandler));
+                transport.fireIOEvent(IOEvent.CONNECTED, connection, new EnableReadHandler(completionHandler));
             }
         }
 
@@ -248,8 +235,7 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
 
         private final CompletionHandler<Connection> completionHandler;
 
-        private EnableReadHandler(
-                final CompletionHandler<Connection> completionHandler) {
+        private EnableReadHandler(final CompletionHandler<Connection> completionHandler) {
             this.completionHandler = completionHandler;
         }
 
@@ -262,12 +248,10 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         public void onNotRun(final Context context) throws IOException {
             onComplete(context, null);
         }
-        
+
         @Override
-        public void onComplete(final Context context, final Object data)
-                throws IOException {
-            final UDPNIOConnection connection =
-                    (UDPNIOConnection) context.getConnection();
+        public void onComplete(final Context context, final Object data) throws IOException {
+            final UDPNIOConnection connection = (UDPNIOConnection) context.getConnection();
 
             if (completionHandler != null) {
                 completionHandler.completed(connection);
@@ -279,8 +263,7 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         }
 
         @Override
-        public void onError(final Context context, final Object description)
-                throws IOException {
+        public void onError(final Context context, final Object description) throws IOException {
             context.getConnection().closeSilently();
         }
     }
@@ -301,9 +284,9 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         private Long timeout;
         private TimeUnit timeoutTimeunit;
 
+        @Override
         public UDPNIOConnectorHandler build() {
-            UDPNIOConnectorHandler handler =
-                    (UDPNIOConnectorHandler) super.build();
+            UDPNIOConnectorHandler handler = (UDPNIOConnectorHandler) super.build();
             if (reuseAddress != null) {
                 handler.setReuseAddress(reuseAddress);
             }
@@ -332,8 +315,7 @@ public class UDPNIOConnectorHandler extends AbstractSocketConnectorHandler {
         @Override
         protected AbstractSocketConnectorHandler create() {
             if (transport == null) {
-                throw new IllegalStateException(
-                        "Unable to create UDPNIOConnectorHandler - transport is null");
+                throw new IllegalStateException("Unable to create UDPNIOConnectorHandler - transport is null");
             }
             return new UDPNIOConnectorHandler(transport);
         }

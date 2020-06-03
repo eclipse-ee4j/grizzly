@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,27 +16,26 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.utils.conditions.Condition;
-import java.io.IOException;
 
 /**
  *
  * @author Alexey Stashok
  */
 public interface Input {
-    GrizzlyFuture<Integer> notifyCondition(
-            final Condition condition,
-            final CompletionHandler<Integer> completionHandler);
+    GrizzlyFuture<Integer> notifyCondition(final Condition condition, final CompletionHandler<Integer> completionHandler);
 
     byte read() throws IOException;
 
     void skip(int length);
-    
+
     boolean isBuffered();
-    
+
     /**
      * Return the <tt>Input</tt>'s {@link Buffer}.
      *
@@ -45,11 +44,9 @@ public interface Input {
     Buffer getBuffer();
 
     /**
-     * Takes the <tt>Input</tt>'s {@link Buffer}. This <tt>Input</tt> should
-     * never try to access this {@link Buffer}.
+     * Takes the <tt>Input</tt>'s {@link Buffer}. This <tt>Input</tt> should never try to access this {@link Buffer}.
      *
-     * @return the <tt>Input</tt>'s {@link Buffer}. This <tt>Input</tt> should
-     * never try to access this {@link Buffer}.
+     * @return the <tt>Input</tt>'s {@link Buffer}. This <tt>Input</tt> should never try to access this {@link Buffer}.
      */
     Buffer takeBuffer();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,11 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
-import java.io.IOException;
 
 /**
  *
@@ -57,14 +58,12 @@ public class StreamOutput implements Output {
     }
 
     @Override
-    public GrizzlyFuture<Integer> flush(
-            CompletionHandler<Integer> completionHandler) throws IOException {
+    public GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler) throws IOException {
         return streamWriter.flush(completionHandler);
     }
 
     @Override
-    public GrizzlyFuture<Integer> close(
-            CompletionHandler<Integer> completionHandler) throws IOException {
+    public GrizzlyFuture<Integer> close(CompletionHandler<Integer> completionHandler) throws IOException {
         return streamWriter.close(completionHandler);
     }
 

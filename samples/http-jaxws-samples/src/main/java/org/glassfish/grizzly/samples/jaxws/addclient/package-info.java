@@ -8,5 +8,5 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://jaxws.grizzly.glassfish.org/")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://jaxws.grizzly.glassfish.org/")
 package org.glassfish.grizzly.samples.jaxws.addclient;

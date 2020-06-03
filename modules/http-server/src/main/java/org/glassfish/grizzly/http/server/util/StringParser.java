@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,11 @@
 
 package org.glassfish.grizzly.http.server.util;
 
-
 /**
- * Utility class for string parsing that is higher performance than
- * StringParser for simple delimited text cases.  Parsing is performed
- * by setting the string, and then using the <code>findXxxx()</code> and
- * <code>skipXxxx()</code> families of methods to remember significant
- * offsets.  To retrieve the parsed substrings, call the <code>extract()</code>
- * method with the appropriate saved offset values.
+ * Utility class for string parsing that is higher performance than StringParser for simple delimited text cases.
+ * Parsing is performed by setting the string, and then using the <code>findXxxx()</code> and <code>skipXxxx()</code>
+ * families of methods to remember significant offsets. To retrieve the parsed substrings, call the
+ * <code>extract()</code> method with the appropriate saved offset values.
  *
  * @author Craig R. McClanahan
  * @version $Revision: 1.3 $ $Date: 2007/06/18 14:17:08 $
@@ -32,9 +29,7 @@ package org.glassfish.grizzly.http.server.util;
 
 public final class StringParser {
 
-
     // ----------------------------------------------------------- Constructors
-
 
     /**
      * Construct a string parser with no preset string to be parsed.
@@ -45,10 +40,8 @@ public final class StringParser {
 
     }
 
-
     /**
-     * Construct a string parser that is initialized to parse the specified
-     * string.
+     * Construct a string parser that is initialized to parse the specified string.
      *
      * @param string The string to be parsed
      */
@@ -59,79 +52,64 @@ public final class StringParser {
 
     }
 
-
     // ----------------------------------------------------- Instance Variables
 
-
     /**
-     * The characters of the current string, as a character array.  Stored
-     * when the string is first specified to speed up access to characters
-     * being compared during parsing.
+     * The characters of the current string, as a character array. Stored when the string is first specified to speed up
+     * access to characters being compared during parsing.
      */
     private char chars[] = null;
 
-
     /**
-     * The zero-relative index of the current point at which we are
-     * positioned within the string being parsed.  <strong>NOTE</strong>:
-     * the value of this index can be one larger than the index of the last
-     * character of the string (i.e. equal to the string length) if you
-     * parse off the end of the string.  This value is useful for extracting
+     * The zero-relative index of the current point at which we are positioned within the string being parsed.
+     * <strong>NOTE</strong>: the value of this index can be one larger than the index of the last character of the string
+     * (i.e. equal to the string length) if you parse off the end of the string. This value is useful for extracting
      * substrings that include the end of the string.
      */
     private int index = 0;
 
-
     /**
-     * The length of the String we are currently parsing.  Stored when the
-     * string is first specified to avoid repeated recalculations.
+     * The length of the String we are currently parsing. Stored when the string is first specified to avoid repeated
+     * recalculations.
      */
     private int length = 0;
-
 
     /**
      * The String we are currently parsing.
      */
     private String string = null;
 
-
     // ------------------------------------------------------------- Properties
 
-
     /**
-     * Return the zero-relative index of our current parsing position
-     * within the string being parsed.
+     * Return the zero-relative index of our current parsing position within the string being parsed.
      */
     public int getIndex() {
 
-        return (this.index);
+        return this.index;
 
     }
-
 
     /**
      * Return the length of the string we are parsing.
      */
     public int getLength() {
 
-        return (this.length);
+        return this.length;
 
     }
-
 
     /**
      * Return the String we are currently parsing.
      */
     public String getString() {
 
-        return (this.string);
+        return this.string;
 
     }
 
-
     /**
-     * Set the String we are currently parsing.  The parser state is also reset
-     * to begin at the start of this string.
+     * Set the String we are currently parsing. The parser state is also reset to begin at the start of this string.
      *
      * @param string The string to be parsed.
      */
@@ -149,107 +127,98 @@ public final class StringParser {
 
     }
 
-
     // --------------------------------------------------------- Public Methods
 
-
     /**
-     * Advance the current parsing position by one, if we are not already
-     * past the end of the string.
+     * Advance the current parsing position by one, if we are not already past the end of the string.
      */
     public void advance() {
 
-        if (index < length)
+        if (index < length) {
             index++;
+        }
 
     }
 
-
     /**
-     * Extract and return a substring that starts at the specified position,
-     * and extends to the end of the string being parsed.  If this is not
-     * possible, a zero-length string is returned.
+     * Extract and return a substring that starts at the specified position, and extends to the end of the string being
+     * parsed. If this is not possible, a zero-length string is returned.
      *
      * @param start Starting index, zero relative, inclusive
      */
     public String extract(int start) {
 
-        if ((start < 0) || (start >= length))
-            return ("");
-        else
-            return (string.substring(start));
+        if (start < 0 || start >= length) {
+            return "";
+        } else {
+            return string.substring(start);
+        }
 
     }
 
-
     /**
-     * Extract and return a substring that starts at the specified position,
-     * and ends at the character before the specified position.  If this is
-     * not possible, a zero-length string is returned.
+     * Extract and return a substring that starts at the specified position, and ends at the character before the specified
+     * position. If this is not possible, a zero-length string is returned.
      *
      * @param start Starting index, zero relative, inclusive
      * @param end Ending index, zero relative, exclusive
      */
     public String extract(int start, int end) {
 
-        if ((start < 0) || (start >= end) || (end > length))
-            return ("");
-        else
-            return (string.substring(start, end));
+        if (start < 0 || start >= end || end > length) {
+            return "";
+        } else {
+            return string.substring(start, end);
+        }
 
     }
 
-
     /**
-     * Return the index of the next occurrence of the specified character,
-     * or the index of the character after the last position of the string
-     * if no more occurrences of this character are found.  The current
-     * parsing position is updated to the returned value.
+     * Return the index of the next occurrence of the specified character, or the index of the character after the last
+     * position of the string if no more occurrences of this character are found. The current parsing position is updated to
+     * the returned value.
      *
      * @param ch Character to be found
      */
     public int findChar(char ch) {
 
-        while ((index < length) && (ch != chars[index]))
+        while (index < length && ch != chars[index]) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     /**
-     * Return the index of the next occurrence of a non-whitespace character,
-     * or the index of the character after the last position of the string
-     * if no more non-whitespace characters are found.  The current
-     * parsing position is updated to the returned value.
+     * Return the index of the next occurrence of a non-whitespace character, or the index of the character after the last
+     * position of the string if no more non-whitespace characters are found. The current parsing position is updated to the
+     * returned value.
      */
     public int findText() {
 
-        while ((index < length) && isWhite(chars[index]))
+        while (index < length && isWhite(chars[index])) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     /**
-     * Return the index of the next occurrence of a whitespace character,
-     * or the index of the character after the last position of the string
-     * if no more whitespace characters are found.  The current parsing
-     * position is updated to the returned value.
+     * Return the index of the next occurrence of a whitespace character, or the index of the character after the last
+     * position of the string if no more whitespace characters are found. The current parsing position is updated to the
+     * returned value.
      */
     public int findWhite() {
 
-        while ((index < length) && !isWhite(chars[index]))
+        while (index < length && !isWhite(chars[index])) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     /**
-     * Reset the current state of the parser to the beginning of the
-     * current string being parsed.
+     * Reset the current state of the parser to the beginning of the current string being parsed.
      */
     public void reset() {
 
@@ -257,53 +226,48 @@ public final class StringParser {
 
     }
 
-
     /**
-     * Advance the current parsing position while it is pointing at the
-     * specified character, or until it moves past the end of the string.
-     * Return the final value.
+     * Advance the current parsing position while it is pointing at the specified character, or until it moves past the end
+     * of the string. Return the final value.
      *
      * @param ch Character to be skipped
      */
     public int skipChar(char ch) {
 
-        while ((index < length) && (ch == chars[index]))
+        while (index < length && ch == chars[index]) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     /**
-     * Advance the current parsing position while it is pointing at a
-     * non-whitespace character, or until it moves past the end of the string.
-     * Return the final value.
+     * Advance the current parsing position while it is pointing at a non-whitespace character, or until it moves past the
+     * end of the string. Return the final value.
      */
     public int skipText() {
 
-        while ((index < length) && !isWhite(chars[index]))
+        while (index < length && !isWhite(chars[index])) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     /**
-     * Advance the current parsing position while it is pointing at a
-     * whitespace character, or until it moves past the end of the string.
-     * Return the final value.
+     * Advance the current parsing position while it is pointing at a whitespace character, or until it moves past the end
+     * of the string. Return the final value.
      */
     public int skipWhite() {
 
-        while ((index < length) && isWhite(chars[index]))
+        while (index < length && isWhite(chars[index])) {
             index++;
-        return (index);
+        }
+        return index;
 
     }
 
-
     // ------------------------------------------------------ Protected Methods
-
 
     /**
      * Is the specified character considered to be whitespace?
@@ -312,12 +276,12 @@ public final class StringParser {
      */
     protected boolean isWhite(char ch) {
 
-        if ((ch == ' ') || (ch == '\t') || (ch == '\r') || (ch == '\n'))
-            return (true);
-        else
-            return (false);
+        if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
+            return true;
+        } else {
+            return false;
+        }
 
     }
-
 
 }

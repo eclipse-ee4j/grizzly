@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.GenericCloseListener;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.http.HttpContent;
@@ -51,59 +51,46 @@ public class WebSocketEngine {
     private static final WebSocketEngine engine = new WebSocketEngine();
     static final Logger logger = Logger.getLogger(Constants.WEBSOCKET);
 
-    private final List<WebSocketApplication> applications = new ArrayList<WebSocketApplication>();
-
+    private final List<WebSocketApplication> applications = new ArrayList<>();
 
     // Association between WebSocketApplication and a value based on the
     // context path and url pattern.
-    private final HashMap<WebSocketApplication, String> applicationMap =
-            new HashMap<WebSocketApplication, String>(4);
+    private final HashMap<WebSocketApplication, String> applicationMap = new HashMap<>(4);
     // Association between full path and registered application.
-    private final HashMap<String, WebSocketApplication> fullPathToApplication =
-            new HashMap<String, WebSocketApplication>(4);
+    private final HashMap<String, WebSocketApplication> fullPathToApplication = new HashMap<>(4);
     // Association between a particular context path and all applications with
     // sub-paths registered to that context path.
-    private final HashMap<String, List<WebSocketApplication>> contextApplications =
-            new HashMap<String, List<WebSocketApplication>>(2);
+    private final HashMap<String, List<WebSocketApplication>> contextApplications = new HashMap<>(2);
 
     private final HttpResponsePacket.Builder unsupportedVersionsResponseBuilder;
 
     private Mapper mapper = new Mapper();
 
-
     private WebSocketEngine() {
         mapper.setDefaultHostName("localhost");
         unsupportedVersionsResponseBuilder = new HttpResponsePacket.Builder();
         unsupportedVersionsResponseBuilder.status(HttpStatus.BAD_REQUEST_400.getStatusCode());
-        unsupportedVersionsResponseBuilder.header(Constants.SEC_WS_VERSION,
-                               Version.getSupportedWireProtocolVersions());
+        unsupportedVersionsResponseBuilder.header(Constants.SEC_WS_VERSION, Version.getSupportedWireProtocolVersions());
     }
 
     public static WebSocketEngine getEngine() {
         return engine;
     }
 
-
-
     public WebSocketApplication getApplication(HttpRequestPacket request) {
         final WebSocketApplicationReg appReg = getApplication(request, mapper);
         return appReg != null ? appReg.app : null;
     }
 
-    private WebSocketApplicationReg getApplication(
-            final HttpRequestPacket request,
-            final Mapper glassfishMapper) {
-        
+    private WebSocketApplicationReg getApplication(final HttpRequestPacket request, final Mapper glassfishMapper) {
+
         final boolean isGlassfish = glassfishMapper != null;
 
         WebSocketApplication foundWebSocketApp = null;
         final WebSocketMappingData data = new WebSocketMappingData(isGlassfish);
-        
+
         try {
-            mapper.mapUriWithSemicolon(request,
-                    request.getRequestURIRef().getDecodedRequestURIBC(),
-                                data,
-                                0);
+            mapper.mapUriWithSemicolon(request, request.getRequestURIRef().getDecodedRequestURIBC(), data, 0);
             if (data.wrapper != null) {
                 foundWebSocketApp = (WebSocketApplication) data.wrapper;
             }
@@ -121,48 +108,41 @@ public class WebSocketEngine {
                 }
             }
         }
-        
+
         if (foundWebSocketApp == null) {
             return null;
         }
-        
+
         if (isGlassfish) {
             assert glassfishMapper != null;
-            
+
             // do one more mapping, this time using GF Mapper to retrieve
             // correspondent web application
-            
+
             try {
                 data.recycle();
-                glassfishMapper.mapUriWithSemicolon(request,
-                        request.getRequestURIRef().getDecodedRequestURIBC(),
-                                    data,
-                                    0);
+                glassfishMapper.mapUriWithSemicolon(request, request.getRequestURIRef().getDecodedRequestURIBC(), data, 0);
             } catch (Exception e) {
                 if (logger.isLoggable(Level.WARNING)) {
                     logger.log(Level.WARNING, e.toString(), e);
                 }
             }
         }
-        
+
         return new WebSocketApplicationReg(foundWebSocketApp,
                 // if contextPath == null - don't return any mapping info
                 data.contextPath.isNull() ? null : data);
     }
-    
-    public boolean upgrade(FilterChainContext ctx, HttpContent requestContent)
-            throws IOException {
+
+    public boolean upgrade(FilterChainContext ctx, HttpContent requestContent) throws IOException {
         return upgrade(ctx, requestContent, null);
     }
-    
+
     // Mapper will be non-null when integrated in GF.
-    public boolean upgrade(FilterChainContext ctx, HttpContent requestContent,
-            Mapper mapper) throws IOException {
-        final HttpRequestPacket request =
-                (HttpRequestPacket) requestContent.getHttpHeader();
-        final WebSocketApplicationReg reg =
-                WebSocketEngine.getEngine().getApplication(request, mapper);
-        
+    public boolean upgrade(FilterChainContext ctx, HttpContent requestContent, Mapper mapper) throws IOException {
+        final HttpRequestPacket request = (HttpRequestPacket) requestContent.getHttpHeader();
+        final WebSocketApplicationReg reg = WebSocketEngine.getEngine().getApplication(request, mapper);
+
         WebSocket socket = null;
         try {
             if (reg != null) {
@@ -175,24 +155,21 @@ public class WebSocketEngine {
                 protocolHandler.setFilterChainContext(ctx);
                 protocolHandler.setConnection(connection);
                 protocolHandler.setMappingData(reg.mappingData);
-                
+
                 ctx.setMessage(null); // remove the message from the context, so underlying layers will not try to update it.
-                
+
                 final WebSocketApplication app = reg.app;
                 socket = app.createSocket(protocolHandler, request, app);
-                WebSocketHolder holder =
-                        WebSocketHolder.set(connection, protocolHandler, socket);
+                WebSocketHolder holder = WebSocketHolder.set(connection, protocolHandler, socket);
                 holder.application = app;
                 protocolHandler.handshake(ctx, app, requestContent);
                 request.getConnection().addCloseListener(new GenericCloseListener() {
                     @Override
-                    public void onClosed(final Closeable closeable,
-                            final CloseType type) throws IOException {
-                        
+                    public void onClosed(final Closeable closeable, final CloseType type) throws IOException {
+
                         final WebSocket webSocket = WebSocketHolder.getWebSocket(connection);
                         webSocket.close();
-                        webSocket.onClose(new ClosingFrame(WebSocket.END_POINT_GOING_DOWN,
-                            "Close detected on connection"));
+                        webSocket.onClose(new ClosingFrame(WebSocket.END_POINT_GOING_DOWN, "Close detected on connection"));
                     }
                 });
                 socket.onConnect();
@@ -203,10 +180,10 @@ public class WebSocketEngine {
             if (socket != null) {
                 socket.close();
             }
-            
+
             throw e;
         }
-        
+
         return false;
     }
 
@@ -220,66 +197,63 @@ public class WebSocketEngine {
     }
 
     /**
-     * Register a WebSocketApplication to a specific context path and url pattern.
-     * If you wish to associate this application with the root context, use an
-     * empty string for the contextPath argument.
+     * Register a WebSocketApplication to a specific context path and url pattern. If you wish to associate this application
+     * with the root context, use an empty string for the contextPath argument.
      *
      * <pre>
      * Examples:
-     *   // WS application will be invoked:
-     *   //    ws://localhost:8080/echo
-     *   // WS application will not be invoked:
-     *   //    ws://localhost:8080/foo/echo
-     *   //    ws://localhost:8080/echo/some/path
-     *   register("", "/echo", webSocketApplication);
+     * // WS application will be invoked:
+     * // ws://localhost:8080/echo
+     * // WS application will not be invoked:
+     * // ws://localhost:8080/foo/echo
+     * // ws://localhost:8080/echo/some/path
+     * register("", "/echo", webSocketApplication);
      *
-     *   // WS application will be invoked:
-     *   //    ws://localhost:8080/echo
-     *   //    ws://localhost:8080/echo/some/path
-     *   // WS application will not be invoked:
-     *   //    ws://localhost:8080/foo/echo
-     *   register("", "/echo/*", webSocketApplication);
+     * // WS application will be invoked:
+     * // ws://localhost:8080/echo
+     * // ws://localhost:8080/echo/some/path
+     * // WS application will not be invoked:
+     * // ws://localhost:8080/foo/echo
+     * register("", "/echo/*", webSocketApplication);
      *
-     *   // WS application will be invoked:
-     *   //    ws://localhost:8080/context/echo
+     * // WS application will be invoked:
+     * // ws://localhost:8080/context/echo
      *
-     *   // WS application will not be invoked:
-     *   //    ws://localhost:8080/echo
-     *   //    ws://localhost:8080/context/some/path
-     *   register("/context", "/echo", webSocketApplication);
+     * // WS application will not be invoked:
+     * // ws://localhost:8080/echo
+     * // ws://localhost:8080/context/some/path
+     * register("/context", "/echo", webSocketApplication);
      * </pre>
      *
      * @param contextPath the context path (per servlet rules)
      * @param urlPattern url pattern (per servlet rules)
      * @param app the WebSocket application.
      */
-    public synchronized void register(final String contextPath,
-            final String urlPattern, final WebSocketApplication app) {
+    public synchronized void register(final String contextPath, final String urlPattern, final WebSocketApplication app) {
         if (contextPath == null || urlPattern == null) {
             throw new IllegalArgumentException("contextPath and urlPattern must not be null");
         }
-        
+
         if (!urlPattern.startsWith("/")) {
             throw new IllegalArgumentException("The urlPattern must start with '/'");
         }
-        
+
         String contextPathLocal = getContextPath(contextPath);
         final String fullPath = contextPathLocal + '|' + urlPattern;
-        
+
         final WebSocketApplication oldApp = fullPathToApplication.get(fullPath);
         if (oldApp != null) {
             unregister(oldApp);
         }
-        
-        mapper.addContext("localhost", contextPathLocal,
-                "[Context '" + contextPath + "']", EMPTY_STRING_ARRAY, null);
+
+        mapper.addContext("localhost", contextPathLocal, "[Context '" + contextPath + "']", EMPTY_STRING_ARRAY, null);
         mapper.addWrapper("localhost", contextPathLocal, urlPattern, app);
         applicationMap.put(app, fullPath);
         fullPathToApplication.put(fullPath, app);
         if (contextApplications.containsKey(contextPathLocal)) {
             contextApplications.get(contextPathLocal).add(app);
         } else {
-            List<WebSocketApplication> apps = new ArrayList<WebSocketApplication>(4);
+            List<WebSocketApplication> apps = new ArrayList<>(4);
             apps.add(app);
             contextApplications.put(contextPathLocal, apps);
         }
@@ -312,8 +286,7 @@ public class WebSocketEngine {
     }
 
     /**
-     * Un-registers all {@link WebSocketApplication} instances with the 
-     * {@link WebSocketEngine}.
+     * Un-registers all {@link WebSocketApplication} instances with the {@link WebSocketEngine}.
      */
     public synchronized void unregisterAll() {
         applicationMap.clear();
@@ -324,13 +297,10 @@ public class WebSocketEngine {
         mapper.setDefaultHostName("localhost");
     }
 
-    private void handleUnsupportedVersion(final FilterChainContext ctx,
-                                                 final HttpRequestPacket request)
-    throws IOException {
+    private void handleUnsupportedVersion(final FilterChainContext ctx, final HttpRequestPacket request) throws IOException {
         unsupportedVersionsResponseBuilder.requestPacket(request);
         ctx.write(unsupportedVersionsResponseBuilder.build());
     }
-
 
     private static String getContextPath(String mapping) {
         String ctx;
@@ -349,7 +319,6 @@ public class WebSocketEngine {
             }
         }
 
-
         if (ctx.startsWith("/*") || ctx.startsWith("*")) {
             ctx = "";
         }
@@ -366,8 +335,7 @@ public class WebSocketEngine {
         private final WebSocketApplication app;
         private final WebSocketMappingData mappingData;
 
-        public WebSocketApplicationReg(final WebSocketApplication app,
-                final WebSocketMappingData mappingData) {
+        public WebSocketApplicationReg(final WebSocketApplication app, final WebSocketMappingData mappingData) {
             this.app = app;
             this.mappingData = mappingData;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,45 +31,38 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Expand out a jar.
- * Adapted from Tomcat's org.apache.catalina.startup.ExpendWar classes
- * 
+ * Expand out a jar. Adapted from Tomcat's org.apache.catalina.startup.ExpendWar classes
+ *
  * @author Jeanfrancois Arcand
  */
 
 public class ExpandJar {
 
     /**
-     * Expand the jar file found at the specified URL into an unpacked
-     * directory structure, and return the absolute pathname to the expanded
-     * directory.
+     * Expand the jar file found at the specified URL into an unpacked directory structure, and return the absolute pathname
+     * to the expanded directory.
      *
-     * @param jar URL of the web application archive to be expanded
-     *  (must start with "jar:")
+     * @param jar URL of the web application archive to be expanded (must start with "jar:")
      *
      * @return Absolute path as in {@link java.io.File#getAbsolutePath()} of location where to find expanded jar.
      * @exception IllegalArgumentException if this is not a "jar:" URL
-     * @exception IOException if an input/output error was encountered
-     *  during expansion
+     * @exception IOException if an input/output error was encountered during expansion
      */
     public static String expand(URL jar) throws IOException {
         return expand(jar, System.getProperty("java.io.tmpdir"));
     }
-    
+
     /**
-     * Expand the jar file found at the specified URL into an unpacked
-     * directory structure, and return the absolute pathname to the expanded
-     * directory.
+     * Expand the jar file found at the specified URL into an unpacked directory structure, and return the absolute pathname
+     * to the expanded directory.
      *
-     * @param jar URL of the web application archive to be expanded
-     *  (must start with "jar:")
-     *  
+     * @param jar URL of the web application archive to be expanded (must start with "jar:")
+     * 
      * @param workFolder the folder where the file will be expanded
      *
      * @return Absolute path as in {@link java.io.File#getAbsolutePath()} of location where to find expanded jar.
      * @exception IllegalArgumentException if this is not a "jar:" URL
-     * @exception IOException if an input/output error was encountered
-     *  during expansion
+     * @exception IOException if an input/output error was encountered during expansion
      */
     public static String expand(URL jar, String workFolder) throws IOException {
 
@@ -79,8 +72,9 @@ public class ExpandJar {
             pathname = pathname.substring(0, pathname.length() - 2);
         }
         int period = pathname.lastIndexOf('.');
-        if (period >= pathname.length() - 4)
+        if (period >= pathname.length() - 4) {
             pathname = pathname.substring(0, period);
+        }
         int slash = pathname.lastIndexOf('/');
         if (slash >= 0) {
             pathname = pathname.substring(slash + 1);
@@ -89,23 +83,18 @@ public class ExpandJar {
 
     }
 
-
     /**
-     * Expand the jar file found at the specified URL into an unpacked
-     * directory structure, and return the absolute pathname to the expanded
-     * directory.
+     * Expand the jar file found at the specified URL into an unpacked directory structure, and return the absolute pathname
+     * to the expanded directory.
      *
-     * @param jar URL of the web application archive to be expanded
-     *  (must start with "jar:")
+     * @param jar URL of the web application archive to be expanded (must start with "jar:")
      * @param pathname Context path name for web application
      *
      * @return Absolute path as in {@link java.io.File#getAbsolutePath()} of location where to find expanded jar.
      * @exception IllegalArgumentException if this is not a "jar:" URL
-     * @exception IOException if an input/output error was encountered
-     *  during expansion
+     * @exception IOException if an input/output error was encountered during expansion
      */
-    public static String expand(URL jar, String pathname, String dirname)
-        throws IOException {
+    public static String expand(URL jar, String pathname, String dirname) throws IOException {
 
         // Make sure that there is no such directory already existing
         File appBase = new File(dirname);
@@ -128,8 +117,7 @@ public class ExpandJar {
                 String name = jarEntry.getName();
                 int last = name.lastIndexOf('/');
                 if (last >= 0) {
-                    File parent = new File(docBase,
-                                           name.substring(0, last));
+                    File parent = new File(docBase, name.substring(0, last));
                     if (!parent.mkdirs()) {
                         throw new IllegalStateException(String.format("Unable to create directory: %s", parent.getAbsolutePath()));
                     }
@@ -143,7 +131,7 @@ public class ExpandJar {
                 input = null;
             }
         } catch (IOException e) {
-            // If something went wrong, delete expanded dir to keep things 
+            // If something went wrong, delete expanded dir to keep things
             // clean
             deleteDir(docBase);
             throw e;
@@ -165,10 +153,9 @@ public class ExpandJar {
         }
 
         // Return the absolute path to our new document base directory
-        return (docBase.getAbsolutePath());
+        return docBase.getAbsolutePath();
 
     }
-
 
     /**
      * Copy the specified file or directory to the destination.
@@ -177,9 +164,9 @@ public class ExpandJar {
      * @param dest File object representing the destination
      */
     public static boolean copy(File src, File dest) {
-        
+
         boolean result = true;
-        
+
         String files[];
         if (src.isDirectory()) {
             files = src.list();
@@ -191,7 +178,7 @@ public class ExpandJar {
         if (files == null) {
             files = new String[0];
         }
-        for (int i = 0; (i < files.length) && result; i++) {
+        for (int i = 0; i < files.length && result; i++) {
             File fileSrc = new File(src, files[i]);
             File fileDest = new File(dest, files[i]);
             if (fileSrc.isDirectory()) {
@@ -200,8 +187,8 @@ public class ExpandJar {
                 FileChannel ic = null;
                 FileChannel oc = null;
                 try {
-                    ic = (new FileInputStream(fileSrc)).getChannel();
-                    oc = (new FileOutputStream(fileDest)).getChannel();
+                    ic = new FileInputStream(fileSrc).getChannel();
+                    oc = new FileOutputStream(fileDest).getChannel();
                     ic.transferTo(0, ic.size(), oc);
                 } catch (IOException e) {
 
@@ -223,13 +210,11 @@ public class ExpandJar {
             }
         }
         return result;
-        
+
     }
-    
-    
+
     /**
-     * Delete the specified directory, including all of its contents and
-     * subdirectories recursively.
+     * Delete the specified directory, including all of its contents and subdirectories recursively.
      *
      * @param dir File object representing the directory to be deleted
      */
@@ -240,11 +225,9 @@ public class ExpandJar {
             return dir.delete();
         }
     }
-    
-    
+
     /**
-     * Delete the specified directory, including all of its contents and
-     * subdirectories recursively.
+     * Delete the specified directory, including all of its contents and subdirectories recursively.
      *
      * @param dir File object representing the directory to be deleted
      */
@@ -260,7 +243,7 @@ public class ExpandJar {
                 deleteDir(file);
             } else {
                 if (!file.delete()) {
-                    throw new IllegalStateException(String.format("Unable to delete file: %s",file.getAbsolutePath()));
+                    throw new IllegalStateException(String.format("Unable to delete file: %s", file.getAbsolutePath()));
                 }
             }
         }
@@ -268,10 +251,9 @@ public class ExpandJar {
 
     }
 
-
     /**
-     * Expand the specified input stream into the specified directory, creating
-     * a file named from the specified relative path.
+     * Expand the specified input stream into the specified directory, creating a file named from the specified relative
+     * path.
      *
      * @param input InputStream to be copied
      * @param docBase Document base directory into which we are expanding
@@ -279,19 +261,18 @@ public class ExpandJar {
      *
      * @exception IOException if an input/output error occurs
      */
-    protected static void expand(InputStream input, File docBase, String name)
-        throws IOException {
+    protected static void expand(InputStream input, File docBase, String name) throws IOException {
 
         File file = new File(docBase, name);
         BufferedOutputStream output = null;
         try {
-            output = 
-                new BufferedOutputStream(new FileOutputStream(file));
+            output = new BufferedOutputStream(new FileOutputStream(file));
             byte buffer[] = new byte[2048];
             while (true) {
                 int n = input.read(buffer);
-                if (n <= 0)
+                if (n <= 0) {
                     break;
+                }
                 output.write(buffer, 0, n);
             }
         } finally {
@@ -305,6 +286,5 @@ public class ExpandJar {
         }
 
     }
-
 
 }

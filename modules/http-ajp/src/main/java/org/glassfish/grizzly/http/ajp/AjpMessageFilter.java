@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,26 +17,25 @@
 package org.glassfish.grizzly.http.ajp;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
-import org.glassfish.grizzly.utils.NullaryFunction;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.utils.NullaryFunction;
 
 /**
- * Filter, responsible for parsing Ajp requests and making sure the request
- * packets are complete and properly constructed.
- * 
+ * Filter, responsible for parsing Ajp requests and making sure the request packets are complete and properly
+ * constructed.
+ *
  * @author Alexey Stashok
  */
 public class AjpMessageFilter extends BaseFilter {
-    private final Attribute<ParsingState> parsingStateAttribute =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-            AjpMessageFilter.class + ".parsingStateAttribute",
-            new NullaryFunction<ParsingState>() {
+    private final Attribute<ParsingState> parsingStateAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
+            .createAttribute(AjpMessageFilter.class + ".parsingStateAttribute", new NullaryFunction<ParsingState>() {
 
                 @Override
                 public ParsingState evaluate() {
@@ -68,11 +67,9 @@ public class AjpMessageFilter extends BaseFilter {
             parsingState.length = buffer.getShort(start + 2);
             parsingState.isHeaderParsed = true;
 
-            if (parsingState.length + AjpConstants.H_SIZE >
-                    AjpConstants.MAX_PACKET_SIZE) {
-                throw new IllegalStateException("The message is too large. " +
-                        (parsingState.length + AjpConstants.H_SIZE) + ">" +
-                        AjpConstants.MAX_PACKET_SIZE);
+            if (parsingState.length + AjpConstants.H_SIZE > AjpConstants.MAX_PACKET_SIZE) {
+                throw new IllegalStateException(
+                        "The message is too large. " + (parsingState.length + AjpConstants.H_SIZE) + ">" + AjpConstants.MAX_PACKET_SIZE);
             }
         }
 
@@ -86,12 +83,11 @@ public class AjpMessageFilter extends BaseFilter {
         final int start = buffer.position();
 
         // Split off the remainder
-        final Buffer remainder = buffer.split(start + parsingState.length +
-                AjpConstants.H_SIZE);
+        final Buffer remainder = buffer.split(start + parsingState.length + AjpConstants.H_SIZE);
 
         // Skip the Ajp message header
         buffer.position(start + 4);
-        
+
         parsingState.parsed();
 
         // Invoke the next filter

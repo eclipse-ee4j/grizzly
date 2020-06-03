@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,7 +18,13 @@ package org.glassfish.grizzly.nio.transport;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import org.glassfish.grizzly.*;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.IOEvent;
+import org.glassfish.grizzly.Interceptor;
+import org.glassfish.grizzly.ReadResult;
 import org.glassfish.grizzly.asyncqueue.AsyncQueueReader;
 import org.glassfish.grizzly.asyncqueue.AsyncReadQueueRecord;
 import org.glassfish.grizzly.nio.AbstractNIOAsyncQueueReader;
@@ -26,8 +32,7 @@ import org.glassfish.grizzly.nio.NIOConnection;
 import org.glassfish.grizzly.nio.NIOTransport;
 
 /**
- * The TCP transport {@link AsyncQueueReader} implementation, based on
- * the Java NIO
+ * The TCP transport {@link AsyncQueueReader} implementation, based on the Java NIO
  *
  * @author Alexey Stashok
  */
@@ -37,8 +42,7 @@ public final class TCPNIOAsyncQueueReader extends AbstractNIOAsyncQueueReader {
     }
 
     @Override
-    protected int read0(final Connection connection, Buffer buffer,
-            final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
+    protected int read0(final Connection connection, Buffer buffer, final ReadResult<Buffer, SocketAddress> currentResult) throws IOException {
 
         final int oldPosition = buffer != null ? buffer.position() : 0;
         if ((buffer = ((TCPNIOTransport) transport).read(connection, buffer)) != null) {
@@ -53,18 +57,13 @@ public final class TCPNIOAsyncQueueReader extends AbstractNIOAsyncQueueReader {
         return 0;
     }
 
-    protected void addRecord(Connection connection,
-            Buffer buffer,
-            CompletionHandler completionHandler,
-            Interceptor<ReadResult> interceptor) {
-        final AsyncReadQueueRecord record = AsyncReadQueueRecord.create(
-                connection, buffer,
-                completionHandler, interceptor);
+    protected void addRecord(Connection connection, Buffer buffer, CompletionHandler completionHandler, Interceptor<ReadResult> interceptor) {
+        final AsyncReadQueueRecord record = AsyncReadQueueRecord.create(connection, buffer, completionHandler, interceptor);
         ((TCPNIOConnection) connection).getAsyncReadQueue().offer(record);
     }
 
     @Override
-    protected final void onReadyToRead(Connection connection) throws IOException {
+    protected void onReadyToRead(Connection connection) throws IOException {
         final NIOConnection nioConnection = (NIOConnection) connection;
         nioConnection.enableIOEvent(IOEvent.READ);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http2;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.http.HttpContent;
@@ -27,8 +28,8 @@ import org.glassfish.grizzly.http.HttpContent;
  */
 interface StreamInputBuffer {
     /**
-     * The method will be invoked once upstream completes READ operation processing.
-     * Here we have to simulate NIO OP_READ event re-registration.
+     * The method will be invoked once upstream completes READ operation processing. Here we have to simulate NIO OP_READ
+     * event re-registration.
      */
     void onReadEventComplete();
 
@@ -39,27 +40,27 @@ interface StreamInputBuffer {
 
     /**
      * Retrieves available input buffer payload, waiting up to the
-     * {@link Connection#getReadTimeout(java.util.concurrent.TimeUnit)}
-     * wait time if necessary for payload to become available.
-     * 
+     * {@link Connection#getReadTimeout(java.util.concurrent.TimeUnit)} wait time if necessary for payload to become
+     * available.
+     *
      * @throws IOException if an error occurs during the poll operation.
      */
     HttpContent poll() throws IOException;
 
     /**
      * Graceful input buffer close.
-     * 
+     *
      * Marks the input buffer as closed by adding Termination input element to the input queue.
      */
     void close(final Termination termination);
 
     /**
      * Forcibly closes the input buffer.
-     * 
+     *
      * All the buffered data will be discarded.
      */
     void terminate(final Termination termination);
-    
+
     /**
      * Returns <tt>true</tt> if the <tt>InputBuffer</tt> has been closed.
      */

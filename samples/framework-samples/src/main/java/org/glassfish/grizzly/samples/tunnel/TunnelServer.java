@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,14 +10,14 @@
 
 package org.glassfish.grizzly.samples.tunnel;
 
+import java.io.IOException;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-
-import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * Simple tunneling server
@@ -35,20 +35,17 @@ public class TunnelServer {
 
     public static void main(String[] args) throws IOException {
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
 
         // Create a FilterChain using FilterChainBuilder
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
         // Add TransportFilter, which is responsible
         // for reading and writing data to the connection
         filterChainBuilder.add(new TransportFilter());
-        filterChainBuilder.add(new TunnelFilter(
-                TCPNIOConnectorHandler.builder(transport).build(),
-                REDIRECT_HOST, REDIRECT_PORT));
-        
+        filterChainBuilder.add(new TunnelFilter(TCPNIOConnectorHandler.builder(transport).build(), REDIRECT_HOST, REDIRECT_PORT));
+
         transport.setProcessor(filterChainBuilder.build());
-        
+
         // Set async write queue size limit
         transport.getAsyncQueueIO().getWriter().setMaxPendingBytesPerConnection(256 * 1024);
 

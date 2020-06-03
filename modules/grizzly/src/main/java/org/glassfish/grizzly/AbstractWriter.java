@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,8 +22,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
 /**
- * Abstract class, which provides transitive dependencies for overloaded
- * {@link Writer} methods.
+ * Abstract class, which provides transitive dependencies for overloaded {@link Writer} methods.
  *
  * @author Alexey Stashok
  */
@@ -34,9 +33,7 @@ public abstract class AbstractWriter<L> implements Writer<L> {
      * {@inheritDoc}
      */
     @Override
-    public final GrizzlyFuture<WriteResult<WritableMessage, L>> write(
-            final Connection<L> connection,
-            final WritableMessage message) {
+    public final GrizzlyFuture<WriteResult<WritableMessage, L>> write(final Connection<L> connection, final WritableMessage message) {
         return write(connection, null, message);
     }
 
@@ -45,9 +42,7 @@ public abstract class AbstractWriter<L> implements Writer<L> {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final void write(
-            final Connection<L> connection,
-            final WritableMessage message,
+    public final void write(final Connection<L> connection, final WritableMessage message,
             final CompletionHandler<WriteResult<WritableMessage, L>> completionHandler) {
         write(connection, null, message, completionHandler, (MessageCloner) null);
     }
@@ -57,15 +52,11 @@ public abstract class AbstractWriter<L> implements Writer<L> {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final GrizzlyFuture<WriteResult<WritableMessage, L>> write(
-            final Connection<L> connection,
-            final L dstAddress, final WritableMessage message) {
-        final FutureImpl<WriteResult<WritableMessage, L>> future =
-                Futures.createSafeFuture();
-        
-        write(connection, dstAddress, message,
-                Futures.toCompletionHandler(future), (MessageCloner) null);
-        
+    public final GrizzlyFuture<WriteResult<WritableMessage, L>> write(final Connection<L> connection, final L dstAddress, final WritableMessage message) {
+        final FutureImpl<WriteResult<WritableMessage, L>> future = Futures.createSafeFuture();
+
+        write(connection, dstAddress, message, Futures.toCompletionHandler(future), (MessageCloner) null);
+
         return future;
     }
 
@@ -74,9 +65,7 @@ public abstract class AbstractWriter<L> implements Writer<L> {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final void write(
-            final Connection<L> connection,
-            final L dstAddress, final WritableMessage message,
+    public final void write(final Connection<L> connection, final L dstAddress, final WritableMessage message,
             final CompletionHandler<WriteResult<WritableMessage, L>> completionHandler) {
         write(connection, dstAddress, message, completionHandler, (MessageCloner) null);
     }

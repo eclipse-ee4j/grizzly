@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.compression.lzma;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.TransformationResult;
@@ -23,23 +25,18 @@ import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
-import java.io.IOException;
-
 public class LZMAFilter extends BaseFilter {
 
     private final LZMAEncoder encoder = new LZMAEncoder();
     private final LZMADecoder decoder = new LZMADecoder();
 
-
     // ----------------------------------------------------- Methods from Filter
-
 
     @Override
     public NextAction handleRead(FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         final Buffer input = ctx.getMessage();
-        final TransformationResult<Buffer, Buffer> result =
-                decoder.transform(connection, input);
+        final TransformationResult<Buffer, Buffer> result = decoder.transform(connection, input);
 
         final Buffer remainder = result.getExternalRemainder();
 
@@ -51,22 +48,19 @@ public class LZMAFilter extends BaseFilter {
 
         try {
             switch (result.getStatus()) {
-                case COMPLETE: {
-                    ctx.setMessage(result.getMessage());
-                    decoder.finish(connection);
-                    return ctx.getInvokeAction(remainder);
-                }
-                case INCOMPLETE: {
-                    return ctx.getStopAction(remainder);
-                }
-                case ERROR: {
-                    throw new IllegalStateException("LZMA decode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            case COMPLETE: {
+                ctx.setMessage(result.getMessage());
+                decoder.finish(connection);
+                return ctx.getInvokeAction(remainder);
+            }
+            case INCOMPLETE: {
+                return ctx.getStopAction(remainder);
+            }
+            case ERROR: {
+                throw new IllegalStateException("LZMA decode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();
@@ -77,8 +71,7 @@ public class LZMAFilter extends BaseFilter {
     public NextAction handleWrite(FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         final Buffer input = ctx.getMessage();
-        final TransformationResult<Buffer, Buffer> result =
-                encoder.transform(connection, input);
+        final TransformationResult<Buffer, Buffer> result = encoder.transform(connection, input);
 
         if (!input.hasRemaining()) {
             input.tryDispose();
@@ -88,33 +81,29 @@ public class LZMAFilter extends BaseFilter {
 
         try {
             switch (result.getStatus()) {
-                case COMPLETE:
-                    encoder.finish(connection);
-                case INCOMPLETE: {
-                    final Buffer readyBuffer = result.getMessage();
-                    if (readyBuffer != null) {
-                        ctx.setMessage(readyBuffer);
-                        return ctx.getInvokeAction();
-                    } else {
-                        return ctx.getStopAction();
-                    }
+            case COMPLETE:
+                encoder.finish(connection);
+            case INCOMPLETE: {
+                final Buffer readyBuffer = result.getMessage();
+                if (readyBuffer != null) {
+                    ctx.setMessage(readyBuffer);
+                    return ctx.getInvokeAction();
+                } else {
+                    return ctx.getStopAction();
                 }
+            }
 
-                case ERROR: {
-                    throw new IllegalStateException("LZMA encode error. Code: "
-                            + result.getErrorCode() + " Description: "
-                            + result.getErrorDescription());
-                }
+            case ERROR: {
+                throw new IllegalStateException("LZMA encode error. Code: " + result.getErrorCode() + " Description: " + result.getErrorDescription());
+            }
 
-                default:
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getStatus());
+            default:
+                throw new IllegalStateException("Unexpected status: " + result.getStatus());
             }
         } finally {
             result.recycle();
         }
     }
-
 
     @Override
     public NextAction handleClose(FilterChainContext ctx) throws IOException {

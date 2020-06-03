@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,30 +16,32 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 import java.nio.ReadOnlyBufferException;
 import java.util.LinkedList;
 import java.util.List;
 
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
+import org.glassfish.grizzly.Buffer;
 
 /**
  * Encodes headers to their binary representation.
  *
- * <p>Typical lifecycle looks like this:
+ * <p>
+ * Typical lifecycle looks like this:
  *
- * <p> {@link #Encoder(int) new Encoder}
- * ({@link #setMaxCapacity(int) setMaxCapacity}?
- * {@link #encode(Buffer) encode})*
+ * <p>
+ * {@link #Encoder(int) new Encoder} ({@link #setMaxCapacity(int) setMaxCapacity}? {@link #encode(Buffer) encode})*
  *
- * <p> Suppose headers are represented by {@code Map<String, List<String>>}. A
- * supplier and a consumer of {@link Buffer}s in forms of {@code
- * Supplier<ByteBuffer>} and {@code Consumer<ByteBuffer>} respectively. Then to
- * encode headers, the following approach might be used:
+ * <p>
+ * Suppose headers are represented by {@code Map<String, List<String>>}. A supplier and a consumer of {@link Buffer}s in
+ * forms of {@code
+ * Supplier<ByteBuffer>} and {@code Consumer<ByteBuffer>} respectively. Then to encode headers, the following approach
+ * might be used:
  *
- * <pre>{@code
+ * <pre>
+ * {@code
  *     for (Map.Entry<String, List<String>> h : headers.entrySet()) {
  *         String name = h.getKey();
  *         for (String value : h.getValue()) {
@@ -52,37 +54,37 @@ import static java.util.Objects.requireNonNull;
  *             } while (!encoded);
  *         }
  *     }
- * }</pre>
+ * }
+ * </pre>
  *
- * <p> Though the specification <a
- * href="https://tools.ietf.org/html/rfc7541#section-2"> does not define</a> how
- * an encoder is to be implemented, a default implementation is provided by the
- * method {@link #header(CharSequence, CharSequence, boolean)}.
+ * <p>
+ * Though the specification <a href="https://tools.ietf.org/html/rfc7541#section-2"> does not define</a> how an encoder
+ * is to be implemented, a default implementation is provided by the method
+ * {@link #header(CharSequence, CharSequence, boolean)}.
  *
- * <p> To provide a custom encoding implementation, {@code Encoder} has to be
- * extended. A subclass then can access methods for encoding using specific
- * representations (e.g. {@link #literal(int, CharSequence, boolean) literal},
+ * <p>
+ * To provide a custom encoding implementation, {@code Encoder} has to be extended. A subclass then can access methods
+ * for encoding using specific representations (e.g. {@link #literal(int, CharSequence, boolean) literal},
  * {@link #indexed(int) indexed}, etc.)
  *
- * <p> An Encoder provides an incremental way of encoding headers.
- * {@link #encode(Buffer)} takes a buffer a returns a boolean indicating
- * whether, or not, the buffer was sufficiently sized to hold the
- * remaining of the encoded representation.
+ * <p>
+ * An Encoder provides an incremental way of encoding headers. {@link #encode(Buffer)} takes a buffer a returns a
+ * boolean indicating whether, or not, the buffer was sufficiently sized to hold the remaining of the encoded
+ * representation.
  *
- * <p> This way, there's no need to provide a buffer of a specific size, or to
- * resize (and copy) the buffer on demand, when the remaining encoded
- * representation will not fit in the buffer's remaining space. Instead, an
- * array of existing buffers can be used, prepended with a frame that encloses
- * the resulting header block afterwards.
+ * <p>
+ * This way, there's no need to provide a buffer of a specific size, or to resize (and copy) the buffer on demand, when
+ * the remaining encoded representation will not fit in the buffer's remaining space. Instead, an array of existing
+ * buffers can be used, prepended with a frame that encloses the resulting header block afterwards.
  *
- * <p> Splitting the encoding operation into header set up and header encoding,
- * separates long lived arguments ({@code name}, {@code value}, {@code
- * sensitivity}, etc.) from the short lived ones (e.g. {@code buffer}),
- * simplifying each operation itself.
+ * <p>
+ * Splitting the encoding operation into header set up and header encoding, separates long lived arguments
+ * ({@code name}, {@code value}, {@code
+ * sensitivity}, etc.) from the short lived ones (e.g. {@code buffer}), simplifying each operation itself.
  *
- * <p> The default implementation does not use dynamic table. It reports to a
- * coupled Decoder a size update with the value of {@code 0}, and never changes
- * it afterwards.
+ * <p>
+ * The default implementation does not use dynamic table. It reports to a coupled Decoder a size update with the value
+ * of {@code 0}, and never changes it afterwards.
  */
 public class Encoder {
 
@@ -91,13 +93,10 @@ public class Encoder {
 
     private final IndexedWriter indexedWriter = new IndexedWriter();
     private final LiteralWriter literalWriter = new LiteralWriter();
-    private final LiteralNeverIndexedWriter literalNeverIndexedWriter
-            = new LiteralNeverIndexedWriter();
-    private final LiteralWithIndexingWriter literalWithIndexingWriter
-            = new LiteralWithIndexingWriter();
+    private final LiteralNeverIndexedWriter literalNeverIndexedWriter = new LiteralNeverIndexedWriter();
+    private final LiteralWithIndexingWriter literalWithIndexingWriter = new LiteralWithIndexingWriter();
     private final SizeUpdateWriter sizeUpdateWriter = new SizeUpdateWriter();
-    private final BulkSizeUpdateWriter bulkSizeUpdateWriter
-            = new BulkSizeUpdateWriter();
+    private final BulkSizeUpdateWriter bulkSizeUpdateWriter = new BulkSizeUpdateWriter();
 
     private BinaryRepresentationWriter writer;
     private final HeaderTable headerTable;
@@ -112,19 +111,15 @@ public class Encoder {
     private boolean configuredCapacityUpdate;
 
     /**
-     * Constructs an {@code Encoder} with the specified maximum capacity of the
-     * header table.
+     * Constructs an {@code Encoder} with the specified maximum capacity of the header table.
      *
-     * <p> The value has to be agreed between decoder and encoder out-of-band,
-     * e.g. by a protocol that uses HPACK (see <a
-     * href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table
-     * Size</a>).
+     * <p>
+     * The value has to be agreed between decoder and encoder out-of-band, e.g. by a protocol that uses HPACK (see
+     * <a href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table Size</a>).
      *
-     * @param maxCapacity
-     *         a non-negative integer
+     * @param maxCapacity a non-negative integer
      *
-     * @throws IllegalArgumentException
-     *         if maxCapacity is negative
+     * @throws IllegalArgumentException if maxCapacity is negative
      */
     public Encoder(int maxCapacity) {
         if (maxCapacity < 0) {
@@ -140,48 +135,38 @@ public class Encoder {
     /**
      * Sets up the given header {@code (name, value)}.
      *
-     * <p> Fixates {@code name} and {@code value} for the duration of encoding.
+     * <p>
+     * Fixates {@code name} and {@code value} for the duration of encoding.
      *
-     * @param name
-     *         the name
-     * @param value
-     *         the value
+     * @param name the name
+     * @param value the value
      *
-     * @throws NullPointerException
-     *         if any of the arguments are {@code null}
-     * @throws IllegalStateException
-     *         if the encoder hasn't fully encoded the previous header, or
-     *         hasn't yet started to encode it
+     * @throws NullPointerException if any of the arguments are {@code null}
+     * @throws IllegalStateException if the encoder hasn't fully encoded the previous header, or hasn't yet started to
+     * encode it
      * @see #header(CharSequence, CharSequence, boolean)
      */
-    public void header(CharSequence name, CharSequence value)
-            throws IllegalStateException {
+    public void header(CharSequence name, CharSequence value) throws IllegalStateException {
         header(name, value, false);
     }
 
     /**
-     * Sets up the given header {@code (name, value)} with possibly sensitive
-     * value.
+     * Sets up the given header {@code (name, value)} with possibly sensitive value.
      *
-     * <p> Fixates {@code name} and {@code value} for the duration of encoding.
+     * <p>
+     * Fixates {@code name} and {@code value} for the duration of encoding.
      *
-     * @param name
-     *         the name
-     * @param value
-     *         the value
-     * @param sensitive
-     *         whether or not the value is sensitive
+     * @param name the name
+     * @param value the value
+     * @param sensitive whether or not the value is sensitive
      *
-     * @throws NullPointerException
-     *         if any of the arguments are {@code null}
-     * @throws IllegalStateException
-     *         if the encoder hasn't fully encoded the previous header, or
-     *         hasn't yet started to encode it
+     * @throws NullPointerException if any of the arguments are {@code null}
+     * @throws IllegalStateException if the encoder hasn't fully encoded the previous header, or hasn't yet started to
+     * encode it
      * @see #header(CharSequence, CharSequence)
      * @see DecodingCallback#onDecoded(CharSequence, CharSequence, boolean)
      */
-    public void header(CharSequence name, CharSequence value,
-                       boolean sensitive) throws IllegalStateException {
+    public void header(CharSequence name, CharSequence value, boolean sensitive) throws IllegalStateException {
         // Arguably a good balance between complexity of implementation and
         // efficiency of encoding
         requireNonNull(name, "name");
@@ -208,25 +193,22 @@ public class Encoder {
     /**
      * Sets a maximum capacity of the header table.
      *
-     * <p> The value has to be agreed between decoder and encoder out-of-band,
-     * e.g. by a protocol that uses HPACK (see <a
-     * href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table
-     * Size</a>).
+     * <p>
+     * The value has to be agreed between decoder and encoder out-of-band, e.g. by a protocol that uses HPACK (see
+     * <a href="https://tools.ietf.org/html/rfc7541#section-4.2">4.2. Maximum Table Size</a>).
      *
-     * <p> May be called any number of times after or before a complete header
-     * has been encoded.
+     * <p>
+     * May be called any number of times after or before a complete header has been encoded.
      *
-     * <p> If the encoder decides to change the actual capacity, an update will
-     * be encoded before a new encoding operation starts.
+     * <p>
+     * If the encoder decides to change the actual capacity, an update will be encoded before a new encoding operation
+     * starts.
      *
-     * @param capacity
-     *         a non-negative integer
+     * @param capacity a non-negative integer
      *
-     * @throws IllegalArgumentException
-     *         if capacity is negative
-     * @throws IllegalStateException
-     *         if the encoder hasn't fully encoded the previous header, or
-     *         hasn't yet started to encode it
+     * @throws IllegalArgumentException if capacity is negative
+     * @throws IllegalStateException if the encoder hasn't fully encoded the previous header, or hasn't yet started to
+     * encode it
      */
     public void setMaxCapacity(int capacity) {
         checkEncoding();
@@ -235,9 +217,7 @@ public class Encoder {
         }
         int calculated = calculateCapacity(capacity);
         if (calculated < 0 || calculated > capacity) {
-            throw new IllegalArgumentException(
-                    format("0 <= calculated <= capacity: calculated=%s, capacity=%s",
-                            calculated, capacity));
+            throw new IllegalArgumentException(format("0 <= calculated <= capacity: calculated=%s, capacity=%s", calculated, capacity));
         }
         capacityUpdate = true;
         // maxCapacity needs to be updated unconditionally, so the encoder
@@ -258,29 +238,23 @@ public class Encoder {
     }
 
     /**
-     * Encodes the {@linkplain #header(CharSequence, CharSequence) set up}
-     * header into the given buffer.
+     * Encodes the {@linkplain #header(CharSequence, CharSequence) set up} header into the given buffer.
      *
-     * <p> The encoder writes as much as possible of the header's binary
-     * representation into the given buffer, starting at the buffer's position,
-     * and increments its position to reflect the bytes written. The buffer's
-     * mark and limit will not be modified.
+     * <p>
+     * The encoder writes as much as possible of the header's binary representation into the given buffer, starting at the
+     * buffer's position, and increments its position to reflect the bytes written. The buffer's mark and limit will not be
+     * modified.
      *
-     * <p> Once the method has returned {@code true}, the current header is
-     * deemed encoded. A new header may be set up.
+     * <p>
+     * Once the method has returned {@code true}, the current header is deemed encoded. A new header may be set up.
      *
-     * @param headerBlock
-     *         the buffer to encode the header into, may be empty
+     * @param headerBlock the buffer to encode the header into, may be empty
      *
-     * @return {@code true} if the current header has been fully encoded,
-     *         {@code false} otherwise
+     * @return {@code true} if the current header has been fully encoded, {@code false} otherwise
      *
-     * @throws NullPointerException
-     *         if the buffer is {@code null}
-     * @throws ReadOnlyBufferException
-     *         if this buffer is read-only
-     * @throws IllegalStateException
-     *         if there is no set up header
+     * @throws NullPointerException if the buffer is {@code null}
+     * @throws ReadOnlyBufferException if this buffer is read-only
+     * @throws IllegalStateException if there is no set up header
      */
     public final boolean encode(Buffer headerBlock) {
         if (!encoding) {
@@ -331,74 +305,50 @@ public class Encoder {
         writer = indexedWriter.index(index);
     }
 
-    protected final void literal(int index, CharSequence value,
-                                 boolean useHuffman)
-            throws IndexOutOfBoundsException {
+    protected final void literal(int index, CharSequence value, boolean useHuffman) throws IndexOutOfBoundsException {
         checkEncoding();
         encoding = true;
-        writer = literalWriter
-                .index(index).value(value, useHuffman);
+        writer = literalWriter.index(index).value(value, useHuffman);
     }
 
-    protected final void literal(CharSequence name, boolean nameHuffman,
-                                 CharSequence value, boolean valueHuffman) {
+    protected final void literal(CharSequence name, boolean nameHuffman, CharSequence value, boolean valueHuffman) {
         checkEncoding();
         encoding = true;
-        writer = literalWriter
-                .name(name, nameHuffman).value(value, valueHuffman);
+        writer = literalWriter.name(name, nameHuffman).value(value, valueHuffman);
     }
 
-    protected final void literalNeverIndexed(int index,
-                                             CharSequence value,
-                                             boolean valueHuffman)
-            throws IndexOutOfBoundsException {
+    protected final void literalNeverIndexed(int index, CharSequence value, boolean valueHuffman) throws IndexOutOfBoundsException {
         checkEncoding();
         encoding = true;
-        writer = literalNeverIndexedWriter
-                .index(index).value(value, valueHuffman);
+        writer = literalNeverIndexedWriter.index(index).value(value, valueHuffman);
     }
 
-    protected final void literalNeverIndexed(CharSequence name,
-                                             boolean nameHuffman,
-                                             CharSequence value,
-                                             boolean valueHuffman) {
+    protected final void literalNeverIndexed(CharSequence name, boolean nameHuffman, CharSequence value, boolean valueHuffman) {
         checkEncoding();
         encoding = true;
-        writer = literalNeverIndexedWriter
-                .name(name, nameHuffman).value(value, valueHuffman);
+        writer = literalNeverIndexedWriter.name(name, nameHuffman).value(value, valueHuffman);
     }
 
     @SuppressWarnings("unused")
-    protected final void literalWithIndexing(int index,
-                                             CharSequence value,
-                                             boolean valueHuffman)
-            throws IndexOutOfBoundsException {
+    protected final void literalWithIndexing(int index, CharSequence value, boolean valueHuffman) throws IndexOutOfBoundsException {
         checkEncoding();
         encoding = true;
-        writer = literalWithIndexingWriter
-                .index(index).value(value, valueHuffman);
+        writer = literalWithIndexingWriter.index(index).value(value, valueHuffman);
     }
 
     @SuppressWarnings("unused")
-    protected final void literalWithIndexing(CharSequence name,
-                                             boolean nameHuffman,
-                                             CharSequence value,
-                                             boolean valueHuffman) {
+    protected final void literalWithIndexing(CharSequence name, boolean nameHuffman, CharSequence value, boolean valueHuffman) {
         checkEncoding();
         encoding = true;
-        writer = literalWithIndexingWriter
-                .name(name, nameHuffman).value(value, valueHuffman);
+        writer = literalWithIndexingWriter.name(name, nameHuffman).value(value, valueHuffman);
     }
 
     @SuppressWarnings("unused")
-    protected final void sizeUpdate(int capacity)
-            throws IllegalArgumentException {
+    protected final void sizeUpdate(int capacity) throws IllegalArgumentException {
         checkEncoding();
         // Ensure subclass follows the contract
         if (capacity > this.maxCapacity) {
-            throw new IllegalArgumentException(
-                    format("capacity <= maxCapacity: capacity=%s, maxCapacity=%s",
-                            capacity, maxCapacity));
+            throw new IllegalArgumentException(format("capacity <= maxCapacity: capacity=%s, maxCapacity=%s", capacity, maxCapacity));
         }
         writer = sizeUpdateWriter.maxHeaderTableSize(capacity);
     }
@@ -414,8 +364,7 @@ public class Encoder {
 
     protected final void checkEncoding() {
         if (encoding) {
-            throw new IllegalStateException(
-                    "Previous encoding operation hasn't finished yet");
+            throw new IllegalStateException("Previous encoding operation hasn't finished yet");
         }
     }
 }

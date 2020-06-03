@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,10 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.junit.runners.Parameterized;
-
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.junit.runners.Parameterized;
 
 public class AbstractThreadLocalMemoryManagerTest {
 
@@ -27,22 +27,19 @@ public class AbstractThreadLocalMemoryManagerTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getOptimizedForMultiplexing() {
-        return Arrays.asList(new Object[][]{
-                {0},
-                {1},
-        });
+        return Arrays.asList(new Object[][] { { 0 }, { 1 }, });
     }
 
     public AbstractThreadLocalMemoryManagerTest(final int mmType) {
         switch (mmType) {
-            case 0:
-                mm = new HeapMemoryManager();
-                break;
-            case 1:
-                mm = new ByteBufferManager();
-                break;
-            default:
-                throw new IllegalStateException("Unknown thread local memory manager type");
+        case 0:
+            mm = new HeapMemoryManager();
+            break;
+        case 1:
+            mm = new ByteBufferManager();
+            break;
+        default:
+            throw new IllegalStateException("Unknown thread local memory manager type");
         }
     }
 

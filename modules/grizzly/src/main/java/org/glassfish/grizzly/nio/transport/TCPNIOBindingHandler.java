@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,24 +16,26 @@
 
 package org.glassfish.grizzly.nio.transport;
 
-import org.glassfish.grizzly.AbstractBindingHandler;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.utils.Exceptions;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.locks.Lock;
 
+import org.glassfish.grizzly.AbstractBindingHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.utils.Exceptions;
+
 /**
- * This class may be used to apply a custom {@link org.glassfish.grizzly.Processor} and/or {@link org.glassfish.grizzly.ProcessorSelector}
- * atomically within a bind operation - not something that can normally be done using the {@link TCPNIOTransport} alone.
+ * This class may be used to apply a custom {@link org.glassfish.grizzly.Processor} and/or
+ * {@link org.glassfish.grizzly.ProcessorSelector} atomically within a bind operation - not something that can normally
+ * be done using the {@link TCPNIOTransport} alone.
  *
  * Example usage:
+ * 
  * <pre>
- *     TCPNIOBindingHandler handler = TCPNIOBindingHandler.builder(transport).setProcessor(custom).build();
- *     handler.bind(socketAddress);
+ * TCPNIOBindingHandler handler = TCPNIOBindingHandler.builder(transport).setProcessor(custom).build();
+ * handler.bind(socketAddress);
  * </pre>
  *
  * @since 2.2.19
@@ -44,15 +46,12 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
 
     // ------------------------------------------------------------ Constructors
 
-
     TCPNIOBindingHandler(final TCPNIOTransport tcpTransport) {
         super(tcpTransport);
         this.tcpTransport = tcpTransport;
     }
 
-
     // ------------------------------- Methods from AbstractBindingHandler
-
 
     @Override
     public TCPNIOServerConnection bind(SocketAddress socketAddress) throws IOException {
@@ -61,18 +60,12 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
 
     @Override
     public TCPNIOServerConnection bind(SocketAddress socketAddress, int backlog) throws IOException {
-        return bindToChannelAndAddress(
-                tcpTransport.getSelectorProvider().openServerSocketChannel(),
-                socketAddress,
-                backlog);
+        return bindToChannelAndAddress(tcpTransport.getSelectorProvider().openServerSocketChannel(), socketAddress, backlog);
     }
 
     @Override
     public TCPNIOServerConnection bindToInherited() throws IOException {
-        return bindToChannelAndAddress(
-                this.<ServerSocketChannel>getSystemInheritedChannel(ServerSocketChannel.class),
-                null,
-                -1);
+        return bindToChannelAndAddress(this.<ServerSocketChannel>getSystemInheritedChannel(ServerSocketChannel.class), null, -1);
     }
 
     @Override
@@ -81,17 +74,13 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
     }
 
     public static Builder builder(final TCPNIOTransport transport) {
-       return new TCPNIOBindingHandler.Builder().transport(transport);
+        return new TCPNIOBindingHandler.Builder().transport(transport);
     }
-
 
     // --------------------------------------------------------- Private Methods
 
-
-    private TCPNIOServerConnection bindToChannelAndAddress(final ServerSocketChannel serverSocketChannel,
-                                                           final SocketAddress socketAddress,
-                                                           final int backlog)
-    throws IOException {
+    private TCPNIOServerConnection bindToChannelAndAddress(final ServerSocketChannel serverSocketChannel, final SocketAddress socketAddress, final int backlog)
+            throws IOException {
         TCPNIOServerConnection serverConnection = null;
 
         final Lock lock = tcpTransport.getState().getStateLocker().writeLock();
@@ -100,15 +89,13 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
 
             final ServerSocket serverSocket = serverSocketChannel.socket();
 
-            tcpTransport.getChannelConfigurator().preConfigure(transport,
-                    serverSocketChannel);
-            
+            tcpTransport.getChannelConfigurator().preConfigure(transport, serverSocketChannel);
+
             if (socketAddress != null) {
                 serverSocket.bind(socketAddress, backlog);
             }
 
-            tcpTransport.getChannelConfigurator().postConfigure(transport,
-                    serverSocketChannel);
+            tcpTransport.getChannelConfigurator().postConfigure(transport, serverSocketChannel);
 
             serverConnection = tcpTransport.obtainServerNIOConnection(serverSocketChannel);
             serverConnection.setProcessor(getProcessor());
@@ -139,9 +126,7 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
         }
     }
 
-
     // ----------------------------------------------------------- Inner Classes
-
 
     public static class Builder extends AbstractBindingHandler.Builder<Builder> {
 
@@ -152,6 +137,7 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
             return this;
         }
 
+        @Override
         public TCPNIOBindingHandler build() {
             return (TCPNIOBindingHandler) super.build();
         }
@@ -159,13 +145,11 @@ public class TCPNIOBindingHandler extends AbstractBindingHandler {
         @Override
         protected AbstractBindingHandler create() {
             if (transport == null) {
-                throw new IllegalStateException(
-                        "Unable to create TCPNIOBindingHandler - transport is null");
+                throw new IllegalStateException("Unable to create TCPNIOBindingHandler - transport is null");
             }
             return new TCPNIOBindingHandler(transport);
         }
 
     } // END Builder
-
 
 }

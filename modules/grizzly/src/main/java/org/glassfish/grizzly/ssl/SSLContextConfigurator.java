@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,9 +31,11 @@ import java.security.cert.CertificateException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -70,9 +72,8 @@ public class SSLContextConfigurator {
     private static final Logger LOGGER = Grizzly.logger(SSLContextConfigurator.class);
 
     /**
-     * Default SSL configuration. If you have changed any of
-     * {@link System#getProperties()} of javax.net.ssl family you should refresh
-     * this configuration by calling {@link #retrieve(java.util.Properties)}.
+     * Default SSL configuration. If you have changed any of {@link System#getProperties()} of javax.net.ssl family you
+     * should refresh this configuration by calling {@link #retrieve(java.util.Properties)}.
      */
     public static final SSLContextConfigurator DEFAULT_CONFIG = new SSLContextConfigurator();
 
@@ -98,9 +99,8 @@ public class SSLContextConfigurator {
     private String securityProtocol = "TLS";
 
     /**
-     * Default constructor. Reads configuration properties from
-     * {@link System#getProperties()}. Calls {@link #SSLContextConfigurator(boolean)} with
-     * <code>true</code>.
+     * Default constructor. Reads configuration properties from {@link System#getProperties()}. Calls
+     * {@link #SSLContextConfigurator(boolean)} with <code>true</code>.
      */
     public SSLContextConfigurator() {
         this(true);
@@ -109,10 +109,8 @@ public class SSLContextConfigurator {
     /**
      * Constructor that allows you creating empty configuration.
      *
-     * @param readSystemProperties
-     *            If <code>true</code> populates configuration from
-     *            {@link System#getProperties()}, else you have empty
-     *            configuration.
+     * @param readSystemProperties If <code>true</code> populates configuration from {@link System#getProperties()}, else
+     * you have empty configuration.
      */
     public SSLContextConfigurator(boolean readSystemProperties) {
         if (readSystemProperties) {
@@ -123,8 +121,7 @@ public class SSLContextConfigurator {
     /**
      * Sets the <em>trust</em> store provider name.
      *
-     * @param trustStoreProvider
-     *            <em>Trust</em> store provider to set.
+     * @param trustStoreProvider <em>Trust</em> store provider to set.
      */
     public void setTrustStoreProvider(String trustStoreProvider) {
         this.trustStoreProvider = trustStoreProvider;
@@ -133,8 +130,7 @@ public class SSLContextConfigurator {
     /**
      * Sets the <em>key</em> store provider name.
      *
-     * @param keyStoreProvider
-     *            <em>Key</em> store provider to set.
+     * @param keyStoreProvider <em>Key</em> store provider to set.
      */
     public void setKeyStoreProvider(String keyStoreProvider) {
         this.keyStoreProvider = keyStoreProvider;
@@ -143,8 +139,7 @@ public class SSLContextConfigurator {
     /**
      * Type of <em>trust</em> store.
      *
-     * @param trustStoreType
-     *            Type of <em>trust</em> store to set.
+     * @param trustStoreType Type of <em>trust</em> store to set.
      */
     public void setTrustStoreType(String trustStoreType) {
         this.trustStoreType = trustStoreType;
@@ -153,8 +148,7 @@ public class SSLContextConfigurator {
     /**
      * Type of <em>key</em> store.
      *
-     * @param keyStoreType
-     *            Type of <em>key</em> store to set.
+     * @param keyStoreType Type of <em>key</em> store to set.
      */
     public void setKeyStoreType(String keyStoreType) {
         this.keyStoreType = keyStoreType;
@@ -163,8 +157,7 @@ public class SSLContextConfigurator {
     /**
      * Password of <em>trust</em> store.
      *
-     * @param trustStorePass
-     *            Password of <em>trust</em> store to set.
+     * @param trustStorePass Password of <em>trust</em> store to set.
      */
     public void setTrustStorePass(String trustStorePass) {
         this.trustStorePass = trustStorePass.toCharArray();
@@ -173,8 +166,7 @@ public class SSLContextConfigurator {
     /**
      * Password of <em>key</em> store.
      *
-     * @param keyStorePass
-     *            Password of <em>key</em> store to set.
+     * @param keyStorePass Password of <em>key</em> store to set.
      */
     public void setKeyStorePass(String keyStorePass) {
         this.keyStorePass = keyStorePass.toCharArray();
@@ -183,8 +175,7 @@ public class SSLContextConfigurator {
     /**
      * Password of <em>key</em> store.
      *
-     * @param keyStorePass
-     *            Password of <em>key</em> store to set.
+     * @param keyStorePass Password of <em>key</em> store to set.
      */
     public void setKeyStorePass(char[] keyStorePass) {
         this.keyStorePass = keyStorePass;
@@ -193,8 +184,7 @@ public class SSLContextConfigurator {
     /**
      * Password of the key in the <em>key</em> store.
      *
-     * @param keyPass
-     *            Password of <em>key</em> to set.
+     * @param keyPass Password of <em>key</em> to set.
      */
     public void setKeyPass(String keyPass) {
         this.keyPass = keyPass.toCharArray();
@@ -203,21 +193,18 @@ public class SSLContextConfigurator {
     /**
      * Password of the key in the <em>key</em> store.
      *
-     * @param keyPass
-     *            Password of <em>key</em> to set.
+     * @param keyPass Password of <em>key</em> to set.
      */
     public void setKeyPass(char[] keyPass) {
         this.keyPass = keyPass;
     }
 
     /**
-     * Sets trust store file name, also makes sure that if other trust store
-     * configuration parameters are not set to set them to default values.
-     * Method resets trust store bytes if any have been set before via
+     * Sets trust store file name, also makes sure that if other trust store configuration parameters are not set to set
+     * them to default values. Method resets trust store bytes if any have been set before via
      * {@link #setTrustStoreBytes(byte[])}.
-     * 
-     * @param trustStoreFile
-     *            File name of trust store.
+     *
+     * @param trustStoreFile File name of trust store.
      */
     public void setTrustStoreFile(String trustStoreFile) {
         this.trustStoreFile = trustStoreFile;
@@ -225,12 +212,10 @@ public class SSLContextConfigurator {
     }
 
     /**
-     * Sets trust store payload as byte array.
-     * Method resets trust store file if any has been set before via
+     * Sets trust store payload as byte array. Method resets trust store file if any has been set before via
      * {@link #setTrustStoreFile(java.lang.String)}.
-     * 
-     * @param trustStoreBytes
-     *            trust store payload.
+     *
+     * @param trustStoreBytes trust store payload.
      */
     public void setTrustStoreBytes(byte[] trustStoreBytes) {
         this.trustStoreBytes = trustStoreBytes;
@@ -238,13 +223,10 @@ public class SSLContextConfigurator {
     }
 
     /**
-     * Sets key store file name, also makes sure that if other key store
-     * configuration parameters are not set to set them to default values.
-     * Method resets key store bytes if any have been set before via
-     * {@link #setKeyStoreBytes(byte[])}.
-     * 
-     * @param keyStoreFile
-     *            File name of key store.
+     * Sets key store file name, also makes sure that if other key store configuration parameters are not set to set them to
+     * default values. Method resets key store bytes if any have been set before via {@link #setKeyStoreBytes(byte[])}.
+     *
+     * @param keyStoreFile File name of key store.
      */
     public void setKeyStoreFile(String keyStoreFile) {
         this.keyStoreFile = keyStoreFile;
@@ -252,42 +234,36 @@ public class SSLContextConfigurator {
     }
 
     /**
-     * Sets key store payload as byte array.
-     * Method resets key store file if any has been set before via
+     * Sets key store payload as byte array. Method resets key store file if any has been set before via
      * {@link #setKeyStoreFile(java.lang.String)}.
-     * 
-     * @param keyStoreBytes
-     *            key store payload.
+     *
+     * @param keyStoreBytes key store payload.
      */
     public void setKeyStoreBytes(byte[] keyStoreBytes) {
         this.keyStoreBytes = keyStoreBytes;
         this.keyStoreFile = null;
     }
-    
+
     /**
      * Sets the trust manager factory algorithm.
      *
-     * @param trustManagerFactoryAlgorithm
-     *            the trust manager factory algorithm.
+     * @param trustManagerFactoryAlgorithm the trust manager factory algorithm.
      */
-    public void setTrustManagerFactoryAlgorithm(
-            String trustManagerFactoryAlgorithm) {
+    public void setTrustManagerFactoryAlgorithm(String trustManagerFactoryAlgorithm) {
         this.trustManagerFactoryAlgorithm = trustManagerFactoryAlgorithm;
     }
 
     /**
      * Sets the key manager factory algorithm.
      *
-     * @param keyManagerFactoryAlgorithm
-     *            the key manager factory algorithm.
+     * @param keyManagerFactoryAlgorithm the key manager factory algorithm.
      */
     public void setKeyManagerFactoryAlgorithm(String keyManagerFactoryAlgorithm) {
         this.keyManagerFactoryAlgorithm = keyManagerFactoryAlgorithm;
     }
 
     /**
-     * Sets the SSLContext protocol. The default value is <code>TLS</code> if
-     * this is null.
+     * Sets the SSLContext protocol. The default value is <code>TLS</code> if this is null.
      *
      * @param securityProtocol Protocol for {@link javax.net.ssl.SSLContext#getProtocol()}.
      */
@@ -298,8 +274,7 @@ public class SSLContextConfigurator {
     /**
      * Validates {@link SSLContextConfigurator} configuration.
      *
-     * @return <code>true</code> if configuration is valid, else
-     *         <code>false</code>.
+     * @return <code>true</code> if configuration is valid, else <code>false</code>.
      *
      * @deprecated Use {@link #createSSLContext(boolean)}.
      */
@@ -311,10 +286,8 @@ public class SSLContextConfigurator {
     /**
      * Validates {@link SSLContextConfigurator} configuration.
      *
-     * @param needsKeyStore
-     *            forces failure if no keystore is specified.
-     * @return <code>true</code> if configuration is valid, else
-     *         <code>false</code>.
+     * @param needsKeyStore forces failure if no keystore is specified.
+     * @return <code>true</code> if configuration is valid, else <code>false</code>.
      *
      * @deprecated Use {@link #createSSLContext(boolean)}.
      */
@@ -326,25 +299,17 @@ public class SSLContextConfigurator {
             try {
                 KeyStore keyStore;
                 if (keyStoreProvider != null) {
-                    keyStore = KeyStore.getInstance(
-                            keyStoreType != null ? keyStoreType : KeyStore
-                                    .getDefaultType(), keyStoreProvider);
+                    keyStore = KeyStore.getInstance(keyStoreType != null ? keyStoreType : KeyStore.getDefaultType(), keyStoreProvider);
                 } else {
-                    keyStore = KeyStore
-                            .getInstance(keyStoreType != null ? keyStoreType
-                                    : KeyStore.getDefaultType());
+                    keyStore = KeyStore.getInstance(keyStoreType != null ? keyStoreType : KeyStore.getDefaultType());
                 }
                 loadBytes(keyStoreBytes, keyStoreFile, keyStorePass, keyStore);
                 String kmfAlgorithm = keyManagerFactoryAlgorithm;
                 if (kmfAlgorithm == null) {
-                    kmfAlgorithm = System.getProperty(
-                            KEY_FACTORY_MANAGER_ALGORITHM, KeyManagerFactory
-                                    .getDefaultAlgorithm());
+                    kmfAlgorithm = System.getProperty(KEY_FACTORY_MANAGER_ALGORITHM, KeyManagerFactory.getDefaultAlgorithm());
                 }
-                KeyManagerFactory keyManagerFactory = KeyManagerFactory
-                        .getInstance(kmfAlgorithm);
-                keyManagerFactory.init(keyStore, keyPass != null ? keyPass
-                        : keyStorePass);
+                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(kmfAlgorithm);
+                keyManagerFactory.init(keyStore, keyPass != null ? keyPass : keyStorePass);
             } catch (KeyStoreException e) {
                 LOGGER.log(Level.FINE, "Error initializing key store", e);
                 valid = false;
@@ -355,20 +320,16 @@ public class SSLContextConfigurator {
                 LOGGER.log(Level.FINE, "Key store unrecoverable exception.", e);
                 valid = false;
             } catch (FileNotFoundException e) {
-                LOGGER.log(Level.FINE, "Can't find key store file: "
-                        + keyStoreFile, e);
+                LOGGER.log(Level.FINE, "Can't find key store file: " + keyStoreFile, e);
                 valid = false;
             } catch (IOException e) {
-                LOGGER.log(Level.FINE, "Error loading key store from file: "
-                        + keyStoreFile, e);
+                LOGGER.log(Level.FINE, "Error loading key store from file: " + keyStoreFile, e);
                 valid = false;
             } catch (NoSuchAlgorithmException e) {
-                LOGGER.log(Level.FINE,
-                        "Error initializing key manager factory (no such algorithm)", e);
+                LOGGER.log(Level.FINE, "Error initializing key manager factory (no such algorithm)", e);
                 valid = false;
             } catch (NoSuchProviderException e) {
-                LOGGER.log(Level.FINE,
-                        "Error initializing key store (no such provider)", e);
+                LOGGER.log(Level.FINE, "Error initializing key store (no such provider)", e);
                 valid = false;
             }
         } else {
@@ -379,25 +340,18 @@ public class SSLContextConfigurator {
             try {
                 KeyStore trustStore;
                 if (trustStoreProvider != null) {
-                    trustStore = KeyStore.getInstance(
-                            trustStoreType != null ? trustStoreType : KeyStore
-                                    .getDefaultType(), trustStoreProvider);
+                    trustStore = KeyStore.getInstance(trustStoreType != null ? trustStoreType : KeyStore.getDefaultType(), trustStoreProvider);
                 } else {
-                    trustStore = KeyStore
-                            .getInstance(trustStoreType != null ? trustStoreType
-                                    : KeyStore.getDefaultType());
+                    trustStore = KeyStore.getInstance(trustStoreType != null ? trustStoreType : KeyStore.getDefaultType());
                 }
                 loadBytes(trustStoreBytes, trustStoreFile, trustStorePass, trustStore);
 
                 String tmfAlgorithm = trustManagerFactoryAlgorithm;
                 if (tmfAlgorithm == null) {
-                    tmfAlgorithm = System.getProperty(
-                            TRUST_FACTORY_MANAGER_ALGORITHM,
-                            TrustManagerFactory.getDefaultAlgorithm());
+                    tmfAlgorithm = System.getProperty(TRUST_FACTORY_MANAGER_ALGORITHM, TrustManagerFactory.getDefaultAlgorithm());
                 }
 
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory
-                        .getInstance(tmfAlgorithm);
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(tmfAlgorithm);
                 trustManagerFactory.init(trustStore);
             } catch (KeyStoreException e) {
                 LOGGER.log(Level.FINE, "Error initializing trust store", e);
@@ -406,21 +360,16 @@ public class SSLContextConfigurator {
                 LOGGER.log(Level.FINE, "Trust store certificate exception.", e);
                 valid = false;
             } catch (FileNotFoundException e) {
-                LOGGER.log(Level.FINE, "Can't find trust store file: "
-                        + trustStoreFile, e);
+                LOGGER.log(Level.FINE, "Can't find trust store file: " + trustStoreFile, e);
                 valid = false;
             } catch (IOException e) {
-                LOGGER.log(Level.FINE, "Error loading trust store from file: "
-                        + trustStoreFile, e);
+                LOGGER.log(Level.FINE, "Error loading trust store from file: " + trustStoreFile, e);
                 valid = false;
             } catch (NoSuchAlgorithmException e) {
-                LOGGER.log(Level.FINE,
-                           "Error initializing trust manager factory (no such algorithm)",
-                           e);
+                LOGGER.log(Level.FINE, "Error initializing trust manager factory (no such algorithm)", e);
                 valid = false;
             } catch (NoSuchProviderException e) {
-                LOGGER.log(Level.FINE,
-                        "Error initializing trust store (no such provider)", e);
+                LOGGER.log(Level.FINE, "Error initializing trust store (no such provider)", e);
                 valid = false;
             }
         }
@@ -428,8 +377,8 @@ public class SSLContextConfigurator {
     }
 
     /**
-     * Create a new {@link SSLContext}.  Note that if there are any problems with the key or trust stores, that no
-     * exception will be thrown.
+     * Create a new {@link SSLContext}. Note that if there are any problems with the key or trust stores, that no exception
+     * will be thrown.
      *
      * @return a new {@link SSLContext}
      *
@@ -441,16 +390,14 @@ public class SSLContextConfigurator {
     }
 
     /**
-     * Create a new {@link SSLContext}.  If the {@link SSLContext} cannot be created for whatever reason,
-     * a {@link GenericStoreException}
-     * will be raised containing the root cause of the failure.
+     * Create a new {@link SSLContext}. If the {@link SSLContext} cannot be created for whatever reason, a
+     * {@link GenericStoreException} will be raised containing the root cause of the failure.
      *
      * @param throwException <code>true</code> if an exception should be raised upon failure.
      *
      * @return a new {@link SSLContext}
      *
-     * @throws GenericStoreException <code>throwException</code> is <code>true</code> and
-     *  the SSLContext cannot be created
+     * @throws GenericStoreException <code>throwException</code> is <code>true</code> and the SSLContext cannot be created
      *
      * @since 2.3.28
      */
@@ -465,26 +412,18 @@ public class SSLContextConfigurator {
                 try {
                     KeyStore keyStore;
                     if (keyStoreProvider != null) {
-                        keyStore = KeyStore.getInstance(
-                                keyStoreType != null ? keyStoreType : KeyStore
-                                        .getDefaultType(), keyStoreProvider);
+                        keyStore = KeyStore.getInstance(keyStoreType != null ? keyStoreType : KeyStore.getDefaultType(), keyStoreProvider);
                     } else {
-                        keyStore = KeyStore
-                                .getInstance(keyStoreType != null ? keyStoreType
-                                        : KeyStore.getDefaultType());
+                        keyStore = KeyStore.getInstance(keyStoreType != null ? keyStoreType : KeyStore.getDefaultType());
                     }
                     loadBytes(keyStoreBytes, keyStoreFile, keyStorePass, keyStore);
 
                     String kmfAlgorithm = keyManagerFactoryAlgorithm;
                     if (kmfAlgorithm == null) {
-                        kmfAlgorithm = System.getProperty(
-                                KEY_FACTORY_MANAGER_ALGORITHM,
-                                KeyManagerFactory.getDefaultAlgorithm());
+                        kmfAlgorithm = System.getProperty(KEY_FACTORY_MANAGER_ALGORITHM, KeyManagerFactory.getDefaultAlgorithm());
                     }
-                    keyManagerFactory = KeyManagerFactory
-                            .getInstance(kmfAlgorithm);
-                    keyManagerFactory.init(keyStore, keyPass != null ? keyPass
-                            : keyStorePass);
+                    keyManagerFactory = KeyManagerFactory.getInstance(kmfAlgorithm);
+                    keyManagerFactory.init(keyStore, keyPass != null ? keyPass : keyStorePass);
                 } catch (KeyStoreException e) {
                     LOGGER.log(Level.FINE, "Error initializing key store", e);
                     if (throwException) {
@@ -524,26 +463,18 @@ public class SSLContextConfigurator {
                 try {
                     KeyStore trustStore;
                     if (trustStoreProvider != null) {
-                        trustStore = KeyStore.getInstance(
-                                trustStoreType != null ? trustStoreType
-                                        : KeyStore.getDefaultType(),
-                                trustStoreProvider);
+                        trustStore = KeyStore.getInstance(trustStoreType != null ? trustStoreType : KeyStore.getDefaultType(), trustStoreProvider);
                     } else {
-                        trustStore = KeyStore
-                                .getInstance(trustStoreType != null ? trustStoreType
-                                        : KeyStore.getDefaultType());
+                        trustStore = KeyStore.getInstance(trustStoreType != null ? trustStoreType : KeyStore.getDefaultType());
                     }
                     loadBytes(trustStoreBytes, trustStoreFile, trustStorePass, trustStore);
 
                     String tmfAlgorithm = trustManagerFactoryAlgorithm;
                     if (tmfAlgorithm == null) {
-                        tmfAlgorithm = System.getProperty(
-                                TRUST_FACTORY_MANAGER_ALGORITHM,
-                                TrustManagerFactory.getDefaultAlgorithm());
+                        tmfAlgorithm = System.getProperty(TRUST_FACTORY_MANAGER_ALGORITHM, TrustManagerFactory.getDefaultAlgorithm());
                     }
 
-                    trustManagerFactory = TrustManagerFactory
-                            .getInstance(tmfAlgorithm);
+                    trustManagerFactory = TrustManagerFactory.getInstance(tmfAlgorithm);
                     trustManagerFactory.init(trustStore);
                 } catch (KeyStoreException e) {
                     LOGGER.log(Level.FINE, "Error initializing trust store", e);
@@ -583,10 +514,8 @@ public class SSLContextConfigurator {
                 secProtocol = securityProtocol;
             }
             sslContext = SSLContext.getInstance(secProtocol);
-            sslContext.init(keyManagerFactory != null ? keyManagerFactory
-                    .getKeyManagers() : null,
-                    trustManagerFactory != null ? trustManagerFactory
-                            .getTrustManagers() : null, null);
+            sslContext.init(keyManagerFactory != null ? keyManagerFactory.getKeyManagers() : null,
+                    trustManagerFactory != null ? trustManagerFactory.getTrustManagers() : null, null);
         } catch (KeyManagementException e) {
             LOGGER.log(Level.FINE, "Key management error.", e);
             if (throwException) {
@@ -610,8 +539,7 @@ public class SSLContextConfigurator {
         keyStoreType = props.getProperty(KEY_STORE_TYPE);
 
         if (props.getProperty(TRUST_STORE_PASSWORD) != null) {
-            trustStorePass = props.getProperty(TRUST_STORE_PASSWORD)
-                    .toCharArray();
+            trustStorePass = props.getProperty(TRUST_STORE_PASSWORD).toCharArray();
         } else {
             trustStorePass = null;
         }
@@ -627,7 +555,7 @@ public class SSLContextConfigurator {
 
         trustStoreBytes = null;
         keyStoreBytes = null;
-        
+
         securityProtocol = "TLS";
     }
 

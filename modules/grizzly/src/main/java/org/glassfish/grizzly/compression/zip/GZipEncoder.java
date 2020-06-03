@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,6 +19,7 @@ package org.glassfish.grizzly.compression.zip;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.TransformationException;
@@ -29,8 +30,7 @@ import org.glassfish.grizzly.memory.ByteBufferArray;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * This class implements a {@link org.glassfish.grizzly.Transformer} which encodes plain data to
- * the GZIP format.
+ * This class implements a {@link org.glassfish.grizzly.Transformer} which encodes plain data to the GZIP format.
  *
  * @author Alexey Stashok
  */
@@ -48,16 +48,16 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
 
     static {
         header = MemoryManager.DEFAULT_MEMORY_MANAGER.allocate(10);
-        header.put((byte) GZIP_MAGIC);                // Magic number (short)
-        header.put((byte) (GZIP_MAGIC >> 8));                // Magic number (short)
-        header.put((byte) Deflater.DEFLATED);         // Compression method (CM)
-        header.put((byte) 0);                         // Flags (FLG)
-        header.put((byte) 0);                         // Modification time MTIME (int)
-        header.put((byte) 0);                         // Modification time MTIME (int)
-        header.put((byte) 0);                         // Modification time MTIME (int)
-        header.put((byte) 0);                         // Modification time MTIME (int)
-        header.put((byte) 0);                         // Extra flags (XFLG)
-        header.put((byte) 0);                         // Operating system (OS)
+        header.put((byte) GZIP_MAGIC); // Magic number (short)
+        header.put((byte) (GZIP_MAGIC >> 8)); // Magic number (short)
+        header.put((byte) Deflater.DEFLATED); // Compression method (CM)
+        header.put((byte) 0); // Flags (FLG)
+        header.put((byte) 0); // Modification time MTIME (int)
+        header.put((byte) 0); // Modification time MTIME (int)
+        header.put((byte) 0); // Modification time MTIME (int)
+        header.put((byte) 0); // Modification time MTIME (int)
+        header.put((byte) 0); // Extra flags (XFLG)
+        header.put((byte) 0); // Operating system (OS)
 
         header.flip();
     }
@@ -69,7 +69,6 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
     public GZipEncoder(int bufferSize) {
         this.bufferSize = bufferSize;
     }
-
 
     /**
      * {@inheritDoc}
@@ -99,8 +98,7 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
      * {@inheritDoc}
      */
     @Override
-    protected TransformationResult<Buffer, Buffer> transformImpl(
-            AttributeStorage storage, Buffer input) throws TransformationException {
+    protected TransformationResult<Buffer, Buffer> transformImpl(AttributeStorage storage, Buffer input) throws TransformationException {
 
         final MemoryManager memoryManager = obtainMemoryManager(storage);
         final GZipOutputState state = (GZipOutputState) obtainStateObject(storage);
@@ -121,18 +119,16 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
         // Put GZIP header if needed
         if (!state.isHeaderWritten) {
             state.isHeaderWritten = true;
-            
-            encodedBuffer = Buffers.appendBuffers(memoryManager,
-                    getHeader(), encodedBuffer);
+
+            encodedBuffer = Buffers.appendBuffers(memoryManager, getHeader(), encodedBuffer);
         }
 
         return TransformationResult.createCompletedResult(encodedBuffer, null);
     }
 
     /**
-     * Finishes to compress data to the output stream without closing
-     * the underlying stream. Use this method when applying multiple filters
-     * in succession to the same output stream.
+     * Finishes to compress data to the output stream without closing the underlying stream. Use this method when applying
+     * multiple filters in succession to the same output stream.
      *
      * @return {@link Buffer} with the last GZIP data to be sent.
      */
@@ -148,19 +144,16 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
                 deflater.finish();
 
                 while (!deflater.finished()) {
-                    resultBuffer = Buffers.appendBuffers(memoryManager,
-                            resultBuffer,
-                            deflate(deflater, memoryManager));
+                    resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer, deflate(deflater, memoryManager));
                 }
 
                 // Put GZIP header if needed
                 if (!state.isHeaderWritten) {
                     state.isHeaderWritten = true;
 
-                    resultBuffer = Buffers.appendBuffers(memoryManager,
-                            getHeader(), resultBuffer);
+                    resultBuffer = Buffers.appendBuffers(memoryManager, getHeader(), resultBuffer);
                 }
-                
+
                 // Put GZIP member trailer
                 final Buffer trailer = memoryManager.allocate(TRAILER_SIZE);
                 final CRC32 crc32 = state.crc32;
@@ -168,8 +161,7 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
                 putUInt(trailer, deflater.getTotalIn());
                 trailer.flip();
 
-                resultBuffer = Buffers.appendBuffers(memoryManager,
-                        resultBuffer, trailer);
+                resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer, trailer);
             }
 
             state.reset();
@@ -177,23 +169,22 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
 
         return resultBuffer;
     }
-    
+
     private Buffer getHeader() {
         final Buffer headerToWrite = header.duplicate();
         headerToWrite.allowBufferDispose(false);
         return headerToWrite;
     }
 
-    private Buffer encodeBuffer(Buffer buffer,
-            GZipOutputState state, MemoryManager memoryManager) {
+    private Buffer encodeBuffer(Buffer buffer, GZipOutputState state, MemoryManager memoryManager) {
         final CRC32 crc32 = state.crc32;
         final Deflater deflater = state.deflater;
 
-	if (deflater.finished()) {
-	    throw new IllegalStateException("write beyond end of stream");
-	}
+        if (deflater.finished()) {
+            throw new IllegalStateException("write beyond end of stream");
+        }
 
-        // Deflate no more than stride bytes at a time.  This avoids
+        // Deflate no more than stride bytes at a time. This avoids
         // excess copying in deflateBytes (see Deflater.c)
         int stride = bufferSize;
         Buffer resultBuffer = null;
@@ -223,8 +214,7 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
                     while (!deflater.needsInput()) {
                         final Buffer deflated = deflate(deflater, memoryManager);
                         if (deflated != null) {
-                            resultBuffer = Buffers.appendBuffers(
-                                    memoryManager, resultBuffer, deflated);
+                            resultBuffer = Buffers.appendBuffers(memoryManager, resultBuffer, deflated);
                         }
                     }
                 }
@@ -237,20 +227,20 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
         byteBufferArray.recycle();
 
         buffer.position(buffer.limit());
-        
+
         return resultBuffer;
     }
 
     /**
      * Writes next block of compressed data to the output stream.
      */
-     protected Buffer deflate(Deflater deflater, MemoryManager memoryManager) {
+    protected Buffer deflate(Deflater deflater, MemoryManager memoryManager) {
         final Buffer buffer = memoryManager.allocate(bufferSize);
         final ByteBuffer byteBuffer = buffer.toByteBuffer();
         final byte[] array = byteBuffer.array();
         final int offset = byteBuffer.arrayOffset() + byteBuffer.position();
 
-	int len = deflater.deflate(array, offset, bufferSize);
+        int len = deflater.deflate(array, offset, bufferSize);
         if (len <= 0) {
             buffer.dispose();
             return null;
@@ -261,30 +251,27 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
 
         return buffer;
     }
-    
+
     /*
-     * Writes integer in Intel byte order to a byte array, starting at a
-     * given offset.
+     * Writes integer in Intel byte order to a byte array, starting at a given offset.
      */
     private static void putUInt(Buffer buffer, int value) {
         putUShort(buffer, value & 0xffff);
-        putUShort(buffer, (value >> 16) & 0xffff);
+        putUShort(buffer, value >> 16 & 0xffff);
     }
 
     /*
-     * Writes short integer in Intel byte order to a byte array, starting
-     * at a given offset
+     * Writes short integer in Intel byte order to a byte array, starting at a given offset
      */
     private static void putUShort(Buffer buffer, int value) {
         buffer.put((byte) (value & 0xff));
-        buffer.put((byte) ((value >> 8) & 0xff));
+        buffer.put((byte) (value >> 8 & 0xff));
     }
 
-    protected static final class GZipOutputState
-            extends LastResultAwareState<Buffer, Buffer> {
+    protected static final class GZipOutputState extends LastResultAwareState<Buffer, Buffer> {
         private boolean isInitialized;
         private boolean isHeaderWritten;
-        
+
         /**
          * CRC-32 of uncompressed data.
          */
@@ -303,7 +290,7 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
             crc32 = newCrc32;
             isInitialized = true;
         }
-        
+
         private void reset() {
             isInitialized = false;
             isHeaderWritten = false;

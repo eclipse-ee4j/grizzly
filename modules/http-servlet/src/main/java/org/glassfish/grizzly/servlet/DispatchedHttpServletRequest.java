@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,16 @@ package org.glassfish.grizzly.servlet;
 import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.*;
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import org.glassfish.grizzly.http.server.util.Enumerator;
 import org.glassfish.grizzly.http.server.util.Globals;
 import org.glassfish.grizzly.http.server.util.ParameterMap;
@@ -34,10 +38,15 @@ import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.utils.Charsets;
 
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+
 /**
- * Wrapper around a <code>javax.servlet.http.HttpServletRequest</code>
- * that transforms an application request object (which might be the original
- * one passed to a servlet.
+ * Wrapper around a <code>jakarta.servlet.http.HttpServletRequest</code> that transforms an application request object
+ * (which might be the original one passed to a servlet.
  *
  * @author Bongjae Chang
  */
@@ -48,7 +57,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     /**
      * The set of attribute names that are special for request dispatchers
      */
-    private static final HashSet<String> specials = new HashSet<String>(15);
+    private static final HashSet<String> specials = new HashSet<>(15);
 
     static {
         specials.add(RequestDispatcher.INCLUDE_REQUEST_URI);
@@ -68,7 +77,6 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         specials.add(AsyncContext.ASYNC_QUERY_STRING);
     }
 
-
     // ----------------------------------------------------------- Constructors
 
     /**
@@ -77,10 +85,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      * @param request the servlet request being wrapped
      * @param dispatcherType the dispatcher type
      */
-    public DispatchedHttpServletRequest(HttpServletRequest request,
-            WebappContext context,
-            boolean crossContext,
-            DispatcherType dispatcherType) {
+    public DispatchedHttpServletRequest(HttpServletRequest request, WebappContext context, boolean crossContext, DispatcherType dispatcherType) {
         super(request);
         this.context = context;
         this.crossContext = crossContext;
@@ -88,8 +93,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
 
         setRequest(request);
     }
-    
-    
+
     // ----------------------------------------------------- Instance Variables
 
     /**
@@ -101,10 +105,9 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      * The context path for this request.
      */
     protected String contextPath = null;
-    
+
     /**
-     * If this request is cross context, since this changes session access
-     * behavior.
+     * If this request is cross context, since this changes session access behavior.
      */
     protected boolean crossContext = false;
 
@@ -123,7 +126,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      * Have the parameters for this request already been parsed?
      */
     private boolean parsedParams = false;
-    
+
     /**
      * The path information for this request.
      */
@@ -170,10 +173,10 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     public Object getAttribute(String name) {
 
         if (name.equals(Globals.DISPATCHER_REQUEST_PATH_ATTR)) {
-            if ( requestDispatcherPath != null ){
+            if (requestDispatcherPath != null) {
                 return requestDispatcherPath.toString();
             } else {
-                return null;   
+                return null;
             }
         }
 
@@ -184,20 +187,14 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             if (specialAttributes != null) {
                 value = specialAttributes.get(name);
             }
-            if (value == null && name.startsWith("javax.servlet.forward")) {
+            if (value == null && name.startsWith("jakarta.servlet.forward")) {
                 /*
-                 * If it's a forward special attribute, and null, delegate
-                 * to the wrapped request. This will allow access to the
-                 * forward special attributes from a request that was first
-                 * forwarded and then included, or forwarded multiple times
-                 * in a row.
-                 * Notice that forward special attributes are set only on
-                 * the wrapper that was created for the initial forward
-                 * (i.e., the top-most wrapper for a request that was
-                 * forwarded multiple times in a row, and never included,
-                 * will not contain any specialAttributes!).
-                 * This is different from an include, where the special
-                 * include attributes are set on every include wrapper.
+                 * If it's a forward special attribute, and null, delegate to the wrapped request. This will allow access to the forward
+                 * special attributes from a request that was first forwarded and then included, or forwarded multiple times in a row.
+                 * Notice that forward special attributes are set only on the wrapper that was created for the initial forward (i.e.,
+                 * the top-most wrapper for a request that was forwarded multiple times in a row, and never included, will not contain
+                 * any specialAttributes!). This is different from an include, where the special include attributes are set on every
+                 * include wrapper.
                  */
                 value = getRequest().getAttribute(name);
             }
@@ -206,19 +203,16 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
 
     }
 
-
     /**
-     * Override the <code>getAttributeNames()</code> method of the wrapped
-     * request.
+     * Override the <code>getAttributeNames()</code> method of the wrapped request.
      */
     @Override
     public Enumeration<String> getAttributeNames() {
-        return (new AttributeNamesEnumerator());
+        return new AttributeNamesEnumerator();
     }
 
     /**
-     * Override the <code>removeAttribute()</code> method of the
-     * wrapped request.
+     * Override the <code>removeAttribute()</code> method of the wrapped request.
      *
      * @param name Name of the attribute to remove
      */
@@ -234,10 +228,8 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         }
     }
 
-
     /**
-     * Override the <code>setAttribute()</code> method of the
-     * wrapped request.
+     * Override the <code>setAttribute()</code> method of the wrapped request.
      *
      * @param name Name of the attribute to set
      * @param value Value of the attribute to set
@@ -258,31 +250,32 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             getRequest().setAttribute(name, value);
         }
     }
-    
 
     /**
-     * Return a RequestDispatcher that wraps the resource at the specified
-     * path, which may be interpreted as relative to the current request path.
+     * Return a RequestDispatcher that wraps the resource at the specified path, which may be interpreted as relative to the
+     * current request path.
      *
      * @param path Path of the resource to be wrapped
      */
     @Override
     public RequestDispatcher getRequestDispatcher(String path) {
 
-        if (context == null)
-            return (null);
+        if (context == null) {
+            return null;
+        }
 
         // If the path is already context-relative, just pass it through
-        if (path == null)
-            return (null);
-        else if (path.startsWith("/"))
-            return (context.getRequestDispatcher(path));
+        if (path == null) {
+            return null;
+        } else if (path.startsWith("/")) {
+            return context.getRequestDispatcher(path);
+        }
 
         // Convert a request-relative path to a context-relative one
-        String servletPath = 
-            (String) getAttribute(RequestDispatcher.INCLUDE_SERVLET_PATH);
-        if (servletPath == null)
+        String servletPath = (String) getAttribute(RequestDispatcher.INCLUDE_SERVLET_PATH);
+        if (servletPath == null) {
             servletPath = getServletPath();
+        }
 
         // Add the path info, if there is any
         String pathInfo = getPathInfo();
@@ -302,32 +295,27 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             relative = requestPath + path;
         }
 
-        return (context.getRequestDispatcher(relative));
+        return context.getRequestDispatcher(relative);
 
     }
-    
-    
+
     @Override
     public DispatcherType getDispatcherType() {
         return dispatcherType;
     }
 
-
     // --------------------------------------------- HttpServletRequest Methods
 
-
     /**
-     * Override the <code>getContextPath()</code> method of the wrapped
-     * request.
+     * Override the <code>getContextPath()</code> method of the wrapped request.
      */
     @Override
     public String getContextPath() {
 
-        return (this.contextPath);
+        return this.contextPath;
 
     }
-    
-    
+
     /**
      * Override the <code>getParameter()</code> method of the wrapped request.
      *
@@ -340,17 +328,14 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             parseParameters();
         }
         if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(
-                    new GetParameterPrivilegedAction(name));
+            return AccessController.doPrivileged(new GetParameterPrivilegedAction(name));
         } else {
             return mergedParameters.getParameter(name);
         }
     }
 
-
     /**
-     * Override the <code>getParameterMap()</code> method of the
-     * wrapped request.
+     * Override the <code>getParameterMap()</code> method of the wrapped request.
      */
     @Override
     public Map<String, String[]> getParameterMap() {
@@ -358,17 +343,14 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             parseParameters();
         }
         if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(
-                    new GetParameterMapPrivilegedAction());
+            return AccessController.doPrivileged(new GetParameterMapPrivilegedAction());
         } else {
             return getParameterMapInternal();
         }
     }
 
-
     /**
-     * Override the <code>getParameterNames()</code> method of the
-     * wrapped request.
+     * Override the <code>getParameterNames()</code> method of the wrapped request.
      */
     @Override
     public Enumeration<String> getParameterNames() {
@@ -376,17 +358,14 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
             parseParameters();
         }
         if (System.getSecurityManager() != null) {
-            return new Enumerator<String>(AccessController.doPrivileged(
-                    new GetParameterNamesPrivilegedAction()));
+            return new Enumerator<>(AccessController.doPrivileged(new GetParameterNamesPrivilegedAction()));
         } else {
-            return new Enumerator<String>(mergedParameters.getParameterNames());
+            return new Enumerator<>(mergedParameters.getParameterNames());
         }
     }
 
-
     /**
-     * Override the <code>getParameterValues()</code> method of the
-     * wrapped request.
+     * Override the <code>getParameterValues()</code> method of the wrapped request.
      *
      * @param name Name of the requested parameter
      */
@@ -397,12 +376,11 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         }
         String[] ret;
         /*
-         * Clone the returned array only if there is a security manager
-         * in place, so that performance won't suffer in the nonsecure case
+         * Clone the returned array only if there is a security manager in place, so that performance won't suffer in the
+         * nonsecure case
          */
         if (System.getSecurityManager() != null) {
-            ret = AccessController.doPrivileged(
-                    new GetParameterValuePrivilegedAction(name));
+            ret = AccessController.doPrivileged(new GetParameterValuePrivilegedAction(name));
             if (ret != null) {
                 ret = ret.clone();
             }
@@ -427,10 +405,9 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     /**
      * Parses the parameters of this request.
      * <p/>
-     * If parameters are present in both the query string and the request
-     * content, they are merged.
+     * If parameters are present in both the query string and the request content, they are merged.
      */
-    @SuppressWarnings( "unchecked")
+    @SuppressWarnings("unchecked")
     private void parseParameters() {
         if (parsedParams) {
             return;
@@ -467,38 +444,32 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     @Override
     public String getPathInfo() {
 
-        return (this.pathInfo);
+        return this.pathInfo;
 
     }
 
-
     /**
-     * Override the <code>getQueryString()</code> method of the wrapped
-     * request.
+     * Override the <code>getQueryString()</code> method of the wrapped request.
      */
     @Override
     public String getQueryString() {
 
-        return (this.queryString);
+        return this.queryString;
 
     }
 
-
     /**
-     * Override the <code>getRequestURI()</code> method of the wrapped
-     * request.
+     * Override the <code>getRequestURI()</code> method of the wrapped request.
      */
     @Override
     public String getRequestURI() {
 
-        return (this.requestURI);
+        return this.requestURI;
 
     }
 
-
     /**
-     * Override the <code>getRequestURL()</code> method of the wrapped
-     * request.
+     * Override the <code>getRequestURL()</code> method of the wrapped request.
      */
     @Override
     public StringBuffer getRequestURL() {
@@ -506,34 +477,31 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         StringBuffer url = new StringBuffer();
         String scheme = getScheme();
         int port = getServerPort();
-        if (port < 0)
+        if (port < 0) {
             port = 80; // Work around java.net.URL bug
+        }
 
         url.append(scheme);
         url.append("://");
         url.append(getServerName());
-        if ((scheme.equals("http") && (port != 80))
-            || (scheme.equals("https") && (port != 443))) {
+        if (scheme.equals("http") && port != 80 || scheme.equals("https") && port != 443) {
             url.append(':');
             url.append(port);
         }
         url.append(getRequestURI());
 
-        return (url);
+        return url;
     }
 
-    
     /**
-     * Override the <code>getServletPath()</code> method of the wrapped
-     * request.
+     * Override the <code>getServletPath()</code> method of the wrapped request.
      */
     @Override
     public String getServletPath() {
 
-        return (this.servletPath);
+        return this.servletPath;
 
     }
-    
 
     // -------------------------------------------------------- Package Methods
 
@@ -544,9 +512,10 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      */
     void copyMap(Map<String, String[]> orig, Map<String, String[]> dest) {
 
-        if (orig == null)
+        if (orig == null) {
             return;
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        }
+        // noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (orig) {
             for (Map.Entry<String, String[]> entry : orig.entrySet()) {
                 dest.put(entry.getKey(), entry.getValue());
@@ -591,8 +560,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         super.setRequest(request);
 
         // Initialize the attributes for this request
-        requestDispatcherPath = 
-            request.getAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR);
+        requestDispatcherPath = request.getAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR);
 
         // Initialize the path elements for this request
         contextPath = request.getContextPath();
@@ -602,7 +570,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         servletPath = request.getServletPath();
 
     }
-    
+
     /**
      * Set the request URI for this request.
      *
@@ -624,25 +592,22 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     /**
      * Save query parameters for this request.
      *
-     * @param queryString The query string containing parameters for this
-     *                    request
-         */
+     * @param queryString The query string containing parameters for this request
+     */
     void setQueryParams(String queryString) {
         this.queryParamString = queryString;
     }
 
-
     // ------------------------------------------------------ Protected Methods
 
     /**
-     * Is this attribute name one of the special ones that is added only for
-     * included servlets?
+     * Is this attribute name one of the special ones that is added only for included servlets?
      *
      * @param name Attribute name to be tested
      */
     protected boolean isSpecial(String name) {
         return specials.contains(name);
-        }
+    }
 
     /**
      * Initializes the special attributes of this request wrapper.
@@ -653,53 +618,34 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      * @param pathInfo The path info
      * @param queryString The query string
      */
-    void initSpecialAttributes(String requestUri,
-                                String contextPath,
-                                String servletPath,
-                                String pathInfo,
-                               String queryString) {
-        specialAttributes = new HashMap<String, Object>(5);
+    void initSpecialAttributes(String requestUri, String contextPath, String servletPath, String pathInfo, String queryString) {
+        specialAttributes = new HashMap<>(5);
 
         switch (dispatcherType) {
-            case INCLUDE:
-            specialAttributes.put(RequestDispatcher.INCLUDE_REQUEST_URI,
-                                  requestUri);
-            specialAttributes.put(RequestDispatcher.INCLUDE_CONTEXT_PATH,
-                                  contextPath);
-            specialAttributes.put(RequestDispatcher.INCLUDE_SERVLET_PATH,
-                                  servletPath);
-            specialAttributes.put(RequestDispatcher.INCLUDE_PATH_INFO,
-                                  pathInfo);
-            specialAttributes.put(RequestDispatcher.INCLUDE_QUERY_STRING,
-                                  queryString);
-                break;
-            case FORWARD:
-            case ERROR:
-            specialAttributes.put(RequestDispatcher.FORWARD_REQUEST_URI,
-                                  requestUri);
-            specialAttributes.put(RequestDispatcher.FORWARD_CONTEXT_PATH,
-                                  contextPath);
-            specialAttributes.put(RequestDispatcher.FORWARD_SERVLET_PATH,
-                                  servletPath);
-            specialAttributes.put(RequestDispatcher.FORWARD_PATH_INFO,
-                                  pathInfo);
-            specialAttributes.put(RequestDispatcher.FORWARD_QUERY_STRING,
-                                  queryString);
-                break;
-            case ASYNC:
-            specialAttributes.put(AsyncContext.ASYNC_REQUEST_URI,
-                                  requestUri);
-            specialAttributes.put(AsyncContext.ASYNC_CONTEXT_PATH,
-                                  contextPath);
-            specialAttributes.put(AsyncContext.ASYNC_SERVLET_PATH,
-                                  servletPath);
-            specialAttributes.put(AsyncContext.ASYNC_PATH_INFO,
-                                  pathInfo);
-            specialAttributes.put(AsyncContext.ASYNC_QUERY_STRING,
-                                  queryString);
-                break;
-            default: // REQUEST
-                break;
+        case INCLUDE:
+            specialAttributes.put(RequestDispatcher.INCLUDE_REQUEST_URI, requestUri);
+            specialAttributes.put(RequestDispatcher.INCLUDE_CONTEXT_PATH, contextPath);
+            specialAttributes.put(RequestDispatcher.INCLUDE_SERVLET_PATH, servletPath);
+            specialAttributes.put(RequestDispatcher.INCLUDE_PATH_INFO, pathInfo);
+            specialAttributes.put(RequestDispatcher.INCLUDE_QUERY_STRING, queryString);
+            break;
+        case FORWARD:
+        case ERROR:
+            specialAttributes.put(RequestDispatcher.FORWARD_REQUEST_URI, requestUri);
+            specialAttributes.put(RequestDispatcher.FORWARD_CONTEXT_PATH, contextPath);
+            specialAttributes.put(RequestDispatcher.FORWARD_SERVLET_PATH, servletPath);
+            specialAttributes.put(RequestDispatcher.FORWARD_PATH_INFO, pathInfo);
+            specialAttributes.put(RequestDispatcher.FORWARD_QUERY_STRING, queryString);
+            break;
+        case ASYNC:
+            specialAttributes.put(AsyncContext.ASYNC_REQUEST_URI, requestUri);
+            specialAttributes.put(AsyncContext.ASYNC_CONTEXT_PATH, contextPath);
+            specialAttributes.put(AsyncContext.ASYNC_SERVLET_PATH, servletPath);
+            specialAttributes.put(AsyncContext.ASYNC_PATH_INFO, pathInfo);
+            specialAttributes.put(AsyncContext.ASYNC_QUERY_STRING, queryString);
+            break;
+        default: // REQUEST
+            break;
         }
     }
 
@@ -711,44 +657,44 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
      */
     protected String[] mergeValues(Object values1, Object values2) {
 
-        ArrayList<String> results = new ArrayList<String>();
+        ArrayList<String> results = new ArrayList<>();
 
-        if (values1 == null)
+        if (values1 == null) {
             ;
-        else if (values1 instanceof String)
-            results.add((String)values1);
-        else if (values1 instanceof String[]) {
+        } else if (values1 instanceof String) {
+            results.add((String) values1);
+        } else if (values1 instanceof String[]) {
             String values[] = (String[]) values1;
             Collections.addAll(results, values);
-        } else
+        } else {
             results.add(values1.toString());
+        }
 
-        if (values2 == null)
+        if (values2 == null) {
             ;
-        else if (values2 instanceof String)
-            results.add((String)values2);
-        else if (values2 instanceof String[]) {
+        } else if (values2 instanceof String) {
+            results.add((String) values2);
+        } else if (values2 instanceof String[]) {
             String values[] = (String[]) values2;
             Collections.addAll(results, values);
-        } else
+        } else {
             results.add(values2.toString());
+        }
 
         String values[] = new String[results.size()];
         return results.toArray(values);
 
-    }    
+    }
 
     public void recycle() {
 //        parameterMap.setLocked( false );
 //        parameterMap.clear();
     }
 
-
     // ----------------------------------- AttributeNamesEnumerator Inner Class
 
     /**
-     * Utility class used to expose the special attributes as being available
-     * as request attributes.
+     * Utility class used to expose the special attributes as being available as request attributes.
      */
     private final class AttributeNamesEnumerator implements Enumeration<String> {
 
@@ -756,7 +702,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         String next = null;
         private Iterator<String> specialNames = null;
 
-        @SuppressWarnings( "unchecked" )
+        @SuppressWarnings("unchecked")
         public AttributeNamesEnumerator() {
             parentEnumeration = getRequest().getAttributeNames();
             if (specialAttributes != null) {
@@ -766,9 +712,7 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
 
         @Override
         public boolean hasMoreElements() {
-            return (specialNames != null && specialNames.hasNext())
-                    || (next != null) 
-                    || ((next = findNext()) != null);
+            return specialNames != null && specialNames.hasNext() || next != null || (next = findNext()) != null;
         }
 
         @Override
@@ -789,12 +733,10 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
 
         protected String findNext() {
             String result = null;
-            while ((result == null) && (parentEnumeration.hasMoreElements())) {
+            while (result == null && parentEnumeration.hasMoreElements()) {
                 String current = parentEnumeration.nextElement();
-                if (!isSpecial(current) ||
-                        (!dispatcherType.equals(DispatcherType.FORWARD) &&
-                        current.startsWith("javax.servlet.forward") &&
-                        getAttribute(current) != null)) {
+                if (!isSpecial(current)
+                        || !dispatcherType.equals(DispatcherType.FORWARD) && current.startsWith("jakarta.servlet.forward") && getAttribute(current) != null) {
                     result = current;
                 }
             }
@@ -802,25 +744,24 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         }
     }
 
-    
     public HttpServletRequestImpl getRequestFacade() {
         if (getRequest() instanceof HttpServletRequestImpl) {
             return (HttpServletRequestImpl) getRequest();
         } else {
-            return ((DispatchedHttpServletRequest)getRequest()).getRequestFacade();
+            return ((DispatchedHttpServletRequest) getRequest()).getRequestFacade();
         }
     }
-    
+
     private final class GetParameterPrivilegedAction implements PrivilegedAction<String> {
         public final String name;
 
-        public GetParameterPrivilegedAction( String name ) {
+        public GetParameterPrivilegedAction(String name) {
             this.name = name;
         }
 
         @Override
         public String run() {
-            return mergedParameters.getParameter( name );
+            return mergedParameters.getParameter(name);
         }
     }
 
@@ -834,13 +775,13 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
     private final class GetParameterValuePrivilegedAction implements PrivilegedAction<String[]> {
         public final String name;
 
-        public GetParameterValuePrivilegedAction( String name ) {
+        public GetParameterValuePrivilegedAction(String name) {
             this.name = name;
         }
 
         @Override
         public String[] run() {
-            return mergedParameters.getParameterValues( name );
+            return mergedParameters.getParameterValues(name);
         }
     }
 
@@ -849,5 +790,5 @@ public class DispatchedHttpServletRequest extends HttpServletRequestWrapper {
         public ParameterMap run() {
             return getParameterMapInternal();
         }
-    }    
+    }
 }

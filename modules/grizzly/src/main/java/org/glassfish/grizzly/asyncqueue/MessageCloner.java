@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,30 +19,24 @@ package org.glassfish.grizzly.asyncqueue;
 import org.glassfish.grizzly.Connection;
 
 /**
- * Cloner, which will be called by {@link AsyncQueueWriter}, when message
- * could not be written directly, and will be added to the queue.
- * Cloner may create a clone of original message and return it to the
- * {@link AsyncQueueWriter} instead of original one.
- * Using MessageCloner, developer has a chance to clone a message only in
- * case, when it is really required.
+ * Cloner, which will be called by {@link AsyncQueueWriter}, when message could not be written directly, and will be
+ * added to the queue. Cloner may create a clone of original message and return it to the {@link AsyncQueueWriter}
+ * instead of original one. Using MessageCloner, developer has a chance to clone a message only in case, when it is
+ * really required.
  *
  * @author Alexey Stashok
  */
 public interface MessageCloner<E> {
     /**
-     * Method will be called by {@link AsyncQueueWriter}, when message
-     * could not be written directly, and will be added to the queue.
-     * Cloner may create a clone of original message and return it to the
-     * {@link AsyncQueueWriter} instead of original one.
-     * Using MessageCloner, developer has a chance to clone a message only in
-     * case, when it is really required.
+     * Method will be called by {@link AsyncQueueWriter}, when message could not be written directly, and will be added to
+     * the queue. Cloner may create a clone of original message and return it to the {@link AsyncQueueWriter} instead of
+     * original one. Using MessageCloner, developer has a chance to clone a message only in case, when it is really
+     * required.
      *
-     * @param connection {@link Connection}, where the {@link org.glassfish.grizzly.Buffer} will
-     * be written.
+     * @param connection {@link Connection}, where the {@link org.glassfish.grizzly.Buffer} will be written.
      * @param originalMessage {@link org.glassfish.grizzly.Buffer} to be written.
      *
-     * @return original {@link org.glassfish.grizzly.Buffer} or its clone to be added to asynchronous
-     * queue.
+     * @return original {@link org.glassfish.grizzly.Buffer} or its clone to be added to asynchronous queue.
      */
     E clone(Connection connection, E originalMessage);
 }

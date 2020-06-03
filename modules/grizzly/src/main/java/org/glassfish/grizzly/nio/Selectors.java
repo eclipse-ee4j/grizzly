@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,19 +22,19 @@ import java.nio.channels.spi.SelectorProvider;
 
 /**
  * Utility class for {@link Selector} related operations.
+ * 
  * @author Alexey Stashok
  */
 public final class Selectors {
 
     /**
      * Creates new {@link Selector} using passed {@link SelectorProvider}.
-     * 
+     *
      * @param provider {@link SelectorProvider}
      * @return {@link Selector}
-     * @throws IOException 
+     * @throws IOException
      */
-    public static Selector newSelector(final SelectorProvider provider)
-            throws IOException {
+    public static Selector newSelector(final SelectorProvider provider) throws IOException {
         try {
             return provider.openSelector();
         } catch (NullPointerException e) {

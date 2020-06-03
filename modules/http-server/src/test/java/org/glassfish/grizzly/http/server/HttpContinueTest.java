@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,9 @@
 
 package org.glassfish.grizzly.http.server;
 
-import org.glassfish.grizzly.http.util.HttpStatus;
-import java.io.IOException;
-import org.junit.Test;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
+import static org.junit.Assert.assertEquals;
 
-import javax.net.SocketFactory;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -29,37 +26,38 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.SocketFactory;
+
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class HttpContinueTest {
 
     private static final int PORT = 9495;
 
-
     private final int numberOfExtraHttpHandlers;
-    
+
     public HttpContinueTest(final int numberOfExtraHttpHandlers) {
         this.numberOfExtraHttpHandlers = numberOfExtraHttpHandlers;
     }
 
     @Parameters
     public static Collection<Object[]> getNumberOfExtraHttpHandlers() {
-        return Arrays.asList(new Object[][]{
-                    {0},
-                    {5}
-                });
+        return Arrays.asList(new Object[][] { { 0 }, { 5 } });
     }
-    
+
     // ------------------------------------------------------------ Test Methods
 
     @Test
     public void test100Continue() throws Exception {
 
-        final SafeFutureImpl<String> future = new SafeFutureImpl<String>();
+        final SafeFutureImpl<String> future = new SafeFutureImpl<>();
         HttpServer server = createServer(new HttpHandler() {
 
             @Override
@@ -74,7 +72,7 @@ public class HttpContinueTest {
             server.start();
             s = SocketFactory.getDefault().createSocket("localhost", PORT);
             s.setSoTimeout(10 * 1000);
-            
+
             OutputStream out = s.getOutputStream();
             InputStream in = s.getInputStream();
 
@@ -128,8 +126,7 @@ public class HttpContinueTest {
     @Test
     public void testExpectationIgnored() throws Exception {
 
-        HttpServer server = createServer(new StaticHttpHandler(
-                Collections.<String>emptySet()), "/path");
+        HttpServer server = createServer(new StaticHttpHandler(Collections.<String>emptySet()), "/path");
 
         Socket s = null;
         try {
@@ -168,7 +165,6 @@ public class HttpContinueTest {
         }
 
     }
-
 
     @Test
     public void testFailedExpectation() throws Exception {
@@ -216,12 +212,11 @@ public class HttpContinueTest {
         HttpServer server = createServer(new StaticHttpHandler() {
 
             @Override
-            protected boolean sendAcknowledgment(Request request,
-                    Response response) throws IOException {
+            protected boolean sendAcknowledgment(Request request, Response response) throws IOException {
                 response.setStatus(HttpStatus.EXPECTATION_FAILED_417);
                 return false;
             }
-            
+
         }, "/path");
 
         Socket s = null;
@@ -260,23 +255,17 @@ public class HttpContinueTest {
     }
     // --------------------------------------------------------- Private Methods
 
-
-    private HttpServer createServer(final HttpHandler httpHandler,
-                                          final String... mappings) {
+    private HttpServer createServer(final HttpHandler httpHandler, final String... mappings) {
 
         HttpServer server = new HttpServer();
-        NetworkListener listener =
-                new NetworkListener("grizzly",
-                                    NetworkListener.DEFAULT_NETWORK_HOST,
-                                    PORT);
+        NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandler, mappings);
-        
+
         for (int i = 0; i < numberOfExtraHttpHandlers; i++) {
-            server.getServerConfiguration().addHttpHandler(
-                    new StaticHttpHandler(), String.valueOf("/" + i));
+            server.getServerConfiguration().addHttpHandler(new StaticHttpHandler(), String.valueOf("/" + i));
         }
-        
+
         return server;
 
     }

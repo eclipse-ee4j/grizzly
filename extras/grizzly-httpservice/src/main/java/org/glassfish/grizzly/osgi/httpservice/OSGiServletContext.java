@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,21 +16,22 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import static java.text.MessageFormat.format;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.EventListener;
+
 import org.glassfish.grizzly.http.util.MimeType;
+import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.glassfish.grizzly.servlet.FilterChainFactory;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.osgi.service.http.HttpContext;
-import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 
-import javax.servlet.Filter;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.EventListener;
-
-import static java.text.MessageFormat.format;
+import jakarta.servlet.Filter;
 
 /**
  * OSGi {@link WebappContext} integration.
@@ -44,15 +45,13 @@ public class OSGiServletContext extends WebappContext {
     private final HttpContext httpContext;
     private final Logger logger;
 
-
     // ------------------------------------------------------------ Constructors
-
 
     /**
      * Default constructor.
      *
      * @param httpContext {@link org.osgi.service.http.HttpContext} to provide integration with OSGi.
-     * @param logger      Logger util.
+     * @param logger Logger util.
      */
     public OSGiServletContext(HttpContext httpContext, Logger logger) {
         this.httpContext = httpContext;
@@ -60,23 +59,23 @@ public class OSGiServletContext extends WebappContext {
         installAuthFilter(httpContext);
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     /**
      * OSGi integration. Uses {@link HttpContext#getResource(String)}.
      * <p/>
      * {@inheritDoc}
      */
-    @Override public URL getResource(String path) throws MalformedURLException {
+    @Override
+    public URL getResource(String path) throws MalformedURLException {
         if (path == null || !path.startsWith("/")) {
             throw new MalformedURLException(path);
         }
 
         path = normalize(path);
-        if (path == null)
-            return (null);
+        if (path == null) {
+            return null;
+        }
 
         return httpContext.getResource(path);
     }
@@ -86,10 +85,12 @@ public class OSGiServletContext extends WebappContext {
      * <p/>
      * {@inheritDoc}
      */
-    @Override public InputStream getResourceAsStream(String path) {
+    @Override
+    public InputStream getResourceAsStream(String path) {
         path = normalize(path);
-        if (path == null)
-            return (null);
+        if (path == null) {
+            return null;
+        }
 
         URL resource = httpContext.getResource(path);
         if (resource == null) {
@@ -110,7 +111,8 @@ public class OSGiServletContext extends WebappContext {
      * <p/>
      * {@inheritDoc}
      */
-    @Override public String getMimeType(String file) {
+    @Override
+    public String getMimeType(String file) {
         String mime = httpContext.getMimeType(file);
         if (mime == null) {
             // if returned null, try figuring out by ourselfs.
@@ -119,9 +121,7 @@ public class OSGiServletContext extends WebappContext {
         return mime;
     }
 
-
     // ------------------------------------------------------- Protected Methods
-
 
     @Override
     protected EventListener[] getEventListeners() {
@@ -143,9 +143,7 @@ public class OSGiServletContext extends WebappContext {
         super.unregisterAllFilters();
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private void installAuthFilter(HttpContext httpContext) {
         final Filter f = new OSGiAuthFilter(httpContext);
@@ -154,8 +152,7 @@ public class OSGiServletContext extends WebappContext {
         } catch (Exception ignored) {
             // won't happen
         }
-        FilterRegistration registration =
-                addFilter(Integer.toString(f.hashCode()), f);
+        FilterRegistration registration = addFilter(Integer.toString(f.hashCode()), f);
         registration.addMappingForUrlPatterns(null, "/*");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.glassfish.grizzly.http;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.util.BufferChunk;
 import org.glassfish.grizzly.http.util.ByteChunk;
@@ -30,8 +31,7 @@ import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 
 /**
- * A collection of cookies - reusable and tuned for server side performance.
- * Based on RFC2965 ( and 2109 )
+ * A collection of cookies - reusable and tuned for server side performance. Based on RFC2965 ( and 2109 )
  *
  * This class is not synchronized.
  *
@@ -47,7 +47,7 @@ public final class Cookies {
     private static final int INITIAL_SIZE = 4;
     private Cookie[] cookies = new Cookie[INITIAL_SIZE];
     private Cookie[] processedCookies;
-    
+
     private boolean isProcessed;
     private boolean isRequest;
     private MimeHeaders headers;
@@ -56,15 +56,11 @@ public final class Cookies {
     private int storedCookieCount;
 
     /*
-    List of Separator Characters (see isSeparator())
-    Excluding the '/' char violates the RFC, but 
-    it looks like a lot of people put '/'
-    in unquoted values: '/': ; //47 
-    '\t':9 ' ':32 '\"':34 '\'':39 '(':40 ')':41 ',':44 ':':58 ';':59 '<':60 
-    '=':61 '>':62 '?':63 '@':64 '[':91 '\\':92 ']':93 '{':123 '}':125
+     * List of Separator Characters (see isSeparator()) Excluding the '/' char violates the RFC, but it looks like a lot of
+     * people put '/' in unquoted values: '/': ; //47 '\t':9 ' ':32 '\"':34 '\'':39 '(':40 ')':41 ',':44 ':':58 ';':59
+     * '<':60 '=':61 '>':62 '?':63 '@':64 '[':91 '\\':92 ']':93 '{':123 '}':125
      */
-    static final char SEPARATORS[] = {'\t', ' ', '\"', '\'', '(', ')', ',',
-        ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '{', '}'};
+    static final char SEPARATORS[] = { '\t', ' ', '\"', '\'', '(', ')', ',', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '{', '}' };
     static final boolean separators[] = new boolean[128];
 
     static {
@@ -76,12 +72,9 @@ public final class Cookies {
         }
     }
 
-
     public boolean initialized() {
         return headers != null;
     }
-
-
 
     public Cookie[] get() {
         if (!isProcessed) {
@@ -91,10 +84,8 @@ public final class Cookies {
             } else {
                 processServerCookies();
             }
-            
-            processedCookies = nextUnusedCookieIndex > 0 ?
-                    copyTo(new Cookie[nextUnusedCookieIndex]) :
-                    EMPTY_COOKIE_ARRAY;
+
+            processedCookies = nextUnusedCookieIndex > 0 ? copyTo(new Cookie[nextUnusedCookieIndex]) : EMPTY_COOKIE_ARRAY;
         }
 
         return processedCookies;
@@ -103,7 +94,7 @@ public final class Cookies {
     public void setHeaders(final MimeHeaders headers) {
         setHeaders(headers, true);
     }
-    
+
     public void setHeaders(final MimeHeaders headers, final boolean isRequest) {
         this.headers = headers;
         this.isRequest = isRequest;
@@ -125,7 +116,7 @@ public final class Cookies {
             return cookie;
         }
     }
-    
+
     /**
      * Recycle.
      */
@@ -147,13 +138,14 @@ public final class Cookies {
         return destination;
     }
 
-    // code from CookieTools 
-    /** Add all Cookie found in the headers of a request.
+    // code from CookieTools
+    /**
+     * Add all Cookie found in the headers of a request.
      */
     private void processClientCookies() {
         if (headers == null) {
             return;// nothing to process
-        }        // process each "cookie" header
+        } // process each "cookie" header
         int pos = 0;
         while (pos >= 0) {
             // Cookie2: version ? not needed
@@ -176,40 +168,35 @@ public final class Cookies {
                 }
 
                 final ByteChunk byteChunk = cookieValue.getByteChunk();
-                CookieParserUtils.parseClientCookies(this, byteChunk.getBuffer(),
-                        byteChunk.getStart(),
-                        byteChunk.getLength());
+                CookieParserUtils.parseClientCookies(this, byteChunk.getBuffer(), byteChunk.getStart(), byteChunk.getLength());
             } else if (cookieValue.getType() == DataChunk.Type.Buffer) {
                 if (logger.isLoggable(Level.FINE)) {
                     log("Parsing buffer: " + cookieValue.toString());
                 }
 
                 final BufferChunk bufferChunk = cookieValue.getBufferChunk();
-                CookieParserUtils.parseClientCookies(this, bufferChunk.getBuffer(),
-                        bufferChunk.getStart(),
-                        bufferChunk.getLength());
+                CookieParserUtils.parseClientCookies(this, bufferChunk.getBuffer(), bufferChunk.getStart(), bufferChunk.getLength());
             } else {
                 if (logger.isLoggable(Level.FINE)) {
                     log("Parsing string: " + cookieValue.toString());
                 }
 
                 final String value = cookieValue.toString();
-                CookieParserUtils.parseClientCookies(this, value,
-                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                        CookieUtils.RFC_6265_SUPPORT_ENABLED);
+                CookieParserUtils.parseClientCookies(this, value, CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE, CookieUtils.RFC_6265_SUPPORT_ENABLED);
             }
 
             pos++;// search from the next position
         }
     }
 
-    // code from CookieTools 
-    /** Add all Cookie found in the headers of a request.
+    // code from CookieTools
+    /**
+     * Add all Cookie found in the headers of a request.
      */
     private void processServerCookies() {
         if (headers == null) {
             return;// nothing to process
-        }        // process each "cookie" header
+        } // process each "cookie" header
         int pos = 0;
         while (pos >= 0) {
             // Cookie2: version ? not needed
@@ -232,31 +219,23 @@ public final class Cookies {
                 }
 
                 final ByteChunk byteChunk = cookieValue.getByteChunk();
-                CookieParserUtils.parseServerCookies(this, byteChunk.getBuffer(),
-                        byteChunk.getStart(),
-                        byteChunk.getLength(),
-                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                        CookieUtils.RFC_6265_SUPPORT_ENABLED);
+                CookieParserUtils.parseServerCookies(this, byteChunk.getBuffer(), byteChunk.getStart(), byteChunk.getLength(),
+                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE, CookieUtils.RFC_6265_SUPPORT_ENABLED);
             } else if (cookieValue.getType() == DataChunk.Type.Buffer) {
                 if (logger.isLoggable(Level.FINE)) {
                     log("Parsing b[]: " + cookieValue.toString());
                 }
 
                 final BufferChunk bufferChunk = cookieValue.getBufferChunk();
-                CookieParserUtils.parseServerCookies(this, bufferChunk.getBuffer(),
-                        bufferChunk.getStart(),
-                        bufferChunk.getLength(),
-                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                        CookieUtils.RFC_6265_SUPPORT_ENABLED);
+                CookieParserUtils.parseServerCookies(this, bufferChunk.getBuffer(), bufferChunk.getStart(), bufferChunk.getLength(),
+                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE, CookieUtils.RFC_6265_SUPPORT_ENABLED);
             } else {
                 if (logger.isLoggable(Level.FINE)) {
                     log("Parsing string: " + cookieValue.toString());
                 }
 
                 final String value = cookieValue.toString();
-                CookieParserUtils.parseServerCookies(this, value,
-                        CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE,
-                        CookieUtils.RFC_6265_SUPPORT_ENABLED);
+                CookieParserUtils.parseServerCookies(this, value, CookieUtils.COOKIE_VERSION_ONE_STRICT_COMPLIANCE, CookieUtils.RFC_6265_SUPPORT_ENABLED);
             }
 
             pos++;// search from the next position
@@ -264,7 +243,7 @@ public final class Cookies {
     }
 
     /**
-     * EXPENSIVE!!!  only for debugging.
+     * EXPENSIVE!!! only for debugging.
      */
     @Override
     public String toString() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,12 +24,10 @@ import org.glassfish.grizzly.ThreadCache;
  */
 class HttpResponsePacketImpl extends HttpResponsePacket {
 
-    private static final ThreadCache.CachedTypeIndex<HttpResponsePacketImpl> CACHE_IDX =
-            ThreadCache.obtainIndex(HttpResponsePacketImpl.class, 16);
+    private static final ThreadCache.CachedTypeIndex<HttpResponsePacketImpl> CACHE_IDX = ThreadCache.obtainIndex(HttpResponsePacketImpl.class, 16);
 
     public static HttpResponsePacketImpl create() {
-        final HttpResponsePacketImpl httpResponseImpl =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final HttpResponsePacketImpl httpResponseImpl = ThreadCache.takeFromCache(CACHE_IDX);
         if (httpResponseImpl != null) {
             return httpResponseImpl;
         }
@@ -42,7 +40,7 @@ class HttpResponsePacketImpl extends HttpResponsePacket {
             }
         };
     }
-    
+
     protected HttpResponsePacketImpl() {
     }
 

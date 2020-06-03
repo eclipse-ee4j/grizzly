@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,11 +23,9 @@ final class ForkAction extends AbstractNextAction {
 
     static final int TYPE = 5;
 
-
     private final FilterChainContext context;
     // ------------------------------------------------------------ Constructors
 
-    
     ForkAction(final FilterChainContext context) {
 
         super(TYPE);

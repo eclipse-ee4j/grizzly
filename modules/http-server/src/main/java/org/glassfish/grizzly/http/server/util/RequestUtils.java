@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.server.Request;
@@ -34,7 +35,6 @@ public class RequestUtils {
 
     private static final Logger LOGGER = Grizzly.logger(RequestUtils.class);
 
-
     public static Object populateCertificateAttribute(final Request request) {
         Object certificates = null;
 
@@ -42,23 +42,19 @@ public class RequestUtils {
             if (!request.getRequest().isUpgrade()) {
                 // It's normal HTTP request, not upgraded one
                 try {
-                    request.getInputBuffer().fillFully(
-                            request.getHttpFilter().getConfiguration().getMaxBufferedPostSize());
+                    request.getInputBuffer().fillFully(request.getHttpFilter().getConfiguration().getMaxBufferedPostSize());
                 } catch (IOException e) {
                     throw new IllegalStateException("Can't complete SSL re-negotation", e);
                 }
             }
 
-            GrizzlyFuture<Object[]> certFuture =
-                    new CertificateEvent(true).trigger(request.getContext());
+            GrizzlyFuture<Object[]> certFuture = new CertificateEvent(true).trigger(request.getContext());
             try {
                 // TODO: make the timeout configurable
                 certificates = certFuture.get(30, TimeUnit.SECONDS);
             } catch (Exception e) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE,
-                               "Unable to obtain certificates from peer.",
-                               e);
+                    LOGGER.log(Level.FINE, "Unable to obtain certificates from peer.", e);
                 }
             }
             request.setAttribute(SSLSupport.CERTIFICATE_KEY, certificates);
@@ -89,14 +85,11 @@ public class RequestUtils {
                 }
             } catch (Exception ioe) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE,
-                            "Unable to populate SSL attributes",
-                            ioe);
+                    LOGGER.log(Level.FINE, "Unable to populate SSL attributes", ioe);
                 }
             }
         }
     }
-
 
     public static void handleSendFile(final Request request) {
         final Object f = request.getAttribute(Request.SEND_FILE_ATTR);
@@ -104,8 +97,7 @@ public class RequestUtils {
             final Response response = request.getResponse();
             if (response.isCommitted()) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.log(Level.WARNING,
-                            LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUESTUTILS_SENDFILE_FAILED());
+                    LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUESTUTILS_SENDFILE_FAILED());
                 }
 
                 return;

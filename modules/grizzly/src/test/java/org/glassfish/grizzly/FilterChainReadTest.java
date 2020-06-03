@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,17 @@
 
 package org.glassfish.grizzly;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.security.SecureRandom;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.asyncqueue.WritableMessage;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChain;
@@ -23,38 +34,40 @@ import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.memory.CompositeBuffer;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.EchoFilter;
 import org.glassfish.grizzly.utils.StringEncoder;
 import org.glassfish.grizzly.utils.StringFilter;
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import junit.framework.TestCase;
-import org.glassfish.grizzly.memory.CompositeBuffer;
-import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 
 /**
  * Test {@link FilterChain} blocking read.
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class FilterChainReadTest extends TestCase {
-    public static final int PORT = 7785;
+    public static final int PORT = PORT();
+
+    static int PORT() {
+        try {
+            int port = 7785 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     private static final Logger logger = Grizzly.logger(FilterChainReadTest.class);
 
     public void testBlockingRead() throws Exception {
-        final String[] clientMsgs = {"Hello", "from", "client"};
-        
+        final String[] clientMsgs = { "Hello", "from", "client" };
+
         Connection connection = null;
         int messageNum = 3;
 
@@ -64,8 +77,7 @@ public class FilterChainReadTest extends TestCase {
         filterChainBuilder.add(new StringFilter());
         filterChainBuilder.add(new BaseFilter() {
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
                 String message = ctx.getMessage();
 
@@ -92,18 +104,17 @@ public class FilterChainReadTest extends TestCase {
         });
         filterChainBuilder.add(new EchoFilter());
 
-
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(5);
             transport.bind(PORT);
             transport.start();
 
             final BlockingQueue<String> resultQueue = new LinkedTransferQueue<>();
 
-            FilterChainBuilder clientFilterChainBuilder =
-                    FilterChainBuilder.stateless();
+            FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(new StringFilter());
             clientFilterChainBuilder.add(new BaseFilter() {
@@ -117,12 +128,8 @@ public class FilterChainReadTest extends TestCase {
             });
             final FilterChain clientFilterChain = clientFilterChainBuilder.build();
 
-            SocketConnectorHandler connectorHandler =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
 
-            
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -134,8 +141,7 @@ public class FilterChainReadTest extends TestCase {
                     String msg = clientMsgs[j] + "-" + i;
                     Future<WriteResult> writeFuture = connection.write(msg);
 
-                    assertTrue("Write timeout loop: " + i,
-                            writeFuture.get(10, TimeUnit.SECONDS) != null);
+                    assertTrue("Write timeout loop: " + i, writeFuture.get(10, TimeUnit.SECONDS) != null);
 
                     final String srvInterm = intermResultQueue.poll(10, TimeUnit.SECONDS);
 
@@ -144,11 +150,9 @@ public class FilterChainReadTest extends TestCase {
                     clientMessage += msg;
                 }
 
-
                 final String message = resultQueue.poll(10, TimeUnit.SECONDS);
 
-                assertEquals("Unexpected response (" + i + ")",
-                        clientMessage, message);
+                assertEquals("Unexpected response (" + i + ")", clientMessage, message);
             }
         } finally {
             if (connection != null) {
@@ -160,7 +164,7 @@ public class FilterChainReadTest extends TestCase {
     }
 
     public void testBlockingReadWithRemainder() throws Exception {
-        final String[] clientMsgs = {"Hello", "from", "client"};
+        final String[] clientMsgs = { "Hello", "from", "client" };
 
         Connection connection = null;
         int messageNum = 3;
@@ -171,8 +175,7 @@ public class FilterChainReadTest extends TestCase {
         filterChainBuilder.add(new StringFilter());
         filterChainBuilder.add(new BaseFilter() {
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
                 String message = ctx.getMessage();
 
@@ -199,18 +202,17 @@ public class FilterChainReadTest extends TestCase {
         });
         filterChainBuilder.add(new EchoFilter());
 
-
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(5);
             transport.bind(PORT);
             transport.start();
 
             final BlockingQueue<String> resultQueue = new LinkedTransferQueue<>();
 
-            FilterChainBuilder clientFilterChainBuilder =
-                    FilterChainBuilder.stateless();
+            FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(new StringFilter());
             clientFilterChainBuilder.add(new BaseFilter() {
@@ -224,11 +226,8 @@ public class FilterChainReadTest extends TestCase {
             });
             final FilterChain clientFilterChain = clientFilterChainBuilder.build();
 
-            SocketConnectorHandler connectorHandler =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
-            
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
+
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -237,23 +236,19 @@ public class FilterChainReadTest extends TestCase {
                 String clientMessage = "";
 
                 CompositeBuffer bb = CompositeBuffer.newBuffer(transport.getMemoryManager());
-                
+
                 for (int j = 0; j < clientMsgs.length; j++) {
                     String msg = clientMsgs[j] + "-" + i;
                     clientMessage += msg;
                     StringEncoder stringEncoder = new StringEncoder();
-                    TransformationResult<String, Buffer> result =
-                            stringEncoder.transform(connection, msg);
+                    TransformationResult<String, Buffer> result = stringEncoder.transform(connection, msg);
                     Buffer buffer = result.getMessage();
                     bb.append(buffer);
                 }
 
+                Future<WriteResult<WritableMessage, SocketAddress>> writeFuture = transport.getAsyncQueueIO().getWriter().write(connection, bb);
 
-                Future<WriteResult<WritableMessage, SocketAddress>> writeFuture =
-                        transport.getAsyncQueueIO().getWriter().write(connection, bb);
-
-                assertTrue("Write timeout loop: " + i,
-                        writeFuture.get(10, TimeUnit.SECONDS) != null);
+                assertTrue("Write timeout loop: " + i, writeFuture.get(10, TimeUnit.SECONDS) != null);
 
                 for (int j = 0; j < clientMsgs.length; j++) {
                     String msg = clientMsgs[j] + "-" + i;
@@ -262,11 +257,9 @@ public class FilterChainReadTest extends TestCase {
                     assertEquals("Unexpected interm. response (" + i + ", " + j + ")", msg, srvInterm);
                 }
 
-
                 final String message = resultQueue.poll(10, TimeUnit.SECONDS);
 
-                assertEquals("Unexpected response (" + i + ")",
-                        clientMessage, message);
+                assertEquals("Unexpected response (" + i + ")", clientMessage, message);
             }
         } finally {
             if (connection != null) {
@@ -286,8 +279,7 @@ public class FilterChainReadTest extends TestCase {
         filterChainBuilder.add(new StringFilter());
         filterChainBuilder.add(new BaseFilter() {
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
                 String message = ctx.getMessage();
 
@@ -308,25 +300,21 @@ public class FilterChainReadTest extends TestCase {
             }
         });
 
-
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
+            Thread.sleep(5);
             transport.bind(PORT);
             transport.start();
 
-            FilterChainBuilder clientFilterChainBuilder =
-                    FilterChainBuilder.stateless();
+            FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(new StringFilter());
             final FilterChain clientFilterChain = clientFilterChainBuilder.build();
 
-            SocketConnectorHandler connectorHandler =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
-            
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
+
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -334,8 +322,7 @@ public class FilterChainReadTest extends TestCase {
             String msg = "Hello";
             Future<WriteResult> writeFuture = connection.write(msg);
 
-            assertTrue("Write timeout",
-                    writeFuture.get(10, TimeUnit.SECONDS) != null);
+            assertTrue("Write timeout", writeFuture.get(10, TimeUnit.SECONDS) != null);
 
             final String srvInterm = (String) intermResultQueue.poll(10, TimeUnit.SECONDS);
 
@@ -343,11 +330,10 @@ public class FilterChainReadTest extends TestCase {
 
             connection.closeSilently();
             connection = null;
-            
+
             final Exception e = (Exception) intermResultQueue.poll(10, TimeUnit.SECONDS);
 
-            assertTrue("Unexpected response. Exception: " + e.getClass() + ": " + e.getMessage(),
-                    e instanceof EOFException);
+            assertTrue("Unexpected response. Exception: " + e.getClass() + ": " + e.getMessage(), e instanceof EOFException);
         } finally {
             if (connection != null) {
                 connection.closeSilently();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -18,13 +18,13 @@ import org.glassfish.grizzly.samples.echo.EchoFilter;
 
 /**
  * Simple GIOP echo server
- * 
+ *
  * @author Alexey Stashok
  */
 public class GIOPServer {
     public static final String HOST = "localhost";
     public static final int PORT = 9098;
-    
+
     public static void main(String[] args) throws Exception {
         // Create a FilterChain using FilterChainBuilder
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
@@ -33,10 +33,8 @@ public class GIOPServer {
         filterChainBuilder.add(new GIOPFilter());
         filterChainBuilder.add(new EchoFilter());
 
-
         // Create TCP NIO transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {

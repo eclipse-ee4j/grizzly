@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -38,6 +38,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -46,6 +47,7 @@ import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.IOEvent;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.WriteResult;
+import org.glassfish.grizzly.Writer.Reentrant;
 import org.glassfish.grizzly.asyncqueue.AsyncQueueWriter;
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -56,9 +58,9 @@ import org.glassfish.grizzly.http.HttpHeader;
 import org.glassfish.grizzly.http.HttpServerFilter;
 import org.glassfish.grizzly.http.HttpTrailer;
 import org.glassfish.grizzly.http.Protocol;
-import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HeaderValue;
+import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.CompositeBuffer;
@@ -68,32 +70,23 @@ import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.Exceptions;
 import org.glassfish.grizzly.utils.Futures;
 
-import static org.glassfish.grizzly.Writer.Reentrant;
-
 /**
- * Abstraction exposing both byte and character methods to write content
- * to the HTTP messaging system in Grizzly.
+ * Abstraction exposing both byte and character methods to write content to the HTTP messaging system in Grizzly.
  */
 public class OutputBuffer {
-    
+
     protected static final Logger LOGGER = Grizzly.logger(OutputBuffer.class);
 
-    private static final int DEFAULT_BUFFER_SIZE =
-            Integer.getInteger(OutputBuffer.class.getName() + ".default-buffer-size",
-                    1024 * 8);
+    private static final int DEFAULT_BUFFER_SIZE = Integer.getInteger(OutputBuffer.class.getName() + ".default-buffer-size", 1024 * 8);
 
-    private static final int MAX_CHAR_BUFFER_SIZE =
-            Integer.getInteger(OutputBuffer.class.getName() + ".max-char-buffer-size",
-                    1024 * 64 + 1);
+    private static final int MAX_CHAR_BUFFER_SIZE = Integer.getInteger(OutputBuffer.class.getName() + ".max-char-buffer-size", 1024 * 64 + 1);
 
     private static final int MIN_BUFFER_SIZE = 512;
-    
+
     /**
-     * Flag indicating whether or not async operations are being used on the
-     * input streams.
+     * Flag indicating whether or not async operations are being used on the input streams.
      */
-    private final static boolean IS_BLOCKING =
-            Boolean.getBoolean(OutputBuffer.class.getName() + ".isBlocking");
+    private final static boolean IS_BLOCKING = Boolean.getBoolean(OutputBuffer.class.getName() + ".isBlocking");
 
     private FilterChainContext ctx;
 
@@ -103,14 +96,12 @@ public class OutputBuffer {
 
     // Buffer, which is used for write(byte[] ...) scenarios to try to avoid
     // byte arrays copying
-    private final TemporaryHeapBuffer temporaryWriteBuffer =
-            new TemporaryHeapBuffer();
+    private final TemporaryHeapBuffer temporaryWriteBuffer = new TemporaryHeapBuffer();
     // The cloner, which will be responsible for cloning temporaryWriteBuffer,
     // if it's not possible to write its content in this thread
     private final ByteArrayCloner cloner = new ByteArrayCloner(temporaryWriteBuffer);
 
-    private final List<LifeCycleListener> lifeCycleListeners =
-            new ArrayList<>(2);
+    private final List<LifeCycleListener> lifeCycleListeners = new ArrayList<>(2);
 
     private boolean committed;
 
@@ -122,8 +113,7 @@ public class OutputBuffer {
 
     private CharsetEncoder encoder;
 
-    private final Map<String, CharsetEncoder> encoders =
-            new HashMap<>();
+    private final Map<String, CharsetEncoder> encoders = new HashMap<>();
 
     private char[] charsArray;
     private int charsArrayLength;
@@ -131,7 +121,7 @@ public class OutputBuffer {
 
     private MemoryManager memoryManager;
     private Connection connection;
-    
+
     private WriteHandler handler;
 
     private InternalWriteHandler asyncWriteHandler;
@@ -139,31 +129,27 @@ public class OutputBuffer {
     private boolean fileTransferRequested;
 
     private int bufferSize = DEFAULT_BUFFER_SIZE;
-    
+
     protected boolean sendfileEnabled;
-    
+
     private HttpHeader outputHeader;
 
     // Runnable to be used for async notifyWritePossible() notifications,
     // which helps to limit the number of reentrants
     private Runnable writePossibleRunnable;
-    
+
     private Builder builder;
-    
+
     private boolean isNonBlockingWriteGuaranteed;
     private boolean isLastWriteNonBlocking;
-    
+
     private HttpContext httpContext;
 
-    private Supplier<Map<String,String>> trailersSupplier;
-    
-    
+    private Supplier<Map<String, String>> trailersSupplier;
+
     // ---------------------------------------------------------- Public Methods
 
-
-    public void initialize(final HttpHeader outputHeader,
-                           final boolean sendfileEnabled,
-                           final FilterChainContext ctx) {
+    public void initialize(final HttpHeader outputHeader, final boolean sendfileEnabled, final FilterChainContext ctx) {
 
         this.outputHeader = outputHeader;
         if (builder == null) {
@@ -180,22 +166,19 @@ public class OutputBuffer {
 
     /**
      * <p>
-     * Returns <code>true</code> if content will be written in a non-blocking
-     * fashion, otherwise returns <code>false</code>.
+     * Returns <code>true</code> if content will be written in a non-blocking fashion, otherwise returns <code>false</code>.
      * </p>
      *
-     * @return <code>true</code> if content will be written in a non-blocking
-     * fashion, otherwise returns <code>false</code>.
+     * @return <code>true</code> if content will be written in a non-blocking fashion, otherwise returns <code>false</code>.
      *
      * @since 2.1.2
      * @deprecated will always return true
      */
     @Deprecated
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public boolean isAsyncEnabled() {
         return true;
     }
-
 
     /**
      * Sets the asynchronous processing state of this <code>OutputBuffer</code>.
@@ -203,14 +186,13 @@ public class OutputBuffer {
      * @param asyncEnabled <code>true</code> if this <code>OutputBuffer<code>
      *  will write content without blocking.
      *
-     * @since 2.1.2
-     * @deprecated <tt>OutputBuffer</tt> always supports async mode
+     * &#64;since 2.1.2
+     * &#64;deprecated <tt>OutputBuffer</tt> always supports async mode
      */
     @Deprecated
     @SuppressWarnings("UnusedDeclaration")
     public void setAsyncEnabled(boolean asyncEnabled) {
     }
-
 
     public void prepareCharacterEncoder() {
         getEncoder();
@@ -220,12 +202,12 @@ public class OutputBuffer {
         return bufferSize;
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public void registerLifeCycleListener(final LifeCycleListener listener) {
         lifeCycleListeners.add(listener);
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public boolean removeLifeCycleListener(final LifeCycleListener listener) {
         return lifeCycleListeners.remove(listener);
     }
@@ -241,9 +223,8 @@ public class OutputBuffer {
         if (currentBuffer == null) {
             this.bufferSize = bufferSizeLocal;
         }
-        
-        if (charsArray != null &&
-                charsArray.length < bufferSizeLocal) {
+
+        if (charsArray != null && charsArray.length < bufferSizeLocal) {
             final char[] newCharsArray = new char[bufferSizeLocal];
             System.arraycopy(charsArray, 0, newCharsArray, 0, charsArrayLength);
             charsBuffer = CharBuffer.wrap(newCharsArray);
@@ -272,12 +253,10 @@ public class OutputBuffer {
         encoder = null;
     }
 
-
     /**
-     * @return <code>true</code> if this <tt>OutputBuffer</tt> is closed, otherwise
-     *  returns <code>false</code>.
+     * @return <code>true</code> if this <tt>OutputBuffer</tt> is closed, otherwise returns <code>false</code>.
      */
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public boolean isClosed() {
         return closed;
     }
@@ -287,7 +266,7 @@ public class OutputBuffer {
      *
      * @return the number of bytes buffered on OutputBuffer and ready to be sent.
      */
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public int getBufferedDataSize() {
         int size = 0;
         if (compositeBuffer != null) {
@@ -298,15 +277,13 @@ public class OutputBuffer {
             size += currentBuffer.position();
         }
 
-        size += (charsArrayLength << 1);
-        
+        size += charsArrayLength << 1;
+
         return size;
     }
 
-
     /**
-     * Recycle the output buffer. This should be called when closing the
-     * connection.
+     * Recycle the output buffer. This should be called when closing the connection.
      */
     public void recycle() {
 
@@ -327,7 +304,7 @@ public class OutputBuffer {
 
         if (charsArray != null) {
             charsArrayLength = 0;
-            
+
             if (charsArray.length < MAX_CHAR_BUFFER_SIZE) {
                 charsBuffer.clear();
             } else {
@@ -358,10 +335,8 @@ public class OutputBuffer {
         lifeCycleListeners.clear();
     }
 
+    public void endRequest() throws IOException {
 
-    public void endRequest()
-        throws IOException {
-        
         if (finished) {
             return;
         }
@@ -371,7 +346,7 @@ public class OutputBuffer {
             asyncWriteHandler = null;
             asyncWriteQueueHandlerLocal.detach();
         }
-        
+
         if (!closed) {
             try {
                 close();
@@ -387,22 +362,19 @@ public class OutputBuffer {
 
     }
 
-
     /**
-     * Acknowledge a HTTP <code>Expect</code> header.  The response status
-     * code and reason phrase should be set before invoking this method.
+     * Acknowledge a HTTP <code>Expect</code> header. The response status code and reason phrase should be set before
+     * invoking this method.
      *
      * @throws IOException if an error occurs writing the acknowledgment.
      */
     public void acknowledge() throws IOException {
 
         ctx.write(outputHeader, IS_BLOCKING);
-        
+
     }
 
-
     // ---------------------------------------------------- Writer-Based Methods
-
 
     public void writeChar(int c) throws IOException {
 
@@ -422,7 +394,7 @@ public class OutputBuffer {
 
         charsArray[charsArrayLength++] = (char) c;
     }
-    
+
     public void write(char[] cbuf, int off, int len) throws IOException {
 
         connection.assertOpen();
@@ -438,18 +410,18 @@ public class OutputBuffer {
         }
 
         checkCharBuffer();
-        
+
         final int remaining = charsArray.length - charsArrayLength;
-        
+
         if (len <= remaining) {
             System.arraycopy(cbuf, off, charsArray, charsArrayLength, len);
             charsArrayLength += len;
         } else if (len - remaining < remaining) {
             System.arraycopy(cbuf, off, charsArray, charsArrayLength, remaining);
             charsArrayLength += remaining;
-            
+
             flushCharsToBuf(true);
-            
+
             System.arraycopy(cbuf, off + remaining, charsArray, 0, len - remaining);
             charsArrayLength = len - remaining;
         } else {
@@ -462,11 +434,9 @@ public class OutputBuffer {
         write(cbuf, 0, cbuf.length);
     }
 
-
     public void write(final String str) throws IOException {
         write(str, 0, str.length());
     }
-
 
     public void write(final String str, final int off, final int len) throws IOException {
 
@@ -481,17 +451,16 @@ public class OutputBuffer {
         if (writingBytes()) {
             flushBinaryBuffers(false);
         }
-        
+
         checkCharBuffer();
-        
+
         if (charsArray.length - charsArrayLength >= len) {
-            str.getChars(off, off + len,
-                         charsArray, charsArrayLength);
+            str.getChars(off, off + len, charsArray, charsArrayLength);
             charsArrayLength += len;
-            
+
             return;
         }
-        
+
         int offLocal = off;
         int lenLocal = len;
 
@@ -499,8 +468,7 @@ public class OutputBuffer {
             final int remaining = charsArray.length - charsArrayLength;
             final int workingLen = Math.min(lenLocal, remaining);
 
-            str.getChars(offLocal, offLocal + workingLen,
-                    charsArray, charsArrayLength);
+            str.getChars(offLocal, offLocal + workingLen, charsArray, charsArrayLength);
             charsArrayLength += workingLen;
 
             offLocal += workingLen;
@@ -513,7 +481,6 @@ public class OutputBuffer {
 
         flushBinaryBuffersIfNeeded();
     }
-
 
     // ---------------------------------------------- OutputStream-Based Methods
 
@@ -529,9 +496,9 @@ public class OutputBuffer {
         if (writingChars()) {
             flushCharsToBuf(false);
         }
-        
+
         checkCurrentBuffer();
-        
+
         if (!currentBuffer.hasRemaining()) {
             if (canWritePayloadChunk()) {
                 doCommit();
@@ -544,10 +511,9 @@ public class OutputBuffer {
                 checkCurrentBuffer();
             }
         }
-        
+
         currentBuffer.put((byte) b);
     }
-
 
     public void write(final byte[] b) throws IOException {
         write(b, 0, b.length);
@@ -559,8 +525,7 @@ public class OutputBuffer {
      * </p>
      *
      * @param file the {@link File} to transfer.
-     * @param handler {@link CompletionHandler} that will be notified
-     *                of the transfer progress/completion or failure.
+     * @param handler {@link CompletionHandler} that will be notified of the transfer progress/completion or failure.
      *
      * @throws IllegalArgumentException if <code>file</code> is null
      *
@@ -577,40 +542,30 @@ public class OutputBuffer {
 
     /**
      * <p>
-     * Will use {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}
-     * to send file to the remote endpoint.  Note that all headers necessary
-     * for the file transfer must be set prior to invoking this method as this will
-     * case the HTTP header to be flushed to the client prior to sending the file
-     * content. This should also be the last call to write any content to the remote
-     * endpoint.
+     * Will use {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)} to send
+     * file to the remote endpoint. Note that all headers necessary for the file transfer must be set prior to invoking this
+     * method as this will case the HTTP header to be flushed to the client prior to sending the file content. This should
+     * also be the last call to write any content to the remote endpoint.
      * </p>
      *
      * <p>
-     * It's required that the response be suspended when using this functionality.
-     * It will be assumed that if the response wasn't suspended when this method
-     * is called, that it's desired that this method manages the suspend/resume cycle.
+     * It's required that the response be suspended when using this functionality. It will be assumed that if the response
+     * wasn't suspended when this method is called, that it's desired that this method manages the suspend/resume cycle.
      * </p>
      *
      * @param file the {@link File} to transfer.
      * @param offset the starting offset within the File
      * @param length the total number of bytes to transfer
-     * @param handler {@link CompletionHandler} that will be notified
-     *                of the transfer progress/completion or failure.
+     * @param handler {@link CompletionHandler} that will be notified of the transfer progress/completion or failure.
      *
-     * @throws IllegalArgumentException if the response has already been committed
-     *                                  at the time this method was invoked.
-     * @throws IllegalStateException    if a file transfer request has already
-     *                                  been made or if send file support isn't
-     *                                  available.
-     * @throws IllegalStateException    if the response was in a suspended state
-     *                                  when this method was invoked, but no
-     *                                  {@link CompletionHandler} was provided.
+     * @throws IllegalArgumentException if the response has already been committed at the time this method was invoked.
+     * @throws IllegalStateException if a file transfer request has already been made or if send file support isn't
+     * available.
+     * @throws IllegalStateException if the response was in a suspended state when this method was invoked, but no
+     * {@link CompletionHandler} was provided.
      * @since 2.2
      */
-    public void sendfile(final File file,
-                         final long offset,
-                         final long length,
-                         final CompletionHandler<WriteResult> handler) {
+    public void sendfile(final File file, final long offset, final long length, final CompletionHandler<WriteResult> handler) {
         if (!sendfileEnabled) {
             throw new IllegalStateException("sendfile support isn't available.");
         }
@@ -642,19 +597,13 @@ public class OutputBuffer {
                 handler.failed(e);
             } else {
                 if (LOGGER.isLoggable(Level.SEVERE)) {
-                    LOGGER.log(Level.SEVERE,
-                            String.format("Failed to transfer file %s.  Cause: %s.",
-                            file.getAbsolutePath(),
-                            e.getMessage()),
-                            e);
+                    LOGGER.log(Level.SEVERE, String.format("Failed to transfer file %s.  Cause: %s.", file.getAbsolutePath(), e.getMessage()), e);
                 }
             }
 
             return;
         }
 
-
-        
         ctx.write(f, handler);
     }
 
@@ -670,17 +619,16 @@ public class OutputBuffer {
         if (writingChars()) {
             flushCharsToBuf(false);
         }
-        
+
         // Copy the content of the b[] to the currentBuffer, if it's possible
-        if (bufferSize >= len &&
-                (currentBuffer == null || currentBuffer.remaining() >= len)) {
+        if (bufferSize >= len && (currentBuffer == null || currentBuffer.remaining() >= len)) {
             checkCurrentBuffer();
 
             assert currentBuffer != null;
             currentBuffer.put(b, off, len);
         } else if (canWritePayloadChunk()) {
             // If b[] is too big - try to send it to wire right away (if chunking is allowed)
-            
+
             // wrap byte[] with a thread local buffer
             temporaryWriteBuffer.reset(b, off, len);
 
@@ -691,13 +639,13 @@ public class OutputBuffer {
             doCommit();
             if (compositeBuffer != null) { // if we write a composite buffer
                 compositeBuffer.append(temporaryWriteBuffer);
-                
+
                 flushBuffer(compositeBuffer, false, cloner);
                 compositeBuffer = null;
             } else { // we write just mutableHeapBuffer content
                 flushBuffer(temporaryWriteBuffer, false, cloner);
             }
-            
+
             blockAfterWriteIfNeeded();
         } else {
             // if we can't write the chunk - buffer it.
@@ -706,14 +654,12 @@ public class OutputBuffer {
             cloneBuffer.put(b, off, len);
             cloneBuffer.flip();
             checkCompositeBuffer();
-            
+
             compositeBuffer.append(cloneBuffer);
         }
     }
 
-
     // --------------------------------------------------- Common Output Methods
-
 
     public void close() throws IOException {
 
@@ -721,7 +667,7 @@ public class OutputBuffer {
             return;
         }
         closed = true;
-        
+
         connection.assertOpen();
 
         // commit the response (mark it as committed)
@@ -733,12 +679,9 @@ public class OutputBuffer {
             // and we need to send trailer
             forceCommitHeaders(true);
         }
-        
+
         blockAfterWriteIfNeeded();
     }
-
-
-
 
     /**
      * Flush the response.
@@ -753,55 +696,51 @@ public class OutputBuffer {
             forceCommitHeaders(false);
         }
 
-        blockAfterWriteIfNeeded();      
+        blockAfterWriteIfNeeded();
     }
-
 
     /**
      * <p>
      * Writes the contents of the specified {@link ByteBuffer} to the client.
      * </p>
      *
-     * Note, that passed {@link ByteBuffer} will be directly used by underlying
-     * connection, so it could be reused only if it has been flushed.
+     * Note, that passed {@link ByteBuffer} will be directly used by underlying connection, so it could be reused only if it
+     * has been flushed.
      *
      * @param byteBuffer the {@link ByteBuffer} to write
      * @throws IOException if an error occurs during the write
      */
-    @SuppressWarnings({"unchecked", "UnusedDeclaration"})
+    @SuppressWarnings({ "unchecked", "UnusedDeclaration" })
     public void writeByteBuffer(final ByteBuffer byteBuffer) throws IOException {
         final Buffer w = Buffers.wrap(memoryManager, byteBuffer);
         w.allowBufferDispose(false);
         writeBuffer(w);
     }
 
-
     /**
      * <p>
      * Writes the contents of the specified {@link Buffer} to the client.
      * </p>
      *
-     * Note, that passed {@link Buffer} will be directly used by underlying
-     * connection, so it could be reused only if it has been flushed.
+     * Note, that passed {@link Buffer} will be directly used by underlying connection, so it could be reused only if it has
+     * been flushed.
      *
      * @param buffer the {@link Buffer} to write
      * @throws IOException if an error occurs during the write
      */
     public void writeBuffer(final Buffer buffer) throws IOException {
         connection.assertOpen();
-        
+
         updateNonBlockingStatus();
-        
+
         finishCurrentBuffer();
         checkCompositeBuffer();
         compositeBuffer.append(buffer);
-        
-        if (canWritePayloadChunk() &&
-                compositeBuffer.remaining() > bufferSize) {
+
+        if (canWritePayloadChunk() && compositeBuffer.remaining() > bufferSize) {
             flush();
         }
     }
-
 
     // -------------------------------------------------- General Public Methods
 
@@ -820,15 +759,15 @@ public class OutputBuffer {
     public boolean canWrite(@SuppressWarnings("UnusedParameters") final int length) {
         return canWrite();
     }
-    
+
     /**
      * @see AsyncQueueWriter#canWrite(org.glassfish.grizzly.Connection)
      */
     public boolean canWrite() {
         if (IS_BLOCKING || isNonBlockingWriteGuaranteed) {
             return true;
-        }        
-        
+        }
+
         if (httpContext.getOutputSink().canWrite()) {
             isNonBlockingWriteGuaranteed = true;
             return true;
@@ -838,12 +777,12 @@ public class OutputBuffer {
 
     /**
      * @see AsyncQueueWriter#notifyWritePossible(org.glassfish.grizzly.Connection, org.glassfish.grizzly.WriteHandler, int)
-     * @deprecated the <code>length</code> parameter will be ignored. Please use {@link #notifyCanWrite(org.glassfish.grizzly.WriteHandler)}.
+     * @deprecated the <code>length</code> parameter will be ignored. Please use
+     * {@link #notifyCanWrite(org.glassfish.grizzly.WriteHandler)}.
      */
     @Deprecated
     @SuppressWarnings("UnusedParameters")
-    public void notifyCanWrite(final WriteHandler handler,
-                               @SuppressWarnings("UnusedParameters") final int length) {
+    public void notifyCanWrite(final WriteHandler handler, @SuppressWarnings("UnusedParameters") final int length) {
         notifyCanWrite(handler);
     }
 
@@ -851,14 +790,14 @@ public class OutputBuffer {
         if (this.handler != null) {
             throw new IllegalStateException("Illegal attempt to set a new handler before the existing handler has been notified.");
         }
-        
+
         if (!httpContext.getCloseable().isOpen()) {
             handler.onError(connection.getCloseReason().getCause());
             return;
         }
-        
+
         this.handler = handler;
-        
+
         if (isNonBlockingWriteGuaranteed || canWrite()) {
             final Reentrant reentrant = Reentrant.getWriteReentrant();
             if (!reentrant.isMaxReentrantsReached()) {
@@ -866,17 +805,17 @@ public class OutputBuffer {
             } else {
                 notifyWritePossibleAsync();
             }
-            
+
             return;
         }
-        
+
         // This point might be reached if OutputBuffer is in non-blocking mode
         assert !IS_BLOCKING;
 
         if (asyncWriteHandler == null) {
             asyncWriteHandler = new InternalWriteHandler(this);
         }
-        
+
         try {
             // If exception occurs here - it's from WriteHandler, so it must
             // have been processed by WriteHandler.onError().
@@ -885,8 +824,7 @@ public class OutputBuffer {
         }
     }
 
-
-    public void setTrailers(Supplier<Map<String,String>> trailersSupplier) {
+    public void setTrailers(Supplier<Map<String, String>> trailersSupplier) {
         this.trailersSupplier = trailersSupplier;
     }
 
@@ -895,18 +833,17 @@ public class OutputBuffer {
     }
 
     /**
-     * @return {@link Executor}, which will be used for notifying user
-     * registered {@link WriteHandler}.
+     * @return {@link Executor}, which will be used for notifying user registered {@link WriteHandler}.
      */
     protected Executor getThreadPool() {
         if (!Threads.isService()) {
             return null;
         }
-        
+
         final ExecutorService es = connection.getTransport().getWorkerThreadPool();
         return es != null && !es.isShutdown() ? es : null;
-    }    
-    
+    }
+
     /**
      * Notify WriteHandler asynchronously
      */
@@ -920,7 +857,7 @@ public class OutputBuffer {
                 }
             };
         }
-        
+
         connection.executeInEventThread(IOEvent.WRITE, writePossibleRunnable);
     }
 
@@ -932,7 +869,7 @@ public class OutputBuffer {
 
         if (localHandler != null) {
             final Reentrant reentrant = Reentrant.getWriteReentrant();
-            
+
             try {
                 handler = null;
                 reentrant.inc();
@@ -951,23 +888,21 @@ public class OutputBuffer {
     // --------------------------------------------------------- Private Methods
 
     private boolean canWritePayloadChunk() {
-        return outputHeader.isChunkingAllowed()
-                || outputHeader.getContentLength() != -1;
+        return outputHeader.isChunkingAllowed() || outputHeader.getContentLength() != -1;
     }
-    
-    private void blockAfterWriteIfNeeded()
-            throws IOException {
-        
+
+    private void blockAfterWriteIfNeeded() throws IOException {
+
         if (IS_BLOCKING || isNonBlockingWriteGuaranteed || isLastWriteNonBlocking) {
             return;
         }
-        
+
         if (httpContext.getOutputSink().canWrite()) {
             return;
         }
-        
+
         final FutureImpl<Boolean> future = Futures.createSafeFuture();
-        
+
         httpContext.getOutputSink().notifyCanWrite(new WriteHandler() {
 
             @Override
@@ -980,10 +915,9 @@ public class OutputBuffer {
                 future.failure(Exceptions.makeIOException(t));
             }
         });
-        
+
         try {
-            final long writeTimeout =
-                    connection.getWriteTimeout(TimeUnit.MILLISECONDS);
+            final long writeTimeout = connection.getWriteTimeout(TimeUnit.MILLISECONDS);
             if (writeTimeout >= 0) {
                 future.get(writeTimeout, TimeUnit.MILLISECONDS);
             } else {
@@ -1008,14 +942,12 @@ public class OutputBuffer {
         if (charsArrayLength > 0) {
             flushCharsToBuf(false);
         }
-        
+
         return flushBinaryBuffers(isLast);
     }
-    
-    private boolean flushBinaryBuffers(final boolean isLast)
-            throws IOException {
-        if (!outputHeader.isChunkingAllowed()
-                && outputHeader.getContentLength() == -1) {
+
+    private boolean flushBinaryBuffers(final boolean isLast) throws IOException {
+        if (!outputHeader.isChunkingAllowed() && outputHeader.getContentLength() == -1) {
             if (!isLast) {
                 return false;
             } else {
@@ -1047,9 +979,7 @@ public class OutputBuffer {
         return false;
     }
 
-    private void flushBuffer(final Buffer bufferToFlush,
-            final boolean isLast, final MessageCloner<Buffer> messageCloner)
-            throws IOException {
+    private void flushBuffer(final Buffer bufferToFlush, final boolean isLast, final MessageCloner<Buffer> messageCloner) throws IOException {
 
         final HttpContent content;
         if (isLast && trailersSupplier != null && (outputHeader.isChunked() || outputHeader.getProtocol().equals(Protocol.HTTP_2_0))) {
@@ -1065,11 +995,7 @@ public class OutputBuffer {
         } else {
             content = builder.content(bufferToFlush).last(isLast).build();
         }
-        ctx.write(null,
-                  content,
-                  null,
-                  messageCloner,
-                  IS_BLOCKING);
+        ctx.write(null, content, null, messageCloner, IS_BLOCKING);
     }
 
     private void checkCharBuffer() {
@@ -1080,11 +1006,11 @@ public class OutputBuffer {
     }
 
     private boolean writingChars() {
-        return (charsArray != null && charsArrayLength > 0);
+        return charsArray != null && charsArrayLength > 0;
     }
 
     private boolean writingBytes() {
-        return (currentBuffer != null && currentBuffer.position() != 0);
+        return currentBuffer != null && currentBuffer.position() != 0;
     }
 
     private void checkCurrentBuffer() {
@@ -1128,7 +1054,6 @@ public class OutputBuffer {
 
     }
 
-
     private boolean doCommit() throws IOException {
 
         if (!committed) {
@@ -1157,8 +1082,7 @@ public class OutputBuffer {
 
     private void checkCompositeBuffer() {
         if (compositeBuffer == null) {
-            final CompositeBuffer buffer = CompositeBuffer.newBuffer(
-                    memoryManager);
+            final CompositeBuffer buffer = CompositeBuffer.newBuffer(memoryManager);
             buffer.allowBufferDispose(true);
             buffer.allowInternalBuffersDispose(true);
             compositeBuffer = buffer;
@@ -1177,7 +1101,9 @@ public class OutputBuffer {
 
     private void flushCharsToBuf(final CharBuffer charBuf, final boolean canFlushToNet) throws IOException {
 
-        if (!charBuf.hasRemaining()) return;
+        if (!charBuf.hasRemaining()) {
+            return;
+        }
 
         // flush the buffer - need to take care of encoding at this point
         final CharsetEncoder enc = getEncoder();
@@ -1193,11 +1119,9 @@ public class OutputBuffer {
         int bufferPos = currentBuffer.position();
         int byteBufferPos = currentByteBuffer.position();
 
-        CoderResult res = enc.encode(charBuf,
-                                     currentByteBuffer,
-                                     true);
+        CoderResult res = enc.encode(charBuf, currentByteBuffer, true);
 
-        currentBuffer.position(bufferPos + (currentByteBuffer.position() - byteBufferPos));
+        currentBuffer.position(bufferPos + currentByteBuffer.position() - byteBufferPos);
 
         while (res == CoderResult.OVERFLOW) {
             checkCurrentBuffer();
@@ -1207,7 +1131,7 @@ public class OutputBuffer {
 
             res = enc.encode(charBuf, currentByteBuffer, true);
 
-            currentBuffer.position(bufferPos + (currentByteBuffer.position() - byteBufferPos));
+            currentBuffer.position(bufferPos + currentByteBuffer.position() - byteBufferPos);
 
             if (res == CoderResult.OVERFLOW) {
                 finishCurrentBuffer();
@@ -1226,7 +1150,7 @@ public class OutputBuffer {
     private void flushBinaryBuffersIfNeeded() throws IOException {
         if (compositeBuffer != null) { // this actually checks wheather current buffer was overloaded during encoding so we need to flush
             flushBinaryBuffers(false);
-            
+
             blockAfterWriteIfNeeded();
         }
     }
@@ -1236,19 +1160,17 @@ public class OutputBuffer {
             lifeCycleListeners.get(i).onCommit();
         }
     }
-        
+
     private void updateNonBlockingStatus() {
         isLastWriteNonBlocking = isNonBlockingWriteGuaranteed;
         isNonBlockingWriteGuaranteed = false;
     }
 
     /**
-     * The {@link MessageCloner}, responsible for cloning Buffer content, if it
-     * wasn't possible to write it in the current Thread (it was added to async
-     * write queue).
-     * We do this, because {@link #write(byte[], int, int)} method is not aware
-     * of async write queues, and content of the passed byte[] might be changed
-     * by user application once in gets control back.
+     * The {@link MessageCloner}, responsible for cloning Buffer content, if it wasn't possible to write it in the current
+     * Thread (it was added to async write queue). We do this, because {@link #write(byte[], int, int)} method is not aware
+     * of async write queues, and content of the passed byte[] might be changed by user application once in gets control
+     * back.
      */
     static final class ByteArrayCloner implements MessageCloner<Buffer> {
         private final TemporaryHeapBuffer temporaryWriteBuffer;
@@ -1256,23 +1178,21 @@ public class OutputBuffer {
         public ByteArrayCloner(final TemporaryHeapBuffer temporaryWriteBuffer) {
             this.temporaryWriteBuffer = temporaryWriteBuffer;
         }
-        
+
         @Override
-        public Buffer clone(final Connection connection,
-                final Buffer originalMessage) {
-            
+        public Buffer clone(final Connection connection, final Buffer originalMessage) {
+
             // Buffer was disposed somewhere on the way to async write queue -
             // just return the original message
             if (temporaryWriteBuffer.isDisposed()) {
                 return originalMessage;
             }
-            
+
             return clone0(connection.getMemoryManager(), originalMessage);
         }
 
-        Buffer clone0(final MemoryManager memoryManager,
-                final Buffer originalMessage) {
-            
+        Buffer clone0(final MemoryManager memoryManager, final Buffer originalMessage) {
+
             if (originalMessage.isComposite()) {
                 final CompositeBuffer compositeBuffer = (CompositeBuffer) originalMessage;
                 compositeBuffer.shrink();
@@ -1283,22 +1203,21 @@ public class OutputBuffer {
                         compositeBuffer.tryDispose();
                         return temporaryWriteBuffer.cloneContent(memoryManager);
                     } else {
-                        compositeBuffer.replace(temporaryWriteBuffer,
-                                temporaryWriteBuffer.cloneContent(memoryManager));
+                        compositeBuffer.replace(temporaryWriteBuffer, temporaryWriteBuffer.cloneContent(memoryManager));
                     }
                 }
-                
+
                 return originalMessage;
             }
-                
+
             return temporaryWriteBuffer.cloneContent(memoryManager);
         }
     }
-    
+
     public interface LifeCycleListener {
         void onCommit() throws IOException;
     }
-    
+
     private static class InternalWriteHandler implements WriteHandler {
 
         private volatile OutputBuffer outputBuffer;
@@ -1313,13 +1232,10 @@ public class OutputBuffer {
                 outputBuffer = null;
                 // call in the current thread, because otherwise handler executed
                 // in the different thread may deal with recycled Request/Response objects
-                onError0(obLocal,
-                        obLocal.httpContext.getCloseable().isOpen() ?
-                            new CancellationException() :
-                            new EOFException());
+                onError0(obLocal, obLocal.httpContext.getCloseable().isOpen() ? new CancellationException() : new EOFException());
             }
         }
-        
+
         @Override
         public void onWritePossible() throws Exception {
             final OutputBuffer localOB = outputBuffer;
@@ -1362,13 +1278,10 @@ public class OutputBuffer {
                 }
             }
         }
-        
 
         // ----------------------------------------------------- Private Methods
 
-
-        private static void onWritePossible0(final OutputBuffer ob)
-                throws Exception {
+        private static void onWritePossible0(final OutputBuffer ob) throws Exception {
             try {
                 final Reentrant reentrant = Reentrant.getWriteReentrant();
                 if (!reentrant.isMaxReentrantsReached()) {

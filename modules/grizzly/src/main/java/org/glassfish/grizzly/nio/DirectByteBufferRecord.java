@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,6 +19,7 @@ package org.glassfish.grizzly.nio;
 import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
 import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.memory.Buffers;
 
@@ -29,12 +30,11 @@ import org.glassfish.grizzly.memory.Buffers;
  */
 public final class DirectByteBufferRecord {
 
-    private static final ThreadCache.CachedTypeIndex<DirectByteBufferRecord> CACHE_IDX =
-            ThreadCache.obtainIndex("direct-buffer-cache", DirectByteBufferRecord.class, 1);
+    private static final ThreadCache.CachedTypeIndex<DirectByteBufferRecord> CACHE_IDX = ThreadCache.obtainIndex("direct-buffer-cache",
+            DirectByteBufferRecord.class, 1);
 
     public static DirectByteBufferRecord get() {
-        final DirectByteBufferRecord record =
-                ThreadCache.getFromCache(CACHE_IDX);
+        final DirectByteBufferRecord record = ThreadCache.getFromCache(CACHE_IDX);
         if (record != null) {
             return record;
         }
@@ -42,8 +42,7 @@ public final class DirectByteBufferRecord {
         ThreadCache.putToCache(CACHE_IDX, recordLocal);
         return recordLocal;
     }
-    
-    
+
     private ByteBuffer directBuffer;
     private int sliceOffset;
     private ByteBuffer directBufferSlice;
@@ -73,12 +72,12 @@ public final class DirectByteBufferRecord {
             return byteBuffer;
         }
     }
-        
+
     public ByteBuffer sliceBuffer() {
         int oldLim = directBuffer.limit();
         Buffers.setPositionLimit(directBuffer, sliceOffset, directBuffer.capacity());
         directBufferSlice = directBuffer.slice();
-        Buffers.setPositionLimit(directBuffer, 0, oldLim);        
+        Buffers.setPositionLimit(directBuffer, 0, oldLim);
         return directBufferSlice;
     }
 
@@ -114,7 +113,7 @@ public final class DirectByteBufferRecord {
             directBuffer.clear();
             switchToSoft();
         }
-        
+
         Arrays.fill(array, 0, arraySize, null);
         arraySize = 0;
         directBufferSlice = null;
@@ -130,7 +129,7 @@ public final class DirectByteBufferRecord {
 
     private void switchToSoft() {
         if (directBuffer != null && softRef == null) {
-            softRef = new SoftReference<ByteBuffer>(directBuffer);
+            softRef = new SoftReference<>(directBuffer);
         }
         directBuffer = null;
     }
@@ -142,7 +141,7 @@ public final class DirectByteBufferRecord {
 
     private void ensureArraySize() {
         if (arraySize == array.length) {
-            array = Arrays.copyOf(array, (arraySize * 3) / 2 + 1);
+            array = Arrays.copyOf(array, arraySize * 3 / 2 + 1);
         }
     }
 }

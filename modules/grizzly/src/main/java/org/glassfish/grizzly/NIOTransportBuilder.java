@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -31,9 +31,8 @@ import org.glassfish.grizzly.strategies.WorkerThreadIOStrategy;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 
 /**
- * This builder is responsible for creating {@link NIOTransport} implementations
- * as well as providing basic configuration for <code>IOStrategies</code> and
- * thread pools.
+ * This builder is responsible for creating {@link NIOTransport} implementations as well as providing basic
+ * configuration for <code>IOStrategies</code> and thread pools.
  *
  * @see NIOTransport
  * @see IOStrategy
@@ -48,14 +47,10 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     protected ThreadPoolConfig workerConfig;
     protected ThreadPoolConfig kernelConfig;
     protected SelectorProvider selectorProvider;
-    protected SelectorHandler selectorHandler =
-            SelectorHandler.DEFAULT_SELECTOR_HANDLER;
-    protected SelectionKeyHandler selectionKeyHandler =
-            SelectionKeyHandler.DEFAULT_SELECTION_KEY_HANDLER;
-    protected MemoryManager memoryManager =
-            MemoryManager.DEFAULT_MEMORY_MANAGER;
-    protected AttributeBuilder attributeBuilder =
-            AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
+    protected SelectorHandler selectorHandler = SelectorHandler.DEFAULT_SELECTOR_HANDLER;
+    protected SelectionKeyHandler selectionKeyHandler = SelectionKeyHandler.DEFAULT_SELECTION_KEY_HANDLER;
+    protected MemoryManager memoryManager = MemoryManager.DEFAULT_MEMORY_MANAGER;
+    protected AttributeBuilder attributeBuilder = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
     protected IOStrategy ioStrategy = WorkerThreadIOStrategy.getInstance();
     protected int selectorRunnerCount = NIOTransport.DEFAULT_SELECTOR_RUNNER_COUNT;
     protected NIOChannelDistributor nioChannelDistributor;
@@ -75,23 +70,18 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     // ------------------------------------------------------------ Constructors
 
-
     /**
      * <p>
-     * Constructs a new <code>NIOTransport</code> using the given
-     * <code>transportClass</code> and {@link IOStrategy}.
+     * Constructs a new <code>NIOTransport</code> using the given <code>transportClass</code> and {@link IOStrategy}.
      * </p>
      *
      * <p>
-     * The builder's worker thread pool configuration will be based on the return
-     * value of {@link IOStrategy#createDefaultWorkerPoolConfig(Transport)}.
-     * If worker thread configuration is non-null, the initial selector thread pool
-     * configuration will be cloned from it, otherwise a default configuration
-     * will be chosen.
+     * The builder's worker thread pool configuration will be based on the return value of
+     * {@link IOStrategy#createDefaultWorkerPoolConfig(Transport)}. If worker thread configuration is non-null, the initial
+     * selector thread pool configuration will be cloned from it, otherwise a default configuration will be chosen.
      * </p>
      *
-     * @param transportClass the class of the {@link NIOTransport}
-     *  implementation to be used.
+     * @param transportClass the class of the {@link NIOTransport} implementation to be used.
      */
     protected NIOTransportBuilder(final Class<? extends NIOTransport> transportClass) {
 
@@ -102,9 +92,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     // ---------------------------------------------------------- Public Methods
 
     /**
-     * @return the number of {@link java.nio.channels.Selector}s to be created to serve Transport
-     * connections. <tt>-1</tt> is the default value, which lets the Transport
-     * to pick the value, usually it's equal to the number of CPU cores
+     * @return the number of {@link java.nio.channels.Selector}s to be created to serve Transport connections. <tt>-1</tt>
+     * is the default value, which lets the Transport to pick the value, usually it's equal to the number of CPU cores
      * {@link Runtime#availableProcessors()}
      */
     public int getSelectorRunnersCount() {
@@ -112,11 +101,10 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * Sets the number of {@link java.nio.channels.Selector}s to be created to serve Transport
-     * connections. <tt>-1</tt> is the default value, which lets the Transport
-     * to pick the value, usually it's equal to the number of CPU cores
+     * Sets the number of {@link java.nio.channels.Selector}s to be created to serve Transport connections. <tt>-1</tt> is
+     * the default value, which lets the Transport to pick the value, usually it's equal to the number of CPU cores
      * {@link Runtime#availableProcessors()}.
-     * 
+     *
      * @param selectorRunnersCount number of channels
      * @return the builder
      */
@@ -126,19 +114,18 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link ThreadPoolConfig} that will be used to construct the
-     *  {@link java.util.concurrent.ExecutorService} for <code>IOStrategies</code>
-     *  that require worker threads.  This method will return <code>null</code>
-     *  if a {@link ThreadPoolConfig} had not been previously set.
+     * @return the {@link ThreadPoolConfig} that will be used to construct the {@link java.util.concurrent.ExecutorService}
+     * for <code>IOStrategies</code> that require worker threads. This method will return <code>null</code> if a
+     * {@link ThreadPoolConfig} had not been previously set.
      */
     public ThreadPoolConfig getWorkerThreadPoolConfig() {
         return workerConfig;
     }
 
     /**
-     * Sets the {@link ThreadPoolConfig} that will be used to construct the
-     *  {@link java.util.concurrent.ExecutorService} for <code>IOStrategies</code>
-     *  that require worker threads
+     * Sets the {@link ThreadPoolConfig} that will be used to construct the {@link java.util.concurrent.ExecutorService} for
+     * <code>IOStrategies</code> that require worker threads
+     * 
      * @param workerConfig the config
      * @return this builder
      */
@@ -146,20 +133,19 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
         this.workerConfig = workerConfig;
         return getThis();
     }
-    
+
     /**
-     * @return the {@link ThreadPoolConfig} that will be used to construct the
-     *  {@link java.util.concurrent.ExecutorService} which will run the {@link NIOTransport}'s
-     *  {@link org.glassfish.grizzly.nio.SelectorRunner}s.
+     * @return the {@link ThreadPoolConfig} that will be used to construct the {@link java.util.concurrent.ExecutorService}
+     * which will run the {@link NIOTransport}'s {@link org.glassfish.grizzly.nio.SelectorRunner}s.
      */
     public ThreadPoolConfig getSelectorThreadPoolConfig() {
         return kernelConfig;
     }
 
     /**
-     * Sets the {@link ThreadPoolConfig} that will be used to construct the
-     *  {@link java.util.concurrent.ExecutorService} which will run the {@link NIOTransport}'s
-     *  {@link org.glassfish.grizzly.nio.SelectorRunner}s.
+     * Sets the {@link ThreadPoolConfig} that will be used to construct the {@link java.util.concurrent.ExecutorService}
+     * which will run the {@link NIOTransport}'s {@link org.glassfish.grizzly.nio.SelectorRunner}s.
+     * 
      * @param kernelConfig the config
      * @return this builder
      */
@@ -177,8 +163,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * <p>
-     * Changes the {@link IOStrategy} that will be used.  Invoking this method
-     * may change the return value of {@link #getWorkerThreadPoolConfig()}
+     * Changes the {@link IOStrategy} that will be used. Invoking this method may change the return value of
+     * {@link #getWorkerThreadPoolConfig()}
      *
      * @param ioStrategy the {@link IOStrategy} to use.
      *
@@ -190,8 +176,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link MemoryManager} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link MemoryManager#DEFAULT_MEMORY_MANAGER} will be used.
+     * @return the {@link MemoryManager} that will be used by the created {@link NIOTransport}. If not explicitly set, then
+     * {@link MemoryManager#DEFAULT_MEMORY_MANAGER} will be used.
      */
     public MemoryManager getMemoryManager() {
         return memoryManager;
@@ -210,8 +196,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link SelectorHandler} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link SelectorHandler#DEFAULT_SELECTOR_HANDLER} will be used.
+     * @return the {@link SelectorHandler} that will be used by the created {@link NIOTransport}. If not explicitly set,
+     * then {@link SelectorHandler#DEFAULT_SELECTOR_HANDLER} will be used.
      */
     public SelectorHandler getSelectorHandler() {
         return selectorHandler;
@@ -230,8 +216,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link SelectionKeyHandler} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link SelectionKeyHandler#DEFAULT_SELECTION_KEY_HANDLER} will be used.
+     * @return the {@link SelectionKeyHandler} that will be used by the created {@link NIOTransport}. If not explicitly set,
+     * then {@link SelectionKeyHandler#DEFAULT_SELECTION_KEY_HANDLER} will be used.
      */
     public SelectionKeyHandler getSelectionKeyHandler() {
         return selectionKeyHandler;
@@ -250,8 +236,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link AttributeBuilder} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link AttributeBuilder#DEFAULT_ATTRIBUTE_BUILDER} will be used.
+     * @return the {@link AttributeBuilder} that will be used by the created {@link NIOTransport}. If not explicitly set,
+     * then {@link AttributeBuilder#DEFAULT_ATTRIBUTE_BUILDER} will be used.
      */
     public AttributeBuilder getAttributeBuilder() {
         return attributeBuilder;
@@ -270,8 +256,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link NIOChannelDistributor} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link AttributeBuilder#DEFAULT_ATTRIBUTE_BUILDER} will be used.
+     * @return the {@link NIOChannelDistributor} that will be used by the created {@link NIOTransport}. If not explicitly
+     * set, then {@link AttributeBuilder#DEFAULT_ATTRIBUTE_BUILDER} will be used.
      */
     public NIOChannelDistributor getNIOChannelDistributor() {
         return nioChannelDistributor;
@@ -290,8 +276,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the {@link SelectorProvider} that will be used by the created {@link NIOTransport}.
-     *  If not explicitly set, then {@link SelectorProvider#provider()} will be used.
+     * @return the {@link SelectorProvider} that will be used by the created {@link NIOTransport}. If not explicitly set,
+     * then {@link SelectorProvider#provider()} will be used.
      */
     public SelectorProvider getSelectorProvider() {
         return selectorProvider;
@@ -309,7 +295,6 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
         return getThis();
     }
 
-    
     /**
      * @return the Transport name
      * @see Transport#getName()
@@ -329,8 +314,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return the default {@link Processor} if a {@link Connection}
-     * does not specify a preference
+     * @return the default {@link Processor} if a {@link Connection} does not specify a preference
      * @see Transport#getProcessor()
      */
     public Processor getProcessor() {
@@ -338,8 +322,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @param processor the default {@link Processor} if a {@link Connection}
-     * does not specify a preference
+     * @param processor the default {@link Processor} if a {@link Connection} does not specify a preference
      * @see Transport#setProcessor(Processor)
      *
      * @return this <code>NIOTransportBuilder</code>
@@ -404,8 +387,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return gets the timeout on socket blocking operations
-     * on the client
+     * @return gets the timeout on socket blocking operations on the client
      * @see java.net.Socket#getSoTimeout()
      */
     public int getClientSocketSoTimeout() {
@@ -413,8 +395,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * Sets the timeout on socket blocking operations for the
-     * client
+     * Sets the timeout on socket blocking operations for the client
+     * 
      * @param clientSocketSoTimeout the specified timeout in milliseconds
      * @return this <code>NIOTransportBuilder</code>
      * @see java.net.Socket#setSoTimeout(int)
@@ -433,8 +415,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @param connectionTimeout the value of the connection
-     * timeout in milliseconds
+     * @param connectionTimeout the value of the connection timeout in milliseconds
      * @return this <code>NIOTransportBuilder</code>
      * @see NIOTransport#setConnectionTimeout(int)
      */
@@ -458,6 +439,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * Sets the value of the blocking read timeout
+     * 
      * @param timeout the new timeout value
      * @param timeUnit the unit of the new timeout value
      * @return this NioTransportBuilder
@@ -482,7 +464,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
             return -1;
         } else {
             return timeUnit.convert(writeTimeout, TimeUnit.MILLISECONDS);
-        }        
+        }
     }
 
     /**
@@ -500,9 +482,9 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
         return getThis();
     }
 
-
     /**
      * Whether address may be reused for multiple sockets
+     * 
      * @return SO_REUSEADDR
      * @see <a href="http://man7.org/linux/man-pages/man7/socket.7.html">Socket man page</a>
      */
@@ -512,6 +494,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * Sets whether address may be reused for multiple sockets
+     * 
      * @param reuseAddress SO_REUSEADDR
      * @return this <code>TCPNIOTransportBuilder</code>
      * @see <a href="http://man7.org/linux/man-pages/man7/socket.7.html">Socket man page</a>
@@ -523,6 +506,7 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
 
     /**
      * Max asynchronous write queue size in bytes
+     * 
      * @return the value is per connection, not transport total.
      * @see org.glassfish.grizzly.asyncqueue.AsyncQueueWriter#getMaxPendingBytesPerConnection()
      */
@@ -541,7 +525,8 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
     }
 
     /**
-     * @return true, if NIOTransport is configured to use AsyncQueueWriter, optimized to be used in connection multiplexing mode, or false otherwise. 
+     * @return true, if NIOTransport is configured to use AsyncQueueWriter, optimized to be used in connection multiplexing
+     * mode, or false otherwise.
      * @see org.glassfish.grizzly.nio.NIOTransport#isOptimizedForMultiplexing()
      */
     public boolean isOptimizedForMultiplexing() {
@@ -588,19 +573,16 @@ public abstract class NIOTransportBuilder<T extends NIOTransportBuilder> {
         transport.setWriteBufferSize(writeBufferSize);
         transport.setReuseAddress(reuseAddress);
         transport.setOptimizedForMultiplexing(isOptimizedForMultiplexing());
-        transport.getAsyncQueueIO()
-                .getWriter()
-                .setMaxPendingBytesPerConnection(
-                        maxPendingBytesPerConnection);
+        transport.getAsyncQueueIO().getWriter().setMaxPendingBytesPerConnection(maxPendingBytesPerConnection);
         return transport;
     }
-
 
     // ------------------------------------------------------- Protected Methods
 
     /**
      * @return this NIOTransportBuilder
-     * @see <a href="http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205">http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205</a>
+     * @see <a href=
+     * "http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205">http://www.angelikalanger.com/GenericsFAQ/FAQSections/ProgrammingIdioms.html#FAQ205</a>
      */
     protected abstract T getThis();
 

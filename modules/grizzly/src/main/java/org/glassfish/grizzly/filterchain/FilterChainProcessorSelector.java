@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,18 +22,16 @@ import org.glassfish.grizzly.Processor;
 import org.glassfish.grizzly.ProcessorSelector;
 
 /**
- * {@link ProcessorSelector} implementation, which delegates processing
- * of {@link IOEvent} to the {@link FilterChain}.
+ * {@link ProcessorSelector} implementation, which delegates processing of {@link IOEvent} to the {@link FilterChain}.
  *
  * @see ProcessorSelector
- * 
+ *
  * @author Alexey Stashok
  */
 public class FilterChainProcessorSelector implements ProcessorSelector {
 
     /**
-     * {@link FilterChainBuilder}, responsible for creating {@link FilterChain}
-     * instances
+     * {@link FilterChainBuilder}, responsible for creating {@link FilterChain} instances
      */
     protected final FilterChainBuilder builder;
 
@@ -42,14 +40,14 @@ public class FilterChainProcessorSelector implements ProcessorSelector {
     }
 
     /**
-     * Returns {@link FilterChain} instance, if it's interested in processing
-     * passed {@link IOEvent}, or <tt>null</tt> otherwise.
-     * 
+     * Returns {@link FilterChain} instance, if it's interested in processing passed {@link IOEvent}, or <tt>null</tt>
+     * otherwise.
+     *
      * @param ioEvent {@link IOEvent} to process.
      * @param connection {@link Connection}, where {@link IOEvent} occured.
      *
-     * @return {@link FilterChain} instance, if it's interested in processing
-     * passed {@link IOEvent}, or <tt>null</tt> otherwise.
+     * @return {@link FilterChain} instance, if it's interested in processing passed {@link IOEvent}, or <tt>null</tt>
+     * otherwise.
      */
     @Override
     public Processor select(IOEvent ioEvent, Connection connection) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,10 @@
 
 package org.glassfish.grizzly;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.asyncqueue.AsyncQueueWriter;
 import org.glassfish.grizzly.asyncqueue.TaskQueue;
 import org.glassfish.grizzly.asyncqueue.WritableMessage;
@@ -57,11 +62,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import static org.junit.Assert.*;
-
 /**
  * AsyncWriteQueue tests.
- * 
+ *
  * @author Alexey Stashok
  * @author Ryan Lubke
  */
@@ -74,27 +77,20 @@ public class AsyncWriteQueueTest {
 
     @Parameters
     public static Collection<Object[]> getOptimizedForMultiplexing() {
-        return Arrays.asList(new Object[][]{
-                    {Boolean.FALSE},
-                    {Boolean.TRUE}
-                });
+        return Arrays.asList(new Object[][] { { Boolean.FALSE }, { Boolean.TRUE } });
     }
-    
+
     private final boolean isOptimizedForMultiplexing;
-    
+
     public AsyncWriteQueueTest(boolean isOptimizedForMultiplexing) {
         this.isOptimizedForMultiplexing = isOptimizedForMultiplexing;
     }
-    
-    private static TCPNIOTransport createTransport(
-            final boolean isOptimizedForMultiplexing) {
-        
-        return TCPNIOTransportBuilder
-                .newInstance()
-                .setOptimizedForMultiplexing(isOptimizedForMultiplexing)
-                .build();
+
+    private static TCPNIOTransport createTransport(final boolean isOptimizedForMultiplexing) {
+
+        return TCPNIOTransportBuilder.newInstance().setOptimizedForMultiplexing(isOptimizedForMultiplexing).build();
     }
-    
+
     @Test
     public void testParallelWrites() throws Exception {
         Connection connection = null;
@@ -108,8 +104,7 @@ public class AsyncWriteQueueTest {
         filterChainBuilder.add(new EchoFilter() {
 
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 serverRcvdMessages.incrementAndGet();
                 return super.handleRead(ctx);
             }
@@ -122,37 +117,31 @@ public class AsyncWriteQueueTest {
             transport.bind(PORT);
             transport.start();
 
-            FilterChain clientFilterChain = FilterChainBuilder.stateless()
-                    .add(new TransportFilter())
-                    .add(new StringFilter(Charsets.UTF8_CHARSET))
+            FilterChain clientFilterChain = FilterChainBuilder.stateless().add(new TransportFilter()).add(new StringFilter(Charsets.UTF8_CHARSET))
                     .add(new BaseFilter() {
 
-                @Override
-                public NextAction handleRead(FilterChainContext ctx) throws IOException {
-                    clientRcvdMessages.incrementAndGet();
-                    return super.handleRead(ctx);
-                }
-            }).build();
-            
-            SocketConnectorHandler connectorHandler = 
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
-            
+                        @Override
+                        public NextAction handleRead(FilterChainContext ctx) throws IOException {
+                            clientRcvdMessages.incrementAndGet();
+                            return super.handleRead(ctx);
+                        }
+                    }).build();
+
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
+
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
 
             final AsyncQueueWriter asyncQueueWriter = transport.getAsyncQueueIO().getWriter();
-            asyncQueueWriter.setMaxPendingBytesPerConnection(256);            
+            asyncQueueWriter.setMaxPendingBytesPerConnection(256);
 
             final Connection finalConnection = connection;
-            
+
             final int senderThreads = 16;
             final int packetsCount = 1000;
-            
-            Collection<Callable<Object>> sendTasks =
-                    new ArrayList<Callable<Object>>(senderThreads);
+
+            Collection<Callable<Object>> sendTasks = new ArrayList<>(senderThreads);
             for (int i = 0; i < senderThreads; i++) {
                 final int id = i;
                 sendTasks.add(new Callable<Object>() {
@@ -167,42 +156,29 @@ public class AsyncWriteQueueTest {
                                 f.failure(throwable);
                             }
                         };
-                        
-                        asyncQueueWriter.notifyWritePossible(finalConnection,
-                                                             new WriteHandler() {
 
-                                                                 @Override
-                                                                 public void onWritePossible()
-                                                                 throws Exception {
-                                                                     final int
-                                                                             msgNum =
-                                                                             acceptedPackets
-                                                                                     .incrementAndGet();
-                                                                     if (msgNum >= packetsCount) {
-                                                                         if (msgNum == packetsCount) {
-                                                                             f.result(
-                                                                                     Boolean.TRUE);
-                                                                         }
-                                                                         return;
-                                                                     }
+                        asyncQueueWriter.notifyWritePossible(finalConnection, new WriteHandler() {
 
-                                                                     finalConnection
-                                                                             .write(
-                                                                                     "client(" + id + ")-" + msgNum,
-                                                                                     ch);
-                                                                     asyncQueueWriter
-                                                                             .notifyWritePossible(
-                                                                                     finalConnection,
-                                                                                     this);
-                                                                 }
+                            @Override
+                            public void onWritePossible() throws Exception {
+                                final int msgNum = acceptedPackets.incrementAndGet();
+                                if (msgNum >= packetsCount) {
+                                    if (msgNum == packetsCount) {
+                                        f.result(Boolean.TRUE);
+                                    }
+                                    return;
+                                }
 
-                                                                 @Override
-                                                                 public void onError(Throwable t) {
-                                                                     f.failure(
-                                                                             t);
-                                                                 }
-                                                             });
-                                                
+                                finalConnection.write("client(" + id + ")-" + msgNum, ch);
+                                asyncQueueWriter.notifyWritePossible(finalConnection, this);
+                            }
+
+                            @Override
+                            public void onError(Throwable t) {
+                                f.failure(t);
+                            }
+                        });
+
                         return f.get(10, TimeUnit.SECONDS);
                     }
                 });
@@ -211,7 +187,7 @@ public class AsyncWriteQueueTest {
             ExecutorService executorService = Executors.newFixedThreadPool(senderThreads);
             try {
                 List<Future<Object>> futures = executorService.invokeAll(sendTasks);
-                
+
                 for (int i = 0; i < futures.size(); i++) {
                     try {
                         assertTrue(Boolean.TRUE.equals(futures.get(i).get(10, TimeUnit.SECONDS)));
@@ -231,7 +207,7 @@ public class AsyncWriteQueueTest {
             transport.shutdownNow();
         }
     }
-    
+
     @Test
     public void testAsyncWriteQueueEcho() throws Exception {
         Connection connection = null;
@@ -247,8 +223,7 @@ public class AsyncWriteQueueTest {
         filterChainBuilder.add(new EchoFilter() {
 
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 serverRcvdBytes.addAndGet(((Buffer) ctx.getMessage()).remaining());
                 return super.handleRead(ctx);
             }
@@ -258,8 +233,7 @@ public class AsyncWriteQueueTest {
         transport.setProcessor(filterChainBuilder.build());
 
         try {
-            final AsyncQueueWriter<SocketAddress> asyncQueueWriter =
-                    transport.getAsyncQueueIO().getWriter();
+            final AsyncQueueWriter<SocketAddress> asyncQueueWriter = transport.getAsyncQueueIO().getWriter();
             asyncQueueWriter.setMaxPendingBytesPerConnection(-1);
 
             transport.bind(PORT);
@@ -278,9 +252,8 @@ public class AsyncWriteQueueTest {
 
             final AtomicInteger counter = new AtomicInteger(packetNumber);
             final FutureImpl<Boolean> sentFuture = Futures.createSafeFuture();
-            
-            final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler =
-                    new EmptyCompletionHandler<WriteResult<WritableMessage, SocketAddress>>() {
+
+            final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler = new EmptyCompletionHandler<WriteResult<WritableMessage, SocketAddress>>() {
                 @Override
                 public void completed(WriteResult<WritableMessage, SocketAddress> result) {
                     if (counter.decrementAndGet() == 0) {
@@ -294,8 +267,7 @@ public class AsyncWriteQueueTest {
                 }
             };
 
-            Collection<Callable<Object>> sendTasks =
-                    new ArrayList<Callable<Object>>(packetNumber + 1);
+            Collection<Callable<Object>> sendTasks = new ArrayList<>(packetNumber + 1);
             for (int i = 0; i < packetNumber; i++) {
                 final byte b = (byte) i;
                 sendTasks.add(new Callable<Object>() {
@@ -324,16 +296,14 @@ public class AsyncWriteQueueTest {
             int responseSize = packetNumber * packetSize;
             Future<Integer> readFuture = reader.notifyAvailable(responseSize);
             Integer available = null;
-            
+
             try {
                 available = readFuture.get(10, TimeUnit.SECONDS);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "read error", e);
             }
 
-            assertTrue("Read timeout. Server received: " +serverRcvdBytes.get() +
-                    " bytes. Expected: " + packetNumber * packetSize,
-                     available != null);
+            assertTrue("Read timeout. Server received: " + serverRcvdBytes.get() + " bytes. Expected: " + packetNumber * packetSize, available != null);
 
             byte[] echoMessage = new byte[responseSize];
             reader.readByteArray(echoMessage);
@@ -342,18 +312,15 @@ public class AsyncWriteQueueTest {
 
             boolean[] isByteUsed = new boolean[packetNumber];
             int offset = 0;
-            for(int i=0; i<packetNumber; i++) {
+            for (int i = 0; i < packetNumber; i++) {
                 byte pattern = echoMessage[offset];
 
-                assertEquals("Pattern: " + pattern + " was already used",
-                        false, isByteUsed[pattern]);
+                assertEquals("Pattern: " + pattern + " was already used", false, isByteUsed[pattern]);
 
                 isByteUsed[pattern] = true;
-                for(int j = 0; j < packetSize; j++) {
+                for (int j = 0; j < packetSize; j++) {
                     byte check = echoMessage[offset++];
-                    assertEquals("Echo doesn't match. Offset: " + offset +
-                            " pattern: " + pattern + " found: " + check,
-                            pattern, check);
+                    assertEquals("Echo doesn't match. Offset: " + offset + " pattern: " + pattern + " found: " + check, pattern, check);
                 }
             }
 
@@ -375,17 +342,14 @@ public class AsyncWriteQueueTest {
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
         filterChainBuilder.add(new TransportFilter());
 
-
         final TCPNIOTransport transport = createTransport(isOptimizedForMultiplexing);
         transport.setProcessor(filterChainBuilder.build());
-
 
         try {
             final AsyncQueueWriter asyncQueueWriter = transport.getAsyncQueueIO().getWriter();
             asyncQueueWriter.setMaxPendingBytesPerConnection(256000 * 10);
-            System.out.println(
-                    "Max Space: " + asyncQueueWriter.getMaxPendingBytesPerConnection());
-            
+            System.out.println("Max Space: " + asyncQueueWriter.getMaxPendingBytesPerConnection());
+
             transport.bind(PORT);
             transport.start();
 
@@ -411,9 +375,9 @@ public class AsyncWriteQueueTest {
                 } catch (IOException e) {
                     assertTrue("IOException occurred: " + e.toString(), false);
                 }
-            } while (asyncQueueWriter.canWrite(con));  // fill the buffer
+            } while (asyncQueueWriter.canWrite(con)); // fill the buffer
 
-            // out of space.  Add a monitor to be notified when space is available
+            // out of space. Add a monitor to be notified when space is available
             tqueue.notifyWritePossible(new WriteQueueHandler(con));
 
             transport.resume(); // resume the transport so bytes start draining from the queue
@@ -422,13 +386,13 @@ public class AsyncWriteQueueTest {
             try {
                 System.out.println("Waiting for free space notification.  Max wait time is 10000ms.");
                 start = System.currentTimeMillis();
-                Thread.sleep(10000);  // should be interrupted before time completes
+                Thread.sleep(10000); // should be interrupted before time completes
                 fail("Thread not interrupted within 10 seconds.");
             } catch (InterruptedException ie) {
-                long result = (System.currentTimeMillis() - start);
+                long result = System.currentTimeMillis() - start;
                 System.out.println("Notified in " + result + "ms");
             }
-            assertTrue(tqueue.spaceInBytes() < asyncQueueWriter.getMaxPendingBytesPerConnection()); 
+            assertTrue(tqueue.spaceInBytes() < asyncQueueWriter.getMaxPendingBytesPerConnection());
             System.out.println("Queue Space: " + tqueue.spaceInBytes());
 
         } finally {
@@ -453,8 +417,7 @@ public class AsyncWriteQueueTest {
         filterChainBuilder.add(new BaseFilter() {
 
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 serverRcvdBytes.addAndGet(((Buffer) ctx.getMessage()).remaining());
                 return ctx.getStopAction();
             }
@@ -475,13 +438,13 @@ public class AsyncWriteQueueTest {
             connection.configureStandalone(true);
 
             final AsyncQueueWriter<SocketAddress> asyncQueueWriter = transport.getAsyncQueueIO().getWriter();
-            
+
             final MemoryManager mm = transport.getMemoryManager();
             final Connection con = connection;
 
             final int maxAllowedReentrants = Writer.Reentrant.getMaxReentrants();
             final int reentrantsToTest = maxAllowedReentrants * 3;
-            
+
             final AtomicInteger maxReentrantsNoticed = new AtomicInteger();
 
             final AtomicInteger packetCounter = new AtomicInteger();
@@ -496,50 +459,46 @@ public class AsyncWriteQueueTest {
                     return -1;
                 }
             };
-            
+
             reentrantsCounter.set(0);
 
             try {
-            asyncQueueWriter.write(con, buffer,
-                    new EmptyCompletionHandler<WriteResult<WritableMessage, SocketAddress>>() {
+                asyncQueueWriter.write(con, buffer, new EmptyCompletionHandler<WriteResult<WritableMessage, SocketAddress>>() {
 
-                        @Override
-                        public void completed(
-                                WriteResult<WritableMessage, SocketAddress> result) {
+                    @Override
+                    public void completed(WriteResult<WritableMessage, SocketAddress> result) {
 
-                            final int packetNum = packetCounter.incrementAndGet();
-                            if (packetNum <= reentrantsToTest) {
-                                
-                                final int reentrantNum = reentrantsCounter.get() + 1;
-                                try {
-                                    reentrantsCounter.set(reentrantNum);
-                                    
-                                    if (reentrantNum > maxReentrantsNoticed.get()) {
-                                        maxReentrantsNoticed.set(reentrantNum);
-                                    }
-                                    
-                                    Buffer bufferInner = Buffers.wrap(mm, ""
-                                            + ((char) ('A' + packetNum)));
-                                    asyncQueueWriter.write(con, bufferInner, this);
-                                } finally {
-                                    reentrantsCounter.set(reentrantNum - 1);
+                        final int packetNum = packetCounter.incrementAndGet();
+                        if (packetNum <= reentrantsToTest) {
+
+                            final int reentrantNum = reentrantsCounter.get() + 1;
+                            try {
+                                reentrantsCounter.set(reentrantNum);
+
+                                if (reentrantNum > maxReentrantsNoticed.get()) {
+                                    maxReentrantsNoticed.set(reentrantNum);
                                 }
-                                
-                                
-                            } else {
-                                resultFuture.result(Boolean.TRUE);
-                            }
-                        }
 
-                        @Override
-                        public void failed(Throwable throwable) {
-                            resultFuture.failure(throwable);
+                                Buffer bufferInner = Buffers.wrap(mm, "" + (char) ('A' + packetNum));
+                                asyncQueueWriter.write(con, bufferInner, this);
+                            } finally {
+                                reentrantsCounter.set(reentrantNum - 1);
+                            }
+
+                        } else {
+                            resultFuture.result(Boolean.TRUE);
                         }
-                    });
+                    }
+
+                    @Override
+                    public void failed(Throwable throwable) {
+                        resultFuture.failure(throwable);
+                    }
+                });
             } finally {
                 reentrantsCounter.remove();
             }
-            
+
             assertTrue(resultFuture.get(10, TimeUnit.SECONDS));
 
             assertTrue("maxReentrantNoticed=" + maxReentrantsNoticed + " maxAllowed=" + maxAllowedReentrants,
@@ -553,24 +512,20 @@ public class AsyncWriteQueueTest {
             transport.shutdownNow();
         }
     }
-    
-    // ---------------------------------------------------------- Nested Classes
 
+    // ---------------------------------------------------------- Nested Classes
 
     private static class WriteQueueHandler implements WriteHandler {
 
         private final Transport transport;
         private final Thread current;
 
-
         // -------------------------------------------------------- Constructors
-
 
         public WriteQueueHandler(final Connection c) {
             transport = c.getTransport();
             current = Thread.currentThread();
         }
-
 
         // -------------------------------------- Methods from WriteHandler
 

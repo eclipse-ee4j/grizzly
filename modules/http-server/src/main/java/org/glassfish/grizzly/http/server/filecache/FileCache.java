@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,16 +15,6 @@
  */
 
 package org.glassfish.grizzly.http.server.filecache;
-
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.http.HttpRequestPacket;
-import org.glassfish.grizzly.http.HttpResponsePacket;
-import org.glassfish.grizzly.http.server.util.SimpleDateFormats;
-import org.glassfish.grizzly.http.util.FastHttpDateFormat;
-import org.glassfish.grizzly.http.util.Header;
-import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.http.util.MimeHeaders;
-import org.glassfish.grizzly.utils.DelayedExecutor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,14 +34,24 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
+
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.CompressionConfig;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.server.util.SimpleDateFormats;
 import org.glassfish.grizzly.http.util.ContentType;
+import org.glassfish.grizzly.http.util.FastHttpDateFormat;
+import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.http.util.MimeHeaders;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringAware;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
+import org.glassfish.grizzly.utils.DelayedExecutor;
 
 /**
  * This class implements a file caching mechanism used to cache static resources.
@@ -60,36 +60,30 @@ import org.glassfish.grizzly.monitoring.MonitoringUtils;
  * @author Scott Oaks
  */
 public class FileCache implements MonitoringAware<FileCacheProbe> {
-    private static final File TMP_DIR =
-            new File(System.getProperty("java.io.tmpdir"));
-    
-    final static String[] COMPRESSION_ALIASES = {"gzip"};
+    private static final File TMP_DIR = new File(System.getProperty("java.io.tmpdir"));
+
+    final static String[] COMPRESSION_ALIASES = { "gzip" };
 
     public enum CacheType {
         HEAP, MAPPED, FILE, TIMESTAMP
     }
 
     public enum CacheResult {
-        OK_CACHED,
-        OK_CACHED_TIMESTAMP,
-        FAILED_CACHE_FULL,
-        FAILED_ENTRY_EXISTS,
-        FAILED
+        OK_CACHED, OK_CACHED_TIMESTAMP, FAILED_CACHE_FULL, FAILED_ENTRY_EXISTS, FAILED
     }
 
     private static final Logger LOGGER = Grizzly.logger(FileCache.class);
-    
+
     /**
      * Cache size.
      */
     private final AtomicInteger cacheSize = new AtomicInteger();
-    
+
     /**
      * A {@link ByteBuffer} cache of static pages.
      */
-    private final ConcurrentMap<FileCacheKey, FileCacheEntry> fileCacheMap =
-            new ConcurrentHashMap<>();
-    
+    private final ConcurrentMap<FileCacheKey, FileCacheEntry> fileCacheMap = new ConcurrentHashMap<>();
+
     private final FileCacheEntry NULL_CACHE_ENTRY = new FileCacheEntry(this);
 
     /**
@@ -136,7 +130,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * Is the file cache enabled.
      */
     private boolean enabled = true;
-    
+
     private DelayedExecutor.DelayQueue<FileCacheEntry> delayQueue;
 
     /**
@@ -144,22 +138,19 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      */
     private volatile File compressedFilesFolder = TMP_DIR;
     /**
-     * Compression configuration, used to decide if cached resource
-     * has to be compressed or not
+     * Compression configuration, used to decide if cached resource has to be compressed or not
      */
     private final CompressionConfig compressionConfig = new CompressionConfig();
-    
+
     /**
-     * <tt>true</tt>, if zero-copy file-send feature could be used, or
-     * <tt>false</tt> otherwise.
+     * <tt>true</tt>, if zero-copy file-send feature could be used, or <tt>false</tt> otherwise.
      */
     private boolean fileSendEnabled;
-    
+
     /**
      * File cache probes
      */
-    protected final DefaultMonitoringConfig<FileCacheProbe> monitoringConfig =
-            new DefaultMonitoringConfig<FileCacheProbe>(FileCacheProbe.class) {
+    protected final DefaultMonitoringConfig<FileCacheProbe> monitoringConfig = new DefaultMonitoringConfig<FileCacheProbe>(FileCacheProbe.class) {
 
         @Override
         public Object createManagementObject() {
@@ -168,41 +159,33 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
     };
 
-
     // ---------------------------------------------------- Methods ----------//
 
     public void initialize(final DelayedExecutor delayedExecutor) {
-        delayQueue = delayedExecutor.createDelayQueue(new EntryWorker(),
-                new EntryResolver());
+        delayQueue = delayedExecutor.createDelayQueue(new EntryWorker(), new EntryResolver());
+    }
+
+    /**
+     * Add a resource to the cache. Unlike the {@link #add(org.glassfish.grizzly.http.HttpRequestPacket, java.io.File)} this
+     * method adds a resource to a cache but is not able to send the resource content to a client if client doesn't have the
+     * latest version of this resource.
+     */
+    public CacheResult add(final HttpRequestPacket request, final long lastModified) {
+        return add(request, null, lastModified);
+    }
+
+    /**
+     * Add a {@link File} resource to the cache. If a client comes with not the latest version of this resource - the
+     * {@link FileCache} will return it the latest resource version.
+     */
+    public CacheResult add(final HttpRequestPacket request, final File cacheFile) {
+        return add(request, cacheFile, cacheFile.lastModified());
     }
 
     /**
      * Add a resource to the cache.
-     * Unlike the {@link #add(org.glassfish.grizzly.http.HttpRequestPacket, java.io.File)}
-     * this method adds a resource to a cache but is not able to send the
-     * resource content to a client if client doesn't have the latest version
-     * of this resource.
      */
-    public CacheResult add(final HttpRequestPacket request,
-            final long lastModified) {
-        return add(request, null, lastModified);
-    }
-    
-    /**
-     * Add a {@link File} resource to the cache.
-     * If a client comes with not the latest version of this resource - the
-     * {@link FileCache} will return it the latest resource version.
-     */
-    public CacheResult add(final HttpRequestPacket request,
-            final File cacheFile) {
-        return add(request, cacheFile, cacheFile.lastModified());
-    }
-    
-    /**
-     * Add a resource to the cache.
-     */
-    protected CacheResult add(final HttpRequestPacket request,
-            final File cacheFile, final long lastModified) {
+    protected CacheResult add(final HttpRequestPacket request, final File cacheFile, final long lastModified) {
 
         final String requestURI = request.getRequestURI();
 
@@ -228,9 +211,9 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
         final HttpResponsePacket response = request.getResponse();
         final MimeHeaders headers = response.getHeaders();
-        
+
         final String contentType = response.getContentType();
-        
+
         final FileCacheEntry entry;
         if (cacheFile != null) { // If we have a file - try to create File-aware cache resource
             entry = createEntry(cacheFile);
@@ -253,27 +236,26 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         entry.server = headers.getHeader(Header.Server);
 
         fileCacheMap.put(key, entry);
-        
+
         notifyProbesEntryAdded(this, entry);
-        
+
         final int secondsMaxAgeLocal = getSecondsMaxAge();
         if (secondsMaxAgeLocal > 0) {
             delayQueue.add(entry, secondsMaxAgeLocal, TimeUnit.SECONDS);
         }
 
-        return ((entry.type == CacheType.TIMESTAMP)
-                    ? CacheResult.OK_CACHED_TIMESTAMP
-                    : CacheResult.OK_CACHED);
+        return entry.type == CacheType.TIMESTAMP ? CacheResult.OK_CACHED_TIMESTAMP : CacheResult.OK_CACHED;
     }
 
     /**
-     * Returns {@link FileCacheEntry}.
-     * If {@link FileCacheEntry} has been found - this method also sets
-     * correspondent {@link HttpResponsePacket} status code and reason phrase.
+     * Returns {@link FileCacheEntry}. If {@link FileCacheEntry} has been found - this method also sets correspondent
+     * {@link HttpResponsePacket} status code and reason phrase.
      */
     public FileCacheEntry get(final HttpRequestPacket request) {
         // It should be faster than calculating the key hash code
-        if (cacheSize.get() == 0) return null;
+        if (cacheSize.get() == 0) {
+            return null;
+        }
 
         final LazyFileCacheKey key = LazyFileCacheKey.create(request);
         final FileCacheEntry entry = fileCacheMap.get(key);
@@ -284,28 +266,25 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
                 // to the user-agent
                 final HttpStatus httpStatus = checkIfHeaders(entry, request);
 
-                final boolean flushBody = (httpStatus == null);
+                final boolean flushBody = httpStatus == null;
                 if (flushBody && entry.type == CacheType.TIMESTAMP) {
                     return null; // this will cause control to be passed to the static handler
                 }
-                
-                request.getResponse().setStatus(httpStatus != null?
-                        httpStatus :
-                        HttpStatus.OK_200);
-                
+
+                request.getResponse().setStatus(httpStatus != null ? httpStatus : HttpStatus.OK_200);
+
                 notifyProbesEntryHit(this, entry);
                 return entry;
             }
-            
+
             notifyProbesEntryMissed(this, request);
         } catch (Exception e) {
             notifyProbesError(this, e);
             // If an unexpected exception occurs, try to serve the page
             // as if it wasn't in a cache.
-            LOGGER.log(Level.WARNING,
-                    LogMessages.WARNING_GRIZZLY_HTTP_SERVER_FILECACHE_GENERAL_ERROR(), e);
+            LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_FILECACHE_GENERAL_ERROR(), e);
         }
-        
+
         return null;
     }
 
@@ -324,9 +303,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
     }
 
     protected Object createJmxManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.http.server.filecache.jmx.FileCache",
-                this, FileCache.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.http.server.filecache.jmx.FileCache", this, FileCache.class);
     }
 
     /**
@@ -338,24 +315,25 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
             entry = new FileCacheEntry(this);
             entry.type = CacheType.FILE;
         }
-        
+
         entry.plainFile = file;
         entry.plainFileSize = file.length();
 
         return entry;
     }
-    
+
     /**
      * Map the file to a {@link ByteBuffer}
+     * 
      * @return the preinitialized {@link FileCacheEntry}
      */
     private FileCacheEntry tryMapFileToBuffer(final File file) {
-        
+
         final long size = file.length();
         if (size > getMaxEntrySize()) {
             return null;
         }
-        
+
         final CacheType type;
         final ByteBuffer bb;
         FileChannel fileChannel = null;
@@ -367,7 +345,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
                     subMappedMemorySize(size);
                     return null;
                 }
-                
+
                 type = CacheType.MAPPED;
             } else {
                 if (addHeapSize(size) > getMaxSmallFileCacheSize()) {
@@ -386,7 +364,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
             if (type == CacheType.HEAP) {
                 ((MappedByteBuffer) bb).load();
-            }    
+            }
         } catch (Exception e) {
             notifyProbesError(this, e);
             return null;
@@ -418,24 +396,25 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
     /**
      * Checks if the {@link File} with the given content-type could be compressed.
      */
-    private boolean canBeCompressed(final File cacheFile,
-            final String contentType) {
+    private boolean canBeCompressed(final File cacheFile, final String contentType) {
         switch (compressionConfig.getCompressionMode()) {
-            case FORCE: return true;
-            case OFF: return false;
-            case ON: {
-                if (cacheFile.length() <
-                        compressionConfig.getCompressionMinSize()) {
-                    return false;
-                }
-                
-                return compressionConfig.checkMimeType(contentType);
+        case FORCE:
+            return true;
+        case OFF:
+            return false;
+        case ON: {
+            if (cacheFile.length() < compressionConfig.getCompressionMinSize()) {
+                return false;
             }
-                
-            default: throw new IllegalStateException("Unknown mode");
+
+            return compressionConfig.checkMimeType(contentType);
+        }
+
+        default:
+            throw new IllegalStateException("Unknown mode");
         }
     }
-    
+
     // ------------------------------------------------ Configuration Properties
 
     /**
@@ -470,40 +449,33 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         this.maxCacheEntries = maxCacheEntries;
     }
 
-
     /**
-     * @return the minimum size, in bytes, a file must be in order to be cached
-     *  in the heap cache.
+     * @return the minimum size, in bytes, a file must be in order to be cached in the heap cache.
      */
     public long getMinEntrySize() {
         return minEntrySize;
     }
 
     /**
-     * The maximum size, in bytes, a file must be in order to be cached
-     * in the heap cache.
+     * The maximum size, in bytes, a file must be in order to be cached in the heap cache.
      *
-     * @param minEntrySize the maximum size, in bytes, a file must be in order
-     *  to be cached in the heap cache.
+     * @param minEntrySize the maximum size, in bytes, a file must be in order to be cached in the heap cache.
      */
     public void setMinEntrySize(long minEntrySize) {
         this.minEntrySize = minEntrySize;
     }
 
     /**
-     * @return the maximum size, in bytes, a resource may be before it can no
-     *  longer be considered cacheable.
+     * @return the maximum size, in bytes, a resource may be before it can no longer be considered cacheable.
      */
     public long getMaxEntrySize() {
         return maxEntrySize;
     }
 
     /**
-     * The maximum size, in bytes, a resource may be before it can no
-     * longer be considered cacheable.
+     * The maximum size, in bytes, a resource may be before it can no longer be considered cacheable.
      *
-     * @param maxEntrySize the maximum size, in bytes, a resource may be before it can no
-     *  longer be considered cacheable.
+     * @param maxEntrySize the maximum size, in bytes, a resource may be before it can no longer be considered cacheable.
      */
     public void setMaxEntrySize(long maxEntrySize) {
         this.maxEntrySize = maxEntrySize;
@@ -516,49 +488,42 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         return maxLargeFileCacheSize;
     }
 
-
     /**
-     * Sets the maximum size, in bytes, of the memory mapped cache for large
-     * files.
+     * Sets the maximum size, in bytes, of the memory mapped cache for large files.
      *
-     * @param maxLargeFileCacheSize the maximum size, in bytes, of the memory
-     *  mapped cache for large files.
+     * @param maxLargeFileCacheSize the maximum size, in bytes, of the memory mapped cache for large files.
      */
     public void setMaxLargeFileCacheSize(long maxLargeFileCacheSize) {
         this.maxLargeFileCacheSize = maxLargeFileCacheSize;
     }
 
-
     /**
-     * @return the maximum size, in bytes, of the heap cache for files below the
-     *  water mark set by {@link #getMinEntrySize()}.
+     * @return the maximum size, in bytes, of the heap cache for files below the water mark set by
+     * {@link #getMinEntrySize()}.
      */
     public long getMaxSmallFileCacheSize() {
         return maxSmallFileCacheSize;
     }
 
     /**
-     * The maximum size, in bytes, of the heap cache for files below the
-     * water mark set by {@link #getMinEntrySize()}.
+     * The maximum size, in bytes, of the heap cache for files below the water mark set by {@link #getMinEntrySize()}.
      *
-     * @param maxSmallFileCacheSize the maximum size, in bytes, of the heap
-     *  cache for files below the water mark set by {@link #getMinEntrySize()}.
+     * @param maxSmallFileCacheSize the maximum size, in bytes, of the heap cache for files below the water mark set by
+     * {@link #getMinEntrySize()}.
      */
     public void setMaxSmallFileCacheSize(long maxSmallFileCacheSize) {
         this.maxSmallFileCacheSize = maxSmallFileCacheSize;
     }
 
     /**
-     * @return <code>true</code> if the {@link FileCache} is enabled,
-     *  otherwise <code>false</code>
+     * @return <code>true</code> if the {@link FileCache} is enabled, otherwise <code>false</code>
      */
     public boolean isEnabled() {
         return enabled;
     }
 
     /**
-     * Enables/disables the {@link FileCache}.  By default, the
-     * {@link FileCache} is disabled.
+     * Enables/disables the {@link FileCache}. By default, the {@link FileCache} is disabled.
      *
      * @param enabled <code>true</code> to enable the {@link FileCache}.
      */
@@ -584,9 +549,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * Sets the folder to be used to store temporary compressed files.
      */
     public void setCompressedFilesFolder(final File compressedFilesFolder) {
-        this.compressedFilesFolder = compressedFilesFolder != null ?
-                compressedFilesFolder :
-                TMP_DIR;
+        this.compressedFilesFolder = compressedFilesFolder != null ? compressedFilesFolder : TMP_DIR;
     }
 
     /**
@@ -606,12 +569,12 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * <p/>
      * <p/>
      * <p>
-     * Finally, if the connection between endpoints is secure, send file functionality
-     * will be disabled regardless of configuration.
+     * Finally, if the connection between endpoints is secure, send file functionality will be disabled regardless of
+     * configuration.
      * </p>
      *
      * @return <code>true</code> if resources will be sent using
-     *         {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
      * @since 2.3.5
      */
     public boolean isFileSendEnabled() {
@@ -619,43 +582,40 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
     }
 
     /**
-     * Configure whether or send-file support will enabled which allows sending
-     * {@link java.io.File} resources via {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
-     * If disabled, the more traditional byte[] copy will be used to send content.
+     * Configure whether or send-file support will enabled which allows sending {@link java.io.File} resources via
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}. If disabled, the
+     * more traditional byte[] copy will be used to send content.
      *
-     * @param fileSendEnabled <code>true</code> to enable {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}
-     *                        support.
+     * @param fileSendEnabled <code>true</code> to enable
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)} support.
      * @since 2.3.5
      */
     public void setFileSendEnabled(boolean fileSendEnabled) {
         this.fileSendEnabled = fileSendEnabled;
     }
-    
+
     /**
      * Creates a temporary compressed representation of the given cache entry.
      */
     protected void compressFile(final FileCacheEntry entry) {
         try {
-            final File tmpCompressedFile = File.createTempFile(
-                    String.valueOf(entry.plainFile.hashCode()),
-                    ".tmpzip", compressedFilesFolder);
+            final File tmpCompressedFile = File.createTempFile(String.valueOf(entry.plainFile.hashCode()), ".tmpzip", compressedFilesFolder);
             tmpCompressedFile.deleteOnExit();
 
             InputStream in = null;
             OutputStream out = null;
             try {
                 in = new FileInputStream(entry.plainFile);
-                out = new GZIPOutputStream(
-                        new FileOutputStream(tmpCompressedFile));
-                
+                out = new GZIPOutputStream(new FileOutputStream(tmpCompressedFile));
+
                 final byte[] tmp = new byte[1024];
-                
+
                 do {
                     final int readNow = in.read(tmp);
                     if (readNow == -1) {
                         break;
                     }
-                    
+
                     out.write(tmp, 0, readNow);
                 } while (true);
             } finally {
@@ -672,48 +632,46 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
                     }
                 }
             }
-            
+
             final long size = tmpCompressedFile.length();
-            
+
             switch (entry.type) {
-                case HEAP:
-                case MAPPED: {
-                    final FileInputStream cFis =
-                            new FileInputStream(tmpCompressedFile);
-                    
-                    try {
-                        final FileChannel cFileChannel = cFis.getChannel();
+            case HEAP:
+            case MAPPED: {
+                final FileInputStream cFis = new FileInputStream(tmpCompressedFile);
 
-                        final MappedByteBuffer compressedBb = cFileChannel.map(
-                                FileChannel.MapMode.READ_ONLY, 0, size);
+                try {
+                    final FileChannel cFileChannel = cFis.getChannel();
 
-                        if (entry.type == CacheType.HEAP) {
-                            compressedBb.load();
-                        }
-                        
-                        entry.compressedBb = compressedBb;
-                    } finally {
-                        cFis.close();
+                    final MappedByteBuffer compressedBb = cFileChannel.map(FileChannel.MapMode.READ_ONLY, 0, size);
+
+                    if (entry.type == CacheType.HEAP) {
+                        compressedBb.load();
                     }
-                    
-                    break;
-                }
-                case FILE: {
-                    break;
+
+                    entry.compressedBb = compressedBb;
+                } finally {
+                    cFis.close();
                 }
 
-                default: throw new IllegalStateException("The type is not supported: " + entry.type);
+                break;
             }
-            
+            case FILE: {
+                break;
+            }
+
+            default:
+                throw new IllegalStateException("The type is not supported: " + entry.type);
+            }
+
             entry.compressedFileSize = size;
             entry.compressedFile = tmpCompressedFile;
         } catch (IOException e) {
             LOGGER.log(Level.FINE, "Can not compress file: " + entry.plainFile, e);
         }
     }
-    
-    // ---------------------------------------------------- Monitoring --------//
 
+    // ---------------------------------------------------- Monitoring --------//
 
     protected final long addHeapSize(long size) {
         return heapSize.addAndGet(size);
@@ -725,6 +683,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
     /**
      * Return the heap space used for cache
+     * 
      * @return heap size
      */
     public long getHeapCacheSize() {
@@ -741,22 +700,20 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
     /**
      * Return the size of Mapped memory used for caching
+     * 
      * @return Mapped memory size
      */
     public long getMappedCacheSize() {
         return mappedMemorySize.get();
     }
 
-
     /**
-     * Check if the conditions specified in the optional If headers are
-     * satisfied.
+     * Check if the conditions specified in the optional If headers are satisfied.
      *
-     * @return {@link HttpStatus} if the decision has been made and the response
-     *         status has been defined, or <tt>null</tt> otherwise
+     * @return {@link HttpStatus} if the decision has been made and the response status has been defined, or <tt>null</tt>
+     * otherwise
      */
-    private HttpStatus checkIfHeaders(final FileCacheEntry entry,
-            final HttpRequestPacket request) throws IOException {
+    private HttpStatus checkIfHeaders(final FileCacheEntry entry, final HttpRequestPacket request) throws IOException {
 
         HttpStatus httpStatus = checkIfMatch(entry, request);
         if (httpStatus == null) {
@@ -775,11 +732,10 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
     /**
      * Check if the if-modified-since condition is satisfied.
      *
-     * @return {@link HttpStatus} if the decision has been made and the response
-     *         status has been defined, or <tt>null</tt> otherwise
+     * @return {@link HttpStatus} if the decision has been made and the response status has been defined, or <tt>null</tt>
+     * otherwise
      */
-    private HttpStatus checkIfModifiedSince(final FileCacheEntry entry,
-            final HttpRequestPacket request) throws IOException {
+    private HttpStatus checkIfModifiedSince(final FileCacheEntry entry, final HttpRequestPacket request) throws IOException {
         try {
             final String reqModified = request.getHeader(Header.IfModifiedSince);
             if (reqModified != null) {
@@ -794,8 +750,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
                     long lastModified = entry.lastModified;
                     // If an If-None-Match header has been specified,
                     // If-Modified-Since is ignored.
-                    if ((request.getHeader(Header.IfNoneMatch) == null)
-                            && (lastModified - headerValue <= 1000)) {
+                    if (request.getHeader(Header.IfNoneMatch) == null && lastModified - headerValue <= 1000) {
                         // The entity has not been modified since the date
                         // specified by the client. This is not an error case.
                         return HttpStatus.NOT_MODIFIED_304;
@@ -805,18 +760,17 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         } catch (IllegalArgumentException illegalArgument) {
             notifyProbesError(this, illegalArgument);
         }
-        
+
         return null;
     }
 
     /**
      * Check if the if-none-match condition is satisfied.
-
-     * @return {@link HttpStatus} if the decision has been made and the response
-     *         status has been defined, or <tt>null</tt> otherwise
+     * 
+     * @return {@link HttpStatus} if the decision has been made and the response status has been defined, or <tt>null</tt>
+     * otherwise
      */
-    private HttpStatus checkIfNoneMatch(final FileCacheEntry entry,
-            final HttpRequestPacket request) throws IOException {
+    private HttpStatus checkIfNoneMatch(final FileCacheEntry entry, final HttpRequestPacket request) throws IOException {
 
         String headerValue = request.getHeader(Header.IfNoneMatch);
         if (headerValue != null) {
@@ -826,8 +780,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
             if (!headerValue.equals("*")) {
 
-                StringTokenizer commaTokenizer =
-                        new StringTokenizer(headerValue, ",");
+                StringTokenizer commaTokenizer = new StringTokenizer(headerValue, ",");
 
                 while (!conditionSatisfied && commaTokenizer.hasMoreTokens()) {
                     String currentToken = commaTokenizer.nextToken();
@@ -853,18 +806,17 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
                 }
             }
         }
-        
+
         return null;
     }
 
     /**
      * Check if the if-unmodified-since condition is satisfied.
      *
-     * @return {@link HttpStatus} if the decision has been made and the response
-     *         status has been defined, or <tt>null</tt> otherwise
+     * @return {@link HttpStatus} if the decision has been made and the response status has been defined, or <tt>null</tt>
+     * otherwise
      */
-    private HttpStatus checkIfUnmodifiedSince(final FileCacheEntry entry,
-            final HttpRequestPacket request) throws IOException {
+    private HttpStatus checkIfUnmodifiedSince(final FileCacheEntry entry, final HttpRequestPacket request) throws IOException {
 
         try {
             long lastModified = entry.lastModified;
@@ -890,7 +842,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         } catch (IllegalArgumentException illegalArgument) {
             notifyProbesError(this, illegalArgument);
         }
-        
+
         return null;
     }
 
@@ -899,12 +851,11 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      *
      * @param request The servlet request we are processing
      * @param entry the FileCacheEntry to validate
-     * @return {@link HttpStatus} if the decision has been made and the response
-     *         status has been defined, or <tt>null</tt> otherwise
+     * @return {@link HttpStatus} if the decision has been made and the response status has been defined, or <tt>null</tt>
+     * otherwise
      */
-    private HttpStatus checkIfMatch(final FileCacheEntry entry,
-            final HttpRequestPacket request) throws IOException {
-        
+    private HttpStatus checkIfMatch(final FileCacheEntry entry, final HttpRequestPacket request) throws IOException {
+
         String headerValue = request.getHeader(Header.IfMatch);
         if (headerValue != null) {
             if (headerValue.indexOf('*') == -1) {
@@ -928,7 +879,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
             }
         }
-        
+
         return null;
     }
 
@@ -946,10 +897,8 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * @param fileCache the <tt>FileCache</tt> event occurred on.
      * @param entry entry been added
      */
-    protected static void notifyProbesEntryAdded(final FileCache fileCache,
-            final FileCacheEntry entry) {
-        final FileCacheProbe[] probes =
-                fileCache.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesEntryAdded(final FileCache fileCache, final FileCacheEntry entry) {
+        final FileCacheProbe[] probes = fileCache.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (FileCacheProbe probe : probes) {
                 probe.onEntryAddedEvent(fileCache, entry);
@@ -963,10 +912,8 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * @param fileCache the <tt>FileCache</tt> event occurred on.
      * @param entry entry been removed
      */
-    protected static void notifyProbesEntryRemoved(final FileCache fileCache,
-            final FileCacheEntry entry) {
-        final FileCacheProbe[] probes =
-                fileCache.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesEntryRemoved(final FileCache fileCache, final FileCacheEntry entry) {
+        final FileCacheProbe[] probes = fileCache.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (FileCacheProbe probe : probes) {
                 probe.onEntryRemovedEvent(fileCache, entry);
@@ -980,10 +927,8 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * @param fileCache the <tt>FileCache</tt> event occurred on.
      * @param entry entry been hit.
      */
-    protected static void notifyProbesEntryHit(final FileCache fileCache,
-            final FileCacheEntry entry) {
-        final FileCacheProbe[] probes =
-                fileCache.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesEntryHit(final FileCache fileCache, final FileCacheEntry entry) {
+        final FileCacheProbe[] probes = fileCache.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (FileCacheProbe probe : probes) {
                 probe.onEntryHitEvent(fileCache, entry);
@@ -997,15 +942,12 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      * @param fileCache the <tt>FileCache</tt> event occurred on.
      * @param request HTTP request.
      */
-    protected static void notifyProbesEntryMissed(final FileCache fileCache,
-            final HttpRequestPacket request) {
-        
-        final FileCacheProbe[] probes =
-                fileCache.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesEntryMissed(final FileCache fileCache, final HttpRequestPacket request) {
+
+        final FileCacheProbe[] probes = fileCache.monitoringConfig.getProbesUnsafe();
         if (probes != null && probes.length > 0) {
             for (FileCacheProbe probe : probes) {
-                probe.onEntryMissedEvent(fileCache, request.getHeader(Header.Host),
-                        request.getRequestURI());
+                probe.onEntryMissedEvent(fileCache, request.getHeader(Header.Host), request.getRequestURI());
             }
         }
     }
@@ -1015,10 +957,8 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      *
      * @param fileCache the <tt>FileCache</tt> event occurred on.
      */
-    protected static void notifyProbesError(final FileCache fileCache,
-            final Throwable error) {
-        final FileCacheProbe[] probes =
-                fileCache.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesError(final FileCache fileCache, final Throwable error) {
+        final FileCacheProbe[] probes = fileCache.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (FileCacheProbe probe : probes) {
                 probe.onErrorEvent(fileCache, error);
@@ -1028,15 +968,16 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
 
     protected static long convertToLong(final String dateHeader) {
 
-        if (dateHeader == null)
-            return (-1L);
+        if (dateHeader == null) {
+            return -1L;
+        }
 
         final SimpleDateFormats formats = SimpleDateFormats.create();
 
         try {
             // Attempt to convert the date header in a variety of formats
             long result = FastHttpDateFormat.parseDate(dateHeader, formats.getFormats());
-            if (result != (-1L)) {
+            if (result != -1L) {
                 return result;
             }
             throw new IllegalArgumentException(dateHeader);
@@ -1051,7 +992,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
         public boolean doWork(final FileCacheEntry element) {
             element.run();
             return true;
-        }        
+        }
     }
 
     private static class EntryResolver implements DelayedExecutor.Resolver<FileCacheEntry> {

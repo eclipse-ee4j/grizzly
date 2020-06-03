@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -26,15 +26,14 @@ import java.util.logging.Logger;
 
 /**
  *
- * Format the record to include the Thread that logged the record.
- * To change the default configuration for java.util.logging you will need to
- * add this in the command line parameters : -Djava.util.logging.config.file=myfile
+ * Format the record to include the Thread that logged the record. To change the default configuration for
+ * java.util.logging you will need to add this in the command line parameters : -Djava.util.logging.config.file=myfile
  *
  * Here a sample of what you need to include in myfile
  *
- * #the default logger is this add you can replace it with LoggingFormatter
- * #java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
- * java.util.logging.ConsoleHandler.formatter = com.glassfish.grizzly.utils.LoggingFormatter
+ * #the default logger is this add you can replace it with LoggingFormatter #java.util.logging.ConsoleHandler.formatter
+ * = java.util.logging.SimpleFormatter java.util.logging.ConsoleHandler.formatter =
+ * com.glassfish.grizzly.utils.LoggingFormatter
  *
  * refer to : https://grizzly.dev.java.net/issues/show_bug.cgi?id=291
  *
@@ -45,7 +44,7 @@ public class LoggingFormatter extends Formatter {
 
     private static final Logger log = Logger.getLogger(LoggingFormatter.class.getName());
     // took that from the JDK java.util.logging.SimpleFormatter
-    // Line separator string.  This is the value of the line.separator
+    // Line separator string. This is the value of the line.separator
     // property at the moment that the SimpleFormatter was created.
     private static String lineSeparator = "\n";
 
@@ -67,9 +66,8 @@ public class LoggingFormatter extends Formatter {
     }
 
     /**
-     * Format the record to include the Thread that logged this record.
-     * the format should be
-     * [WorkerThreadImpl-1, Grizzly] 2008-10-08 18:49:59 [INFO] com.glassfish.grizzly.Controller:doSelect message
+     * Format the record to include the Thread that logged this record. the format should be [WorkerThreadImpl-1, Grizzly]
+     * 2008-10-08 18:49:59 [INFO] com.glassfish.grizzly.Controller:doSelect message
      *
      * @param record The record to be logged into the logger.
      *
@@ -107,7 +105,7 @@ public class LoggingFormatter extends Formatter {
         // and substitution of parameters) and add it to the buffer
         sb.append(formatMessage(record)).append(lineSeparator);
 
-        //we log the stackTrace if it's a exception
+        // we log the stackTrace if it's a exception
         if (record.getThrown() != null) {
             try {
                 StringWriter sw = new StringWriter();
@@ -124,9 +122,9 @@ public class LoggingFormatter extends Formatter {
     }
 
     /**
-     * Example to test the com.glassfish.grizzly.utils.LoggingFormatter
-     * You need to include this parameter in the command line
-     * -Djava.util.logging.config.file=myfile
+     * Example to test the com.glassfish.grizzly.utils.LoggingFormatter You need to include this parameter in the command
+     * line -Djava.util.logging.config.file=myfile
+     * 
      * @param args main parameters
      */
     public static void main(String[] args) {

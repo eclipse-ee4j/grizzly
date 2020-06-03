@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -41,18 +41,17 @@ import org.glassfish.grizzly.ssl.SSLUtils;
 
 /**
  * Grizzly TLS Next Protocol Negotiation support class.
- * 
+ *
  */
 public class AlpnSupport {
     private final static Logger LOGGER = Grizzly.logger(AlpnSupport.class);
 
-    private final static Map<SSLEngine, Connection<?>> SSL_TO_CONNECTION_MAP =
-            new WeakHashMap<>();
-    
+    private final static Map<SSLEngine, Connection<?>> SSL_TO_CONNECTION_MAP = new WeakHashMap<>();
+
     private static final AlpnSupport INSTANCE;
-    
+
     static {
-        
+
         boolean isExtensionFound = false;
         try {
             ClassLoader.getSystemClassLoader().loadClass("sun.security.ssl.GrizzlyNPN");
@@ -60,7 +59,7 @@ public class AlpnSupport {
         } catch (Throwable e) {
             LOGGER.log(Level.FINE, "TLS ALPN extension is not found:", e);
         }
-        
+
         INSTANCE = isExtensionFound ? new AlpnSupport() : null;
     }
 
@@ -72,7 +71,7 @@ public class AlpnSupport {
         if (!isEnabled()) {
             throw new IllegalStateException("TLS ALPN is disabled");
         }
-        
+
         return INSTANCE;
     }
 
@@ -81,34 +80,30 @@ public class AlpnSupport {
             return SSL_TO_CONNECTION_MAP.get(engine);
         }
     }
-    
-    private static void setConnection(final SSLEngine engine,
-            final Connection<?> connection) {
+
+    private static void setConnection(final SSLEngine engine, final Connection<?> connection) {
         synchronized (SSL_TO_CONNECTION_MAP) {
             SSL_TO_CONNECTION_MAP.put(engine, connection);
         }
     }
 
-    private final Map<Object, AlpnServerNegotiator> serverSideNegotiators =
-            new WeakHashMap<>();
+    private final Map<Object, AlpnServerNegotiator> serverSideNegotiators = new WeakHashMap<>();
     private final ReadWriteLock serverSideLock = new ReentrantReadWriteLock();
-    
-    private final Map<Object, AlpnClientNegotiator> clientSideNegotiators =
-            new WeakHashMap<>();
+
+    private final Map<Object, AlpnClientNegotiator> clientSideNegotiators = new WeakHashMap<>();
     private final ReadWriteLock clientSideLock = new ReentrantReadWriteLock();
 
-    private final SSLFilter.HandshakeListener handshakeListener = 
-            new SSLFilter.HandshakeListener() {
+    private final SSLFilter.HandshakeListener handshakeListener = new SSLFilter.HandshakeListener() {
 
         @Override
         public void onStart(final Connection<?> connection) {
             final SSLEngine sslEngine = SSLUtils.getSSLEngine(connection);
             assert sslEngine != null;
-            
+
             if (sslEngine.getUseClientMode()) {
                 AlpnClientNegotiator negotiator;
                 clientSideLock.readLock().lock();
-                
+
                 try {
                     negotiator = clientSideNegotiators.get(connection);
                     if (negotiator == null) {
@@ -117,7 +112,7 @@ public class AlpnSupport {
                 } finally {
                     clientSideLock.readLock().unlock();
                 }
-                
+
                 if (negotiator != null) {
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
@@ -134,7 +129,7 @@ public class AlpnSupport {
             } else {
                 AlpnServerNegotiator negotiator;
                 serverSideLock.readLock().lock();
-                
+
                 try {
                     negotiator = serverSideNegotiators.get(connection);
                     if (negotiator == null) {
@@ -143,7 +138,7 @@ public class AlpnSupport {
                 } finally {
                     serverSideLock.readLock().unlock();
                 }
-                
+
                 if (negotiator != null) {
 
                     // add a CloseListener to ensure we remove the
@@ -159,7 +154,7 @@ public class AlpnSupport {
                     NegotiationSupport.addNegotiator(sslEngine, negotiator);
                 }
             }
-            
+
         }
 
         @Override
@@ -170,37 +165,31 @@ public class AlpnSupport {
         public void onFailure(Connection<?> connection, Throwable t) {
         }
     };
-    
+
     private AlpnSupport() {
-    }    
-    
+    }
+
     public void configure(final SSLBaseFilter sslFilter) {
         sslFilter.addHandshakeListener(handshakeListener);
     }
-    
-    public void setServerSideNegotiator(final Transport transport,
-            final AlpnServerNegotiator negotiator) {
+
+    public void setServerSideNegotiator(final Transport transport, final AlpnServerNegotiator negotiator) {
         putServerSideNegotiator(transport, negotiator);
     }
-    
-    public void setServerSideNegotiator(final Connection<?> connection,
-            final AlpnServerNegotiator negotiator) {
+
+    public void setServerSideNegotiator(final Connection<?> connection, final AlpnServerNegotiator negotiator) {
         putServerSideNegotiator(connection, negotiator);
     }
 
-    
-    public void setClientSideNegotiator(final Transport transport,
-            final AlpnClientNegotiator negotiator) {
+    public void setClientSideNegotiator(final Transport transport, final AlpnClientNegotiator negotiator) {
         putClientSideNegotiator(transport, negotiator);
     }
 
-    public void setClientSideNegotiator(final Connection<?> connection,
-            final AlpnClientNegotiator negotiator) {
+    public void setClientSideNegotiator(final Connection<?> connection, final AlpnClientNegotiator negotiator) {
         putClientSideNegotiator(connection, negotiator);
     }
 
-    private void putServerSideNegotiator(final Object object,
-            final AlpnServerNegotiator negotiator) {
+    private void putServerSideNegotiator(final Object object, final AlpnServerNegotiator negotiator) {
         serverSideLock.writeLock().lock();
 
         try {
@@ -210,8 +199,7 @@ public class AlpnSupport {
         }
     }
 
-    private void putClientSideNegotiator(final Object object,
-            final AlpnClientNegotiator negotiator) {
+    private void putClientSideNegotiator(final Object object, final AlpnClientNegotiator negotiator) {
         clientSideLock.writeLock().lock();
 
         try {

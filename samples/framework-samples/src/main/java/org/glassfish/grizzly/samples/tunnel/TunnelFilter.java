@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -27,16 +28,14 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
 /**
- * Simple tunneling filter, which maps input of one connection to the output of
- * another and vise versa.
+ * Simple tunneling filter, which maps input of one connection to the output of another and vise versa.
  *
  * @author Alexey Stashok
  */
 public class TunnelFilter extends BaseFilter {
     private static final Logger logger = Grizzly.logger(TunnelFilter.class);
-    
-    private final Attribute<Connection> peerConnectionAttribute =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("TunnelFilter.peerConnection");
+
+    private final Attribute<Connection> peerConnectionAttribute = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("TunnelFilter.peerConnection");
 
     // Transport, which will be used to create peer connection
     private final SocketConnectorHandler transport;
@@ -52,17 +51,15 @@ public class TunnelFilter extends BaseFilter {
         this.transport = transport;
         this.redirectAddress = redirectAddress;
     }
-    
+
     /**
      * This method will be called, once {@link Connection} has some available data
      */
     @SuppressWarnings("unchecked")
     @Override
-    public NextAction handleRead(final FilterChainContext ctx)
-            throws IOException {
-        logger.log(Level.FINEST, "Connection: {0} handleRead: {1}",
-                new Object[]{ctx.getConnection(), ctx.getMessage()});
-        
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
+        logger.log(Level.FINEST, "Connection: {0} handleRead: {1}", new Object[] { ctx.getConnection(), ctx.getMessage() });
+
         final Connection connection = ctx.getConnection();
         final Connection peerConnection = peerConnectionAttribute.get(connection);
 
@@ -72,7 +69,7 @@ public class TunnelFilter extends BaseFilter {
         }
 
         final NextAction suspendNextAction = ctx.getSuspendAction();
-        
+
         // if peerConnection wasn't created - create it (usually happens on first connection request)
         if (peerConnection == null) {
             // "Peer connect" phase could take some time - so execute it in non-blocking mode
@@ -89,13 +86,12 @@ public class TunnelFilter extends BaseFilter {
         // if peer connection is already created - just forward data to peer
         redirectToPeer(ctx, peerConnection, message);
 
-        final AsyncQueueWriter writer =
-                (AsyncQueueWriter) connection.getTransport().getWriter(false);
-        
+        final AsyncQueueWriter writer = (AsyncQueueWriter) connection.getTransport().getWriter(false);
+
         if (writer.canWrite(peerConnection)) {
             return ctx.getStopAction();
         }
-        
+
         // Make sure we don't overload peer's output buffer and do not cause OutOfMemoryError
         ctx.suspend();
         writer.notifyWritePossible(peerConnection, new WriteHandler() {
@@ -143,22 +139,21 @@ public class TunnelFilter extends BaseFilter {
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    private static void redirectToPeer(final FilterChainContext context,
-            final Connection peerConnection, Object message) throws IOException {
+    private static void redirectToPeer(final FilterChainContext context, final Connection peerConnection, Object message) throws IOException {
 
         final Connection srcConnection = context.getConnection();
         logger.log(Level.FINE, "Redirecting from {0} to {1} message: {2}",
-                new Object[]{srcConnection.getPeerAddress(), peerConnection.getPeerAddress(), message});
+                new Object[] { srcConnection.getPeerAddress(), peerConnection.getPeerAddress(), message });
 
         peerConnection.write(message);
     }
-    
+
     /**
      * Peer connect {@link CompletionHandler}
      */
     private class ConnectCompletionHandler implements CompletionHandler<Connection> {
         private final FilterChainContext context;
-        
+
         private ConnectCompletionHandler(FilterChainContext context) {
             this.context = context;
         }
@@ -195,8 +190,7 @@ public class TunnelFilter extends BaseFilter {
         }
 
         /**
-         * Resume {@link org.glassfish.grizzly.filterchain.FilterChain} execution on stage, where it was
-         * earlier suspended.
+         * Resume {@link org.glassfish.grizzly.filterchain.FilterChain} execution on stage, where it was earlier suspended.
          */
         private void resumeContext() {
             context.resume();

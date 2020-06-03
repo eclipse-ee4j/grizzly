@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,8 +19,10 @@ package org.glassfish.grizzly.streams;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -33,21 +35,16 @@ import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.utils.CompletionHandlerAdapter;
 import org.glassfish.grizzly.utils.ResultAware;
 import org.glassfish.grizzly.utils.conditions.Condition;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Each method reads data from the current ByteBuffer.  If not enough data
- * is present in the current ByteBuffer, discard is called on the current
- * ByteBuffer and we advance to the next ByteBuffer, or block if not enough 
- * data is present.  If close() is called, all subsequent method calls will
- * throw an IllegalStateException, and any threads blocked waiting for more
- * data will be unblocked, and continue with an IllegalStateException from the
- * blocking method call.
+ * Each method reads data from the current ByteBuffer. If not enough data is present in the current ByteBuffer, discard
+ * is called on the current ByteBuffer and we advance to the next ByteBuffer, or block if not enough data is present. If
+ * close() is called, all subsequent method calls will throw an IllegalStateException, and any threads blocked waiting
+ * for more data will be unblocked, and continue with an IllegalStateException from the blocking method call.
  * <p>
- * dataReceived and close may be safely invoked by multiple threads.
- * The other methods must be invoked only by one thread, which is the reader of
- * this data stream.
- * 
+ * dataReceived and close may be safely invoked by multiple threads. The other methods must be invoked only by one
+ * thread, which is the reader of this data stream.
+ *
  * @author Ken Cavanaugh
  * @author Alexey Stashok
  */
@@ -61,13 +58,12 @@ public abstract class AbstractStreamReader implements StreamReader {
     protected final Input input;
 
     protected final AtomicBoolean isClosed = new AtomicBoolean(false);
-    
+
     private static void msg(final String msg) {
         LOGGER.log(Level.INFO, "READERSTREAM:DEBUG:{0}", msg);
     }
 
-    private static void displayBuffer(final String str,
-            final Buffer wrapper) {
+    private static void displayBuffer(final String str, final Buffer wrapper) {
         msg(str);
         msg("\tposition()     = " + wrapper.position());
         msg("\tlimit()        = " + wrapper.limit());
@@ -79,7 +75,7 @@ public abstract class AbstractStreamReader implements StreamReader {
     // The consumer thread will invoke readXXX methods far more often
     // than a typical producer will call dataReceived or (possibly) close.
     // So buffers must be protected from concurrent access, either by locking
-    // or by a wait-free queue.  However, volatile is sufficient for current,
+    // or by a wait-free queue. However, volatile is sufficient for current,
     // since we just need to ensure the visibility of the value of current to
     // all threads.
     //
@@ -87,8 +83,7 @@ public abstract class AbstractStreamReader implements StreamReader {
     /**
      * Create a new ByteBufferReader.
      *
-     * @param connection the {@link Connection} to be associated with this
-     *  <code>AbstractStreamReader</code>
+     * @param connection the {@link Connection} to be associated with this <code>AbstractStreamReader</code>
      * @param streamInput the stream source
      */
     protected AbstractStreamReader(Connection connection, Input streamInput) {
@@ -116,7 +111,7 @@ public abstract class AbstractStreamReader implements StreamReader {
      * {@inheritDoc}
      */
     @Override
-    public char readChar()  throws IOException {
+    public char readChar() throws IOException {
         if (input.isBuffered()) {
             final Buffer buffer = input.getBuffer();
             if (buffer != null && buffer.remaining() >= 2) {
@@ -142,7 +137,7 @@ public abstract class AbstractStreamReader implements StreamReader {
                 return result;
             }
         }
-        
+
         return (short) ((readByte() & 0xff) << 8 | readByte() & 0xff);
     }
 
@@ -159,7 +154,7 @@ public abstract class AbstractStreamReader implements StreamReader {
                 return result;
             }
         }
-        
+
         return (readShort() & 0xffff) << 16 | readShort() & 0xffff;
     }
 
@@ -176,7 +171,7 @@ public abstract class AbstractStreamReader implements StreamReader {
                 return result;
             }
         }
-        
+
         return (readInt() & 0xffffffffL) << 32 | readInt() & 0xffffffffL;
     }
 
@@ -210,7 +205,7 @@ public abstract class AbstractStreamReader implements StreamReader {
                 return result;
             }
         }
-        
+
         return Double.longBitsToDouble(readLong());
     }
 
@@ -250,7 +245,7 @@ public abstract class AbstractStreamReader implements StreamReader {
             buffer.get(data, offset, length);
             buffer.shrink();
         } else {
-            for(int i = offset; i < length; i++) {
+            for (int i = offset; i < length; i++) {
                 data[i] = input.read();
             }
         }
@@ -265,7 +260,7 @@ public abstract class AbstractStreamReader implements StreamReader {
         if (!buffer.hasRemaining()) {
             return;
         }
-        
+
         arraySizeCheck(buffer.remaining());
         if (input.isBuffered()) {
             final Buffer inputBuffer = input.getBuffer();
@@ -278,10 +273,10 @@ public abstract class AbstractStreamReader implements StreamReader {
                 buffer.put(inputBuffer);
                 inputBuffer.limit(save);
             }
-            
+
             inputBuffer.shrink();
         } else {
-            while(buffer.hasRemaining()) {
+            while (buffer.hasRemaining()) {
                 buffer.put(input.read());
             }
         }
@@ -374,13 +369,10 @@ public abstract class AbstractStreamReader implements StreamReader {
     public <E> GrizzlyFuture<E> decode(Transformer<Stream, E> decoder, CompletionHandler<E> completionHandler) {
         final FutureImpl<E> future = SafeFutureImpl.create();
 
-        final DecodeCompletionHandler<E, Integer> completionHandlerWrapper =
-                new DecodeCompletionHandler<E, Integer>(future, completionHandler);
+        final DecodeCompletionHandler<E, Integer> completionHandlerWrapper = new DecodeCompletionHandler<>(future, completionHandler);
 
-        notifyCondition(
-                new StreamDecodeCondition<E>(this, decoder, completionHandlerWrapper),
-                completionHandlerWrapper);
-        
+        notifyCondition(new StreamDecodeCondition<>(this, decoder, completionHandlerWrapper), completionHandlerWrapper);
+
         return future;
     }
 
@@ -396,8 +388,7 @@ public abstract class AbstractStreamReader implements StreamReader {
      * {@inheritDoc}
      */
     @Override
-    public GrizzlyFuture<Integer> notifyAvailable(final int size,
-            CompletionHandler<Integer> completionHandler) {
+    public GrizzlyFuture<Integer> notifyAvailable(final int size, CompletionHandler<Integer> completionHandler) {
         return notifyCondition(new Condition() {
             @Override
             public boolean check() {
@@ -418,9 +409,7 @@ public abstract class AbstractStreamReader implements StreamReader {
      * {@inheritDoc}
      */
     @Override
-    public synchronized GrizzlyFuture<Integer> notifyCondition(
-            final Condition condition,
-            final CompletionHandler<Integer> completionHandler) {
+    public synchronized GrizzlyFuture<Integer> notifyCondition(final Condition condition, final CompletionHandler<Integer> completionHandler) {
         if (isClosed()) {
             EOFException exception = new EOFException();
             if (completionHandler != null) {
@@ -432,10 +421,10 @@ public abstract class AbstractStreamReader implements StreamReader {
 
         return input.notifyCondition(condition, completionHandler);
     }
-    
+
     /**
-     * Closes the <tt>StreamReader</tt> and causes all subsequent method calls
-     * on this object to throw IllegalStateException.
+     * Closes the <tt>StreamReader</tt> and causes all subsequent method calls on this object to throw
+     * IllegalStateException.
      */
     @Override
     public void close() {
@@ -462,7 +451,7 @@ public abstract class AbstractStreamReader implements StreamReader {
      */
     @Override
     public final boolean hasAvailable() {
-       return available() > 0;
+        return available() > 0;
     }
 
     /**
@@ -480,7 +469,6 @@ public abstract class AbstractStreamReader implements StreamReader {
     public boolean isSupportBufferWindow() {
         return input.isBuffered();
     }
-
 
     /**
      * {@inheritDoc}
@@ -506,16 +494,14 @@ public abstract class AbstractStreamReader implements StreamReader {
         return connection;
     }
 
-    private static class DecodeCompletionHandler<A, B> extends CompletionHandlerAdapter<A, B>
-            implements ResultAware<A> {
+    private static class DecodeCompletionHandler<A, B> extends CompletionHandlerAdapter<A, B> implements ResultAware<A> {
 
         private volatile A result;
-        
-        public DecodeCompletionHandler(FutureImpl<A> future,
-                CompletionHandler<A> completionHandler) {
+
+        public DecodeCompletionHandler(FutureImpl<A> future, CompletionHandler<A> completionHandler) {
             super(future, completionHandler);
         }
-        
+
         @Override
         public void setResult(A result) {
             this.result = result;
@@ -527,4 +513,3 @@ public abstract class AbstractStreamReader implements StreamReader {
         }
     }
 }
-

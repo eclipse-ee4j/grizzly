@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,36 +21,29 @@ import org.glassfish.grizzly.TransportProbe;
 import org.glassfish.grizzly.http.HttpProbe;
 import org.glassfish.grizzly.http.server.filecache.FileCacheProbe;
 import org.glassfish.grizzly.memory.MemoryProbe;
-import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
+import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 
 /**
  * Grizzly web server monitoring config.
- * 
+ *
  * @author Alexey Stashok
  */
 public final class HttpServerMonitoringConfig {
-    private final DefaultMonitoringConfig<MemoryProbe> memoryConfig =
-            new DefaultMonitoringConfig<MemoryProbe>(MemoryProbe.class);
+    private final DefaultMonitoringConfig<MemoryProbe> memoryConfig = new DefaultMonitoringConfig<>(MemoryProbe.class);
 
-    private final DefaultMonitoringConfig<TransportProbe> transportConfig =
-            new DefaultMonitoringConfig<TransportProbe>(TransportProbe.class);
+    private final DefaultMonitoringConfig<TransportProbe> transportConfig = new DefaultMonitoringConfig<>(TransportProbe.class);
 
-    private final DefaultMonitoringConfig<ConnectionProbe> connectionConfig =
-            new DefaultMonitoringConfig<ConnectionProbe>(ConnectionProbe.class);
+    private final DefaultMonitoringConfig<ConnectionProbe> connectionConfig = new DefaultMonitoringConfig<>(ConnectionProbe.class);
 
-    private final DefaultMonitoringConfig<ThreadPoolProbe> threadPoolConfig =
-            new DefaultMonitoringConfig<ThreadPoolProbe>(ThreadPoolProbe.class);
+    private final DefaultMonitoringConfig<ThreadPoolProbe> threadPoolConfig = new DefaultMonitoringConfig<>(ThreadPoolProbe.class);
 
-    private final DefaultMonitoringConfig<FileCacheProbe> fileCacheConfig =
-            new DefaultMonitoringConfig<FileCacheProbe>(FileCacheProbe.class);
+    private final DefaultMonitoringConfig<FileCacheProbe> fileCacheConfig = new DefaultMonitoringConfig<>(FileCacheProbe.class);
 
-    private final DefaultMonitoringConfig<HttpProbe> httpConfig =
-            new DefaultMonitoringConfig<HttpProbe>(HttpProbe.class);
+    private final DefaultMonitoringConfig<HttpProbe> httpConfig = new DefaultMonitoringConfig<>(HttpProbe.class);
 
-    private final DefaultMonitoringConfig<HttpServerProbe> webServerConfig =
-            new DefaultMonitoringConfig<HttpServerProbe>(HttpServerProbe.class);
+    private final DefaultMonitoringConfig<HttpServerProbe> webServerConfig = new DefaultMonitoringConfig<>(HttpServerProbe.class);
 
     /**
      * Get the memory monitoring config.

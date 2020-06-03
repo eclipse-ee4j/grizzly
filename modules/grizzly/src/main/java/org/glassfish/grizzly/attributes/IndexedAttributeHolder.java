@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.glassfish.grizzly.utils.NullaryFunction;
 
 /**
- * {@link AttributeHolder}, which supports indexed access to stored
- * {@link Attribute}s. Access to such indexed {@link Attribute}s could be as
- * fast as access to array.
- * 
+ * {@link AttributeHolder}, which supports indexed access to stored {@link Attribute}s. Access to such indexed
+ * {@link Attribute}s could be as fast as access to array.
+ *
  * This implementation is thread-safe.
  *
  * @see AttributeHolder
@@ -36,12 +36,12 @@ import org.glassfish.grizzly.utils.NullaryFunction;
  */
 public final class IndexedAttributeHolder implements AttributeHolder {
     private final Object sync = new Object();
-    
+
     // dummy volatile
     private volatile int count;
-    
+
     private Snapshot state;
-    
+
     protected final DefaultAttributeBuilder attributeBuilder;
     protected final IndexedAttributeAccessor indexedAttributeAccessor;
 
@@ -49,14 +49,14 @@ public final class IndexedAttributeHolder implements AttributeHolder {
      * @param attributeBuilder
      * @deprecated use {@link AttributeBuilder#createSafeAttributeHolder()}
      */
+    @Deprecated
     public IndexedAttributeHolder(final AttributeBuilder attributeBuilder) {
         this.attributeBuilder = (DefaultAttributeBuilder) attributeBuilder;
-        state = new Snapshot(
-                new Object[4], new int[] {-1, -1, -1, -1}, 0);
-        
+        state = new Snapshot(new Object[4], new int[] { -1, -1, -1, -1 }, 0);
+
         indexedAttributeAccessor = new IndexedAttributeAccessorImpl();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -69,17 +69,15 @@ public final class IndexedAttributeHolder implements AttributeHolder {
      * {@inheritDoc}
      */
     @Override
-    public Object getAttribute(final String name,
-            final NullaryFunction initializer) {
+    public Object getAttribute(final String name, final NullaryFunction initializer) {
         final Attribute attribute = attributeBuilder.getAttributeByName(name);
         if (attribute != null) {
-            return indexedAttributeAccessor.getAttribute(
-                    attribute.index(), initializer);
+            return indexedAttributeAccessor.getAttribute(attribute.index(), initializer);
         }
-        
+
         return initializer != null ? initializer : null;
     }
-        
+
     /**
      * {@inheritDoc}
      */
@@ -90,9 +88,9 @@ public final class IndexedAttributeHolder implements AttributeHolder {
             attribute = attributeBuilder.createAttribute(name);
         }
 
-        indexedAttributeAccessor.setAttribute(attribute.index(), value);        
+        indexedAttributeAccessor.setAttribute(attribute.index(), value);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -102,7 +100,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
         if (attribute != null) {
             return indexedAttributeAccessor.removeAttribute(attribute.index());
         }
-        
+
         return null;
     }
 
@@ -112,7 +110,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
     @Override
     public Set<String> getAttributeNames() {
         if (count != 0) {
-            final Set<String> result = new HashSet<String>();
+            final Set<String> result = new HashSet<>();
 
             final Snapshot stateNow = state;
             final int localSize = stateNow.size;
@@ -135,8 +133,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
     @Override
     public void copyFrom(final AttributeHolder srcAttributes) {
         if (srcAttributes instanceof IndexedAttributeHolder) {
-            final IndexedAttributeHolder iah = 
-                    (IndexedAttributeHolder) srcAttributes;
+            final IndexedAttributeHolder iah = (IndexedAttributeHolder) srcAttributes;
 
             final Snapshot stateNow = state;
             final Snapshot srcState = iah.state;
@@ -172,19 +169,18 @@ public final class IndexedAttributeHolder implements AttributeHolder {
             if (names.isEmpty()) {
                 return;
             }
-            
+
             for (String name : names) {
                 setAttribute(name, srcAttributes.getAttribute(name));
             }
         }
     }
-    
+
     @Override
     public void copyTo(final AttributeHolder dstAttributes) {
         if (count != 0) {
             if (dstAttributes instanceof IndexedAttributeHolder) {
-                final IndexedAttributeHolder iah =
-                        (IndexedAttributeHolder) dstAttributes;
+                final IndexedAttributeHolder iah = (IndexedAttributeHolder) dstAttributes;
 
                 final Snapshot stateNow = state;
                 final Snapshot dstState = iah.state;
@@ -232,7 +228,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
             dstAttributes.clear();
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -256,7 +252,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
     public void clear() {
         if (count != 0) {
             count = 0;
-            
+
             for (int i = 0; i < state.size; i++) {
                 state.values[i] = null;
             }
@@ -272,17 +268,15 @@ public final class IndexedAttributeHolder implements AttributeHolder {
     }
 
     /**
-     * Returns {@link IndexedAttributeAccessor} for accessing {@link Attribute}s
-     * by index.
+     * Returns {@link IndexedAttributeAccessor} for accessing {@link Attribute}s by index.
      *
-     * @return {@link IndexedAttributeAccessor} for accessing {@link Attribute}s
-     * by index.
+     * @return {@link IndexedAttributeAccessor} for accessing {@link Attribute}s by index.
      */
     @Override
     public IndexedAttributeAccessor getIndexedAttributeAccessor() {
         return indexedAttributeAccessor;
     }
-    
+
     /**
      * {@link IndexedAttributeAccessor} implementation.
      */
@@ -299,8 +293,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
          * {@inheritDoc}
          */
         @Override
-        public Object getAttribute(final int index,
-                final NullaryFunction initializer) {
+        public Object getAttribute(final int index, final NullaryFunction initializer) {
             Object value = weakGet(index);
 
             if (value == null && initializer != null) {
@@ -308,14 +301,14 @@ public final class IndexedAttributeHolder implements AttributeHolder {
                     // we want to make sure that parallel getAttribute(int, NullaryFunction)
                     // won't create multiple value instances (everyone will call NullaryFunction.evaluate())
                     value = weakGet(index);
-                    
+
                     if (value == null) {
                         value = initializer.evaluate();
                         setAttribute(index, value);
                     }
                 }
             }
-            
+
             return value;
         }
 
@@ -329,10 +322,10 @@ public final class IndexedAttributeHolder implements AttributeHolder {
                     }
                 }
             }
-            
+
             return null;
         }
-        
+
         /**
          * {@inheritDoc}
          */
@@ -341,8 +334,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
             final Snapshot stateNow = state;
 
             int mappedIdx;
-            if (index < stateNow.i2v.length &&
-                    (mappedIdx = stateNow.i2v[index]) != -1) {
+            if (index < stateNow.i2v.length && (mappedIdx = stateNow.i2v[index]) != -1) {
                 stateNow.values[mappedIdx] = value;
                 count++;
             } else if (value != null) {
@@ -353,34 +345,32 @@ public final class IndexedAttributeHolder implements AttributeHolder {
         @Override
         public Object removeAttribute(final int index) {
             final Snapshot stateNow = state;
-            
+
             Object oldValue = null;
-            
+
             int mappedIdx;
-            if (index < stateNow.i2v.length &&
-                    (mappedIdx = stateNow.i2v[index]) != -1) {
+            if (index < stateNow.i2v.length && (mappedIdx = stateNow.i2v[index]) != -1) {
                 oldValue = stateNow.values[mappedIdx];
                 stateNow.values[mappedIdx] = null;
                 count++;
             }
-            
+
             return oldValue;
         }
-        
+
         private void setSync(final int index, final Object value) {
             synchronized (sync) {
                 final Snapshot stateNow = state;
-                
+
                 int mappedIdx;
                 final int[] newI2v;
                 if (index < stateNow.i2v.length) {
-                    if ((mappedIdx = stateNow.i2v[index]) != -1
-                            && mappedIdx < stateNow.size) {
+                    if ((mappedIdx = stateNow.i2v[index]) != -1 && mappedIdx < stateNow.size) {
                         stateNow.values[mappedIdx] = value;
                         count++;
                         return;
                     }
-                    
+
                     newI2v = stateNow.i2v;
                 } else {
                     newI2v = ensureSize(stateNow.i2v, index + 1);
@@ -388,28 +378,25 @@ public final class IndexedAttributeHolder implements AttributeHolder {
 
                 mappedIdx = stateNow.size;
                 final int newSize = mappedIdx + 1;
-                
-                final Object[] newValues = mappedIdx < stateNow.values.length ?
-                        stateNow.values :
-                        ensureSize(stateNow.values, newSize);
+
+                final Object[] newValues = mappedIdx < stateNow.values.length ? stateNow.values : ensureSize(stateNow.values, newSize);
 
                 newValues[mappedIdx] = value;
                 newI2v[index] = mappedIdx;
 
                 state = new Snapshot(newValues, newI2v, newSize);
-                
+
                 count++;
             }
         }
     }
-    
+
     private static Object[] ensureSize(final Object[] array, final int size) {
 
         final int arrayLength = array.length;
         final int delta = size - arrayLength;
 
-        final int newLength = Math.max(arrayLength + delta,
-                (arrayLength * 3) / 2 + 1);
+        final int newLength = Math.max(arrayLength + delta, arrayLength * 3 / 2 + 1);
 
         return Arrays.copyOf(array, newLength);
     }
@@ -419,8 +406,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
         final int arrayLength = array.length;
         final int delta = size - arrayLength;
 
-        final int newLength = Math.max(arrayLength + delta,
-                (arrayLength * 3) / 2 + 1);
+        final int newLength = Math.max(arrayLength + delta, arrayLength * 3 / 2 + 1);
 
         final int[] newArray = Arrays.copyOf(array, newLength);
         Arrays.fill(newArray, array.length, newLength, -1);
@@ -433,7 +419,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
         private final int[] i2v;
 
         private final int size;
-        
+
         public Snapshot(Object[] values, int[] i2v, int size) {
             this.values = values;
             this.i2v = i2v;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,16 +10,15 @@
 
 package org.glassfish.grizzly.samples.connectionpool;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
-import java.io.IOException;
-
 /**
- * The client {@link org.glassfish.grizzly.filterchain.Filter} responsible for
- * tracking the number of established client connections and passing server
- * responses to the {@link ClientCallback} for appropriate accounting.
+ * The client {@link org.glassfish.grizzly.filterchain.Filter} responsible for tracking the number of established client
+ * connections and passing server responses to the {@link ClientCallback} for appropriate accounting.
  */
 public class ClientFilter extends BaseFilter {
     private final ClientCallback callback;
@@ -46,7 +45,7 @@ public class ClientFilter extends BaseFilter {
         // a response is received - pass it to the callback
         final String responseMessage = ctx.getMessage();
         callback.onResponseReceived(ctx.getConnection(), responseMessage);
-        
+
         return ctx.getStopAction();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,6 +10,10 @@
 
 package org.glassfish.grizzly.samples.http.download;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
@@ -18,14 +22,11 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.DelayedExecutor;
 import org.glassfish.grizzly.utils.IdleTimeoutFilter;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
- * Simple HTTP (Web) server, which listens on a specific TCP port and shares
- * static resources (files), located in a passed folder.
- * 
+ * Simple HTTP (Web) server, which listens on a specific TCP port and shares static resources (files), located in a
+ * passed folder.
+ *
  * @author Alexey Stashok
  */
 public class Server {
@@ -57,8 +58,7 @@ public class Server {
         serverFilterChainBuilder.add(new WebServerFilter("."));
 
         // Initialize Transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         // Set filterchain as a Transport Processor
         transport.setProcessor(serverFilterChainBuilder.build());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http.server;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.ReadHandler;
@@ -25,7 +26,7 @@ import org.glassfish.grizzly.http.io.NIOInputStream;
 
 /**
  * {@link NIOInputStream} implementation based on {@link InputBuffer}.
- * 
+ *
  * @author Ryan Lubke
  * @author Alexey Stashok
  */
@@ -33,64 +34,69 @@ final class NIOInputStreamImpl extends NIOInputStream implements Cacheable {
 
     private InputBuffer inputBuffer;
 
-
     // ------------------------------------------------ Methods from InputStream
-
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read() throws IOException {
+    @Override
+    public int read() throws IOException {
         return inputBuffer.readByte();
     }
 
-
     /**
      * {@inheritDoc}
      */
-    @Override public int read(byte[] b) throws IOException {
+    @Override
+    public int read(byte[] b) throws IOException {
         return inputBuffer.read(b, 0, b.length);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read(byte[] b, int off, int len) throws IOException {
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
         return inputBuffer.read(b, off, len);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public long skip(long n) throws IOException {
+    @Override
+    public long skip(long n) throws IOException {
         return inputBuffer.skip(n);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public int available() throws IOException {
+    @Override
+    public int available() throws IOException {
         return inputBuffer.available();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         inputBuffer.close();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void mark(int readlimit) {
+    @Override
+    public void mark(int readlimit) {
         inputBuffer.mark(readlimit);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void reset() throws IOException {
+    @Override
+    public void reset() throws IOException {
         inputBuffer.reset();
     }
 
@@ -99,13 +105,12 @@ final class NIOInputStreamImpl extends NIOInputStream implements Cacheable {
      *
      * @return <code>true</code>
      */
-    @Override public boolean markSupported() {
+    @Override
+    public boolean markSupported() {
         return inputBuffer.markSupported();
     }
 
-
     // --------------------------------------------- Methods from InputSource
-
 
     /**
      * {@inheritDoc}
@@ -144,9 +149,8 @@ final class NIOInputStreamImpl extends NIOInputStream implements Cacheable {
      */
     @Override
     public boolean isReady() {
-        return (inputBuffer.available() > 0);
+        return inputBuffer.available() > 0;
     }
-
 
     // --------------------------------------- Methods from BinaryNIOInputSource
 
@@ -172,9 +176,8 @@ final class NIOInputStreamImpl extends NIOInputStream implements Cacheable {
     @Override
     public Buffer readBuffer(final int size) {
         return inputBuffer.readBuffer(size);
-    }    
+    }
     // -------------------------------------------------- Methods from Cacheable
-
 
     /**
      * {@inheritDoc}
@@ -186,9 +189,7 @@ final class NIOInputStreamImpl extends NIOInputStream implements Cacheable {
 
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     public void setInputBuffer(final InputBuffer inputBuffer) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -20,9 +20,8 @@ package org.glassfish.grizzly;
 import java.io.IOException;
 
 /**
- * The {@link IOEvent} life-cycle listener, which will be notified about changes
- * in {@link IOEvent} processing statuses.
- * 
+ * The {@link IOEvent} life-cycle listener, which will be notified about changes in {@link IOEvent} processing statuses.
+ *
  * @author Alexey Stashok
  */
 public interface IOEventLifeCycleListener {
@@ -43,11 +42,9 @@ public interface IOEventLifeCycleListener {
     void onContextResume(Context context) throws IOException;
 
     /**
-     * Processing switched to the manual IOEvent control.
-     * {@link Connection#enableIOEvent(org.glassfish.grizzly.IOEvent)} or
-     * {@link Connection#disableIOEvent(org.glassfish.grizzly.IOEvent)} might be
-     * explicitly called.
-     * 
+     * Processing switched to the manual IOEvent control. {@link Connection#enableIOEvent(org.glassfish.grizzly.IOEvent)} or
+     * {@link Connection#disableIOEvent(org.glassfish.grizzly.IOEvent)} might be explicitly called.
+     *
      * @param context IO Context on error
      */
     void onContextManualIOEventControl(final Context context) throws IOException;
@@ -62,8 +59,8 @@ public interface IOEventLifeCycleListener {
 
     /**
      * {@link IOEvent} processing completed.
-     * 
-     * @param context  IO Context
+     *
+     * @param context IO Context
      * @param data data produced
      * @throws IOException on error
      */
@@ -78,14 +75,14 @@ public interface IOEventLifeCycleListener {
     void onLeave(Context context) throws IOException;
 
     /**
-     * Terminate {@link IOEvent} processing in this thread, but it's going to
-     * be continued later.
+     * Terminate {@link IOEvent} processing in this thread, but it's going to be continued later.
      *
      * @param context IO Context
      * @throws IOException on error
-     * 
+     *
      * @deprecated will never be invoked
      */
+    @Deprecated
     void onTerminate(Context context) throws IOException;
 
     /**

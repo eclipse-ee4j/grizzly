@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,7 +29,7 @@ abstract class ExecutorResolver {
             throw new UnsupportedOperationException("Not supported yet.");
         }
     };
-    
+
     public static final FilterExecutor DOWNSTREAM_EXECUTOR_SAMPLE = new DownstreamExecutor() {
         @Override
         public NextAction execute(Filter filter, FilterChainContext context) throws IOException {
@@ -39,16 +39,14 @@ abstract class ExecutorResolver {
 
     private static final FilterExecutor CONNECT_EXECUTOR = new UpstreamExecutor() {
         @Override
-        public NextAction execute(final Filter filter, final FilterChainContext context)
-                throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleConnect(context);
         }
     };
-    
+
     private static final FilterExecutor CLOSE_EXECUTOR = new UpstreamExecutor() {
         @Override
-        public NextAction execute(final Filter filter, final FilterChainContext context)
-                throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleClose(context);
         }
     };
@@ -56,65 +54,63 @@ abstract class ExecutorResolver {
     private static final FilterExecutor EVENT_UPSTREAM_EXECUTOR = new UpstreamExecutor() {
 
         @Override
-        public NextAction execute(final Filter filter,
-                final FilterChainContext context) throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleEvent(context, context.event);
         }
     };
-    
+
     private static final FilterExecutor EVENT_DOWNSTREAM_EXECUTOR = new DownstreamExecutor() {
 
         @Override
-        public NextAction execute(final Filter filter,
-                final FilterChainContext context) throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleEvent(context, context.event);
         }
     };
-    
+
     private static final FilterExecutor ACCEPT_EXECUTOR = new UpstreamExecutor() {
 
         @Override
-        public NextAction execute(final Filter filter, final FilterChainContext context)
-                throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleAccept(context);
         }
     };
 
     private static final FilterExecutor WRITE_EXECUTOR = new DownstreamExecutor() {
         @Override
-        public NextAction execute(final Filter filter, final FilterChainContext context)
-                throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleWrite(context);
         }
     };
-    
+
     private static final FilterExecutor READ_EXECUTOR = new UpstreamExecutor() {
         @Override
-        public NextAction execute(final Filter filter, final FilterChainContext context)
-                throws IOException {
+        public NextAction execute(final Filter filter, final FilterChainContext context) throws IOException {
             return filter.handleRead(context);
         }
     };
-    
-    
+
     public static FilterExecutor resolve(final FilterChainContext context) {
-        switch(context.getOperation()) {
-            case READ: return READ_EXECUTOR;
-            case WRITE: return WRITE_EXECUTOR;
-            case ACCEPT: return ACCEPT_EXECUTOR;
-            case CLOSE: return CLOSE_EXECUTOR;
-            case CONNECT: return CONNECT_EXECUTOR;
-            case EVENT: return (context.getFilterIdx() == FilterChainContext.NO_FILTER_INDEX ||
-                        context.getStartIdx() <= context.getEndIdx()) ?
-                    EVENT_UPSTREAM_EXECUTOR:
-                    EVENT_DOWNSTREAM_EXECUTOR;
-            default: return null;
+        switch (context.getOperation()) {
+        case READ:
+            return READ_EXECUTOR;
+        case WRITE:
+            return WRITE_EXECUTOR;
+        case ACCEPT:
+            return ACCEPT_EXECUTOR;
+        case CLOSE:
+            return CLOSE_EXECUTOR;
+        case CONNECT:
+            return CONNECT_EXECUTOR;
+        case EVENT:
+            return context.getFilterIdx() == FilterChainContext.NO_FILTER_INDEX || context.getStartIdx() <= context.getEndIdx() ? EVENT_UPSTREAM_EXECUTOR
+                    : EVENT_DOWNSTREAM_EXECUTOR;
+        default:
+            return null;
         }
     }
-    
+
     /**
-     * Executes appropriate {@link Filter} processing method to process occurred
-     * {@link org.glassfish.grizzly.IOEvent}.
+     * Executes appropriate {@link Filter} processing method to process occurred {@link org.glassfish.grizzly.IOEvent}.
      */
     public static abstract class UpstreamExecutor implements FilterExecutor {
 
@@ -167,14 +163,13 @@ abstract class ExecutorResolver {
         }
 
         @Override
-        public final  boolean isDownstream() {
+        public final boolean isDownstream() {
             return false;
         }
     }
 
     /**
-     * Executes appropriate {@link Filter} processing method to process occurred
-     * {@link org.glassfish.grizzly.IOEvent}.
+     * Executes appropriate {@link Filter} processing method to process occurred {@link org.glassfish.grizzly.IOEvent}.
      */
     public static abstract class DownstreamExecutor implements FilterExecutor {
         @Override
@@ -227,7 +222,7 @@ abstract class ExecutorResolver {
         }
 
         @Override
-        public final  boolean isDownstream() {
+        public final boolean isDownstream() {
             return true;
         }
     }

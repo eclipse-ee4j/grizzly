@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,11 +16,12 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.utils.conditions.Condition;
-import java.io.IOException;
 
 /**
  *
@@ -35,8 +36,7 @@ public class StreamInput implements Input {
     }
 
     @Override
-    public GrizzlyFuture<Integer> notifyCondition(Condition condition,
-            CompletionHandler<Integer> completionHandler) {
+    public GrizzlyFuture<Integer> notifyCondition(Condition condition, CompletionHandler<Integer> completionHandler) {
         return streamReader.notifyCondition(condition, completionHandler);
     }
 

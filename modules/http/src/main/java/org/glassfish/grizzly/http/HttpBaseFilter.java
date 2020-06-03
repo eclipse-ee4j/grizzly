@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,25 +19,23 @@ package org.glassfish.grizzly.http;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 
 /**
- * Base HTTP Filter.
- * Might be extended by Filters, which implement HTTP-based protocols to get finer
- * access to {@link HttpRequestPacket}, {@link HttpResponsePacket} objects.
- * 
+ * Base HTTP Filter. Might be extended by Filters, which implement HTTP-based protocols to get finer access to
+ * {@link HttpRequestPacket}, {@link HttpResponsePacket} objects.
+ *
  * @author Alexey Stashok
  */
 public class HttpBaseFilter extends BaseFilter {
-    
+
     /**
      * Binds {@link HttpRequestPacket} and {@link HttpResponsePacket} objects.
-     * 
+     *
      * @param request
      * @param response
-     * 
+     *
      * @see {@link HttpRequestPacket#setResponse(org.glassfish.grizzly.http.HttpResponsePacket)}
      * @see {@link HttpResponsePacket#setRequest(org.glassfish.grizzly.http.HttpRequestPacket)}
      */
-    protected void bind (final HttpRequestPacket request,
-            final HttpResponsePacket response) {
+    protected void bind(final HttpRequestPacket request, final HttpResponsePacket response) {
         request.setResponse(response);
         response.setRequest(request);
     }

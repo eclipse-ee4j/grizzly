@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http2.frames;
 
 import java.util.Map;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.memory.MemoryManager;
@@ -25,21 +26,19 @@ public abstract class Http2Frame implements Cacheable {
 
     public static final int FRAME_HEADER_SIZE = 9;
 
-    protected static final boolean DONT_RECYCLE =
-            Boolean.getBoolean(Http2Frame.class.getName() + ".dont-recycle");
-    
+    protected static final boolean DONT_RECYCLE = Boolean.getBoolean(Http2Frame.class.getName() + ".dont-recycle");
+
     // these are common to all frames
     private int flags;
     private int streamId = 0;
     protected int length = -1;
 
     protected Buffer frameBuffer;
-    
+
     // ------------------------------------------------------------ Constructors
 
-
-    protected Http2Frame() { }
-
+    protected Http2Frame() {
+    }
 
     // ---------------------------------------------------------- Public Methods
 
@@ -48,7 +47,7 @@ public abstract class Http2Frame implements Cacheable {
     }
 
     public abstract Buffer toBuffer(final MemoryManager memoryManager);
-    
+
     public boolean isFlagSet(final int flag) {
         return (flags & flag) == flag;
     }
@@ -60,16 +59,17 @@ public abstract class Http2Frame implements Cacheable {
     public void clearFlag(final int flag) {
         flags &= ~flag;
     }
-    
+
     /**
-     * @return flags for the frame.  Only the first 8 bits are relevant.
+     * @return flags for the frame. Only the first 8 bits are relevant.
      */
     public int getFlags() {
         return flags;
     }
 
     /**
-     * Sets flags for the frame.  Only the first 8 bits are relevant.
+     * Sets flags for the frame. Only the first 8 bits are relevant.
+     * 
      * @param flags the flags for this frame
      */
     protected void setFlags(final int flags) {
@@ -83,7 +83,7 @@ public abstract class Http2Frame implements Cacheable {
         if (length == -1) {
             length = calcLength();
         }
-        
+
         return length;
     }
 
@@ -91,19 +91,19 @@ public abstract class Http2Frame implements Cacheable {
      * @return the length of this frame.
      */
     protected abstract int calcLength();
-    
+
     /**
      * @return the {@link Map} with flag bit - to - flag name mapping
      */
     protected abstract Map<Integer, String> getFlagNamesMap();
-    
+
     /**
      * The method should be invoked once packet payload is updated
      */
     protected void onPayloadUpdated() {
         length = -1;
     }
-    
+
     /**
      * @return the type of the frame.
      */
@@ -118,17 +118,18 @@ public abstract class Http2Frame implements Cacheable {
 
     /**
      * Sets the stream ID associated with the data frame.
+     * 
      * @param streamId the stream ID of this frame.
      */
     protected void setStreamId(final int streamId) {
         this.streamId = streamId;
     }
-    
+
     @Override
     public String toString() {
         return '{' + headerToString() + '}';
     }
-    
+
     public String headerToString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("streamId=").append(streamId);
@@ -145,56 +146,50 @@ public abstract class Http2Frame implements Cacheable {
     protected void serializeFrameHeader(final Buffer buffer) {
         assert buffer.remaining() >= Http2Frame.FRAME_HEADER_SIZE;
 
-        buffer.putInt(
-                ((getLength() & 0xffffff) << 8) |
-                        getType());
+        buffer.putInt((getLength() & 0xffffff) << 8 | getType());
         buffer.put((byte) getFlags());
         buffer.putInt(getStreamId());
     }
-    
-    // -------------------------------------------------- Methods from Cacheable
 
+    // -------------------------------------------------- Methods from Cacheable
 
     @Override
     public void recycle() {
         if (DONT_RECYCLE) {
             return;
         }
-        
+
         flags = 0;
         length = -1;
         streamId = 0;
-        
+
         if (frameBuffer != null) {
             frameBuffer.tryDispose();
             frameBuffer = null;
         }
     }
 
-    private static String flagsToString(int flags,
-            final Map<Integer, String> flagsNameMap) {
+    private static String flagsToString(int flags, final Map<Integer, String> flagsNameMap) {
         if (flags == 0) {
             return "none";
         }
-        
+
         final StringBuilder sb = new StringBuilder();
         while (flags != 0) {
-            final int flagsNext = flags & (flags - 1); // flags without lowest 1
-            
+            final int flagsNext = flags & flags - 1; // flags without lowest 1
+
             final int lowestOneBit = flags - flagsNext;
             final String name = flagsNameMap.get(lowestOneBit);
-            
+
             if (sb.length() > 0) {
                 sb.append(" | ");
             }
 
-            sb.append(name != null
-                    ? name
-                    : sb.append('#').append(Integer.numberOfLeadingZeros(flags)));
-            
+            sb.append(name != null ? name : sb.append('#').append(Integer.numberOfLeadingZeros(flags)));
+
             flags = flagsNext;
         }
-        
+
         return sb.toString();
     }
     // ---------------------------------------------------------- Nested Classes
@@ -202,7 +197,6 @@ public abstract class Http2Frame implements Cacheable {
     protected static abstract class Http2FrameBuilder<T extends Http2FrameBuilder> {
         protected int flags;
         protected int streamId;
-        
 
         // -------------------------------------------------------- Constructors
 
@@ -211,7 +205,7 @@ public abstract class Http2Frame implements Cacheable {
 
         // ------------------------------------------------------ Public Methods
         public abstract Http2Frame build();
-        
+
         public T setFlag(final int flag) {
             this.flags |= flag;
             return getThis();
@@ -227,16 +221,15 @@ public abstract class Http2Frame implements Cacheable {
             this.streamId = streamId;
             return getThis();
         }
-        
+
         protected void setHeaderValuesTo(final Http2Frame frame) {
             frame.flags = flags;
             frame.streamId = streamId;
         }
-        
-        // --------------------------------------------------- Protected Methods
 
+        // --------------------------------------------------- Protected Methods
 
         protected abstract T getThis();
 
-    } 
+    }
 }

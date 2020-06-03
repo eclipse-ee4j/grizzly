@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -11,7 +11,6 @@
 package org.glassfish.grizzly.samples.filterchain;
 
 import java.util.Arrays;
-
 
 /**
  * Simple representation of GIOP message
@@ -37,8 +36,7 @@ public class GIOPMessage {
     public GIOPMessage() {
     }
 
-    public GIOPMessage(byte major, byte minor,
-            byte flags, byte value, byte[] body) {
+    public GIOPMessage(byte major, byte minor, byte flags, byte value, byte[] body) {
         G = 'G';
         I = 'I';
         O = 'O';
@@ -48,7 +46,7 @@ public class GIOPMessage {
         this.minor = minor;
         this.flags = flags;
         this.value = value;
-        
+
         bodyLength = body.length;
         this.body = body;
     }
@@ -154,8 +152,7 @@ public class GIOPMessage {
         if (this.bodyLength != other.bodyLength) {
             return false;
         }
-        if (this.body != other.body && (this.body == null ||
-                !Arrays.equals(this.body, other.body))) {
+        if (this.body != other.body && (this.body == null || !Arrays.equals(this.body, other.body))) {
             return false;
         }
         return true;

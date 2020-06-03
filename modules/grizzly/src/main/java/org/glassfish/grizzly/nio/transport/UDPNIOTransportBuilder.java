@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,7 +19,6 @@ package org.glassfish.grizzly.nio.transport;
 import org.glassfish.grizzly.NIOTransportBuilder;
 import org.glassfish.grizzly.nio.NIOTransport;
 
-
 /**
  * {@link NIOTransportBuilder} implementation for <code>UDP</code>.
  *
@@ -27,21 +26,17 @@ import org.glassfish.grizzly.nio.NIOTransport;
  */
 public class UDPNIOTransportBuilder extends NIOTransportBuilder<UDPNIOTransportBuilder> {
 
-
     // ------------------------------------------------------------ Constructors
-
 
     protected UDPNIOTransportBuilder(Class<? extends UDPNIOTransport> transportClass) {
         super(transportClass);
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
     public static UDPNIOTransportBuilder newInstance() {
-            return new UDPNIOTransportBuilder(UDPNIOTransport.class);
+        return new UDPNIOTransportBuilder(UDPNIOTransport.class);
     }
-
 
     /**
      * {@inheritDoc}
@@ -51,9 +46,7 @@ public class UDPNIOTransportBuilder extends NIOTransportBuilder<UDPNIOTransportB
         return (UDPNIOTransport) super.build();
     }
 
-
     // ------------------------------------------------------- Protected Methods
-
 
     @Override
     protected UDPNIOTransportBuilder getThis() {

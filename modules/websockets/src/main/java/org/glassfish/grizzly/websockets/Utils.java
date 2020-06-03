@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,15 +22,15 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
+
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
 
 public final class Utils {
 
-    static final ServletInputStream NULL_SERVLET_INPUT_STREAM =
-            new ServletInputStream() {
+    static final ServletInputStream NULL_SERVLET_INPUT_STREAM = new ServletInputStream() {
 
         @Override
         public int read() throws IOException {
@@ -56,7 +56,7 @@ public final class Utils {
             }
         }
     };
-    
+
     static final Reader NULL_READER = new Reader() {
 
         @Override
@@ -69,11 +69,11 @@ public final class Utils {
         }
 
     };
-    
+
     static final ServletOutputStream NULL_SERVLET_OUTPUT_STREAM = new ServletOutputStream() {
         private IOException ioe1;
         private IOException ioe2;
-                
+
         @Override
         public boolean isReady() {
             return true;
@@ -85,7 +85,7 @@ public final class Utils {
             if (ioe1 == null) {
                 ioe1 = new IOException("Can't write to a websocket using ServletOutputStream");
             }
-            
+
             writeListener.onError(ioe1);
         }
 
@@ -95,11 +95,11 @@ public final class Utils {
             if (ioe2 == null) {
                 ioe2 = new IOException("Can't write to a websocket using ServletOutputStream");
             }
-            
+
             throw ioe2;
         }
     };
-    
+
     static final Writer NULL_WRITER = new Writer() {
         private IOException ioe;
 
@@ -109,7 +109,7 @@ public final class Utils {
             if (ioe == null) {
                 ioe = new IOException("Can't write to a websocket using ServletWriter");
             }
-            
+
             throw ioe;
         }
 
@@ -120,9 +120,9 @@ public final class Utils {
         @Override
         public void close() throws IOException {
         }
-        
+
     };
-    
+
     public static byte[] toArray(long length) {
         long value = length;
         byte[] b = new byte[8];
@@ -147,7 +147,7 @@ public final class Utils {
     }
 
     public static List<String> toString(byte[] bytes, int start, int end) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         for (int i = start; i < end; i++) {
             list.add(Integer.toHexString(bytes[i] & 0xFF).toUpperCase(Locale.US));
         }

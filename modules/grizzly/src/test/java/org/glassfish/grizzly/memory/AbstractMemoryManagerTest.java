@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,14 +16,14 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.glassfish.grizzly.Buffer;
-import org.junit.runners.Parameterized;
+import static org.junit.Assert.fail;
 
 import java.nio.InvalidMarkException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assert.fail;
+import org.glassfish.grizzly.Buffer;
+import org.junit.runners.Parameterized;
 
 public class AbstractMemoryManagerTest {
 
@@ -31,26 +31,22 @@ public class AbstractMemoryManagerTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getOptimizedForMultiplexing() {
-        return Arrays.asList(new Object[][]{
-                {0},
-                {1},
-                {2},
-        });
+        return Arrays.asList(new Object[][] { { 0 }, { 1 }, { 2 }, });
     }
 
     public AbstractMemoryManagerTest(final int mmType) {
         switch (mmType) {
-            case 0:
-                mm = createHeapMemoryManager();
-                break;
-            case 1:
-                mm = createByteBufferManager();
-                break;
-            case 2:
-                mm = createPooledMemoryManager();
-                break;
-            default:
-                throw new IllegalStateException("Unknown memory manager type");
+        case 0:
+            mm = createHeapMemoryManager();
+            break;
+        case 1:
+            mm = createByteBufferManager();
+            break;
+        case 2:
+            mm = createPooledMemoryManager();
+            break;
+        default:
+            throw new IllegalStateException("Unknown memory manager type");
         }
     }
 
@@ -68,7 +64,7 @@ public class AbstractMemoryManagerTest {
 
     protected static void assertMarkExceptionThrown(final Buffer bufferToTest) {
         try {
-            bufferToTest.reset();  // mark never carried over to the split buffer.
+            bufferToTest.reset(); // mark never carried over to the split buffer.
             fail();
         } catch (InvalidMarkException ignored) {
         } catch (Exception e) {

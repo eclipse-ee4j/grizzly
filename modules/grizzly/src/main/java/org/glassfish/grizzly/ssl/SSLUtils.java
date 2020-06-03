@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,10 +17,12 @@
 package org.glassfish.grizzly.ssl;
 
 import java.nio.ByteBuffer;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -37,11 +39,11 @@ import org.glassfish.grizzly.ssl.SSLConnectionContext.SslResult;
 
 /**
  * Utility class, which implements the set of useful SSL related operations.
- * 
+ *
  * @author Alexey Stashok
  */
 public final class SSLUtils {
-    
+
     /**
      * Workaround for Android 5 (GRIZZLY-1783)
      */
@@ -49,45 +51,36 @@ public final class SSLUtils {
     private static final int LOLLIPOP_VER = 21;
     static {
         boolean isNeedWorkAround = false;
-        if ("android runtime".equalsIgnoreCase(
-                System.getProperty("java.runtime.name"))) {
+        if ("android runtime".equalsIgnoreCase(System.getProperty("java.runtime.name"))) {
             try {
                 // try to figure out the version via reflection
-                final int version = Class.forName("android.os.Build$VERSION")
-                        .getField("SDK_INT").getInt(null);
-                
-                isNeedWorkAround = (version >= LOLLIPOP_VER);
+                final int version = Class.forName("android.os.Build$VERSION").getField("SDK_INT").getInt(null);
+
+                isNeedWorkAround = version >= LOLLIPOP_VER;
             } catch (Throwable ignored) {
             }
         }
-        
+
         ANDROID_WORKAROUND_NEEDED = isNeedWorkAround;
     }
-    
-    private static final String SSL_CONNECTION_CTX_ATTR_NAME =
-            SSLUtils.class + ".ssl-connection-context";
 
-    static final Attribute<SSLConnectionContext> SSL_CTX_ATTR =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-            SSL_CONNECTION_CTX_ATTR_NAME);
+    private static final String SSL_CONNECTION_CTX_ATTR_NAME = SSLUtils.class + ".ssl-connection-context";
 
-    private static final Allocator HS_UNWRAP_ALLOCATOR =
-            new Allocator() {
+    static final Attribute<SSLConnectionContext> SSL_CTX_ATTR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(SSL_CONNECTION_CTX_ATTR_NAME);
+
+    private static final Allocator HS_UNWRAP_ALLOCATOR = new Allocator() {
         @Override
-        public Buffer grow(final SSLConnectionContext sslCtx,
-            final Buffer oldBuffer, final int newSize) {
+        public Buffer grow(final SSLConnectionContext sslCtx, final Buffer oldBuffer, final int newSize) {
 //            if (oldBuffer != null) {
 //                oldBuffer.dispose();
 //            }
             return allocateOutputBuffer(newSize);
         }
     };
-    
-    private static final Allocator HS_WRAP_ALLOCATOR =
-            new Allocator() {
+
+    private static final Allocator HS_WRAP_ALLOCATOR = new Allocator() {
         @Override
-        public Buffer grow(final SSLConnectionContext sslCtx,
-            final Buffer oldBuffer, final int newSize) {
+        public Buffer grow(final SSLConnectionContext sslCtx, final Buffer oldBuffer, final int newSize) {
             return allocateOutputBuffer(newSize);
         }
     };
@@ -99,8 +92,7 @@ public final class SSLUtils {
     private static final int MIN_VERSION = 0x0300;
     private static final int MAX_MAJOR_VERSION = 0x03;
 
-    public static SSLConnectionContext getSslConnectionContext(
-            final Connection connection) {
+    public static SSLConnectionContext getSslConnectionContext(final Connection connection) {
         return SSL_CTX_ATTR.get(connection);
     }
 
@@ -109,8 +101,7 @@ public final class SSLUtils {
         return sslCtx == null ? null : sslCtx.getSslEngine();
     }
 
-    public static void setSSLEngine(final Connection connection,
-            final SSLEngine sslEngine) {
+    public static void setSSLEngine(final Connection connection, final SSLEngine sslEngine) {
         SSLConnectionContext ctx = getSslConnectionContext(connection);
         if (ctx == null) { // set first time outside of standard SSLFilter
             ctx = new SSLConnectionContext(connection);
@@ -121,29 +112,26 @@ public final class SSLUtils {
     }
 
     /*
-     * Check if there is enough inbound data in the ByteBuffer
-     * to make a inbound packet.  Look for both SSLv2 and SSLv3.
+     * Check if there is enough inbound data in the ByteBuffer to make a inbound packet. Look for both SSLv2 and SSLv3.
      *
      * @return -1 if there are not enough bytes to tell (small header),
      */
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static int getSSLPacketSize(final Buffer buf) throws SSLException {
-        
+
         /*
-         * SSLv2 length field is in bytes 0/1
-         * SSLv3/TLS length field is in bytes 3/4
+         * SSLv2 length field is in bytes 0/1 SSLv3/TLS length field is in bytes 3/4
          */
         if (buf.remaining() < 5) {
             return -1;
         }
 
-        
         final byte byte0;
         final byte byte1;
         final byte byte2;
         final byte byte3;
         final byte byte4;
-        
+
         if (buf.hasArray()) {
             final byte[] array = buf.array();
             int pos = buf.arrayOffset() + buf.position();
@@ -164,62 +152,51 @@ public final class SSLUtils {
         int len;
 
         /*
-         * If we have already verified previous packets, we can
-         * ignore the verifications steps, and jump right to the
-         * determination.  Otherwise, try one last hueristic to
-         * see if it's SSL/TLS.
+         * If we have already verified previous packets, we can ignore the verifications steps, and jump right to the
+         * determination. Otherwise, try one last hueristic to see if it's SSL/TLS.
          */
-        if (byte0 >= CHANGE_CIPHER_SPECT_CONTENT_TYPE
-                && byte0 <= APPLICATION_DATA_CONTENT_TYPE) {
+        if (byte0 >= CHANGE_CIPHER_SPECT_CONTENT_TYPE && byte0 <= APPLICATION_DATA_CONTENT_TYPE) {
             /*
              * Last sanity check that it's not a wild record
              */
             final byte major = byte1;
             final byte minor = byte2;
-            final int v = (major << 8) | minor & 0xff;
+            final int v = major << 8 | minor & 0xff;
 
             // Check if too old (currently not possible)
             // or if the major version does not match.
             // The actual version negotiation is in the handshaker classes
-            if ((v < MIN_VERSION)
-                    || (major > MAX_MAJOR_VERSION)) {
-                throw new SSLException("Unsupported record version major="
-                        + major + " minor=" + minor);
+            if (v < MIN_VERSION || major > MAX_MAJOR_VERSION) {
+                throw new SSLException("Unsupported record version major=" + major + " minor=" + minor);
             }
 
             /*
              * One of the SSLv3/TLS message types.
              */
-            len = ((byte3 & 0xff) << 8)
-                    + (byte4 & 0xff) + SSLV3_RECORD_HEADER_SIZE;
+            len = ((byte3 & 0xff) << 8) + (byte4 & 0xff) + SSLV3_RECORD_HEADER_SIZE;
 
         } else {
             /*
-             * Must be SSLv2 or something unknown.
-             * Check if it's short (2 bytes) or
-             * long (3) header.
+             * Must be SSLv2 or something unknown. Check if it's short (2 bytes) or long (3) header.
              *
              * Internals can warn about unsupported SSLv2
              */
-            boolean isShort = ((byte0 & 0x80) != 0);
+            boolean isShort = (byte0 & 0x80) != 0;
 
-            if (isShort
-                    && ((byte2 == 1) || byte2 == 4)) {
+            if (isShort && (byte2 == 1 || byte2 == 4)) {
 
                 final byte major = byte3;
                 final byte minor = byte4;
-                final int v = (major << 8) | minor & 0xff;
+                final int v = major << 8 | minor & 0xff;
 
                 // Check if too old (currently not possible)
                 // or if the major version does not match.
                 // The actual version negotiation is in the handshaker classes
-                if ((v < MIN_VERSION)
-                        || (major > MAX_MAJOR_VERSION)) {
+                if (v < MIN_VERSION || major > MAX_MAJOR_VERSION) {
 
                     // if it's not SSLv2, we're out of here.
                     if (v != SSL20_HELLO_VERSION) {
-                        throw new SSLException("Unsupported record version major="
-                                + major + " minor=" + minor);
+                        throw new SSLException("Unsupported record version major=" + major + " minor=" + minor);
                     }
                 }
 
@@ -227,12 +204,11 @@ public final class SSLUtils {
                  * Client or Server Hello
                  */
                 int mask = 0x7f;
-                len = ((byte0 & mask) << 8) + (byte1 & 0xff) + (2);
+                len = ((byte0 & mask) << 8) + (byte1 & 0xff) + 2;
 
             } else {
                 // Gobblygook!
-                throw new SSLException(
-                        "Unrecognized SSL message, plaintext connection?");
+                throw new SSLException("Unrecognized SSL message, plaintext connection?");
             }
         }
 
@@ -241,6 +217,7 @@ public final class SSLUtils {
 
     /**
      * Complete handshakes operations.
+     * 
      * @param sslEngine The SSLEngine used to manage the SSL operations.
      */
     public static void executeDelegatedTask(final SSLEngine sslEngine) {
@@ -251,95 +228,82 @@ public final class SSLUtils {
         }
     }
 
-
     public static boolean isHandshaking(final SSLEngine sslEngine) {
         final HandshakeStatus handshakeStatus = sslEngine.getHandshakeStatus();
-        return !(handshakeStatus == HandshakeStatus.FINISHED ||
-                handshakeStatus == HandshakeStatus.NOT_HANDSHAKING);
+        return !(handshakeStatus == HandshakeStatus.FINISHED || handshakeStatus == HandshakeStatus.NOT_HANDSHAKING);
     }
 
-    public static SSLEngineResult handshakeUnwrap(final int length,
-                                                  final SSLConnectionContext sslCtx,
-                                                  final Buffer inputBuffer,
-                                                  final Buffer tmpOutputBuffer)
-    throws SSLException {
+    public static SSLEngineResult handshakeUnwrap(final int length, final SSLConnectionContext sslCtx, final Buffer inputBuffer, final Buffer tmpOutputBuffer)
+            throws SSLException {
 
-        SslResult result =
-                sslCtx.unwrap(length, inputBuffer, tmpOutputBuffer, HS_UNWRAP_ALLOCATOR);
+        SslResult result = sslCtx.unwrap(length, inputBuffer, tmpOutputBuffer, HS_UNWRAP_ALLOCATOR);
 
         final Buffer output = result.getOutput();
-        
+
         assert !output.isComposite();
-        
+
         if (output != tmpOutputBuffer) {
             output.dispose();
         }
-        
+
         if (result.isError()) {
             throw result.getError();
         }
-        
+
         return result.getSslEngineResult();
     }
 
-    public static Buffer handshakeWrap(final Connection connection,
-            final SSLConnectionContext sslCtx, final Buffer netBuffer)
-            throws SSLException {
+    public static Buffer handshakeWrap(final Connection connection, final SSLConnectionContext sslCtx, final Buffer netBuffer) throws SSLException {
 
         final int packetBufferSize = sslCtx.getNetBufferSize();
-        
+
         Buffer buffer;
-        if (netBuffer != null && !netBuffer.isComposite() &&
-                netBuffer.capacity() - netBuffer.limit() >= packetBufferSize) {
+        if (netBuffer != null && !netBuffer.isComposite() && netBuffer.capacity() - netBuffer.limit() >= packetBufferSize) {
             netBuffer.position(netBuffer.limit());
             netBuffer.limit(netBuffer.capacity());
-            
+
             buffer = netBuffer;
         } else {
             buffer = allocateOutputBuffer(packetBufferSize * 2);
         }
-        
-        final SslResult result =
-                sslCtx.wrap(Buffers.EMPTY_BUFFER, buffer, HS_WRAP_ALLOCATOR);
-        
+
+        final SslResult result = sslCtx.wrap(Buffers.EMPTY_BUFFER, buffer, HS_WRAP_ALLOCATOR);
+
         Buffer output = result.getOutput();
-        
+
         output.flip();
         if (buffer != output) {
             if (netBuffer != null && buffer == netBuffer) {
                 netBuffer.flip();
             }
         }
-        
+
         if (result.isError()) {
             if (output != netBuffer) {
                 output.dispose();
             }
-            
+
             throw result.getError();
         }
-        
+
         if (output != netBuffer) {
-            output = allowDispose(Buffers.appendBuffers(
-                    connection.getMemoryManager(),
-                    netBuffer, output));
+            output = allowDispose(Buffers.appendBuffers(connection.getMemoryManager(), netBuffer, output));
         }
 
         return output;
     }
 
-    private static final CachedTypeIndex<Buffer> SSL_OUTPUT_BUFFER_IDX =
-            ThreadCache.obtainIndex(SSLBaseFilter.class.getName() + ".output-buffer-cache",
+    private static final CachedTypeIndex<Buffer> SSL_OUTPUT_BUFFER_IDX = ThreadCache.obtainIndex(SSLBaseFilter.class.getName() + ".output-buffer-cache",
             Buffer.class, 4);
-    
-    static Buffer allocateOutputBuffer(final int size/*, final int counter*/) {
-        
+
+    static Buffer allocateOutputBuffer(final int size/* , final int counter */) {
+
         Buffer buffer = ThreadCache.takeFromCache(SSL_OUTPUT_BUFFER_IDX);
-        final boolean hasBuffer = (buffer != null);
+        final boolean hasBuffer = buffer != null;
         if (!hasBuffer || buffer.remaining() < size) {
             final ByteBuffer byteBuffer;
-                byteBuffer = ByteBuffer.allocate(size);
-            
+            byteBuffer = ByteBuffer.allocate(size);
+
             buffer = new ByteBufferWrapper(byteBuffer) {
 
                 @Override
@@ -352,14 +316,14 @@ public final class SSLUtils {
 
         return buffer;
     }
-    
+
     public static Buffer allocateInputBuffer(final SSLConnectionContext sslCtx) {
-        
+
         final SSLEngine sslEngine = sslCtx.getSslEngine();
         if (sslEngine == null) {
             return null;
         }
-        
+
         // Direct buffer input
 //        final InputBufferWrapper buffer = sslCtx.useInputBuffer();
 //        return buffer.prepare(sslCtx.getNetBufferSize() * 2);
@@ -367,20 +331,17 @@ public final class SSLUtils {
         return allocateOutputBuffer(sslCtx.getNetBufferSize() * 2);
     }
 
-    static Buffer makeInputRemainder(
-            final SSLConnectionContext sslCtx,
-            final FilterChainContext context,
-            final Buffer buffer) {
-        
+    static Buffer makeInputRemainder(final SSLConnectionContext sslCtx, final FilterChainContext context, final Buffer buffer) {
+
         if (buffer == null) {
             return null;
         }
-        
+
         if (!buffer.hasRemaining()) {
             buffer.tryDispose();
             return null;
         }
-        
+
         final Buffer inputBuffer = sslCtx.resetLastInputBuffer();
         if (inputBuffer == null) { // SSLTransportWrapper hasn't been used
             final Buffer remainder = buffer.split(buffer.position());
@@ -390,70 +351,57 @@ public final class SSLUtils {
             return move(context.getMemoryManager(), buffer);
         }
     }
-    
-    static Buffer copy(final MemoryManager memoryManager,
-            final Buffer buffer) {
+
+    static Buffer copy(final MemoryManager memoryManager, final Buffer buffer) {
         final Buffer tmpBuf = memoryManager.allocate(buffer.remaining());
         tmpBuf.put(buffer);
 
         return tmpBuf.flip();
 
     }
-    
-    static Buffer move(final MemoryManager memoryManager,
-            final Buffer buffer) {
+
+    static Buffer move(final MemoryManager memoryManager, final Buffer buffer) {
         final Buffer tmpBuf = copy(memoryManager, buffer);
         buffer.tryDispose();
 
         return tmpBuf;
 
     }
-    
+
     public static Buffer allowDispose(final Buffer buffer) {
         if (buffer == null) {
             return null;
         }
-        
+
         buffer.allowBufferDispose(true);
         if (buffer.isComposite()) {
             ((CompositeBuffer) buffer).allowInternalBuffersDispose(true);
         }
-        
+
         return buffer;
     }
-    
-    static SSLEngineResult sslEngineWrap(final SSLEngine engine,
-            final ByteBuffer in, final ByteBuffer out) throws SSLException {
+
+    static SSLEngineResult sslEngineWrap(final SSLEngine engine, final ByteBuffer in, final ByteBuffer out) throws SSLException {
         return engine.wrap(in, out);
     }
-    
-    static SSLEngineResult sslEngineWrap(final SSLEngine engine,
-            final ByteBuffer[] in, final int inOffs, final int inLen,
-            final ByteBuffer out)
+
+    static SSLEngineResult sslEngineWrap(final SSLEngine engine, final ByteBuffer[] in, final int inOffs, final int inLen, final ByteBuffer out)
             throws SSLException {
-        return ANDROID_WORKAROUND_NEEDED
-                ? AndroidWorkAround.wrapArray(engine, in, inOffs, inLen, out)
-                : engine.wrap(in, inOffs, inLen, out);
+        return ANDROID_WORKAROUND_NEEDED ? AndroidWorkAround.wrapArray(engine, in, inOffs, inLen, out) : engine.wrap(in, inOffs, inLen, out);
     }
 
-    static SSLEngineResult sslEngineUnwrap(final SSLEngine engine,
-            final ByteBuffer in, final ByteBuffer out) throws SSLException {
+    static SSLEngineResult sslEngineUnwrap(final SSLEngine engine, final ByteBuffer in, final ByteBuffer out) throws SSLException {
         return engine.unwrap(in, out);
     }
 
-    static SSLEngineResult sslEngineUnwrap(final SSLEngine engine,
-            final ByteBuffer in,
-            final ByteBuffer[] out, final int outOffs, final int outLen)
+    static SSLEngineResult sslEngineUnwrap(final SSLEngine engine, final ByteBuffer in, final ByteBuffer[] out, final int outOffs, final int outLen)
             throws SSLException {
-        return ANDROID_WORKAROUND_NEEDED
-                ? AndroidWorkAround.unwrapArray(engine, in, out, outOffs, outLen)
-                : engine.unwrap(in, out, outOffs, outLen);
+        return ANDROID_WORKAROUND_NEEDED ? AndroidWorkAround.unwrapArray(engine, in, out, outOffs, outLen) : engine.unwrap(in, out, outOffs, outLen);
     }
-    
+
     private static class AndroidWorkAround {
-        public static SSLEngineResult wrapArray(final SSLEngine engine,
-                final ByteBuffer[] in, final int inOffs, final int inLen,
-                final ByteBuffer out) throws SSLException {
+        public static SSLEngineResult wrapArray(final SSLEngine engine, final ByteBuffer[] in, final int inOffs, final int inLen, final ByteBuffer out)
+                throws SSLException {
             if (inOffs == 0 && inLen == in.length) {
                 return engine.wrap(in, out);
             } else {
@@ -462,10 +410,8 @@ public final class SSLUtils {
                 return engine.wrap(tmp, out);
             }
         }
-        
-        public static SSLEngineResult unwrapArray(final SSLEngine engine,
-                final ByteBuffer in,
-                final ByteBuffer[] out, final int outOffs, final int outLen)
+
+        public static SSLEngineResult unwrapArray(final SSLEngine engine, final ByteBuffer in, final ByteBuffer[] out, final int outOffs, final int outLen)
                 throws SSLException {
             if (outOffs == 0 && outLen == out.length) {
                 return engine.unwrap(in, out);
@@ -475,5 +421,5 @@ public final class SSLUtils {
                 return engine.unwrap(in, tmp);
             }
         }
-    }    
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,7 +23,7 @@ import org.junit.Test;
 
 /**
  * Test websocket application registration process.
- * 
+ *
  * @author Grizzly team
  */
 public class RegistrationTest {
@@ -35,6 +35,7 @@ public class RegistrationTest {
         };
 
         HttpRequestPacket request = new HttpRequestPacket() {
+            @Override
             public ProcessingState getProcessingState() {
                 return null;
             }
@@ -44,8 +45,7 @@ public class RegistrationTest {
         WebSocketEngine.getEngine().register("", "/sample", applicationA);
         WebSocketEngine.getEngine().register("", "/sample", applicationB);
         WebSocketEngine.getEngine().unregister(applicationA);
-        Assert.assertEquals(applicationB,
-                WebSocketEngine.getEngine().getApplication(request));
+        Assert.assertEquals(applicationB, WebSocketEngine.getEngine().getApplication(request));
         WebSocketEngine.getEngine().unregister(applicationB);
         Assert.assertNull(WebSocketEngine.getEngine().getApplication(request));
     }
