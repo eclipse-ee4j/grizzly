@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates and others.
+ * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -12,6 +13,9 @@
  * https://www.gnu.org/software/classpath/license.html.
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ * 
+ * Contributors:
+ *  Payara Services - Add support for JDK 9 ALPN API
  */
 
 package org.glassfish.grizzly.ssl;
@@ -792,6 +796,14 @@ public class SSLBaseFilter extends BaseFilter {
         }
     }
 
+    protected void notifyHandshakeInit(final Connection<?> connection, final SSLEngine sslEngine) {
+        if (!handshakeListeners.isEmpty()) {
+            for (final HandshakeListener listener : handshakeListeners) {
+                listener.onInit(connection, sslEngine);
+            }
+        }
+    }
+
     protected void notifyHandshakeStart(final Connection connection) {
         if (!handshakeListeners.isEmpty()) {
             for (final HandshakeListener listener : handshakeListeners) {
@@ -909,6 +921,7 @@ public class SSLBaseFilter extends BaseFilter {
 
             if (sslCtx.getSslEngine() == null) {
                 final SSLEngine sslEngine = sslBaseFilter.serverSSLEngineConfigurator.createSSLEngine();
+                sslBaseFilter.notifyHandshakeInit(connection, sslEngine);
                 sslEngine.beginHandshake();
                 sslCtx.configure(sslEngine);
                 sslBaseFilter.notifyHandshakeStart(connection);

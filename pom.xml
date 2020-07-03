@@ -126,7 +126,7 @@
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
         <osgi.version>4.2.0</osgi.version>
-        <grizzly.alpn.version>1.9</grizzly.alpn.version>
+        <grizzly.alpn.version>2.0</grizzly.alpn.version>
         <release.arguments></release.arguments>
     </properties>
 
