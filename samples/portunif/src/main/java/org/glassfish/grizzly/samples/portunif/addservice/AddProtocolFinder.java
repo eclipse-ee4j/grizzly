@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -16,9 +16,8 @@ import org.glassfish.grizzly.portunif.PUContext;
 import org.glassfish.grizzly.portunif.ProtocolFinder;
 
 /**
- * {@link ProtocolFinder}, responsible to determine if incoming byte buffer
- * represents ADD-service request.
- * 
+ * {@link ProtocolFinder}, responsible to determine if incoming byte buffer represents ADD-service request.
+ *
  * @author Alexey Stashok
  */
 public class AddProtocolFinder implements ProtocolFinder {
@@ -31,9 +30,8 @@ public class AddProtocolFinder implements ProtocolFinder {
         // Get the input Buffer
         final Buffer inputBuffer = ctx.getMessage();
 
-        final int bytesToCompare = Math.min(AddServiceFilter.magic.length,
-                inputBuffer.remaining());
-        
+        final int bytesToCompare = Math.min(AddServiceFilter.magic.length, inputBuffer.remaining());
+
         final int bufferStart = inputBuffer.position();
 
         // Compare incoming bytes with ADD-service protocol magic
@@ -45,8 +43,7 @@ public class AddProtocolFinder implements ProtocolFinder {
         }
 
         // if we check entire magic - return FOUND, or NEED_MORE_DATA otherwise
-        return bytesToCompare == AddServiceFilter.magic.length ?
-            Result.FOUND : Result.NEED_MORE_DATA;
+        return bytesToCompare == AddServiceFilter.magic.length ? Result.FOUND : Result.NEED_MORE_DATA;
     }
 
 }

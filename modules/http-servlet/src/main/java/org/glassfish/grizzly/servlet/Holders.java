@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,9 +20,8 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 /**
- * Set of holder interfaces, which help to bind Servlet and Grizzly HttpServer
- * abstractions.
- * 
+ * Set of holder interfaces, which help to bind Servlet and Grizzly HttpServer abstractions.
+ *
  * @author Alexey Stashok
  */
 public class Holders {
@@ -32,7 +31,7 @@ public class Holders {
          */
         Request getInternalRequest();
     }
-    
+
     public interface ResponseHolder {
         /**
          * Returns internal Grizzly {@link Response} associated with this Holder.

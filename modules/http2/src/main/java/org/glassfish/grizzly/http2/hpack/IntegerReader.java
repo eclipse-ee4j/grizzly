@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,18 +16,18 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
+import static java.lang.String.format;
 
 import java.util.Arrays;
 
-import static java.lang.String.format;
+import org.glassfish.grizzly.Buffer;
 
 final class IntegerReader {
 
-    private static final byte NEW             = 0x0;
-    private static final byte CONFIGURED      = 0x1;
+    private static final byte NEW = 0x0;
+    private static final byte CONFIGURED = 0x1;
     private static final byte FIRST_BYTE_READ = 0x2;
-    private static final byte DONE            = 0x4;
+    private static final byte DONE = 0x4;
 
     private byte state = NEW;
 
@@ -57,8 +57,7 @@ final class IntegerReader {
         }
         checkPrefix(N);
         if (maxValue < 0) {
-            throw new IllegalArgumentException(
-                    "maxValue >= 0: maxValue=" + maxValue);
+            throw new IllegalArgumentException("maxValue >= 0: maxValue=" + maxValue);
         }
         this.maxValue = maxValue;
         this.N = N;
@@ -77,7 +76,7 @@ final class IntegerReader {
             return false;
         }
         if (state == CONFIGURED) {
-            int max = (2 << (N - 1)) - 1;
+            int max = (2 << N - 1) - 1;
             int n = input.get() & max;
             if (n != max) {
                 value = n;
@@ -98,9 +97,7 @@ final class IntegerReader {
                 i = input.get();
                 long increment = b * (i & 127);
                 if (r + increment > maxValue) {
-                    throw new IllegalArgumentException(format(
-                            "Integer overflow: maxValue=%,d, value=%,d",
-                            maxValue, r + increment));
+                    throw new IllegalArgumentException(format("Integer overflow: maxValue=%,d, value=%,d", maxValue, r + increment));
                 }
                 r += increment;
                 b *= 128;
@@ -110,8 +107,7 @@ final class IntegerReader {
             state = DONE;
             return true;
         }
-        throw new InternalError(Arrays.toString(
-                new Object[]{state, N, maxValue, value, r, b}));
+        throw new InternalError(Arrays.toString(new Object[] { state, N, maxValue, value, r, b }));
     }
 
     public int get() throws IllegalStateException {

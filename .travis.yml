@@ -1,5 +1,11 @@
 language: java
+dist: trusty
 jdk:
   - oraclejdk8
+before_install:
+  - wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+  - tar xzvf apache-maven-3.6.3-bin.tar.gz
+  - export PATH=`pwd`/apache-maven-3.6.3/bin:$PATH
+  - mvn -v
 sudo: false
-script: mvn clean verify
+script: mvn --fail-at-end clean verify

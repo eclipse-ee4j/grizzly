@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -53,8 +53,8 @@ public class DefaultNotificationHandler implements NotificationHandler {
      * @param cometEvent the CometEvent used to notify CometHandler
      * @param iteratorHandlers An iterator over a list of CometHandler
      */
-    public void notify(final CometEvent cometEvent, final Iterator<CometHandler> iteratorHandlers)
-        throws IOException {
+    @Override
+    public void notify(final CometEvent cometEvent, final Iterator<CometHandler> iteratorHandlers) throws IOException {
         while (iteratorHandlers.hasNext()) {
             notify(cometEvent, iteratorHandlers.next());
         }
@@ -65,6 +65,7 @@ public class DefaultNotificationHandler implements NotificationHandler {
      *
      * @param cometEvent cometEvent the CometEvent used to notify CometHandler
      */
+    @Override
     public void notify(final CometEvent cometEvent, final CometHandler cometHandler) throws IOException {
         notify0(cometEvent, cometHandler);
     }
@@ -72,10 +73,10 @@ public class DefaultNotificationHandler implements NotificationHandler {
     /**
      * Notify a {@link CometHandler}.
      * <p/>
-     * CometEvent.INTERRUPT -> <code>CometHandler.onInterrupt</code> CometEvent.NOTIFY ->
-     * <code>CometHandler.onEvent</code> CometEvent.INITIALIZE -> <code>CometHandler.onInitialize</code>
-     * CometEvent.TERMINATE -> <code>CometHandler.onTerminate</code> CometEvent.READ ->
-     * <code>CometHandler.onEvent</code> CometEvent.WRITE -> <code>CometHandler.onEvent</code>
+     * CometEvent.INTERRUPT -> <code>CometHandler.onInterrupt</code> CometEvent.NOTIFY -> <code>CometHandler.onEvent</code>
+     * CometEvent.INITIALIZE -> <code>CometHandler.onInitialize</code> CometEvent.TERMINATE ->
+     * <code>CometHandler.onTerminate</code> CometEvent.READ -> <code>CometHandler.onEvent</code> CometEvent.WRITE ->
+     * <code>CometHandler.onEvent</code>
      *
      * @param cometEvent An object shared amongst {@link CometHandler}.
      * @param cometHandler The CometHandler to invoke.
@@ -83,24 +84,24 @@ public class DefaultNotificationHandler implements NotificationHandler {
     protected void notify0(CometEvent cometEvent, CometHandler cometHandler) {
         try {
             switch (cometEvent.getType()) {
-                case INTERRUPT:
-                    cometHandler.onInterrupt(cometEvent);
-                    break;
-                case NOTIFY:
-                case READ:
-                case WRITE:
-                    if (cometEvent.getCometContext().isActive(cometHandler)) {
-                        cometHandler.onEvent(cometEvent);
-                    }
-                    break;
-                case INITIALIZE:
-                    cometHandler.onInitialize(cometEvent);
-                    break;
-                case TERMINATE:
-                    cometHandler.onTerminate(cometEvent);
-                    break;
-                default:
-                    throw ISEempty;
+            case INTERRUPT:
+                cometHandler.onInterrupt(cometEvent);
+                break;
+            case NOTIFY:
+            case READ:
+            case WRITE:
+                if (cometEvent.getCometContext().isActive(cometHandler)) {
+                    cometHandler.onEvent(cometEvent);
+                }
+                break;
+            case INITIALIZE:
+                cometHandler.onInitialize(cometEvent);
+                break;
+            case TERMINATE:
+                cometHandler.onTerminate(cometEvent);
+                break;
+            default:
+                throw ISEempty;
             }
         } catch (Throwable ex) {
             logger.log(Level.FINE, "Notification failed: ", ex);
@@ -111,6 +112,5 @@ public class DefaultNotificationHandler implements NotificationHandler {
             }
         }
     }
-
 
 }

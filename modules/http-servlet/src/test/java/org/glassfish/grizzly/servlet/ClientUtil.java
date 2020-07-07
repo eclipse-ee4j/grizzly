@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -48,8 +49,8 @@ import org.glassfish.grizzly.utils.ChunkingFilter;
  * @author Marc Arens <marc.arens@open-xchange.com>
  */
 public class ClientUtil {
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     public static HttpPacket createRequest(String uri, int port, Map<String, String> headers) {
 
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
@@ -64,11 +65,9 @@ public class ClientUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static HttpContent sendRequest(final HttpPacket request,
-            final int timeout, final int port) throws Exception {
+    public static HttpContent sendRequest(final HttpPacket request, final int timeout, final int port) throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
 
@@ -105,19 +104,16 @@ public class ClientUtil {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -141,8 +137,7 @@ public class ClientUtil {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -150,7 +145,7 @@ public class ClientUtil {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 

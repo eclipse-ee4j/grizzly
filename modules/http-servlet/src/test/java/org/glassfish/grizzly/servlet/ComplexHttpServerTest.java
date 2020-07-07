@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,16 +16,19 @@
 
 package org.glassfish.grizzly.servlet;
 
+import static java.util.logging.Level.INFO;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.logging.Level;
+import java.security.SecureRandom;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.server.HttpServer;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * {@link HttpServer} tests.
@@ -35,32 +38,28 @@ import org.glassfish.grizzly.http.server.HttpServer;
  */
 public class ComplexHttpServerTest extends HttpServerAbstractTest {
 
-    public static final int PORT = 18890 + 10;
+    public static final int PORT = PORT();
     private static final Logger logger = Grizzly.logger(ComplexHttpServerTest.class);
+   
 
     /**
      * Want to test multiple servletMapping
      *
      * examples :
      *
-     * context = /test
-     * servletPath = /servlet1
-     * mapping = *.1
-     * mapping = /1
+     * context = /test servletPath = /servlet1 mapping = *.1 mapping = /1
      *
-     * URL = http://localhost:port/test/servlet1/test.1
-     * URL = http://localhost:port/test/servlet1/1
+     * URL = http://localhost:port/test/servlet1/test.1 URL = http://localhost:port/test/servlet1/1
      *
      * @throws IOException Error.
      */
-    public void testComplexAliasMapping() throws IOException {
+    public void testComplexAliasMapping() throws Exception {
         System.out.println("testComplexAliasMapping");
         try {
             startHttpServer(PORT);
             String[] aliases = new String[] { "/1", "/2", "/3", "*.a" };
             String context = "/test";
             WebappContext ctx = new WebappContext("Test", context);
-
 
             for (String alias : aliases) {
                 addServlet(ctx, alias);
@@ -73,7 +72,7 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
                 assertEquals(context + aliases[i], readResponse(conn));
             }
 
-            //special test
+            // special test
             String url = context + "/test.a";
             HttpURLConnection conn = getConnection(url, PORT);
             assertEquals(HttpServletResponse.SC_OK, getResponseCodeFromAlias(conn));
@@ -84,14 +83,13 @@ public class ComplexHttpServerTest extends HttpServerAbstractTest {
         }
     }
 
-    private ServletRegistration addServlet(final WebappContext ctx,
-                                           final String alias) {
+    private ServletRegistration addServlet(final WebappContext ctx, final String alias) {
 
         ServletRegistration reg = ctx.addServlet(alias, new HttpServlet() {
 
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                logger.log(Level.INFO, "{0} received request {1}", new Object[]{alias, req.getRequestURI()});
+                logger.log(INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
                 resp.getWriter().write(req.getRequestURI());
             }

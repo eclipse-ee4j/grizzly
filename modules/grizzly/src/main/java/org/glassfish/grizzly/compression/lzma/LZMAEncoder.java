@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.compression.lzma;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
@@ -27,42 +29,33 @@ import org.glassfish.grizzly.compression.lzma.impl.Encoder;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 
-import java.io.IOException;
+public class LZMAEncoder extends AbstractTransformer<Buffer, Buffer> {
 
-public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
-
-    private static final ThreadCache.CachedTypeIndex<LZMAOutputState> CACHE_IDX =
-            ThreadCache.obtainIndex(LZMAOutputState.class, 2);
+    private static final ThreadCache.CachedTypeIndex<LZMAOutputState> CACHE_IDX = ThreadCache.obtainIndex(LZMAOutputState.class, 2);
 
     private final LZMAProperties lzmaProperties;
 
     // ------------------------------------------------------------ Constructors
 
-
     public LZMAEncoder() {
         this(new LZMAProperties());
     }
-
 
     public LZMAEncoder(LZMAProperties lzmaProperties) {
         this.lzmaProperties = lzmaProperties;
     }
 
-
     // ---------------------------------------- Methods from AbstractTransformer
-
 
     @Override
     public String getName() {
         return "lzma-encoder";
     }
 
-
     @Override
     public boolean hasInputRemaining(AttributeStorage storage, Buffer input) {
-         return input.hasRemaining();
+        return input.hasRemaining();
     }
-
 
     @Override
     protected TransformationResult<Buffer, Buffer> transformImpl(AttributeStorage storage, Buffer input) throws TransformationException {
@@ -91,19 +84,15 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
 
     }
 
-
     @Override
-    protected LastResultAwareState<Buffer,Buffer> createStateObject() {
+    protected LastResultAwareState<Buffer, Buffer> createStateObject() {
         return create();
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
-
     public static LZMAOutputState create() {
-        final LZMAOutputState state =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final LZMAOutputState state = ThreadCache.takeFromCache(CACHE_IDX);
         if (state != null) {
             return state;
         }
@@ -116,9 +105,7 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
         state.recycle();
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private void initializeOutput(final LZMAOutputState state) {
         final Encoder encoder = state.getEncoder();
@@ -131,18 +118,14 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
         state.setInitialized(true);
     }
 
-
-    private Buffer encodeBuffer(Buffer input,
-                                LZMAOutputState state) throws IOException {
+    private Buffer encodeBuffer(Buffer input, LZMAOutputState state) throws IOException {
 
         Buffer resultBuffer = null;
 
         state.setSrc(input);
         final Buffer encoded = encode(state);
         if (encoded != null) {
-            resultBuffer = Buffers.appendBuffers(state.getMemoryManager(),
-                    resultBuffer,
-                    encoded);
+            resultBuffer = Buffers.appendBuffers(state.getMemoryManager(), resultBuffer, encoded);
         }
 
         input.position(input.limit());
@@ -150,10 +133,7 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
         return resultBuffer;
     }
 
-
-    private Buffer encode(LZMAOutputState outputState)
-    throws IOException {
-
+    private Buffer encode(LZMAOutputState outputState) throws IOException {
 
         final Encoder encoder = outputState.getEncoder();
         Buffer dst = outputState.getMemoryManager().allocate(512);
@@ -179,11 +159,9 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
         return dst;
     }
 
-
     // ---------------------------------------------------------- Nested Classes
 
-
-    public static class LZMAOutputState extends LastResultAwareState<Buffer,Buffer> implements Cacheable {
+    public static class LZMAOutputState extends LastResultAwareState<Buffer, Buffer> implements Cacheable {
 
         private boolean initialized;
 
@@ -267,13 +245,7 @@ public class LZMAEncoder extends AbstractTransformer<Buffer,Buffer> {
             loadProperties(this);
         }
 
-        public LZMAProperties(int algorithm,
-                              int dictionarySize,
-                              int numFastBytes,
-                              int matchFinder,
-                              int lc,
-                              int lp,
-                              int pb) {
+        public LZMAProperties(int algorithm, int dictionarySize, int numFastBytes, int matchFinder, int lc, int lp, int pb) {
             this.algorithm = algorithm;
             this.dictionarySize = dictionarySize;
             this.numFastBytes = numFastBytes;

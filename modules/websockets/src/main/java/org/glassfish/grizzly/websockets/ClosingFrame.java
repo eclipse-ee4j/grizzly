@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -62,7 +62,7 @@ public class ClosingFrame extends DataFrame {
         }
         if (bytes.length > 0) {
             code = (int) Utils.toLong(bytes, 0, 2);
-            if (code < 1000 || code == 1004 || code == 1005 || code == 1006 || (code > 1011 && code < 3000) || code > 4999) {
+            if (code < 1000 || code == 1004 || code == 1005 || code == 1006 || code > 1011 && code < 3000 || code > 4999) {
                 throw new ProtocolError("Illegal status code: " + code);
             }
             if (bytes.length > 2) {
@@ -96,7 +96,6 @@ public class ClosingFrame extends DataFrame {
         return sb.toString();
     }
 
-
     // --------------------------------------------------------- Private Methods
 
     private void utf8Decode(byte[] data) {
@@ -105,7 +104,7 @@ public class ClosingFrame extends DataFrame {
         final CharsetDecoder decoder = charset.newDecoder();
         int n = (int) (b.remaining() * decoder.averageCharsPerByte());
         CharBuffer cb = CharBuffer.allocate(n);
-        for (; ; ) {
+        for (;;) {
             CoderResult result = decoder.decode(b, cb, true);
             if (result.isUnderflow()) {
                 decoder.flush(cb);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,28 +16,27 @@
 
 package org.glassfish.grizzly.servlet;
 
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.localization.LogMessages;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.ServletRequestListener;
-import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.util.EventListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.localization.LogMessages;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestEvent;
+import jakarta.servlet.ServletRequestListener;
+import jakarta.servlet.ServletResponse;
+
 /**
- * Implementation of <code>javax.servlet.FilterChain</code> used to manage
- * the execution of a set of filters for a particular request.  When the
- * set of defined filters has all been executed, the next call to
- * <code>doFilter()</code> will execute the servlet's <code>service()</code>
- * method itself.
+ * Implementation of <code>jakarta.servlet.FilterChain</code> used to manage the execution of a set of filters for a
+ * particular request. When the set of defined filters has all been executed, the next call to <code>doFilter()</code>
+ * will execute the servlet's <code>service()</code> method itself.
  *
  * @author Craig R. McClanahan
  */
@@ -57,13 +56,11 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
     private FilterRegistration[] filters = new FilterRegistration[0];
 
     /**
-     * The int which is used to maintain the current position
-     * in the filter chain.
+     * The int which is used to maintain the current position in the filter chain.
      */
     private int pos;
 
-    public FilterChainImpl(final Servlet servlet,
-                           final WebappContext ctx) {
+    public FilterChainImpl(final Servlet servlet, final WebappContext ctx) {
 
         this.servlet = servlet;
         this.ctx = ctx;
@@ -71,12 +68,10 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
 
     // ---------------------------------------------------- FilterChain Methods
 
+    @Override
+    public void invokeFilterChain(ServletRequest request, ServletResponse response) throws IOException, ServletException {
 
-    public void invokeFilterChain(ServletRequest request, ServletResponse response)
-            throws IOException, ServletException {
-
-        ServletRequestEvent event =
-                new ServletRequestEvent(ctx, request);
+        ServletRequestEvent event = new ServletRequestEvent(ctx, request);
         try {
             requestInitialized(event);
             pos = 0;
@@ -87,22 +82,18 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
 
     }
 
-
-
     /**
-     * Invoke the next filter in this chain, passing the specified request
-     * and response.  If there are no more filters in this chain, invoke
-     * the <code>service()</code> method of the servlet itself.
+     * Invoke the next filter in this chain, passing the specified request and response. If there are no more filters in
+     * this chain, invoke the <code>service()</code> method of the servlet itself.
      *
      * @param request The servlet request we are processing
      * @param response The servlet response we are creating
      *
      * @exception java.io.IOException if an input/output error occurs
-     * @exception javax.servlet.ServletException if a servlet exception occurs
+     * @exception jakarta.servlet.ServletException if a servlet exception occurs
      */
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
 
         // Call the next filter if there is one
         if (pos < n) {
@@ -132,12 +123,10 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
 
     // ------------------------------------------------------- Protected Methods
 
-
     protected void addFilter(final FilterRegistration filterRegistration) {
         synchronized (lock) {
             if (n == filters.length) {
-                FilterRegistration[] newFilters =
-                        new FilterRegistration[n + 4];
+                FilterRegistration[] newFilters = new FilterRegistration[n + 4];
                 System.arraycopy(filters, 0, newFilters, 0, n);
                 filters = newFilters;
             }
@@ -145,7 +134,6 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
             filters[n++] = filterRegistration;
         }
     }
-
 
     // --------------------------------------------------------- Private Methods
 
@@ -158,9 +146,8 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
                     ((ServletRequestListener) listeners[i]).requestDestroyed(event);
                 } catch (Throwable t) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(Level.WARNING,
-                                LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_CONTAINER_OBJECT_DESTROYED_ERROR("requestDestroyed", "ServletRequestListener", listeners[i].getClass().getName()),
-                                t);
+                        LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_CONTAINER_OBJECT_DESTROYED_ERROR("requestDestroyed",
+                                "ServletRequestListener", listeners[i].getClass().getName()), t);
                     }
                 }
             }
@@ -176,15 +163,12 @@ final class FilterChainImpl implements FilterChain, FilterChainInvoker {
                     ((ServletRequestListener) listeners[i]).requestInitialized(event);
                 } catch (Throwable t) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(Level.WARNING,
-                                LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_CONTAINER_OBJECT_INITIALIZED_ERROR("requestDestroyed", "ServletRequestListener", listeners[i].getClass().getName()),
-                                t);
+                        LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVLET_CONTAINER_OBJECT_INITIALIZED_ERROR("requestDestroyed",
+                                "ServletRequestListener", listeners[i].getClass().getName()), t);
                     }
                 }
             }
         }
     }
-
-
 
 }

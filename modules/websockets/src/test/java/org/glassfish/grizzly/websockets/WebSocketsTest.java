@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.Servlet;
 
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.HttpRequestPacket;
@@ -41,7 +40,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-@SuppressWarnings({"StringContatenationInLoop"})
+import jakarta.servlet.Servlet;
+
+@SuppressWarnings({ "StringContatenationInLoop" })
 @RunWith(Parameterized.class)
 public class WebSocketsTest extends BaseWebSocketTestUtilities {
     private static final int MESSAGE_COUNT = 5;
@@ -55,7 +56,7 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
     public void tearDown() {
         WebSocketEngine.getEngine().unregisterAll();
     }
-    
+
     @Test
     public void simpleConversationWithApplication() throws Exception {
         run(new EchoServlet());
@@ -74,14 +75,13 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
         ctx.deploy(httpServer);
         httpServer.start();
 
-        final Set<String> sent = new ConcurrentSkipListSet<String>();
+        final Set<String> sent = new ConcurrentSkipListSet<>();
         final CountDownLatch connected = new CountDownLatch(1);
         final CountDownLatch received = new CountDownLatch(MESSAGE_COUNT);
 
         WebSocketClient client = null;
         try {
-            client = new WebSocketClient(String.format("ws://localhost:%s/echo", PORT), version,
-                new CountDownAdapter(sent, received, connected)) {
+            client = new WebSocketClient(String.format("ws://localhost:%s/echo", PORT), version, new CountDownAdapter(sent, received, connected)) {
                 @Override
                 public GrizzlyFuture<DataFrame> send(String data) {
                     sent.add(data);
@@ -95,7 +95,7 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
             }
 
             Assert.assertTrue(String.format("Waited %ss for the messages to echo back", WebSocketEngine.DEFAULT_TIMEOUT),
-                received.await(WebSocketEngine.DEFAULT_TIMEOUT, TimeUnit.SECONDS));
+                    received.await(WebSocketEngine.DEFAULT_TIMEOUT, TimeUnit.SECONDS));
 
             Assert.assertEquals(String.format("Should have received all %s messages back. " + sent, MESSAGE_COUNT), 0, sent.size());
         } catch (InterruptedException e) {
@@ -133,6 +133,7 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
     @Test
     public void testGetOnWebSocketApplication() throws IOException, InstantiationException, InterruptedException {
         final WebSocketApplication app = new WebSocketApplication() {
+            @Override
             public void onMessage(WebSocket socket, String data) {
                 Assert.fail("A GET should never get here.");
             }
@@ -147,8 +148,7 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
         HttpServer httpServer = HttpServer.createSimpleServer(".", PORT);
         final ServerConfiguration configuration = httpServer.getServerConfiguration();
         WebappContext ctx = new WebappContext("WS Test", "/");
-        final ServletRegistration registration =
-                ctx.addServlet("TestServlet", new EchoServlet());
+        final ServletRegistration registration = ctx.addServlet("TestServlet", new EchoServlet());
         registration.addMapping("/echo");
         configuration.setHttpServerName("WebSocket Server");
         configuration.setName("WebSocket Server");
@@ -175,8 +175,7 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
         HttpServer httpServer = HttpServer.createSimpleServer(".", PORT);
         final ServerConfiguration configuration = httpServer.getServerConfiguration();
         WebappContext ctx = new WebappContext("WS Test", "/");
-        final ServletRegistration registration =
-                ctx.addServlet("TestServlet", new EchoServlet());
+        final ServletRegistration registration = ctx.addServlet("TestServlet", new EchoServlet());
         registration.addMapping("/echo");
         configuration.setHttpServerName("WebSocket Server");
         configuration.setName("WebSocket Server");
@@ -206,34 +205,32 @@ public class WebSocketsTest extends BaseWebSocketTestUtilities {
                 return true;
             }
         };
-        
+
         final HttpServer server = HttpServer.createSimpleServer(".", 8051);
         server.getListener("grizzly").registerAddOn(new WebSocketAddOn());
         WebSocketEngine.getEngine().register("", "/chat", app);
-        
+
         final FutureImpl<Boolean> isConnectedStateWhenClosed = SafeFutureImpl.create();
-        WebSocketClient client = new WebSocketClient("ws://localhost:8051/chat",
-                new WebSocketAdapter() {
+        WebSocketClient client = new WebSocketClient("ws://localhost:8051/chat", new WebSocketAdapter() {
             @Override
             public void onClose(WebSocket socket, DataFrame frame) {
                 isConnectedStateWhenClosed.result(socket.isConnected());
             }
         });
-        
-        
+
         try {
             server.start();
             client.connect();
-            
+
             server.shutdownNow();
-            
+
             Assert.assertFalse(isConnectedStateWhenClosed.get(10, TimeUnit.SECONDS));
         } finally {
             client.close();
             server.shutdownNow();
         }
     }
-    
+
     private static class CountDownAdapter extends WebSocketAdapter {
         private final Set<String> sent;
         private final CountDownLatch received;

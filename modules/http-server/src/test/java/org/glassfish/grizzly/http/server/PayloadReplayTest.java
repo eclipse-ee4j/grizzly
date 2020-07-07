@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,6 +24,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -50,7 +51,7 @@ import org.junit.Test;
 
 /**
  * Test payload replay feature.
- * 
+ *
  * @author Alexey Stashok
  */
 public class PayloadReplayTest {
@@ -58,7 +59,7 @@ public class PayloadReplayTest {
     private static final Logger LOGGER = Grizzly.logger(PayloadReplayTest.class);
 
     private HttpServer httpServer;
-    
+
     @Before
     public void before() throws Exception {
         httpServer = createServer();
@@ -70,94 +71,84 @@ public class PayloadReplayTest {
             httpServer.shutdownNow();
         }
     }
-       
+
     /**
      * Check basic replay mechanism
      */
     @Test
     @SuppressWarnings("unchecked")
     public void testBasicReplay() throws Exception {
-        final byte[] payloadToReplay = new byte[] {11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
-        
+        final byte[] payloadToReplay = new byte[] { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+
         startServer(new HttpHandler() {
 
             @Override
             public void service(Request request, Response response) throws Exception {
                 try {
-                    request.replayPayload(Buffers.wrap(
-                            request.getContext().getMemoryManager(), payloadToReplay));
-                    
+                    request.replayPayload(Buffers.wrap(request.getContext().getMemoryManager(), payloadToReplay));
+
                     response.getWriter().write("Replay should have caused IllegalStateException");
                     return;
                 } catch (IllegalStateException expectedException) {
                 }
-                
+
                 final InputStream is = request.getInputStream();
-                while (is.read() != -1);
-                
-                request.replayPayload(Buffers.wrap(
-                        request.getContext().getMemoryManager(), payloadToReplay));
-                
+                while (is.read() != -1) {
+                    ;
+                }
+
+                request.replayPayload(Buffers.wrap(request.getContext().getMemoryManager(), payloadToReplay));
+
                 byte[] buffer = new byte[payloadToReplay.length * 2];
-                
+
                 int len = 0;
                 while (true) {
                     int readNow = is.read(buffer, len, buffer.length - len);
-                    
+
                     if (readNow == -1) {
                         break;
                     }
-                    
+
                     len += readNow;
                 }
-                
+
                 response.getOutputStream().write(buffer, 0, len);
             }
         });
-        
-        final BlockingQueue<HttpContent> resultQueue =
-                new LinkedBlockingQueue<HttpContent>();
-        
+
+        final BlockingQueue<HttpContent> resultQueue = new LinkedBlockingQueue<>();
+
         final Connection client = openClient(resultQueue);
         try {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method(Method.POST)
-                    .uri("/")
-                    .protocol(Protocol.HTTP_1_1)
-                    .header(Header.Host, "localhost:" + PORT)
-                    .contentLength(10)
-                    .build();
-            
+            HttpRequestPacket request = HttpRequestPacket.builder().method(Method.POST).uri("/").protocol(Protocol.HTTP_1_1)
+                    .header(Header.Host, "localhost:" + PORT).contentLength(10).build();
+
             client.write(request);
             Thread.sleep(20);
-            final byte[] payload = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-            
+            final byte[] payload = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
             final MemoryManager mm = client.getMemoryManager();
-            HttpContent payload1 = HttpContent.builder(request)
-                    .content(Buffers.wrap(mm, payload, 0, 5))
-                    .build();
-            HttpContent payload2 = HttpContent.builder(request)
-                    .content(Buffers.wrap(mm, payload, 5, 5))
-                    .build();
-            
+            HttpContent payload1 = HttpContent.builder(request).content(Buffers.wrap(mm, payload, 0, 5)).build();
+            HttpContent payload2 = HttpContent.builder(request).content(Buffers.wrap(mm, payload, 5, 5)).build();
+
             client.write(payload1);
             Thread.sleep(20);
             client.write(payload2);
-            
+
             final HttpContent result = resultQueue.poll(10, TimeUnit.SECONDS);
             final Buffer responseBuffer = result.getContent();
-            
+
             final byte[] responseArray = new byte[responseBuffer.remaining()];
             responseBuffer.get(responseArray);
-            
+
             Assert.assertArrayEquals(payloadToReplay, responseArray);
         } finally {
             if (client != null) {
                 client.closeSilently();
             }
-        }        
+        }
     }
-    
+
     /**
      * Check post parameters replay.
      */
@@ -167,124 +158,107 @@ public class PayloadReplayTest {
         final String argRus = "\u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442";
         final String arg1Rus = argRus + "1";
         final String arg2Rus = argRus + "2";
-        
+
         final String valueRus = "\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435";
         final String value1Rus = valueRus + "1";
         final String value2Rus = valueRus + "2";
-        
+
         final String rusParam = arg1Rus + "=" + value1Rus + "&" + arg2Rus + "=" + value2Rus;
-        final String rusParamEncoded = URLEncoder.encode(arg1Rus, "UTF-8") + "=" + URLEncoder.encode(value1Rus, "UTF-8") + "&" + URLEncoder.encode(arg2Rus, "UTF-8") + "=" + URLEncoder.encode(value2Rus, "UTF-8");
+        final String rusParamEncoded = URLEncoder.encode(arg1Rus, "UTF-8") + "=" + URLEncoder.encode(value1Rus, "UTF-8") + "&"
+                + URLEncoder.encode(arg2Rus, "UTF-8") + "=" + URLEncoder.encode(value2Rus, "UTF-8");
 
         final byte[] payloadToReplay = rusParamEncoded.getBytes(Charsets.ASCII_CHARSET);
-        
+
         startServer(new HttpHandler() {
 
             @Override
             public void service(Request request, Response response) throws Exception {
                 try {
-                    request.replayPayload(Buffers.wrap(
-                            request.getContext().getMemoryManager(), payloadToReplay));
-                    
+                    request.replayPayload(Buffers.wrap(request.getContext().getMemoryManager(), payloadToReplay));
+
                     response.getWriter().write("Replay should have caused IllegalStateException");
                     return;
                 } catch (IllegalStateException expectedException) {
                 }
-                
+
                 String value1 = request.getParameter(arg1Rus);
                 String value2 = request.getParameter(arg2Rus);
-                
+
                 if (value1 != null || value2 != null) {
                     response.getWriter().write("Parameter is unexpectedly found. value1= " + value1 + " value2=" + value2);
                     return;
                 }
-                
-                request.replayPayload(Buffers.wrap(
-                        request.getContext().getMemoryManager(), payloadToReplay));
+
+                request.replayPayload(Buffers.wrap(request.getContext().getMemoryManager(), payloadToReplay));
                 request.setCharacterEncoding("UTF-8");
-                
+
                 value1 = request.getParameter(arg1Rus);
                 value2 = request.getParameter(arg2Rus);
-                
+
                 if (!value1Rus.equals(value1) || !value2Rus.equals(value2)) {
                     response.getWriter().write("Parameter values don't match. value1= " + value1 + " value2=" + value2);
                     return;
                 }
-                
+
                 response.setCharacterEncoding("UTF-8");
                 response.getWriter().write(value1 + value2);
             }
         });
-        
-        final BlockingQueue<HttpContent> resultQueue =
-                new LinkedBlockingQueue<HttpContent>();
-        
+
+        final BlockingQueue<HttpContent> resultQueue = new LinkedBlockingQueue<>();
+
         final Connection client = openClient(resultQueue);
         try {
-            HttpRequestPacket request = HttpRequestPacket.builder()
-                    .method(Method.POST)
-                    .uri("/")
-                    .protocol(Protocol.HTTP_1_1)
-                    .header(Header.Host, "localhost:" + PORT)
-                    .contentLength(payloadToReplay.length)
-                    .contentType("application/x-www-form-urlencoded")
-                    .build();
-            
+            HttpRequestPacket request = HttpRequestPacket.builder().method(Method.POST).uri("/").protocol(Protocol.HTTP_1_1)
+                    .header(Header.Host, "localhost:" + PORT).contentLength(payloadToReplay.length).contentType("application/x-www-form-urlencoded").build();
+
             client.write(request);
             Thread.sleep(20);
-            
+
             final MemoryManager mm = client.getMemoryManager();
-            HttpContent payload = HttpContent.builder(request)
-                    .content(Buffers.wrap(mm, payloadToReplay))
-                    .build();
-            
+            HttpContent payload = HttpContent.builder(request).content(Buffers.wrap(mm, payloadToReplay)).build();
+
             client.write(payload);
-            
+
             final HttpContent result = resultQueue.poll(10, TimeUnit.SECONDS);
             final Buffer responseBuffer = result.getContent();
-            
+
             Assert.assertEquals(value1Rus + value2Rus, responseBuffer.toStringContent(Charsets.UTF8_CHARSET));
         } finally {
             if (client != null) {
                 client.closeSilently();
             }
-        }        
+        }
     }
-    
-    private Connection openClient(BlockingQueue<HttpContent> resultQueue)
-            throws Exception {
+
+    private Connection openClient(BlockingQueue<HttpContent> resultQueue) throws Exception {
         final FilterChainBuilder builder = FilterChainBuilder.stateless();
         builder.add(new TransportFilter());
 
         builder.add(new HttpClientFilter());
         builder.add(new ClientFilter(resultQueue));
 
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("test").getTransport())
-                .processor(builder.build())
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("test").getTransport()).processor(builder.build())
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect("localhost", PORT);
         return connectFuture.get(10, TimeUnit.SECONDS);
     }
-    
-    private static HttpServer createServer()
-            throws Exception {
+
+    private static HttpServer createServer() throws Exception {
         final HttpServer server = new HttpServer();
-        final NetworkListener listener = 
-                new NetworkListener("test", 
-                                    NetworkListener.DEFAULT_NETWORK_HOST, 
-                                    PORT);
-        
+        final NetworkListener listener = new NetworkListener("test", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
+
         server.addListener(listener);
-        
+
         return server;
     }
-    
+
     private void startServer(HttpHandler httpHandler) throws IOException {
         httpServer.getServerConfiguration().addHttpHandler(httpHandler, "/");
         httpServer.start();
     }
-    
+
     private static class ClientFilter extends BaseFilter {
 
         private final BlockingQueue<HttpContent> resultQueue;
@@ -304,5 +278,5 @@ public class PayloadReplayTest {
 
             return ctx.getStopAction();
         }
-    }    
+    }
 }

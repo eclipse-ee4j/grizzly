@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -17,13 +17,13 @@
 
 package org.glassfish.grizzly;
 
-import org.glassfish.grizzly.nio.NIOTransport;
-
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.channels.Channel;
 import java.util.Random;
+
+import org.glassfish.grizzly.nio.NIOTransport;
 
 /**
  * @since 2.2.19
@@ -36,62 +36,53 @@ public abstract class AbstractBindingHandler implements SocketBinder {
 
     // ------------------------------------------------------------ Constructors
 
-
     public AbstractBindingHandler(final NIOTransport transport) {
         this.transport = transport;
         this.processor = transport.getProcessor();
         this.processorSelector = transport.getProcessorSelector();
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
-
     /**
-     * Get the default {@link Processor} to process {@link IOEvent}, occurring
-     * on connection phase.
+     * Get the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      *
-     * @return the default {@link Processor} to process {@link IOEvent},
-     *         occurring on connection phase.
+     * @return the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      */
     public Processor getProcessor() {
         return processor;
     }
 
     /**
-     * Set the default {@link Processor} to process {@link IOEvent}, occurring
-     * on connection phase.
+     * Set the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      *
-     * @param processor the default {@link Processor} to process
-     *                  {@link IOEvent}, occurring on connection phase.
+     * @param processor the default {@link Processor} to process {@link IOEvent}, occurring on connection phase.
      */
     public void setProcessor(Processor processor) {
         this.processor = processor;
     }
 
     /**
-     * Gets the default {@link ProcessorSelector}, which will be used to get
-     * {@link Processor} to process I/O events, occurring on connection phase.
+     * Gets the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
+     * occurring on connection phase.
      *
-     * @return the default {@link ProcessorSelector}, which will be used to get
-     *         {@link Processor} to process I/O events, occurring on connection phase.
+     * @return the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
+     * occurring on connection phase.
      */
     public ProcessorSelector getProcessorSelector() {
         return processorSelector;
     }
 
     /**
-     * Sets the default {@link ProcessorSelector}, which will be used to get
-     * {@link Processor} to process I/O events, occurring on connection phase.
+     * Sets the default {@link ProcessorSelector}, which will be used to get {@link Processor} to process I/O events,
+     * occurring on connection phase.
      *
-     * @param processorSelector the default {@link ProcessorSelector},
-     *                          which will be used to get {@link Processor} to process I/O events,
-     *                          occurring on connection phase.
+     * @param processorSelector the default {@link ProcessorSelector}, which will be used to get {@link Processor} to
+     * process I/O events, occurring on connection phase.
      */
     public void setProcessorSelector(final ProcessorSelector processorSelector) {
         this.processorSelector = processorSelector;
     }
-
 
     // ----------------------------------------------- Methods from SocketBinder
 
@@ -115,8 +106,7 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection<?> bind(final String host, final int port, final int backlog)
-            throws IOException {
+    public Connection<?> bind(final String host, final int port, final int backlog) throws IOException {
         return bind(new InetSocketAddress(host, port), backlog);
     }
 
@@ -124,14 +114,12 @@ public abstract class AbstractBindingHandler implements SocketBinder {
      * {@inheritDoc}
      */
     @Override
-    public Connection<?> bind(final String host, final PortRange portRange,
-            final int backlog) throws IOException {
+    public Connection<?> bind(final String host, final PortRange portRange, final int backlog) throws IOException {
         return bind(host, portRange, true, backlog);
     }
 
     @Override
-    public Connection<?> bind(final String host, final PortRange portRange,
-            boolean randomStartPort, final int backlog) throws IOException {
+    public Connection<?> bind(final String host, final PortRange portRange, boolean randomStartPort, final int backlog) throws IOException {
         // Get the initial range parameters
         final int lower = portRange.getLower();
         final int range = portRange.getUpper() - lower + 1;
@@ -171,27 +159,20 @@ public abstract class AbstractBindingHandler implements SocketBinder {
         throw new UnsupportedOperationException();
     }
 
-
     // ------------------------------------------------------- Protected Methods
 
-
     @SuppressWarnings("unchecked")
-    protected <T> T getSystemInheritedChannel(final Class<?> channelType)
-    throws IOException {
+    protected <T> T getSystemInheritedChannel(final Class<?> channelType) throws IOException {
         final Channel inheritedChannel = System.inheritedChannel();
 
         if (inheritedChannel == null) {
             throw new IOException("Inherited channel is not set");
         }
-        if (!(channelType.isInstance(inheritedChannel))) {
-            throw new IOException("Inherited channel is not "
-                    + channelType.getName()
-                    + ", but "
-                    + inheritedChannel.getClass().getName());
+        if (!channelType.isInstance(inheritedChannel)) {
+            throw new IOException("Inherited channel is not " + channelType.getName() + ", but " + inheritedChannel.getClass().getName());
         }
         return (T) inheritedChannel;
     }
-
 
     // ----------------------------------------------------------- Inner Classes
 

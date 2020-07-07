@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,8 +23,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
  *
  * @author Alexey Stashok
  */
-public class CompletionHandlerAdapter<A, B>
-        implements CompletionHandler<B> {
+public class CompletionHandlerAdapter<A, B> implements CompletionHandler<B> {
 
     private final static GenericAdapter DIRECT_ADAPTER = new GenericAdapter() {
         @Override
@@ -41,14 +40,11 @@ public class CompletionHandlerAdapter<A, B>
         this(future, null);
     }
 
-    public CompletionHandlerAdapter(FutureImpl<A> future,
-            CompletionHandler<A> completionHandler) {
+    public CompletionHandlerAdapter(FutureImpl<A> future, CompletionHandler<A> completionHandler) {
         this(future, completionHandler, null);
     }
 
-    public CompletionHandlerAdapter(FutureImpl<A> future,
-            CompletionHandler<A> completionHandler,
-            GenericAdapter<B, A> adapter) {
+    public CompletionHandlerAdapter(FutureImpl<A> future, CompletionHandler<A> completionHandler, GenericAdapter<B, A> adapter) {
         this.future = future;
         this.completionHandler = completionHandler;
         if (adapter != null) {
@@ -58,16 +54,15 @@ public class CompletionHandlerAdapter<A, B>
         }
     }
 
-
     @Override
     public void cancelled() {
         if (completionHandler != null) {
             completionHandler.cancelled();
         }
-        
+
         if (future != null) {
-            future.cancel(false);            
-        }        
+            future.cancel(false);
+        }
     }
 
     @Override
@@ -75,7 +70,7 @@ public class CompletionHandlerAdapter<A, B>
         if (completionHandler != null) {
             completionHandler.failed(throwable);
         }
-        
+
         if (future != null) {
             future.failure(throwable);
         }
@@ -88,10 +83,10 @@ public class CompletionHandlerAdapter<A, B>
         if (completionHandler != null) {
             completionHandler.completed(adaptedResult);
         }
-        
+
         if (future != null) {
             future.result(adaptedResult);
-        }        
+        }
     }
 
     @Override
@@ -106,7 +101,7 @@ public class CompletionHandlerAdapter<A, B>
     protected A adapt(B result) {
         return adapter.adapt(result);
     }
-    
+
     @SuppressWarnings("unchecked")
     private static <K, V> GenericAdapter<K, V> getDirectAdapter() {
         return DIRECT_ADAPTER;

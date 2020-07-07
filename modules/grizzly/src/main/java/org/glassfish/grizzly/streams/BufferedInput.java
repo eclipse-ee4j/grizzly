@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,10 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -24,9 +28,6 @@ import org.glassfish.grizzly.impl.ReadyFutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.CompositeBuffer;
 import org.glassfish.grizzly.utils.conditions.Condition;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  *
@@ -41,7 +42,7 @@ public abstract class BufferedInput implements Input {
 
     protected boolean isCompletionHandlerRegistered;
     protected Exception registrationStackTrace; // used for debugging problems
-    
+
     protected Condition condition;
     protected CompletionHandler<Integer> completionHandler;
     protected FutureImpl<Integer> future;
@@ -54,7 +55,6 @@ public abstract class BufferedInput implements Input {
 
     protected abstract void onCloseInputSource() throws IOException;
 
-    
     public boolean append(final Buffer buffer) {
         if (buffer == null) {
             return false;
@@ -79,7 +79,6 @@ public abstract class BufferedInput implements Input {
         return true;
     }
 
-    
     public boolean prepend(final Buffer buffer) {
         if (buffer == null) {
             return false;
@@ -157,8 +156,7 @@ public abstract class BufferedInput implements Input {
                 if (localCompletionHandler != null) {
                     completionHandler = null;
                     isCompletionHandlerRegistered = false;
-                    notifyFailure(localCompletionHandler,
-                            new EOFException("Input is closed"));
+                    notifyFailure(localCompletionHandler, new EOFException("Input is closed"));
                 }
             }
         } finally {
@@ -168,16 +166,14 @@ public abstract class BufferedInput implements Input {
     }
 
     @Override
-    public GrizzlyFuture<Integer> notifyCondition(Condition condition,
-            CompletionHandler<Integer> completionHandler) {
+    public GrizzlyFuture<Integer> notifyCondition(Condition condition, CompletionHandler<Integer> completionHandler) {
         lock.writeLock().lock();
 
         try {
             if (!isCompletionHandlerRegistered) {
                 if (condition.check()) {
                     notifyCompleted(completionHandler);
-                    return ReadyFutureImpl.create(
-                            compositeBuffer.remaining());
+                    return ReadyFutureImpl.create(compositeBuffer.remaining());
                 }
 
                 registrationStackTrace = new Exception();
@@ -186,7 +182,7 @@ public abstract class BufferedInput implements Input {
                 final FutureImpl<Integer> localFuture = SafeFutureImpl.create();
                 this.future = localFuture;
                 this.condition = condition;
-                
+
                 try {
                     onOpenInputSource();
                 } catch (IOException e) {
@@ -203,7 +199,6 @@ public abstract class BufferedInput implements Input {
         }
     }
 
-
     private void notifyUpdate() {
         if (condition != null && condition.check()) {
             condition = null;
@@ -215,11 +210,11 @@ public abstract class BufferedInput implements Input {
             isCompletionHandlerRegistered = false;
 
             try {
-                
+
                 onCloseInputSource();
                 notifyCompleted(localCompletionHandler);
                 localFuture.result(compositeBuffer.remaining());
-            } catch(IOException e) {
+            } catch (IOException e) {
                 notifyFailure(localCompletionHandler, e);
                 localFuture.failure(e);
             }
@@ -232,8 +227,7 @@ public abstract class BufferedInput implements Input {
         }
     }
 
-    protected void notifyFailure(final CompletionHandler<Integer> completionHandler,
-            final Throwable failure) {
+    protected void notifyFailure(final CompletionHandler<Integer> completionHandler, final Throwable failure) {
         if (completionHandler != null) {
             completionHandler.failed(failure);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,8 +24,8 @@ import static org.glassfish.grizzly.http.Method.GET;
 import static org.glassfish.grizzly.http.Protocol.HTTP_1_1;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Locale;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.glassfish.grizzly.http.Cookie;
@@ -46,7 +46,7 @@ import org.mockito.internal.stubbing.answers.ThrowsException;
  */
 public class ApacheLogFormatTest {
 
-    private static final Date date = new Date(1389829512345L); //1389797112345L + 32400000L); // Jan 15th, 2014 @ 23:45:12.345 UTC
+    private static final Date date = new Date(1389829512345L); // 1389797112345L + 32400000L); // Jan 15th, 2014 @ 23:45:12.345 UTC
     private static final long nanos = 1234567890;
 
     private static final String SERVER_IP = "1.2.3.4";
@@ -135,10 +135,16 @@ public class ApacheLogFormatTest {
         final Response response = mockSimpleResponse();
         Locale.setDefault(Locale.US);
 
-        assertEquals("remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567", ApacheLogFormat.COMMON_UTC.unsafeFormat(response, date, nanos));
-        assertEquals("remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567 \"http://referer/\" \"Test-User-Agent\"", ApacheLogFormat.COMBINED_UTC.unsafeFormat(response, date, nanos));
-        assertEquals("server-name remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567", ApacheLogFormat.VHOST_COMMON_UTC.unsafeFormat(response, date, nanos));
-        assertEquals("server-name remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567 \"http://referer/\" \"Test-User-Agent\"", ApacheLogFormat.VHOST_COMBINED_UTC.unsafeFormat(response, date, nanos));
+        assertEquals("remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567",
+                ApacheLogFormat.COMMON_UTC.unsafeFormat(response, date, nanos));
+        assertEquals(
+                "remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567 \"http://referer/\" \"Test-User-Agent\"",
+                ApacheLogFormat.COMBINED_UTC.unsafeFormat(response, date, nanos));
+        assertEquals("server-name remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567",
+                ApacheLogFormat.VHOST_COMMON_UTC.unsafeFormat(response, date, nanos));
+        assertEquals(
+                "server-name remote-host - remote-user [2014/Jan/15:23:45:12 +0000] \"GET /test/path?testing=true HTTP/1.1\" 210 1234567 \"http://referer/\" \"Test-User-Agent\"",
+                ApacheLogFormat.VHOST_COMBINED_UTC.unsafeFormat(response, date, nanos));
         assertEquals("http://referer/ -> /test/path", ApacheLogFormat.REFERER_UTC.unsafeFormat(response, date, nanos));
         assertEquals("Test-User-Agent", ApacheLogFormat.AGENT_UTC.unsafeFormat(response, date, nanos));
     }
@@ -147,12 +153,12 @@ public class ApacheLogFormatTest {
     public void testBasicFormatsEmptyResponse() {
         final Response response = mockEmptyResponse();
 
-        assertEquals(ApacheLogFormat.COMMON_UTC        .unsafeFormat(response, date, nanos), "- - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 -");
-        assertEquals(ApacheLogFormat.COMBINED_UTC      .unsafeFormat(response, date, nanos), "- - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 - \"\" \"\"");
-        assertEquals(ApacheLogFormat.VHOST_COMMON_UTC  .unsafeFormat(response, date, nanos), "- - - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 -");
+        assertEquals(ApacheLogFormat.COMMON_UTC.unsafeFormat(response, date, nanos), "- - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 -");
+        assertEquals(ApacheLogFormat.COMBINED_UTC.unsafeFormat(response, date, nanos), "- - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 - \"\" \"\"");
+        assertEquals(ApacheLogFormat.VHOST_COMMON_UTC.unsafeFormat(response, date, nanos), "- - - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 -");
         assertEquals(ApacheLogFormat.VHOST_COMBINED_UTC.unsafeFormat(response, date, nanos), "- - - - [2014/Jan/15:23:45:12 +0000] \"- - -\" 000 - \"\" \"\"");
-        assertEquals(ApacheLogFormat.REFERER_UTC       .unsafeFormat(response, date, nanos), " -> -");
-        assertEquals(ApacheLogFormat.AGENT_UTC         .unsafeFormat(response, date, nanos), "");
+        assertEquals(ApacheLogFormat.REFERER_UTC.unsafeFormat(response, date, nanos), " -> -");
+        assertEquals(ApacheLogFormat.AGENT_UTC.unsafeFormat(response, date, nanos), "");
     }
 
     @Test
@@ -200,34 +206,34 @@ public class ApacheLogFormatTest {
 
         assertEquals(new ApacheLogFormat("%s").unsafeFormat(response, date, nanos), Integer.toString(STATUS));
 
-        assertEquals(new ApacheLogFormat("%T")         .unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{s}T")      .unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{sec}T")    .unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{secs}T")   .unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{second}T") .unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{s}T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{sec}T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{secs}T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{second}T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
         assertEquals(new ApacheLogFormat("%{seconds}T").unsafeFormat(response, date, nanos), Long.toString(SECONDS.convert(nanos, NANOSECONDS)));
 
-        assertEquals(new ApacheLogFormat("%{m}T")           .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{milli}T")       .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{millis}T")      .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{millisec}T")    .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{millisecs}T")   .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{millisecond}T") .unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{m}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{milli}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{millis}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{millisec}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{millisecs}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{millisecond}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
         assertEquals(new ApacheLogFormat("%{milliseconds}T").unsafeFormat(response, date, nanos), Long.toString(MILLISECONDS.convert(nanos, NANOSECONDS)));
 
-        assertEquals(new ApacheLogFormat("%{micro}T")       .unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{micros}T")      .unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{microsec}T")    .unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{microsecs}T")   .unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
-        assertEquals(new ApacheLogFormat("%{microsecond}T") .unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{micro}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{micros}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{microsec}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{microsecs}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
+        assertEquals(new ApacheLogFormat("%{microsecond}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
         assertEquals(new ApacheLogFormat("%{microseconds}T").unsafeFormat(response, date, nanos), Long.toString(MICROSECONDS.convert(nanos, NANOSECONDS)));
 
-        assertEquals(new ApacheLogFormat("%{n}T")          .unsafeFormat(response, date, nanos), Long.toString(nanos));
-        assertEquals(new ApacheLogFormat("%{nano}T")       .unsafeFormat(response, date, nanos), Long.toString(nanos));
-        assertEquals(new ApacheLogFormat("%{nanos}T")      .unsafeFormat(response, date, nanos), Long.toString(nanos));
-        assertEquals(new ApacheLogFormat("%{nanosec}T")    .unsafeFormat(response, date, nanos), Long.toString(nanos));
-        assertEquals(new ApacheLogFormat("%{nanosecs}T")   .unsafeFormat(response, date, nanos), Long.toString(nanos));
-        assertEquals(new ApacheLogFormat("%{nanosecond}T") .unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{n}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{nano}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{nanos}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{nanosec}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{nanosecs}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
+        assertEquals(new ApacheLogFormat("%{nanosecond}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
         assertEquals(new ApacheLogFormat("%{nanoseconds}T").unsafeFormat(response, date, nanos), Long.toString(nanos));
 
         assertEquals(new ApacheLogFormat("%u").unsafeFormat(response, date, nanos), "remote-user");
@@ -265,7 +271,7 @@ public class ApacheLogFormatTest {
 
         assertEquals("server port", "-", new ApacheLogFormat("%p").unsafeFormat(response, date, -1));
         assertEquals("server port", "-", new ApacheLogFormat("%{local}p").unsafeFormat(response, date, -1));
-        assertEquals("client port" , "-", new ApacheLogFormat("%{remote}p").unsafeFormat(response, date, -1));
+        assertEquals("client port", "-", new ApacheLogFormat("%{remote}p").unsafeFormat(response, date, -1));
 
         assertEquals("query", "", new ApacheLogFormat("%q").unsafeFormat(response, date, -1));
 
@@ -273,34 +279,34 @@ public class ApacheLogFormatTest {
 
         assertEquals("status", "000", new ApacheLogFormat("%s").unsafeFormat(response, date, -1));
 
-        assertEquals("response time", "-", new ApacheLogFormat("%T")         .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{s}T")      .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{sec}T")    .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{secs}T")   .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{second}T") .unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{s}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{sec}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{secs}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{second}T").unsafeFormat(response, date, -1));
         assertEquals("response time", "-", new ApacheLogFormat("%{seconds}T").unsafeFormat(response, date, -1));
 
-        assertEquals("response time", "-", new ApacheLogFormat("%{m}T")           .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{milli}T")       .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{millis}T")      .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{millisec}T")    .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{millisecs}T")   .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{millisecond}T") .unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{m}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{milli}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{millis}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{millisec}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{millisecs}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{millisecond}T").unsafeFormat(response, date, -1));
         assertEquals("response time", "-", new ApacheLogFormat("%{milliseconds}T").unsafeFormat(response, date, -1));
 
-        assertEquals("response time", "-", new ApacheLogFormat("%{micro}T")       .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{micros}T")      .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{microsec}T")    .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{microsecs}T")   .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{microsecond}T") .unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{micro}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{micros}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{microsec}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{microsecs}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{microsecond}T").unsafeFormat(response, date, -1));
         assertEquals("response time", "-", new ApacheLogFormat("%{microseconds}T").unsafeFormat(response, date, -1));
 
-        assertEquals("response time", "-", new ApacheLogFormat("%{n}T")          .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{nano}T")       .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{nanos}T")      .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{nanosec}T")    .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{nanosecs}T")   .unsafeFormat(response, date, -1));
-        assertEquals("response time", "-", new ApacheLogFormat("%{nanosecond}T") .unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{n}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{nano}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{nanos}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{nanosec}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{nanosecs}T").unsafeFormat(response, date, -1));
+        assertEquals("response time", "-", new ApacheLogFormat("%{nanosecond}T").unsafeFormat(response, date, -1));
         assertEquals("response time", "-", new ApacheLogFormat("%{nanoseconds}T").unsafeFormat(response, date, -1));
 
         assertEquals("remote-user", "-", new ApacheLogFormat("%u").unsafeFormat(response, date, -1));
@@ -316,8 +322,8 @@ public class ApacheLogFormatTest {
         final TimeZone jst = TimeZone.getTimeZone("JST");
         final Response response = mockEmptyResponse();
 
-        assertEquals(new ApacheLogFormat(utc, "%t")              .unsafeFormat(response, date, nanos), "[2014/Jan/15:23:45:12 +0000]");
-        assertEquals(new ApacheLogFormat(jst, "%t")              .unsafeFormat(response, date, nanos), "[2014/Jan/16:08:45:12 +0900]");
+        assertEquals(new ApacheLogFormat(utc, "%t").unsafeFormat(response, date, nanos), "[2014/Jan/15:23:45:12 +0000]");
+        assertEquals(new ApacheLogFormat(jst, "%t").unsafeFormat(response, date, nanos), "[2014/Jan/16:08:45:12 +0900]");
 
         assertEquals(new ApacheLogFormat(utc, "%{HH:mm:ss.SSS}t").unsafeFormat(response, date, nanos), "23:45:12.345");
         assertEquals(new ApacheLogFormat(jst, "%{HH:mm:ss.SSS}t").unsafeFormat(response, date, nanos), "08:45:12.345");
@@ -404,9 +410,7 @@ public class ApacheLogFormatTest {
     }
 
     private void assertStandardFormat(String format) {
-        this.assertFormat(format, format.replace("%r", "%m %U%q %H")
-                                        .replace("Referer", "referer")
-                                        .replace("User-agent", "user-agent"));
+        this.assertFormat(format, format.replace("%r", "%m %U%q %H").replace("Referer", "referer").replace("User-agent", "user-agent"));
     }
 
     private void assertFormat(String format) {

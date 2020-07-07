@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,16 +16,17 @@
 
 package org.glassfish.grizzly.osgi.httpservice;
 
+import java.util.Dictionary;
+
 import org.glassfish.grizzly.osgi.httpservice.util.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import javax.servlet.Filter;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import java.util.Dictionary;
+import jakarta.servlet.Filter;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
 
 /**
  * Grizzly OSGi HttpService implementation.
@@ -40,9 +41,7 @@ public class HttpServiceImpl implements HttpServiceExtension {
 
     final OSGiMainHandler mainHttpHandler;
 
-
     // ------------------------------------------------------------ Constructors
-
 
     /**
      * {@link HttpService} constructor.
@@ -56,9 +55,7 @@ public class HttpServiceImpl implements HttpServiceExtension {
         mainHttpHandler = new OSGiMainHandler(logger, bundle);
     }
 
-
     // ------------------------------------------------ Methods from HttpService
-
 
     /**
      * {@inheritDoc}
@@ -72,13 +69,10 @@ public class HttpServiceImpl implements HttpServiceExtension {
      * {@inheritDoc}
      */
     @Override
-    public void registerServlet(
-            final String alias, final Servlet servlet, final Dictionary initparams, HttpContext httpContext)
+    public void registerServlet(final String alias, final Servlet servlet, final Dictionary initparams, HttpContext httpContext)
             throws ServletException, NamespaceException {
 
-        logger.info("Registering servlet: " + servlet + ", under: "
-                            + alias + ", with: " + initparams
-                            + " and context: " + httpContext);
+        logger.info("Registering servlet: " + servlet + ", under: " + alias + ", with: " + initparams + " and context: " + httpContext);
 
         mainHttpHandler.registerServletHandler(alias, servlet, initparams, httpContext, this);
     }
@@ -87,12 +81,9 @@ public class HttpServiceImpl implements HttpServiceExtension {
      * {@inheritDoc}
      */
     @Override
-    public void registerResources(final String alias, String prefix, HttpContext httpContext)
-            throws NamespaceException {
+    public void registerResources(final String alias, String prefix, HttpContext httpContext) throws NamespaceException {
 
-        logger.info("Registering resource: alias: "
-                            + alias + ", prefix: " + prefix
-                            + " and context: " + httpContext);
+        logger.info("Registering resource: alias: " + alias + ", prefix: " + prefix + " and context: " + httpContext);
 
         mainHttpHandler.registerResourceHandler(alias, httpContext, prefix, this);
     }
@@ -106,20 +97,14 @@ public class HttpServiceImpl implements HttpServiceExtension {
         mainHttpHandler.unregisterAlias(alias);
     }
 
-
     // --------------------------------------- Methods from HttpServiceExtension
-
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void registerFilter(Filter filter, String urlPattern, Dictionary initParams, HttpContext context)
-    throws ServletException {
-        logger.info("Registering servlet: "
-                            + filter + ", under url-pattern: "
-                            + urlPattern + ", with: "
-                            + initParams + " and context: " + context);
+    public void registerFilter(Filter filter, String urlPattern, Dictionary initParams, HttpContext context) throws ServletException {
+        logger.info("Registering servlet: " + filter + ", under url-pattern: " + urlPattern + ", with: " + initParams + " and context: " + context);
         mainHttpHandler.registerFilter(filter, urlPattern, initParams, context, this);
     }
 

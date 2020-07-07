@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,28 +28,23 @@ import org.glassfish.grizzly.http.server.Request;
 
 /**
  * Comet {@link AddOn} for the {@link HttpServer}.
- * 
+ *
  * @author Alexey Stashok
  */
 public class CometAddOn implements AddOn {
 
     @Override
-    public void setup(final NetworkListener networkListener,
-            final FilterChainBuilder builder) {
-        
-        
+    public void setup(final NetworkListener networkListener, final FilterChainBuilder builder) {
+
         final int httpServerFilterIdx = builder.indexOfType(HttpServerFilter.class);
-        final HttpServerFilter httpServerFilter =
-                (HttpServerFilter) builder.get(httpServerFilterIdx);
+        final HttpServerFilter httpServerFilter = (HttpServerFilter) builder.get(httpServerFilterIdx);
         httpServerFilter.getMonitoringConfig().addProbes(new HttpServerProbe.Adapter() {
             @Override
-            public void onBeforeServiceEvent(final HttpServerFilter filter,
-                    final Connection connection, final Request request,
-                    final HttpHandler httpHandler) {
+            public void onBeforeServiceEvent(final HttpServerFilter filter, final Connection connection, final Request request, final HttpHandler httpHandler) {
                 CometContext.REQUEST_LOCAL.set(request);
             }
         });
 
         CometEngine.getEngine().setCometSupported(true);
-    }    
+    }
 }

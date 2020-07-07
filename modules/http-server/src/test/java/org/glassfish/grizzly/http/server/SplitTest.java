@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,15 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -43,17 +46,16 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Test potential split vulnerability
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("unchecked")
 public class SplitTest {
     private static final int PORT = 18899;
-    
+
     @Test
     public void testSplitReasonPhrase() throws Exception {
         final HttpPacket request = createRequest("/index.html", null);
@@ -68,11 +70,10 @@ public class SplitTest {
 
         final String responseContent = response.getContent().toStringContent();
 
-        assertEquals("OK&#13;&#10;Content-Length: 14&#13;&#10;&#13;&#10;Broken content",
-                ((HttpResponsePacket) response.getHttpHeader()).getReasonPhrase());
+        assertEquals("OK&#13;&#10;Content-Length: 14&#13;&#10;&#13;&#10;Broken content", ((HttpResponsePacket) response.getHttpHeader()).getReasonPhrase());
         assertEquals("Expected content", responseContent);
     }
-    
+
     @Test
     public void testSplitHeaders() throws Exception {
         final HttpPacket request = createRequest("/index.html?foo=bar%0D%0AContent-Length:%2014%0D%0A%0D%0ABroken-content", null);
@@ -85,7 +86,7 @@ public class SplitTest {
                     response.getWriter().write("param not found");
                     return;
                 }
-                
+
                 response.addHeader("foo", foo);
                 response.getWriter().write("Expected content");
             }
@@ -93,11 +94,10 @@ public class SplitTest {
 
         final String responseContent = response.getContent().toStringContent();
 
-        assertEquals("bar  Content-Length: 14    Broken-content",
-                response.getHttpHeader().getHeader("foo"));
-        assertEquals("Expected content", responseContent);        
+        assertEquals("bar  Content-Length: 14    Broken-content", response.getHttpHeader().getHeader("foo"));
+        assertEquals("Expected content", responseContent);
     }
-    
+
     private HttpPacket createRequest(String uri, Map<String, String> headers) {
 
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
@@ -111,14 +111,9 @@ public class SplitTest {
         return b.build();
     }
 
-    private HttpContent doTest(
-            final HttpPacket request,
-            final int timeout,
-            final HttpHandler... httpHandlers)
-            throws Exception {
+    private HttpContent doTest(final HttpPacket request, final int timeout, final HttpHandler... httpHandlers) throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         final HttpServer server = createWebServer(httpHandlers);
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
@@ -154,10 +149,7 @@ public class SplitTest {
     private HttpServer createWebServer(final HttpHandler... httpHandlers) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandlers[0], "/");
@@ -170,7 +162,6 @@ public class SplitTest {
 
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -178,19 +169,16 @@ public class SplitTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -214,8 +202,7 @@ public class SplitTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -223,11 +210,11 @@ public class SplitTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
         }
 
-    } // END ClientFilter    
+    } // END ClientFilter
 }

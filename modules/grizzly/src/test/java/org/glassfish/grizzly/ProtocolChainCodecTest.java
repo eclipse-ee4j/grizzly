@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,18 +16,6 @@
 
 package org.glassfish.grizzly;
 
-import org.glassfish.grizzly.filterchain.Filter;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChain;
-import org.glassfish.grizzly.filterchain.FilterChainBuilder;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-import org.glassfish.grizzly.utils.ChunkingFilter;
-import org.glassfish.grizzly.utils.DelayFilter;
-import org.glassfish.grizzly.utils.StringFilter;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
@@ -35,7 +23,20 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.Filter;
+import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.utils.ChunkingFilter;
+import org.glassfish.grizzly.utils.DelayFilter;
+import org.glassfish.grizzly.utils.StringFilter;
 
 /**
  *
@@ -45,7 +46,7 @@ import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 public class ProtocolChainCodecTest extends GrizzlyTestCase {
     private static final Logger logger = Grizzly.logger(ProtocolChainCodecTest.class);
     public static final int PORT = 7784;
-    
+
     public void testSyncSingleStringEcho() throws Exception {
         doTestStringEcho(true, 1);
     }
@@ -80,35 +81,25 @@ public class ProtocolChainCodecTest extends GrizzlyTestCase {
 
     public void testSyncDelayedSingleChunkedStringEcho() throws Exception {
         logger.info("This test execution may take several seconds");
-        doTestStringEcho(true, 1,
-                new DelayFilter(1000, 20),
-                new ChunkingFilter(1));
+        doTestStringEcho(true, 1, new DelayFilter(1000, 20), new ChunkingFilter(1));
     }
 
     public void testAsyncDelayedSingleChunkedStringEcho() throws Exception {
         logger.info("This test execution may take several seconds");
-        doTestStringEcho(false, 1,
-                new DelayFilter(1000, 20),
-                new ChunkingFilter(1));
+        doTestStringEcho(false, 1, new DelayFilter(1000, 20), new ChunkingFilter(1));
     }
 
     public void testSyncDelayed5ChunkedStringEcho() throws Exception {
         logger.info("This test execution may take several seconds");
-        doTestStringEcho(true, 5,
-                new DelayFilter(1000, 20),
-                new ChunkingFilter(1));
+        doTestStringEcho(true, 5, new DelayFilter(1000, 20), new ChunkingFilter(1));
     }
 
     public void testAsyncDelayed5ChunkedStringEcho() throws Exception {
         logger.info("This test execution may take several seconds");
-        doTestStringEcho(false, 5,
-                new DelayFilter(1000, 20),
-                new ChunkingFilter(1));
+        doTestStringEcho(false, 5, new DelayFilter(1000, 20), new ChunkingFilter(1));
     }
 
-    protected final void doTestStringEcho(boolean blocking,
-                                          int messageNum,
-                                          Filter... filters) throws Exception {
+    protected final void doTestStringEcho(boolean blocking, int messageNum, Filter... filters) throws Exception {
         Connection connection = null;
 
         final String clientMessage = "Hello server! It's a client";
@@ -122,9 +113,9 @@ public class ProtocolChainCodecTest extends GrizzlyTestCase {
         filterChainBuilder.add(new StringFilter());
         filterChainBuilder.add(new BaseFilter() {
             volatile int counter;
+
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-                    throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
                 final String message = ctx.getMessage();
 
@@ -137,7 +128,6 @@ public class ProtocolChainCodecTest extends GrizzlyTestCase {
             }
         });
 
-        
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
@@ -146,9 +136,8 @@ public class ProtocolChainCodecTest extends GrizzlyTestCase {
             transport.start();
 
             final BlockingQueue<String> resultQueue = new LinkedTransferQueue<>();
-            
-            FilterChainBuilder clientFilterChainBuilder =
-                    FilterChainBuilder.stateless();
+
+            FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(new StringFilter());
             clientFilterChainBuilder.add(new BaseFilter() {
@@ -162,27 +151,20 @@ public class ProtocolChainCodecTest extends GrizzlyTestCase {
             });
             final FilterChain clientFilterChain = clientFilterChainBuilder.build();
 
-            SocketConnectorHandler connectorHandler =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
-            
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
+
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
             connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
 
             for (int i = 0; i < messageNum; i++) {
-                Future<WriteResult> writeFuture = connection.write(
-                        clientMessage + "-" + i);
+                Future<WriteResult> writeFuture = connection.write(clientMessage + "-" + i);
 
-                assertTrue("Write timeout loop: " + i,
-                        writeFuture.get(10, TimeUnit.SECONDS) != null);
-
+                assertTrue("Write timeout loop: " + i, writeFuture.get(10, TimeUnit.SECONDS) != null);
 
                 final String message = resultQueue.poll(10, TimeUnit.SECONDS);
 
-                assertEquals("Unexpected response (" + i + ")",
-                        serverMessage + "-" + i, message);
+                assertEquals("Unexpected response (" + i + ")", serverMessage + "-" + i, message);
             }
         } finally {
             if (connection != null) {

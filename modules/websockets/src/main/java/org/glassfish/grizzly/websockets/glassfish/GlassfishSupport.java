@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,16 +18,18 @@ package org.glassfish.grizzly.websockets.glassfish;
 
 import java.lang.reflect.Method;
 import java.security.Principal;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+
 import org.glassfish.grizzly.http.server.Request;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * Glassfish support class.
- * 
- * Currently this class is responsible for sharing Glassfish {@link HttpSession}s
- * between web container and websocket applications.
- * 
+ *
+ * Currently this class is responsible for sharing Glassfish {@link HttpSession}s between web container and websocket
+ * applications.
+ *
  * @author Alexey Stashok
  */
 public class GlassfishSupport {
@@ -45,12 +47,11 @@ public class GlassfishSupport {
         wrapper = null;
     }
 
-    public GlassfishSupport(final Object context,
-            final Object wrapper, HttpServletRequest request) {
+    public GlassfishSupport(final Object context, final Object wrapper, HttpServletRequest request) {
 
         this.context = new GlassfishContext(context);
         this.wrapper = new GlassfishWrapper(wrapper);
-        
+
         manager = this.context.getManager();
         this.request = request;
     }
@@ -63,48 +64,48 @@ public class GlassfishSupport {
 
         // BEGIN RIMOD 4949842
         /*
-         * Must get userPrincipal through getUserPrincipal(), can't assume
-         * it has already been set since it may be coming from core.
+         * Must get userPrincipal through getUserPrincipal(), can't assume it has already been set since it may be coming from
+         * core.
          */
         Principal userPrincipal = request.getUserPrincipal();
         // END RIMOD 4949842
 
         // Have we got an authenticated principal at all?
         if (userPrincipal == null) {
-            return (false);
+            return false;
         }
 
         // Identify the Realm we will use for checking role assignments
         if (context == null) {
-            return (false);
+            return false;
         }
         GlassfishRealm realm = context.getRealm();
         if (realm == null) {
-            return (false);
+            return false;
         }
 
         String servletName = null;
-        
+
         // Check for a role alias defined in a <security-role-ref> element
         if (wrapper != null) {
             servletName = wrapper.getServletName();
             String realRole = wrapper.findSecurityReference(role);
 
-            //START SJSAS 6232464
-            if ((realRole != null) &&
-                    //realm.hasRole(userPrincipal, realRole))
+            // START SJSAS 6232464
+            if (realRole != null &&
+            // realm.hasRole(userPrincipal, realRole))
                     realm.hasRole(servletName, userPrincipal, realRole)) {
-                return (true);
+                return true;
             }
         }
 
         // Check for a role defined directly as a <security-role>
 
-        //return (realm.hasRole(userPrincipal, role));
-        return (realm.hasRole(servletName, userPrincipal, role));
-        //END SJSAS 6232464
+        // return (realm.hasRole(userPrincipal, role));
+        return realm.hasRole(servletName, userPrincipal, role);
+        // END SJSAS 6232464
     }
-    
+
     public HttpSession getSession(boolean create) {
         GlassfishSession gfSession = doGetSession(create);
         if (gfSession != null) {
@@ -117,15 +118,15 @@ public class GlassfishSupport {
     private GlassfishSession doGetSession(boolean create) {
         // There cannot be a session if no context has been assigned yet
         if (!isValid()) {
-            return (null);
+            return null;
         }
 
         // Return the current session if it exists and is valid
-        if ((session != null) && !session.isValid()) {
+        if (session != null && !session.isValid()) {
             session = null;
         }
         if (session != null) {
-            return (session);
+            return session;
         }
 
         final String requestedSessionId = request.getRequestedSessionId();
@@ -137,18 +138,18 @@ public class GlassfishSupport {
                 session = null;
             }
 
-            if ((session != null) && !session.isValid()) {
+            if (session != null && !session.isValid()) {
                 session = null;
             }
             if (session != null) {
                 session.access();
-                return (session);
+                return session;
             }
         }
 
         // Create a new session if requested and the response is not committed
         if (!create) {
-            return (null);
+            return null;
         }
 
         // START S1AS8PE 4817642
@@ -169,9 +170,9 @@ public class GlassfishSupport {
 
         if (session != null) {
             session.access();
-            return (session);
+            return session;
         } else {
-            return (null);
+            return null;
         }
     }
 
@@ -182,13 +183,13 @@ public class GlassfishSupport {
             grizzlyRequest.getRequest().authType().setString(gfSession.getAuthType());
         }
     }
-    
+
     private static class GlassfishRealm {
 
         private volatile static Boolean isChecked;
         private static Method hasRoleMethod1;
         private static Method hasRoleMethod2;
-        
+
         private final Object realm;
 
         public GlassfishRealm(Object realm) {
@@ -204,7 +205,7 @@ public class GlassfishSupport {
                 return (Boolean) exec(hasRoleMethod2, principal, role);
             }
         }
-        
+
         private Object exec(Method m, Object... params) {
             try {
                 return m.invoke(realm, params);
@@ -235,7 +236,7 @@ public class GlassfishSupport {
             }
         }
     }
-    
+
     private static class GlassfishSession {
 
         private volatile static Boolean isChecked;
@@ -244,7 +245,7 @@ public class GlassfishSupport {
         private static Method accessMethod;
         private static Method getPrincipalMethod;
         private static Method getAuthTypeMethod;
-        
+
         private final Object session;
 
         public GlassfishSession(Object session) {
@@ -272,7 +273,7 @@ public class GlassfishSupport {
         public String getAuthType() {
             return (String) exec(getAuthTypeMethod);
         }
-        
+
         private Object exec(Method m, Object... params) {
             try {
                 return m.invoke(session, params);
@@ -383,7 +384,7 @@ public class GlassfishSupport {
         private static Method getManagerMethod;
         private static Method getReuseSessionIDMethod;
         private static Method getRealmMethod;
-        
+
         private final Object context;
 
         private GlassfishContext(Object context) {
@@ -421,12 +422,12 @@ public class GlassfishSupport {
             }
         }
     }
-    
+
     private static class GlassfishWrapper {
 
         private static Method findSecurityReferenceMethod;
         private static Method getServletNameMethod;
-        
+
         private final Object wrapper;
 
         private GlassfishWrapper(Object wrapper) {
@@ -441,7 +442,7 @@ public class GlassfishSupport {
         public String getServletName() {
             return (String) exec(getServletNameMethod);
         }
-        
+
         private Object exec(Method m, Object... params) {
             try {
                 return m.invoke(wrapper, params);
@@ -458,5 +459,5 @@ public class GlassfishSupport {
                 throw new IllegalStateException("GlassfishWrapper can't be initialized", t);
             }
         }
-    }    
+    }
 }

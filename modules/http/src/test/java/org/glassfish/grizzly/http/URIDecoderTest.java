@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,23 +16,25 @@
 
 package org.glassfish.grizzly.http;
 
-import org.glassfish.grizzly.http.util.URLDecoder;
-import org.glassfish.grizzly.http.util.DataChunk;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.memory.MemoryManager;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import junit.framework.TestCase;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.http.util.DataChunk;
+import org.glassfish.grizzly.http.util.URLDecoder;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.MemoryManager;
+
+import junit.framework.TestCase;
 
 /**
  * Parse URL decoder
- * 
+ *
  * @author Alexey Stashok
  */
 public class URIDecoderTest extends TestCase {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
-    
+
     public void testURLNoChangeBB() throws Exception {
         testDecoder("http://localhost:8080/helloworld");
     }
@@ -52,10 +54,10 @@ public class URIDecoderTest extends TestCase {
         testStringDecoder(inputURI);
         testCharsDecoder(inputURI);
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     private void testBufferDecoder(String inputURI) throws Exception {
-        
+
         MemoryManager mm = MemoryManager.DEFAULT_MEMORY_MANAGER;
         String encodedURI = URLEncoder.encode(inputURI, UTF8_CHARSET.name());
 
@@ -70,20 +72,20 @@ public class URIDecoderTest extends TestCase {
 
         assertEquals(inputURI, decodedURI);
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     private void testStringDecoder(String inputURI) throws Exception {
-        
+
         String encodedURI = URLEncoder.encode(inputURI, UTF8_CHARSET.name());
 
         String decodedURI = URLDecoder.decode(encodedURI, true, UTF8_CHARSET.name());
 
         assertEquals(inputURI, decodedURI);
     }
-    
-    @SuppressWarnings({"unchecked"})
+
+    @SuppressWarnings({ "unchecked" })
     private void testCharsDecoder(String inputURI) throws Exception {
-        
+
         String encodedURI = URLEncoder.encode(inputURI, UTF8_CHARSET.name());
 
         DataChunk dataChunk = DataChunk.newInstance();
@@ -93,6 +95,6 @@ public class URIDecoderTest extends TestCase {
         URLDecoder.decode(dataChunk, dataChunk, true, UTF8_CHARSET.name());
 
         assertEquals(inputURI, dataChunk.toString());
-    }    
-    
+    }
+
 }

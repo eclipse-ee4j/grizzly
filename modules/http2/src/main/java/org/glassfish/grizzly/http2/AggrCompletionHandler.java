@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http2;
 
 import java.util.Arrays;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.WriteResult;
 
@@ -27,9 +28,8 @@ import org.glassfish.grizzly.WriteResult;
 class AggrCompletionHandler implements CompletionHandler<WriteResult> {
     private Record[] completionHandlerRecords = new Record[2];
     private int recordsCount;
-    
-    public void register(final CompletionHandler<WriteResult> completionHandler,
-            final int bytesWrittenToReport) {
+
+    public void register(final CompletionHandler<WriteResult> completionHandler, final int bytesWrittenToReport) {
         ensureCapacity();
         Record record = completionHandlerRecords[recordsCount];
         if (record == null) {
@@ -38,24 +38,23 @@ class AggrCompletionHandler implements CompletionHandler<WriteResult> {
         } else {
             record.set(completionHandler, bytesWrittenToReport);
         }
-        
+
         recordsCount++;
     }
-    
+
     @Override
     public void cancelled() {
         for (int i = 0; i < recordsCount; i++) {
             try {
                 final Record record = completionHandlerRecords[i];
-                final CompletionHandler<WriteResult> completionHandler =
-                        record.completionHandler;
+                final CompletionHandler<WriteResult> completionHandler = record.completionHandler;
                 record.reset();
-                
+
                 completionHandler.cancelled();
             } catch (Exception ignored) {
             }
         }
-        
+
         recordsCount = 0;
     }
 
@@ -64,15 +63,14 @@ class AggrCompletionHandler implements CompletionHandler<WriteResult> {
         for (int i = 0; i < recordsCount; i++) {
             try {
                 final Record record = completionHandlerRecords[i];
-                final CompletionHandler<WriteResult> completionHandler =
-                        record.completionHandler;
+                final CompletionHandler<WriteResult> completionHandler = record.completionHandler;
                 record.reset();
-                
+
                 completionHandler.failed(throwable);
             } catch (Exception ignored) {
             }
         }
-        
+
         recordsCount = 0;
     }
 
@@ -83,18 +81,17 @@ class AggrCompletionHandler implements CompletionHandler<WriteResult> {
         for (int i = 0; i < recordsCount; i++) {
             try {
                 final Record record = completionHandlerRecords[i];
-                final CompletionHandler<WriteResult> completionHandler =
-                        record.completionHandler;
+                final CompletionHandler<WriteResult> completionHandler = record.completionHandler;
                 final int bytesWrittenToReport = record.bytesWrittenToReport;
-                
+
                 record.reset();
-                
+
                 result.setWrittenSize(bytesWrittenToReport);
                 completionHandler.completed(result);
             } catch (Exception ignored) {
             }
         }
-        
+
         result.setWrittenSize(originalWrittenSize);
         recordsCount = 0;
     }
@@ -106,24 +103,21 @@ class AggrCompletionHandler implements CompletionHandler<WriteResult> {
 
     private void ensureCapacity() {
         if (completionHandlerRecords.length == recordsCount) {
-            completionHandlerRecords = Arrays.copyOf(completionHandlerRecords,
-                    recordsCount + (recordsCount >> 1) + 1);
+            completionHandlerRecords = Arrays.copyOf(completionHandlerRecords, recordsCount + (recordsCount >> 1) + 1);
         }
     }
-    
+
     private static class Record {
 
         private CompletionHandler<WriteResult> completionHandler;
         private int bytesWrittenToReport;
 
-        Record(final CompletionHandler<WriteResult> completionHandler,
-                final int bytesWrittenToReport) {
+        Record(final CompletionHandler<WriteResult> completionHandler, final int bytesWrittenToReport) {
             this.completionHandler = completionHandler;
             this.bytesWrittenToReport = bytesWrittenToReport;
         }
 
-        void set(final CompletionHandler<WriteResult> completionHandler,
-                final int bytesWrittenToReport) {
+        void set(final CompletionHandler<WriteResult> completionHandler, final int bytesWrittenToReport) {
             this.completionHandler = completionHandler;
             this.bytesWrittenToReport = bytesWrittenToReport;
         }

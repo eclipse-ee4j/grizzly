@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,7 +15,6 @@
  */
 
 package org.glassfish.grizzly.http2;
-
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -35,21 +34,16 @@ public abstract class Node {
     protected Node firstChild;
     protected boolean exclusive;
 
-
     // ----------------------------------------------------------- Constructors
-
 
     protected Node(final int id) {
         this.id = id;
     }
 
-
     // ------------------------------------------------------ Protected Methods
 
-
     /**
-     * Mark this {@link Node} as exclusive.  Any siblings will be migrated
-     * to the children list.
+     * Mark this {@link Node} as exclusive. Any siblings will be migrated to the children list.
      */
     protected void exclusive() {
         writeLock.lock();
@@ -85,8 +79,7 @@ public abstract class Node {
     }
 
     /**
-     * Add a new child. If the child is marked as exclusive, any
-     * other children will be moved to become the children of this
+     * Add a new child. If the child is marked as exclusive, any other children will be moved to become the children of this
      * exclusive child.
      */
     protected void addChild(final Node nodeBeingAddedAsChild, final boolean exclusive) {
@@ -132,16 +125,15 @@ public abstract class Node {
     }
 
     /**
-     * Remove this {@link Node} from the tree.  Any children will be moved up
-     * as a child of the remove {@link Node}'s parent.
+     * Remove this {@link Node} from the tree. Any children will be moved up as a child of the remove {@link Node}'s parent.
      */
     protected Node remove(final int id) {
         return remove(id, false);
     }
 
     /**
-     * Top down search from this {@link Node} and any children (recursively)
-     * returning the node with a matching <code>id</code>.
+     * Top down search from this {@link Node} and any children (recursively) returning the node with a matching
+     * <code>id</code>.
      */
     protected Node find(final int id) {
         if (this.id == id) {
@@ -167,20 +159,18 @@ public abstract class Node {
         }
     }
 
-
     // -------------------------------------------------------- Private Methods
 
-
     private boolean isFirstSibling() {
-        return (next != null && prev == null);
+        return next != null && prev == null;
     }
 
     private boolean isLastSibling() {
-        return (next == null && prev != null);
+        return next == null && prev != null;
     }
 
     private boolean hasSiblings() {
-        return (next != null || prev != null);
+        return next != null || prev != null;
     }
 
     private Node remove(final int id, final boolean retainChildren) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,13 +30,11 @@ import org.glassfish.grizzly.utils.conditions.Condition;
 public class StreamDecodeCondition<E> implements Condition {
 
     private final StreamReader streamReader;
-    
+
     private final Transformer<Stream, E> decoder;
     private final ResultAware<E> resultAware;
 
-    public StreamDecodeCondition(StreamReader streamReader,
-            Transformer<Stream, E> decoder,
-            ResultAware<E> resultAware) {
+    public StreamDecodeCondition(StreamReader streamReader, Transformer<Stream, E> decoder, ResultAware<E> resultAware) {
         this.streamReader = streamReader;
         this.decoder = decoder;
         this.resultAware = resultAware;
@@ -44,8 +42,7 @@ public class StreamDecodeCondition<E> implements Condition {
 
     @Override
     public boolean check() {
-        final TransformationResult<Stream, E> result =
-                decoder.transform(streamReader.getConnection(), streamReader);
+        final TransformationResult<Stream, E> result = decoder.transform(streamReader.getConnection(), streamReader);
 
         final Status status = result.getStatus();
         if (status == Status.COMPLETE) {
@@ -55,7 +52,6 @@ public class StreamDecodeCondition<E> implements Condition {
             return false;
         }
 
-        throw new TransformationException(result.getErrorCode() + ": " +
-                result.getErrorDescription());
+        throw new TransformationException(result.getErrorCode() + ": " + result.getErrorDescription());
     }
 }

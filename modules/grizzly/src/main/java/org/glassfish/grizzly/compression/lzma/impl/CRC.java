@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,7 +30,7 @@ public class CRC {
             int r = i;
             for (int j = 0; j < 8; j++) {
                 if ((r & 1) != 0) {
-                    r = (r >>> 1) ^ 0xEDB88320;
+                    r = r >>> 1 ^ 0xEDB88320;
                 } else {
                     r >>>= 1;
                 }
@@ -46,22 +46,22 @@ public class CRC {
 
     public void update(byte[] data, int offset, int size) {
         for (int i = 0; i < size; i++) {
-            _value = TABLE[(_value ^ data[offset + i]) & 0xFF] ^ (_value >>> 8);
+            _value = TABLE[(_value ^ data[offset + i]) & 0xFF] ^ _value >>> 8;
         }
     }
 
     public void update(byte[] data) {
         int size = data.length;
         for (int i = 0; i < size; i++) {
-            _value = TABLE[(_value ^ data[i]) & 0xFF] ^ (_value >>> 8);
+            _value = TABLE[(_value ^ data[i]) & 0xFF] ^ _value >>> 8;
         }
     }
 
     public void updateByte(int b) {
-        _value = TABLE[(_value ^ b) & 0xFF] ^ (_value >>> 8);
+        _value = TABLE[(_value ^ b) & 0xFF] ^ _value >>> 8;
     }
 
     public int getDigest() {
-        return _value ^ (-1);
+        return _value ^ -1;
     }
 }

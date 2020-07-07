@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -47,8 +47,7 @@ public class ServletSessionManager implements SessionManager {
     }
 
     @Override
-    public Session getSession(final Request request,
-            final String requestedSessionId) {
+    public Session getSession(final Request request, final String requestedSessionId) {
         return defaultManager.getSession(request, requestedSessionId);
     }
 
@@ -66,13 +65,11 @@ public class ServletSessionManager implements SessionManager {
     public void configureSessionCookie(final Request request, final Cookie cookie) {
         defaultManager.configureSessionCookie(request, cookie);
 
-        final HttpServletRequestImpl servletRequest =
-                ServletHandler.getServletRequest(request);
+        final HttpServletRequestImpl servletRequest = ServletHandler.getServletRequest(request);
 
         assert servletRequest != null;
 
-        final javax.servlet.SessionCookieConfig cookieConfig =
-                servletRequest.getContextImpl().getSessionCookieConfig();
+        final jakarta.servlet.SessionCookieConfig cookieConfig = servletRequest.getContextImpl().getSessionCookieConfig();
 
         if (cookieConfig.getDomain() != null) {
             cookie.setDomain(cookieConfig.getDomain());

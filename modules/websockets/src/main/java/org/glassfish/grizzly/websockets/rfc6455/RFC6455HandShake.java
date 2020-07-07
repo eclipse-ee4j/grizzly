@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly.websockets.rfc6455;
 
+import static org.glassfish.grizzly.websockets.Constants.ORIGIN_HEADER;
+import static org.glassfish.grizzly.websockets.Constants.SEC_WS_ORIGIN_HEADER;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +33,6 @@ import org.glassfish.grizzly.websockets.HandShake;
 import org.glassfish.grizzly.websockets.HandshakeException;
 import org.glassfish.grizzly.websockets.SecKey;
 
-import static org.glassfish.grizzly.websockets.Constants.*;
-
 public class RFC6455HandShake extends HandShake {
 
     private final SecKey secKey;
@@ -39,7 +40,6 @@ public class RFC6455HandShake extends HandShake {
     private final List<String> enabledProtocols = Collections.emptyList();
 
     // ------------------------------------------------------------ Constructors
-
 
     public RFC6455HandShake(URI uri) {
         super(uri);
@@ -56,7 +56,6 @@ public class RFC6455HandShake extends HandShake {
         secKey = SecKey.generateServerKey(new SecKey(mimeHeaders.getHeader(Constants.SEC_WS_KEY_HEADER)));
     }
 
-
     // -------------------------------------------------- Methods from HandShake
 
     @Override
@@ -69,8 +68,7 @@ public class RFC6455HandShake extends HandShake {
         response.setReasonPhrase(Constants.RESPONSE_CODE_MESSAGE);
         response.setHeader(Constants.SEC_WS_ACCEPT, secKey.getSecKey());
         if (!getEnabledExtensions().isEmpty()) {
-            response.setHeader(Constants.SEC_WS_EXTENSIONS_HEADER,
-                               join(getSubProtocol()));
+            response.setHeader(Constants.SEC_WS_EXTENSIONS_HEADER, join(getSubProtocol()));
         }
     }
 
@@ -82,20 +80,17 @@ public class RFC6455HandShake extends HandShake {
         header.addHeader(Constants.SEC_WS_ORIGIN_HEADER, getOrigin());
         header.addHeader(Constants.SEC_WS_VERSION, getVersion() + "");
         if (!getExtensions().isEmpty()) {
-            header.addHeader(Constants.SEC_WS_EXTENSIONS_HEADER,
-                             joinExtensions(getExtensions()));
+            header.addHeader(Constants.SEC_WS_EXTENSIONS_HEADER, joinExtensions(getExtensions()));
         }
 
-        final String headerValue =
-                header.getHeaders().getHeader(SEC_WS_ORIGIN_HEADER);
+        final String headerValue = header.getHeaders().getHeader(SEC_WS_ORIGIN_HEADER);
         header.getHeaders().removeHeader(SEC_WS_ORIGIN_HEADER);
         header.addHeader(ORIGIN_HEADER, headerValue);
         return content;
     }
 
     @Override
-    public void validateServerResponse(final HttpResponsePacket headers)
-    throws HandshakeException {
+    public void validateServerResponse(final HttpResponsePacket headers) throws HandshakeException {
         super.validateServerResponse(headers);
         secKey.validateServerKey(headers.getHeader(Constants.SEC_WS_ACCEPT));
     }

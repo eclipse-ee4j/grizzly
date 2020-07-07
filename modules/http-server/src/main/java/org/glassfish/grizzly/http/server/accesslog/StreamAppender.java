@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,10 +23,10 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 
 /**
- * An {@link AccessLogAppender appender} writing log entries to an
- * {@link OutputStream}.
+ * An {@link AccessLogAppender appender} writing log entries to an {@link OutputStream}.
  *
- * <p>Log entries will <b>always</b> encoded in <em>UTF-8</em>.
+ * <p>
+ * Log entries will <b>always</b> encoded in <em>UTF-8</em>.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  * @author <a href="http://www.usrz.com/">USRZ.com</a>
@@ -39,17 +39,15 @@ public class StreamAppender implements AccessLogAppender {
     private final Writer writer;
 
     /**
-     * Create a new {@link StreamAppender} instance writing log entries to the
-     * specified {@link OutputStream}.
+     * Create a new {@link StreamAppender} instance writing log entries to the specified {@link OutputStream}.
      */
-    public StreamAppender(OutputStream  output) {
+    public StreamAppender(OutputStream output) {
         writer = new OutputStreamWriter(output, Charset.forName("UTF-8"));
     }
 
     @Override
-    public void append(String accessLogEntry)
-    throws IOException {
-        synchronized(this) {
+    public void append(String accessLogEntry) throws IOException {
+        synchronized (this) {
             writer.write(accessLogEntry);
             writer.write(LINE_SEPARATOR);
             writer.flush();
@@ -57,8 +55,7 @@ public class StreamAppender implements AccessLogAppender {
     }
 
     @Override
-    public void close()
-    throws IOException {
+    public void close() throws IOException {
         writer.close();
     }
 

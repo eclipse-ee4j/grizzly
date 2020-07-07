@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,16 +16,16 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
-
 import java.util.Arrays;
+
+import org.glassfish.grizzly.Buffer;
 
 final class IntegerWriter {
 
-    private static final byte NEW                = 0x0;
-    private static final byte CONFIGURED         = 0x1;
+    private static final byte NEW = 0x0;
+    private static final byte CONFIGURED = 0x1;
     private static final byte FIRST_BYTE_WRITTEN = 0x2;
-    private static final byte DONE               = 0x4;
+    private static final byte DONE = 0x4;
 
     private byte state = NEW;
 
@@ -34,15 +34,15 @@ final class IntegerWriter {
     private int value;
 
     //
-    //      0   1   2   3   4   5   6   7
-    //    +---+---+---+---+---+---+---+---+
-    //    |   |   |   |   |   |   |   |   |
-    //    +---+---+---+-------------------+
-    //    |<--------->|<----------------->|
-    //       payload           N=5
+    // 0 1 2 3 4 5 6 7
+    // +---+---+---+---+---+---+---+---+
+    // | | | | | | | | |
+    // +---+---+---+-------------------+
+    // |<--------->|<----------------->|
+    // payload N=5
     //
     // payload is the contents of the left-hand side part of the octet;
-    //         it is truncated to fit into 8-N bits, where 1 <= N <= 8;
+    // it is truncated to fit into 8-N bits, where 1 <= N <= 8;
     //
     public IntegerWriter configure(int value, int N, int payload) {
         if (state != NEW) {
@@ -54,7 +54,7 @@ final class IntegerWriter {
         checkPrefix(N);
         this.value = value;
         this.N = N;
-        this.payload = payload & 0xFF & (0xFFFFFFFF << N);
+        this.payload = payload & 0xFF & 0xFFFFFFFF << N;
         state = CONFIGURED;
         return this;
     }
@@ -71,7 +71,7 @@ final class IntegerWriter {
             return false;
         }
         if (state == CONFIGURED) {
-            int max = (2 << (N - 1)) - 1;
+            int max = (2 << N - 1) - 1;
             if (value < max) {
                 output.put((byte) (payload | value));
                 state = DONE;
@@ -93,8 +93,7 @@ final class IntegerWriter {
             state = DONE;
             return true;
         }
-        throw new InternalError(Arrays.toString(
-                new Object[]{state, payload, N, value}));
+        throw new InternalError(Arrays.toString(new Object[] { state, payload, N, value }));
     }
 
     private static void checkPrefix(int N) {

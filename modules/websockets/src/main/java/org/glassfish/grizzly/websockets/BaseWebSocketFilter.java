@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -45,26 +45,22 @@ import org.glassfish.grizzly.utils.IdleTimeoutFilter;
  * @author Alexey Stashok
  */
 public abstract class BaseWebSocketFilter extends BaseFilter {
-    
+
     private static final Logger LOGGER = Grizzly.logger(BaseWebSocketFilter.class);
     private static final long DEFAULT_WS_IDLE_TIMEOUT_IN_SECONDS = 15 * 60;
     private final long wsTimeoutMS;
-    
-    
+
     // ------------------------------------------------------------ Constructors
 
-
     /**
-     * Constructs a new <code>BaseWebSocketFilter</code> with a default idle connection
-     * timeout of 15 minutes;
+     * Constructs a new <code>BaseWebSocketFilter</code> with a default idle connection timeout of 15 minutes;
      */
-    public BaseWebSocketFilter()  {
+    public BaseWebSocketFilter() {
         this(DEFAULT_WS_IDLE_TIMEOUT_IN_SECONDS);
     }
 
     /**
-     * Constructs a new <code>BaseWebSocketFilter</code> with a default idle connection
-     * timeout of 15 minutes;
+     * Constructs a new <code>BaseWebSocketFilter</code> with a default idle connection timeout of 15 minutes;
      */
     public BaseWebSocketFilter(final long wsTimeoutInSeconds) {
         if (wsTimeoutInSeconds <= 0) {
@@ -73,13 +69,12 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
             this.wsTimeoutMS = wsTimeoutInSeconds * 1000;
         }
     }
-    
+
     // ----------------------------------------------------- Methods from Filter
     /**
-     * Method handles Grizzly {@link Connection} close phase. Check if the {@link Connection} is a {@link WebSocket}, if
-     * yes - tries to close the websocket gracefully (sending close frame) and calls {@link
-     * WebSocket#onClose(DataFrame)}. If the Grizzly {@link Connection} is not websocket - passes processing to the next
-     * filter in the chain.
+     * Method handles Grizzly {@link Connection} close phase. Check if the {@link Connection} is a {@link WebSocket}, if yes
+     * - tries to close the websocket gracefully (sending close frame) and calls {@link WebSocket#onClose(DataFrame)}. If
+     * the Grizzly {@link Connection} is not websocket - passes processing to the next filter in the chain.
      *
      * @param ctx {@link FilterChainContext}
      *
@@ -107,14 +102,13 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
     /**
      * Handle Grizzly {@link Connection} read phase. If the {@link Connection} has associated {@link WebSocket} object
      * (websocket connection), we check if websocket handshake has been completed for this connection, if not -
-     * initiate/validate handshake. If handshake has been completed - parse websocket {@link DataFrame}s one by one and
-     * pass processing to appropriate {@link WebSocket}: {@link WebSocketApplication} for server- and client- side
-     * connections.
+     * initiate/validate handshake. If handshake has been completed - parse websocket {@link DataFrame}s one by one and pass
+     * processing to appropriate {@link WebSocket}: {@link WebSocketApplication} for server- and client- side connections.
      *
      * @param ctx {@link FilterChainContext}
      *
      * @return {@link NextAction} instruction for {@link FilterChain}, how it should continue the execution
-     * 
+     *
      * @throws java.io.IOException
      */
     @Override
@@ -130,24 +124,21 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
         final WebSocketHolder holder = WebSocketHolder.get(connection);
         WebSocket ws = getWebSocket(connection);
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "handleRead websocket: {0} content-size={1} headers=\n{2}",
-                new Object[]{ws, message.getContent().remaining(), header});
+            LOGGER.log(Level.FINE, "handleRead websocket: {0} content-size={1} headers=\n{2}", new Object[] { ws, message.getContent().remaining(), header });
         }
         if (ws == null || !ws.isConnected()) {
             // If websocket is null - it means either non-websocket Connection, or websocket with incomplete handshake
-            if (!webSocketInProgress(connection) &&
-                !"websocket".equalsIgnoreCase(header.getUpgrade())) {
+            if (!webSocketInProgress(connection) && !"websocket".equalsIgnoreCase(header.getUpgrade())) {
                 // if it's not a websocket connection - pass the processing to the next filter
                 return ctx.getInvokeAction();
             }
-            
+
             try {
                 // Handle handshake
                 return handleHandshake(ctx, message);
             } catch (HandshakeException e) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE, "Handshake error. Code: {0} Msg:{1}",
-                        new Object[]{e.getCode(), e.getMessage()});
+                    LOGGER.log(Level.FINE, "Handshake error. Code: {0} Msg:{1}", new Object[] { e.getCode(), e.getMessage() });
                 }
 
                 onHandshakeFailure(connection, e);
@@ -166,9 +157,8 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
             try {
                 while (buffer != null && buffer.hasRemaining()) {
                     if (holder.buffer != null) {
-                        buffer = Buffers.appendBuffers(
-                                ctx.getMemoryManager(), holder.buffer, buffer);
-                        
+                        buffer = Buffers.appendBuffers(ctx.getMemoryManager(), holder.buffer, buffer);
+
                         holder.buffer = null;
                     }
                     final DataFrame result = holder.handler.unframe(buffer);
@@ -192,8 +182,7 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
 
     /**
      * Handle Grizzly {@link Connection} write phase. If the {@link Connection} has associated {@link WebSocket} object
-     * (websocket connection), we assume that message is websocket {@link DataFrame} and serialize it into a {@link
-     * Buffer}.
+     * (websocket connection), we assume that message is websocket {@link DataFrame} and serialize it into a {@link Buffer}.
      *
      * @param ctx {@link FilterChainContext}
      *
@@ -216,8 +205,7 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
         // invoke next filter in the chain
         return ctx.getInvokeAction();
     }
-    
-    
+
     // --------------------------------------------------------- Private Methods
 
     /**
@@ -230,20 +218,16 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
      *
      * @throws java.io.IOException
      */
-    protected abstract NextAction handleHandshake(FilterChainContext ctx, HttpContent content)
-    throws IOException;
-
+    protected abstract NextAction handleHandshake(FilterChainContext ctx, HttpContent content) throws IOException;
 
     /**
      * The method is called when WebSocket handshake fails for the {@link Connection}.
-     * 
+     *
      * @param connection
-     * @param e 
+     * @param e
      */
-    protected void onHandshakeFailure(final Connection connection,
-            final HandshakeException e) {
+    protected void onHandshakeFailure(final Connection connection, final HandshakeException e) {
     }
-
 
     private static WebSocket getWebSocket(final Connection connection) {
         return WebSocketHolder.getWebSocket(connection);
@@ -252,12 +236,11 @@ public abstract class BaseWebSocketFilter extends BaseFilter {
     protected static boolean webSocketInProgress(final Connection connection) {
         return WebSocketHolder.isWebSocketInProgress(connection);
     }
-    
+
     protected void setIdleTimeout(final FilterChainContext ctx) {
         final FilterChain filterChain = ctx.getFilterChain();
         if (filterChain.indexOfType(IdleTimeoutFilter.class) >= 0) {
-            IdleTimeoutFilter.setCustomTimeout(ctx.getConnection(),
-                    wsTimeoutMS, TimeUnit.MILLISECONDS);
+            IdleTimeoutFilter.setCustomTimeout(ctx.getConnection(), wsTimeoutMS, TimeUnit.MILLISECONDS);
         }
     }
 }

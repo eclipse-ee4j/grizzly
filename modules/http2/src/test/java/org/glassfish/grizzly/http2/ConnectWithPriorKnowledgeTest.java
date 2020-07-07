@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,6 +15,14 @@
  */
 
 package org.glassfish.grizzly.http2;
+
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
@@ -34,23 +42,13 @@ import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class ConnectWithPriorKnowledgeTest extends AbstractHttp2Test {
 
     private static String MESSAGE = "ECHO ECHO ECHO";
     private static final int PORT = 18892;
     private HttpServer httpServer;
 
-
     // ----------------------------------------------------------- Test Methods
-
 
     @Test
     public void testConnectWithPriorKnowledge() throws Exception {
@@ -59,17 +57,12 @@ public class ConnectWithPriorKnowledgeTest extends AbstractHttp2Test {
         final CountDownLatch latch = new CountDownLatch(1);
         final Connection c = getConnection("localhost", PORT, latch);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        HttpRequestPacket request = builder.method(Method.GET)
-                .uri("/echo")
-                .protocol(Protocol.HTTP_2_0)
-                .host("localhost:" + PORT).build();
+        HttpRequestPacket request = builder.method(Method.GET).uri("/echo").protocol(Protocol.HTTP_2_0).host("localhost:" + PORT).build();
         c.write(HttpContent.builder(request).content(Buffers.EMPTY_BUFFER).last(true).build());
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
-
     // -------------------------------------------------------- Private Methods
-
 
     private void configureHttpServer() throws Exception {
         httpServer = createServer(null, PORT, false, true);
@@ -87,25 +80,21 @@ public class ConnectWithPriorKnowledgeTest extends AbstractHttp2Test {
         httpServer.start();
     }
 
-    private Connection getConnection(final String host, final int port, final CountDownLatch latch)
-            throws Exception {
+    private Connection getConnection(final String host, final int port, final CountDownLatch latch) throws Exception {
 
-        final FilterChain clientChain =
-                createClientFilterChainAsBuilder(false, true, new BaseFilter() {
-                    @Override
-                    public NextAction handleRead(FilterChainContext ctx) throws IOException {
-                        final HttpContent httpContent = ctx.getMessage();
-                        if (httpContent.isLast()) {
-                            assertEquals(MESSAGE, httpContent.getContent().toStringContent());
-                            latch.countDown();
-                        }
-                        return ctx.getStopAction();
-                    }
-                }).build();
+        final FilterChain clientChain = createClientFilterChainAsBuilder(false, true, new BaseFilter() {
+            @Override
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
+                final HttpContent httpContent = ctx.getMessage();
+                if (httpContent.isLast()) {
+                    assertEquals(MESSAGE, httpContent.getContent().toStringContent());
+                    latch.countDown();
+                }
+                return ctx.getStopAction();
+            }
+        }).build();
 
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(clientChain)
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(clientChain)
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect(host, port);

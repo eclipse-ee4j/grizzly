@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.grizzly.websockets.frametypes;
 
-
 import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.websockets.BaseFrameType;
 import org.glassfish.grizzly.websockets.DataFrame;
@@ -25,26 +24,25 @@ import org.glassfish.grizzly.websockets.WebSocket;
 
 public class TextFrameType extends BaseFrameType {
     @Override
-        public void setPayload(DataFrame frame, byte[] data) {
-            frame.setPayload(data);
-        }
+    public void setPayload(DataFrame frame, byte[] data) {
+        frame.setPayload(data);
+    }
 
-        @Override
-        public byte[] getBytes(DataFrame dataFrame) {
-            final byte[] bytes = dataFrame.getBytes();
-            if (bytes == null) {
-                setPayload(dataFrame, Utf8Utils.encode(
-                        Charsets.UTF8_CHARSET,
-                        dataFrame.getTextPayload()));
-            }
-            return dataFrame.getBytes();
+    @Override
+    public byte[] getBytes(DataFrame dataFrame) {
+        final byte[] bytes = dataFrame.getBytes();
+        if (bytes == null) {
+            setPayload(dataFrame, Utf8Utils.encode(Charsets.UTF8_CHARSET, dataFrame.getTextPayload()));
         }
+        return dataFrame.getBytes();
+    }
 
-        public void respond(WebSocket socket, DataFrame frame) {
-            if(frame.isLast()) {
-                socket.onMessage(frame.getTextPayload());
-            } else {
-                socket.onFragment(frame.isLast(), frame.getTextPayload());
-            }
+    @Override
+    public void respond(WebSocket socket, DataFrame frame) {
+        if (frame.isLast()) {
+            socket.onMessage(frame.getTextPayload());
+        } else {
+            socket.onFragment(frame.isLast(), frame.getTextPayload());
         }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,19 +16,17 @@
 
 package org.glassfish.grizzly.http.server.util;
 
-import org.glassfish.grizzly.ThreadCache;
-
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.glassfish.grizzly.ThreadCache;
+
 public final class SimpleDateFormats {
-    private static final ThreadCache.CachedTypeIndex<SimpleDateFormats> CACHE_IDX =
-            ThreadCache.obtainIndex(SimpleDateFormats.class, 1);
+    private static final ThreadCache.CachedTypeIndex<SimpleDateFormats> CACHE_IDX = ThreadCache.obtainIndex(SimpleDateFormats.class, 1);
 
     public static SimpleDateFormats create() {
-        final SimpleDateFormats formats =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final SimpleDateFormats formats = ThreadCache.takeFromCache(CACHE_IDX);
         if (formats != null) {
             return formats;
         }
@@ -37,12 +35,11 @@ public final class SimpleDateFormats {
     }
 
     private final SimpleDateFormat[] f;
+
     public SimpleDateFormats() {
         f = new SimpleDateFormat[3];
-        f[0] = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz",
-                                    Locale.US);
-        f[1] = new SimpleDateFormat("EEEEEE, dd-MMM-yy HH:mm:ss zzz",
-                                    Locale.US);
+        f[0] = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+        f[1] = new SimpleDateFormat("EEEEEE, dd-MMM-yy HH:mm:ss zzz", Locale.US);
         f[2] = new SimpleDateFormat("EEE MMMM d HH:mm:ss yyyy", Locale.US);
 
         f[0].setTimeZone(TimeZone.getTimeZone("GMT"));

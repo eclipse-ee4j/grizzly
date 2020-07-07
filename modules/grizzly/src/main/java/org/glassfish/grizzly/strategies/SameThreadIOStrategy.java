@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,7 +30,8 @@ import org.glassfish.grizzly.asyncqueue.AsyncQueue;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 
 /**
- * {@link org.glassfish.grizzly.IOStrategy}, which executes {@link org.glassfish.grizzly.Processor}s in a current thread.
+ * {@link org.glassfish.grizzly.IOStrategy}, which executes {@link org.glassfish.grizzly.Processor}s in a current
+ * thread.
  *
  * @author Alexey Stashok
  */
@@ -40,40 +41,29 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
 
     private static final Logger logger = Grizzly.logger(SameThreadIOStrategy.class);
 
+    private static final InterestLifeCycleListenerWhenIoEnabled LIFECYCLE_LISTENER_WHEN_IO_ENABLED = new InterestLifeCycleListenerWhenIoEnabled();
 
-    private static final InterestLifeCycleListenerWhenIoEnabled LIFECYCLE_LISTENER_WHEN_IO_ENABLED =
-            new InterestLifeCycleListenerWhenIoEnabled();
+    private static final InterestLifeCycleListenerWhenIoDisabled LIFECYCLE_LISTENER_WHEN_IO_DISABLED = new InterestLifeCycleListenerWhenIoDisabled();
 
-    private static final InterestLifeCycleListenerWhenIoDisabled LIFECYCLE_LISTENER_WHEN_IO_DISABLED =
-            new InterestLifeCycleListenerWhenIoDisabled();
-    
     // ------------------------------------------------------------ Constructors
 
-
-    private SameThreadIOStrategy() { }
-
+    private SameThreadIOStrategy() {
+    }
 
     // ---------------------------------------------------------- Public Methods
-
 
     public static SameThreadIOStrategy getInstance() {
         return INSTANCE;
     }
 
-
     // ------------------------------------------------- Methods from IOStrategy
 
-
     @Override
-    public boolean executeIoEvent(final Connection connection,
-            final IOEvent ioEvent, final boolean isIoEventEnabled)
-            throws IOException {
-        
+    public boolean executeIoEvent(final Connection connection, final IOEvent ioEvent, final boolean isIoEventEnabled) throws IOException {
+
         IOEventLifeCycleListener listener = null;
         if (isReadWrite(ioEvent)) {
-            listener = isIoEventEnabled
-                    ? LIFECYCLE_LISTENER_WHEN_IO_ENABLED
-                    : LIFECYCLE_LISTENER_WHEN_IO_DISABLED;
+            listener = isIoEventEnabled ? LIFECYCLE_LISTENER_WHEN_IO_ENABLED : LIFECYCLE_LISTENER_WHEN_IO_DISABLED;
         }
 
         fireIOEvent(connection, ioEvent, listener, logger);
@@ -82,13 +72,11 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
     }
 
     @Override
-    public Executor getThreadPoolFor(final Connection connection,
-            final IOEvent ioEvent) {
+    public Executor getThreadPoolFor(final Connection connection, final IOEvent ioEvent) {
         return null;
     }
 
     // ----------------------------------- Methods from WorkerThreadPoolConfigProducer
-
 
     @Override
     public ThreadPoolConfig createDefaultWorkerPoolConfig(final Transport transport) {
@@ -97,9 +85,7 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
 
     // ---------------------------------------------------------- Nested Classes
 
-
-    private static final class InterestLifeCycleListenerWhenIoEnabled
-            extends IOEventLifeCycleListener.Adapter {
+    private static final class InterestLifeCycleListenerWhenIoEnabled extends IOEventLifeCycleListener.Adapter {
 
         @Override
         public void onReregister(final Context context) throws IOException {
@@ -111,7 +97,7 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
             if (context.wasSuspended() || context.isManualIOEventControl()) {
                 final IOEvent ioEvent = context.getIoEvent();
                 final Connection connection = context.getConnection();
-                
+
                 if (AsyncQueue.EXPECTING_MORE_OPTION.equals(data)) {
                     connection.simulateIOEvent(ioEvent);
                 } else {
@@ -129,25 +115,22 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
         }
 
         @Override
-        public void onContextManualIOEventControl(final Context context)
-                throws IOException {
+        public void onContextManualIOEventControl(final Context context) throws IOException {
             // check suspended mode, to not disable ioevent twice
             if (!context.wasSuspended() && !context.isManualIOEventControl()) {
                 disableIOEvent(context);
             }
         }
 
-        private static void disableIOEvent(final Context context)
-                throws IOException {
+        private static void disableIOEvent(final Context context) throws IOException {
             final Connection connection = context.getConnection();
             final IOEvent ioEvent = context.getIoEvent();
             connection.disableIOEvent(ioEvent);
         }
 
     }
-    
-    private static final class InterestLifeCycleListenerWhenIoDisabled
-            extends IOEventLifeCycleListener.Adapter {
+
+    private static final class InterestLifeCycleListenerWhenIoDisabled extends IOEventLifeCycleListener.Adapter {
 
         @Override
         public void onReregister(final Context context) throws IOException {
@@ -155,9 +138,8 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
         }
 
         @Override
-        public void onComplete(final Context context, final Object data)
-                throws IOException {
-            
+        public void onComplete(final Context context, final Object data) throws IOException {
+
             final IOEvent ioEvent = context.getIoEvent();
             final Connection connection = context.getConnection();
             if (AsyncQueue.EXPECTING_MORE_OPTION.equals(data)) {
@@ -166,5 +148,5 @@ public final class SameThreadIOStrategy extends AbstractIOStrategy {
                 connection.enableIOEvent(ioEvent);
             }
         }
-    }    
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,16 +31,16 @@ public class CountDownWebSocket extends WebSocketClient {
 
     @Override
     public GrizzlyFuture<DataFrame> send(String data) {
-        synchronized(sync) {
+        synchronized (sync) {
             countDown++;
         }
-        
+
         return super.send(data);
     }
 
     @Override
     public void onMessage(String data) {
-        synchronized(sync) {
+        synchronized (sync) {
             if (--countDown == 0) {
                 sync.notify();
             }
@@ -48,14 +48,16 @@ public class CountDownWebSocket extends WebSocketClient {
     }
 
     public boolean countDown() {
-        synchronized(sync) {
-            if (countDown == 0) return true;
-            
+        synchronized (sync) {
+            if (countDown == 0) {
+                return true;
+            }
+
             try {
                 sync.wait(30000);
             } catch (InterruptedException e) {
             }
-            
+
             return countDown == 0;
         }
     }

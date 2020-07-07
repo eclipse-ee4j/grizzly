@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,23 +17,21 @@
 package org.glassfish.grizzly.http.server.naming;
 
 /**
- * This interface represents a naming context, which
- * consists of a set of name-to-object bindings.
- * 
+ * This interface represents a naming context, which consists of a set of name-to-object bindings.
+ *
  * @see javax.naming.Context
- * 
+ *
  * @author Grizzly Team
  */
 public interface NamingContext {
 
     /**
-     * Retrieves the named object.
-     * See {@link #lookup(Name)} for details.
-     * @param name
-     *          the name of the object to look up
-     * @return  the object bound to <tt>name</tt>
-     * @throws  NamingException if a naming exception is encountered
+     * Retrieves the named object. See {@link #lookup(Name)} for details.
+     * 
+     * @param name the name of the object to look up
+     * @return the object bound to <tt>name</tt>
+     * @throws NamingException if a naming exception is encountered
      */
     Object lookup(String pathStr) throws NamingException;
-    
+
 }

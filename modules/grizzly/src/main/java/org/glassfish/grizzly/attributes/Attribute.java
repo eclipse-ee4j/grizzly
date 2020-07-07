@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,15 +18,12 @@ package org.glassfish.grizzly.attributes;
 
 import org.glassfish.grizzly.utils.NullaryFunction;
 
-/** 
- * Class used to define dynamic typed attributes on {@link AttributeHolder}
- * instances.
- * Storing attribute values in {@link AttributeHolder} has two advantage
- * comparing to Map storage:
- *      1) <tt>Attribute</tt> value is typed, and could be checked at
- *         compile time.
- *      2) Access to <tt>Attribute</tt> value, if used with
- *         {@link IndexedAttributeHolder}, could be as fast as access to array.
+/**
+ * Class used to define dynamic typed attributes on {@link AttributeHolder} instances. Storing attribute values in
+ * {@link AttributeHolder} has two advantage comparing to Map storage: 1) <tt>Attribute</tt> value is typed, and could
+ * be checked at compile time. 2) Access to <tt>Attribute</tt> value, if used with {@link IndexedAttributeHolder}, could
+ * be as fast as access to array.
+ * 
  * @param <T>
  */
 public final class Attribute<T> {
@@ -52,8 +49,7 @@ public final class Attribute<T> {
         return "Attribute[" + name + ':' + attributeIndex + ']';
     }
 
-    protected Attribute(final AttributeBuilder builder, final String name,
-            final int index, final T defaultValue) {
+    protected Attribute(final AttributeBuilder builder, final String name, final int index, final T defaultValue) {
         this(builder, name, index, new NullaryFunction<T>() {
 
             @Override
@@ -63,8 +59,7 @@ public final class Attribute<T> {
         });
     }
 
-    protected Attribute(final AttributeBuilder builder, final String name,
-            final int index, final NullaryFunction<T> initializer) {
+    protected Attribute(final AttributeBuilder builder, final String name, final int index, final NullaryFunction<T> initializer) {
         this.builder = builder;
         this.name = name;
         this.attributeIndex = index;
@@ -72,9 +67,9 @@ public final class Attribute<T> {
     }
 
     /**
-     * Get attribute value, stored on the {@link AttributeHolder},
-     * the difference from {@link #get(org.glassfish.grizzly.attributes.AttributeHolder)} is
-     * that default value or {@link NullaryFunction} won't be invoked.
+     * Get attribute value, stored on the {@link AttributeHolder}, the difference from
+     * {@link #get(org.glassfish.grizzly.attributes.AttributeHolder)} is that default value or {@link NullaryFunction} won't
+     * be invoked.
      *
      * @param attributeHolder {@link AttributeHolder}.
      * @return attribute value
@@ -84,8 +79,7 @@ public final class Attribute<T> {
     }
 
     /**
-     * Get attribute value, stored on the {@link AttributeStorage},
-     * the difference from {@link #get(AttributeStorage)} is
+     * Get attribute value, stored on the {@link AttributeStorage}, the difference from {@link #get(AttributeStorage)} is
      * that default value or {@link NullaryFunction} won't be invoked.
      *
      * @param storage {@link AttributeStorage}.
@@ -102,7 +96,7 @@ public final class Attribute<T> {
 
     /**
      * Get attribute value, stored on the {@link AttributeHolder}.
-     * 
+     *
      * @param attributeHolder {@link AttributeHolder}.
      * @return attribute value
      */
@@ -127,9 +121,8 @@ public final class Attribute<T> {
      * @param value attribute value to set.
      */
     public void set(final AttributeHolder attributeHolder, final T value) {
-        final IndexedAttributeAccessor indexedAccessor =
-                attributeHolder.getIndexedAttributeAccessor();
-        
+        final IndexedAttributeAccessor indexedAccessor = attributeHolder.getIndexedAttributeAccessor();
+
         if (indexedAccessor != null) {
             indexedAccessor.setAttribute(attributeIndex, value);
         } else {
@@ -155,12 +148,9 @@ public final class Attribute<T> {
      */
     @SuppressWarnings("unchecked")
     public T remove(final AttributeHolder attributeHolder) {
-        final IndexedAttributeAccessor indexedAccessor =
-                attributeHolder.getIndexedAttributeAccessor();
-        
-        return indexedAccessor != null
-                ? (T) indexedAccessor.removeAttribute(attributeIndex)
-                : (T) attributeHolder.removeAttribute(name);
+        final IndexedAttributeAccessor indexedAccessor = attributeHolder.getIndexedAttributeAccessor();
+
+        return indexedAccessor != null ? (T) indexedAccessor.removeAttribute(attributeIndex) : (T) attributeHolder.removeAttribute(name);
     }
 
     /**
@@ -176,13 +166,13 @@ public final class Attribute<T> {
 
         return null;
     }
-    
+
     /**
-     * Checks if this attribute is set on the {@link AttributeHolder}.
-     * Returns <tt>true</tt>, if attribute is set, of <tt>false</tt> otherwise.
-     * 
+     * Checks if this attribute is set on the {@link AttributeHolder}. Returns <tt>true</tt>, if attribute is set, of
+     * <tt>false</tt> otherwise.
+     *
      * @param attributeHolder {@link AttributeHolder}.
-     * 
+     *
      * @return <tt>true</tt>, if attribute is set, of <tt>false</tt> otherwise.
      */
     public boolean isSet(final AttributeHolder attributeHolder) {
@@ -190,8 +180,8 @@ public final class Attribute<T> {
     }
 
     /**
-     * Checks if this attribute is set on the {@link AttributeStorage}.
-     * Returns <tt>true</tt>, if attribute is set, of <tt>false</tt> otherwise.
+     * Checks if this attribute is set on the {@link AttributeStorage}. Returns <tt>true</tt>, if attribute is set, of
+     * <tt>false</tt> otherwise.
      *
      * @param storage {@link AttributeStorage}.
      *
@@ -202,11 +192,10 @@ public final class Attribute<T> {
         return holder != null && isSet(holder);
 
     }
-    
+
     /**
-     * Return attribute name, which is used as attribute key on
-     * non-indexed {@link AttributeHolder}s.
-     * 
+     * Return attribute name, which is used as attribute key on non-indexed {@link AttributeHolder}s.
+     *
      * @return attribute name.
      */
     public String name() {
@@ -214,23 +203,18 @@ public final class Attribute<T> {
     }
 
     /**
-     * Return attribute name, which is used as attribute key on
-     * indexed {@link AttributeHolder}s.
+     * Return attribute name, which is used as attribute key on indexed {@link AttributeHolder}s.
      *
      * @return attribute indexed.
      */
     public int index() {
         return attributeIndex;
     }
-    
+
     @SuppressWarnings("unchecked")
-    private T get0(final AttributeHolder attributeHolder,
-            final NullaryFunction<T> initializer) {
-        final IndexedAttributeAccessor indexedAccessor =
-                attributeHolder.getIndexedAttributeAccessor();
-        
-        return indexedAccessor != null
-                ? (T) indexedAccessor.getAttribute(attributeIndex, initializer)
-                : (T) attributeHolder.getAttribute(name, initializer);
+    private T get0(final AttributeHolder attributeHolder, final NullaryFunction<T> initializer) {
+        final IndexedAttributeAccessor indexedAccessor = attributeHolder.getIndexedAttributeAccessor();
+
+        return indexedAccessor != null ? (T) indexedAccessor.getAttribute(attributeIndex, initializer) : (T) attributeHolder.getAttribute(name, initializer);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,8 @@
 
 package org.glassfish.grizzly.http.util;
 
+import static org.glassfish.grizzly.http.util.HttpCodecUtils.toCheckedByteArray;
+
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.FieldPosition;
@@ -29,35 +31,33 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.glassfish.grizzly.http.util.HttpCodecUtils.*;
 import org.glassfish.grizzly.utils.Charsets;
 
 /**
  * Utility class to generate HTTP dates.
  *
- * @author Gustav Trede 
+ * @author Gustav Trede
  * @author Remy Maucherat
  */
 public final class FastHttpDateFormat {
 
     private static final String ASCII_CHARSET_NAME = Charsets.ASCII_CHARSET.name();
-    
+
     private static final int CACHE_SIZE = 1000;
 
     private static final TimeZone GMT_TIME_ZONE = TimeZone.getTimeZone("GMT");
 
     private static final SimpleDateFormatter FORMATTER = new SimpleDateFormatter();
-    
+
     /**
      * HTTP date format.
      */
-    private static final ThreadLocal<SimpleDateFormatter> FORMAT =
-        new ThreadLocal<SimpleDateFormatter>() {
-            @Override
-            protected SimpleDateFormatter initialValue() {
-                return new SimpleDateFormatter();
-            }
-        };
+    private static final ThreadLocal<SimpleDateFormatter> FORMAT = new ThreadLocal<SimpleDateFormatter>() {
+        @Override
+        protected SimpleDateFormatter initialValue() {
+            return new SimpleDateFormatter();
+        }
+    };
 
     private static final class SimpleDateFormatter {
         private final Date date;
@@ -70,40 +70,34 @@ public final class FastHttpDateFormat {
             f.setTimeZone(GMT_TIME_ZONE);
         }
 
-        public final String format(final long timeMillis) {
+        public String format(final long timeMillis) {
             date.setTime(timeMillis);
             return f.format(date);
         }
-        
-        public final StringBuffer formatTo(final long timeMillis,
-                final StringBuffer buffer) {
+
+        public StringBuffer formatTo(final long timeMillis, final StringBuffer buffer) {
             date.setTime(timeMillis);
             return f.format(date, buffer, pos);
-        }        
+        }
     }
 
     /**
-     * ThreadLocal for the set of SimpleDateFormat formats to use in getDateHeader().
-     * GMT timezone - all HTTP dates are on GMT
+     * ThreadLocal for the set of SimpleDateFormat formats to use in getDateHeader(). GMT timezone - all HTTP dates are on
+     * GMT
      */
-    private static final ThreadLocal FORMATS =
-        new ThreadLocal() {
-            @Override
-            protected Object initialValue() {
-                SimpleDateFormat[] f = new SimpleDateFormat[3];
-                f[0] = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz",
-                        Locale.US);
-                f[0].setTimeZone(GMT_TIME_ZONE);
-                f[1] = new SimpleDateFormat("EEEEEE, dd-MMM-yy HH:mm:ss zzz",
-                        Locale.US);
-                f[1].setTimeZone(GMT_TIME_ZONE);
-                f[2] = new SimpleDateFormat("EEE MMMM d HH:mm:ss yyyy",
-                        Locale.US);
-                f[2].setTimeZone(GMT_TIME_ZONE);
-                return f;
-            }
-        };
-
+    private static final ThreadLocal FORMATS = new ThreadLocal() {
+        @Override
+        protected Object initialValue() {
+            SimpleDateFormat[] f = new SimpleDateFormat[3];
+            f[0] = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+            f[0].setTimeZone(GMT_TIME_ZONE);
+            f[1] = new SimpleDateFormat("EEEEEE, dd-MMM-yy HH:mm:ss zzz", Locale.US);
+            f[1].setTimeZone(GMT_TIME_ZONE);
+            f[2] = new SimpleDateFormat("EEE MMMM d HH:mm:ss yyyy", Locale.US);
+            f[2].setTimeZone(GMT_TIME_ZONE);
+            return f;
+        }
+    };
 
     /**
      * Instant on which the currentDate object was generated.
@@ -111,9 +105,9 @@ public final class FastHttpDateFormat {
     private static volatile long nextGeneration;
 
     private static final AtomicBoolean isGeneratingNow = new AtomicBoolean();
-    
+
     private static final StringBuffer currentDateBuffer = new StringBuffer();
-    
+
     /**
      * Current formatted date as byte[].
      */
@@ -125,23 +119,17 @@ public final class FastHttpDateFormat {
     private static String cachedStringDate;
     private static volatile byte[] dateBytesForCachedStringDate;
 
-    
     /**
      * Formatter cache.
      */
-    private static final ConcurrentMap<Long, String> formatCache = 
-        new ConcurrentHashMap<>(CACHE_SIZE, 0.75f, 64);
-
+    private static final ConcurrentMap<Long, String> formatCache = new ConcurrentHashMap<>(CACHE_SIZE, 0.75f, 64);
 
     /**
      * Parser cache.
      */
-    private static final ConcurrentMap<String, Long> parseCache =
-            new ConcurrentHashMap<>(CACHE_SIZE, 0.75f, 64);
-
+    private static final ConcurrentMap<String, Long> parseCache = new ConcurrentHashMap<>(CACHE_SIZE, 0.75f, 64);
 
     // --------------------------------------------------------- Public Methods
-
 
     /**
      * Get the current date in HTTP format.
@@ -156,7 +144,7 @@ public final class FastHttpDateFormat {
                 // should never reach this line
             }
         }
-        
+
         return cachedStringDate;
     }
 
@@ -166,11 +154,8 @@ public final class FastHttpDateFormat {
     public static byte[] getCurrentDateBytes() {
         final long now = System.currentTimeMillis();
         final long diff = now - nextGeneration;
-        
-        if (diff > 0 &&
-                (diff > 5000 ||
-                    (!isGeneratingNow.get() &&
-                     isGeneratingNow.compareAndSet(false, true)))) {
+
+        if (diff > 0 && (diff > 5000 || !isGeneratingNow.get() && isGeneratingNow.compareAndSet(false, true))) {
             synchronized (FORMAT) {
                 if (now > nextGeneration) {
                     currentDateBuffer.setLength(0);
@@ -178,30 +163,30 @@ public final class FastHttpDateFormat {
                     currentDateBytes = toCheckedByteArray(currentDateBuffer);
                     nextGeneration = now + 1000;
                 }
-                
+
                 isGeneratingNow.set(false);
             }
         }
         return currentDateBytes;
     }
-    
+
     /**
      * Get the HTTP format of the specified date.<br>
      * http spec only requre second precision http://tools.ietf.org/html/rfc2616#page-20 <br>
-     * therefore we dont use the millisecond precision , but second .
-     * truncation is done in the same way for second precision in SimpleDateFormat:<br>
+     * therefore we dont use the millisecond precision , but second . truncation is done in the same way for second
+     * precision in SimpleDateFormat:<br>
      * (999 millisec. = 0 sec.)
+     * 
      * @param value in milli-seconds
-     * @param threadLocalFormat the {@link DateFormat} used if cache value was 
-     *  not found
+     * @param threadLocalFormat the {@link DateFormat} used if cache value was not found
      */
     public static String formatDate(long value, DateFormat threadLocalFormat) {
         // truncating to second precision
         // this way we optimally use the cache to only store needed http values
-        value = (value/1000)*1000;
-        final Long longValue =  value;
+        value = value / 1000 * 1000;
+        final Long longValue = value;
         String cachedDate = formatCache.get(longValue);
-        if (cachedDate != null){
+        if (cachedDate != null) {
             return cachedDate;
         }
         String newDate;
@@ -216,35 +201,32 @@ public final class FastHttpDateFormat {
 
     }
 
-
     /**
      * Try to parse the given date as a HTTP date.
      */
-    public static long parseDate(final String value,
-            DateFormat[] threadLocalformats) {
+    public static long parseDate(final String value, DateFormat[] threadLocalformats) {
 
         Long cachedDate = parseCache.get(value);
-        if (cachedDate != null){
+        if (cachedDate != null) {
             return cachedDate;
         }
-        long date ;
+        long date;
         if (threadLocalformats != null) {
             date = internalParseDate(value, threadLocalformats);
         } else {
-            date = internalParseDate(value, (SimpleDateFormat[])FORMATS.get());
-        }        
+            date = internalParseDate(value, (SimpleDateFormat[]) FORMATS.get());
+        }
         if (date != -1) {
             updateParseCache(value, date);
         }
         return date;
     }
 
-
     /**
      * Parse date with given formatters.
      */
-    private static long internalParseDate (String value, DateFormat[] formats){
-        for (int i = 0;i < formats.length; i++) {
+    private static long internalParseDate(String value, DateFormat[] formats) {
+        for (int i = 0; i < formats.length; i++) {
             try {
                 return formats[i].parse(value).getTime();
             } catch (ParseException ignore) {
@@ -252,7 +234,6 @@ public final class FastHttpDateFormat {
         }
         return -1;
     }
-
 
     /**
      * Update cache.
@@ -267,16 +248,14 @@ public final class FastHttpDateFormat {
         formatCache.put(key, value);
     }
 
-
     /**
      * Update cache.
      */
     private static void updateParseCache(String key, Long value) {
         if (parseCache.size() > CACHE_SIZE) {
-            parseCache.clear(); 
+            parseCache.clear();
         }
         parseCache.put(key, value);
     }
-
 
 }

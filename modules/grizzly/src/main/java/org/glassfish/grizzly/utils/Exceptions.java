@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,8 +29,8 @@ import java.util.Map;
 public class Exceptions {
 
     /**
-     * Returns the {@link Throwable}'s stack trace information as {@link String}.
-     * The result {@link String} format will be the same as reported by {@link Throwable#printStackTrace()}.
+     * Returns the {@link Throwable}'s stack trace information as {@link String}. The result {@link String} format will be
+     * the same as reported by {@link Throwable#printStackTrace()}.
      *
      * @param t {@link Throwable}.
      * @return the {@link Throwable}'s stack trace information as {@link String}.
@@ -57,26 +57,26 @@ public class Exceptions {
 
         return new IOException(t);
     }
-    
+
     /**
      * @return {@link String} representation of all the JVM threads
-     * 
+     *
      * @see Thread#getAllStackTraces()
      */
     public static String getAllStackTracesAsString() {
         final StringBuilder sb = new StringBuilder(256);
-        
+
         final Map<Thread, StackTraceElement[]> all = Thread.getAllStackTraces();
-        
+
         for (Map.Entry<Thread, StackTraceElement[]> entry : all.entrySet()) {
             sb.append(entry.getKey()).append('\n');
-            
+
             for (StackTraceElement traceElement : entry.getValue()) {
-                sb.append("\tat ").append(traceElement).append('\n');                
+                sb.append("\tat ").append(traceElement).append('\n');
             }
-            
+
         }
-        
+
         return sb.toString();
     }
 }

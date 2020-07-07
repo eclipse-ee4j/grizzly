@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,18 +16,16 @@
 
 package org.glassfish.grizzly.http2;
 
-import org.junit.Test;
-
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Test;
+
 public class NaryTreeTest {
 
-
     // ----------------------------------------------------------- Test Methods
-
 
     @Test
     public void addSibling() {
@@ -537,9 +535,7 @@ public class NaryTreeTest {
         assertNull(n6.firstChild);
     }
 
-
     // --------------------------------------------------- Test Support Methods
-
 
     Node createAndValidate() {
         return validateDefaultStructure(createDefaultStructure());
@@ -650,9 +646,7 @@ public class NaryTreeTest {
         return root;
     }
 
-
     // --------------------------------------------------------- Nested Classes
-
 
     private static final class TestNode extends Node {
         TestNode(final int id) {

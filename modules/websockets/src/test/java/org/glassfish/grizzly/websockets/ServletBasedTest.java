@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,8 +28,8 @@ import org.junit.Test;
 
 public class ServletBasedTest {
     /**
-     * This tests the up front registration of applications from places such as Servlet.init().  This is likely the
-     * common case
+     * This tests the up front registration of applications from places such as Servlet.init(). This is likely the common
+     * case
      */
     @Test
     public void declarative() throws IOException, InstantiationException, InterruptedException, URISyntaxException {
@@ -43,14 +43,14 @@ public class ServletBasedTest {
             networkListener.registerAddOn(new WebSocketAddOn());
         }
         httpServer.start();
-        
+
         try {
-            WebSocketClient socket = new WebSocketClient(String.format("ws://localhost:%s/echo", WebSocketsTest.PORT),
-                new WebSocketAdapter() {
-                    public void onMessage(WebSocket socket, String frame) {
-                        latch.countDown();
-                    }
-                });
+            WebSocketClient socket = new WebSocketClient(String.format("ws://localhost:%s/echo", WebSocketsTest.PORT), new WebSocketAdapter() {
+                @Override
+                public void onMessage(WebSocket socket, String frame) {
+                    latch.countDown();
+                }
+            });
             socket.connect();
             socket.send("echo me back");
             Assert.assertTrue(latch.await(WebSocketEngine.DEFAULT_TIMEOUT, TimeUnit.SECONDS));

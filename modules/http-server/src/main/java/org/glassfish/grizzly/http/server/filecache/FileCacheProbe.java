@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -65,18 +65,16 @@ public interface FileCacheProbe {
      */
     void onErrorEvent(FileCache fileCache, Throwable error);
 
-
     // ---------------------------------------------------------- Nested Classes
 
     /**
-     * {@link FileCacheProbe} adapter that provides no-op implementations for
-     * all interface methods allowing easy extension by the developer.
+     * {@link FileCacheProbe} adapter that provides no-op implementations for all interface methods allowing easy extension
+     * by the developer.
      *
      * @since 2.1.9
      */
     @SuppressWarnings("UnusedDeclaration")
     class Adapter implements FileCacheProbe {
-
 
         // ----------------------------------------- Methods from FileCacheProbe
 
@@ -84,31 +82,36 @@ public interface FileCacheProbe {
          * {@inheritDoc}
          */
         @Override
-        public void onEntryAddedEvent(FileCache fileCache, FileCacheEntry entry) {}
+        public void onEntryAddedEvent(FileCache fileCache, FileCacheEntry entry) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onEntryRemovedEvent(FileCache fileCache, FileCacheEntry entry) {}
+        public void onEntryRemovedEvent(FileCache fileCache, FileCacheEntry entry) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onEntryHitEvent(FileCache fileCache, FileCacheEntry entry) {}
+        public void onEntryHitEvent(FileCache fileCache, FileCacheEntry entry) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onEntryMissedEvent(FileCache fileCache, String host, String requestURI) {}
+        public void onEntryMissedEvent(FileCache fileCache, String host, String requestURI) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onErrorEvent(FileCache fileCache, Throwable error) {}
+        public void onErrorEvent(FileCache fileCache, Throwable error) {
+        }
 
     } // END Adapter
 }

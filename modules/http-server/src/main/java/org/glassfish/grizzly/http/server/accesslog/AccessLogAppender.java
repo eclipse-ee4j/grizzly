@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,17 +30,14 @@ public interface AccessLogAppender extends Closeable {
     /**
      * Append the specified access log entry.
      *
-     * @param accessLogEntry The {@link String} value of the data to be append
-     *                       in the access log.
+     * @param accessLogEntry The {@link String} value of the data to be append in the access log.
      * @throws IOException If an I/O error occurred appending to the log.
      */
-    void append(String accessLogEntry)
-    throws IOException;
+    void append(String accessLogEntry) throws IOException;
 
     /**
      * Close any underlying resource owned by this appender.
      */
     @Override
-    void close()
-    throws IOException;
+    void close() throws IOException;
 }

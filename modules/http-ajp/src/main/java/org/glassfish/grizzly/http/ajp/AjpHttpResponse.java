@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,8 +20,7 @@ import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.ProcessingState;
 
 /**
- * {@link HttpResponsePacket} implementation, which also contains AJP
- * related meta data.
+ * {@link HttpResponsePacket} implementation, which also contains AJP related meta data.
  *
  * @author Alexey Stashok
  */

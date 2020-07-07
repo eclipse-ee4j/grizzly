@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.asyncqueue;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -27,31 +28,29 @@ import org.glassfish.grizzly.utils.DebugPoint;
 
 /**
  * {@link AsyncQueue} element unit
- * 
+ *
  * @param <R> the result type
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class AsyncQueueRecord<R> implements Cacheable {
     private final static Logger LOGGER = Grizzly.logger(AsyncQueue.class);
-    
+
     protected Connection connection;
     protected Object message;
     protected CompletionHandler completionHandler;
 
     protected boolean isRecycled = false;
     protected DebugPoint recycleTrack;
-    
+
     protected AsyncQueueRecord() {
     }
-    
-    public AsyncQueueRecord(final Connection connection,
-            final Object message, final CompletionHandler completionHandler) {
+
+    public AsyncQueueRecord(final Connection connection, final Object message, final CompletionHandler completionHandler) {
         set(connection, message, completionHandler);
     }
 
-    protected final void set(final Connection connection,
-            final Object message, final CompletionHandler completionHandler) {
+    protected final void set(final Connection connection, final Object message, final CompletionHandler completionHandler) {
 
         checkRecycled();
         this.connection = connection;
@@ -62,7 +61,7 @@ public abstract class AsyncQueueRecord<R> implements Cacheable {
     public Connection getConnection() {
         return connection;
     }
-  
+
     @SuppressWarnings("unchecked")
     public final <T> T getMessage() {
         checkRecycled();
@@ -76,7 +75,7 @@ public abstract class AsyncQueueRecord<R> implements Cacheable {
 
     /**
      * Returns the current record result object.
-     * 
+     *
      * @return the current record result object
      */
     public abstract R getCurrentResult();
@@ -86,12 +85,10 @@ public abstract class AsyncQueueRecord<R> implements Cacheable {
             completionHandler.failed(e);
         } else {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE,
-                        LogMessages.FINE_GRIZZLY_ASYNCQUEUE_ERROR_NOCALLBACK_ERROR(e));
+                LOGGER.log(Level.FINE, LogMessages.FINE_GRIZZLY_ASYNCQUEUE_ERROR_NOCALLBACK_ERROR(e));
             }
         }
     }
-
 
     @SuppressWarnings("unchecked")
     public final void notifyIncomplete() {
@@ -99,7 +96,7 @@ public abstract class AsyncQueueRecord<R> implements Cacheable {
             completionHandler.updated(getCurrentResult());
         }
     }
-    
+
     protected final void checkRecycled() {
         if (Grizzly.isTrackingThreadCache() && isRecycled) {
             final DebugPoint track = recycleTrack;

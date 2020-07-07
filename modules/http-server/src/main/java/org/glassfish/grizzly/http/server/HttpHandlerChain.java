@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.server.jmxbase.JmxEventListener;
@@ -38,11 +39,10 @@ import org.glassfish.grizzly.http.util.RequestURIRef;
 import org.glassfish.grizzly.localization.LogMessages;
 
 /**
- * The HttpHandlerChain class allows the invocation of multiple {@link HttpHandler}s
- * every time a new HTTP request is ready to be handled. Requests are mapped
- * to their associated {@link HttpHandler} at runtime using the mapping
- * information configured when invoking the {@link HttpHandlerChain#addHandler
- * (org.glassfish.grizzly.http.server.HttpHandler, java.lang.String[])}
+ * The HttpHandlerChain class allows the invocation of multiple {@link HttpHandler}s every time a new HTTP request is
+ * ready to be handled. Requests are mapped to their associated {@link HttpHandler} at runtime using the mapping
+ * information configured when invoking the
+ * {@link HttpHandlerChain#addHandler (org.glassfish.grizzly.http.server.HttpHandler, java.lang.String[])}
  *
  * @author Jeanfrancois Arcand
  */
@@ -51,50 +51,44 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
     private static final Logger LOGGER = Grizzly.logger(HttpHandlerChain.class);
 
     private static final Map<HttpHandlerRegistration, PathUpdater> ROOT_URLS;
-    
+
     static {
-        ROOT_URLS = new HashMap<HttpHandlerRegistration, PathUpdater>(3);
+        ROOT_URLS = new HashMap<>(3);
         ROOT_URLS.put(HttpHandlerRegistration.fromString(""), new EmptyPathUpdater());
         ROOT_URLS.put(HttpHandlerRegistration.fromString("/"), new SlashPathUpdater());
         ROOT_URLS.put(HttpHandlerRegistration.fromString("/*"), new SlashStarPathUpdater());
     }
-    
-    private final FullUrlPathResolver fullUrlPathResolver =
-            new FullUrlPathResolver(this);
+
+    private final FullUrlPathResolver fullUrlPathResolver = new FullUrlPathResolver(this);
     /**
      * The name -> {@link HttpHandler} map.
      */
-    private final ConcurrentMap<String, HttpHandler> handlersByName =
-            new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, HttpHandler> handlersByName = new ConcurrentHashMap<>();
 
-    private final ReentrantReadWriteLock mapperUpdateLock =
-            new ReentrantReadWriteLock();
-    
+    private final ReentrantReadWriteLock mapperUpdateLock = new ReentrantReadWriteLock();
+
     /**
      * The list of {@link HttpHandler} instance.
      */
-    private final ConcurrentMap<HttpHandler, HttpHandlerRegistration[]> handlers =
-            new ConcurrentHashMap<>();
-    private final ConcurrentMap<HttpHandler, Object> monitors =
-            new ConcurrentHashMap<>();
-    
+    private final ConcurrentMap<HttpHandler, HttpHandlerRegistration[]> handlers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<HttpHandler, Object> monitors = new ConcurrentHashMap<>();
+
     /**
      * Number of registered HttpHandlers
      */
     private int handlersCount;
-    
+
     /**
-     * The root {@link HttpHandler}, used in cases when HttpHandlerChain has
-     * only one {@link HttpHandler} registered and this {@link HttpHandler} is
-     * registered as root resource.
+     * The root {@link HttpHandler}, used in cases when HttpHandlerChain has only one {@link HttpHandler} registered and
+     * this {@link HttpHandler} is registered as root resource.
      */
     private volatile RootHttpHandler rootHttpHandler;
-    
+
     /**
      * Internal {@link Mapper} used to Map request to their associated {@link HttpHandler}
      */
     private final Mapper mapper;
-    
+
     /**
      * DispatchHelper, which maps path or name to the Mapper entry
      */
@@ -105,9 +99,8 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
      */
     private final static String LOCAL_HOST = "localhost";
     /**
-     * Flag indicating this HttpHandler has been started.  Any subsequent
-     * HttpHandler instances added to this chain after is has been started
-     * will have their start() method invoked.
+     * Flag indicating this HttpHandler has been started. Any subsequent HttpHandler instances added to this chain after is
+     * has been started will have their start() method invoked.
      */
     private boolean started;
     private final HttpServer httpServer;
@@ -130,7 +123,7 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
     @Override
     public void jmxEnabled() {
         mapperUpdateLock.readLock().lock();
-        
+
         try {
             for (HttpHandler httpHandler : handlers.keySet()) {
                 if (httpHandler instanceof Monitorable) {
@@ -145,7 +138,7 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
     @Override
     public void jmxDisabled() {
         mapperUpdateLock.readLock().lock();
-        
+
         try {
             for (HttpHandler httpHandler : handlers.keySet()) {
                 if (httpHandler instanceof Monitorable) {
@@ -161,31 +154,25 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
      * {@inheritDoc}
      */
     @Override
-    boolean doHandle(final Request request, final Response response)
-            throws Exception {
+    boolean doHandle(final Request request, final Response response) throws Exception {
         response.setErrorPageGenerator(getErrorPageGenerator(request));
-        
+
         try {
             final RootHttpHandler rootHttpHandlerLocal = rootHttpHandler;
-            
+
             if (rootHttpHandlerLocal != null) {
                 final HttpHandler rh = rootHttpHandlerLocal.httpHandler;
                 rootHttpHandlerLocal.pathUpdater.update(this, rh, request);
                 return rh.doHandle(request, response);
             }
-            
+
             final RequestURIRef uriRef = request.getRequest().getRequestURIRef();
             uriRef.setDefaultURIEncoding(getRequestURIEncoding());
-            final DataChunk decodedURI = uriRef.getDecodedRequestURIBC(
-                    isAllowEncodedSlash());
-            
+            final DataChunk decodedURI = uriRef.getDecodedRequestURIBC(isAllowEncodedSlash());
+
             final MappingData mappingData = request.obtainMappingData();
 
-            mapper.mapUriWithSemicolon(request.getRequest(),
-                                       decodedURI,
-                                       mappingData,
-                                       0);
-
+            mapper.mapUriWithSemicolon(request.getRequest(), decodedURI, mappingData, 0);
 
             HttpHandler httpHandler;
             if (mappingData.context != null && mappingData.context instanceof HttpHandler) {
@@ -209,19 +196,19 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
                 }
             } catch (Exception ex2) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.log(Level.WARNING,
-                            LogMessages.WARNING_GRIZZLY_HTTP_SERVER_HTTPHANDLERCHAIN_ERRORPAGE(), ex2);
+                    LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_HTTPHANDLERCHAIN_ERRORPAGE(), ex2);
                 }
             }
         }
-        
+
         return true;
     }
-    
+
     // ---------------------------------------------------------- Public Methods
-    
+
     /**
      * Map the {@link Request} to the proper {@link HttpHandler}
+     * 
      * @param request The {@link Request}
      * @param response The {@link Response}
      * @throws java.lang.Exception
@@ -232,29 +219,29 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
     }
 
     /**
-     * Add a {@link HttpHandler} and its associated array of mapping. The mapping
-     * data will be used to map incoming request to its associated {@link HttpHandler}.
+     * Add a {@link HttpHandler} and its associated array of mapping. The mapping data will be used to map incoming request
+     * to its associated {@link HttpHandler}.
+     * 
      * @param httpHandler {@link HttpHandler} instance
      * @param mappings an array of mapping.
      */
-    public void addHandler(final HttpHandler httpHandler,
-            final String[] mappings) {
-        
+    public void addHandler(final HttpHandler httpHandler, final String[] mappings) {
+
     }
-    
+
     /**
-     * Add a {@link HttpHandler} and its associated array of mapping. The mapping
-     * data will be used to map incoming request to its associated {@link HttpHandler}.
+     * Add a {@link HttpHandler} and its associated array of mapping. The mapping data will be used to map incoming request
+     * to its associated {@link HttpHandler}.
+     * 
      * @param httpHandler {@link HttpHandler} instance
      * @param mappings an array of mapping.
      */
-    public void addHandler(final HttpHandler httpHandler,
-            final HttpHandlerRegistration[] mappings) {
+    public void addHandler(final HttpHandler httpHandler, final HttpHandlerRegistration[] mappings) {
         mapperUpdateLock.writeLock().lock();
-        
+
         try {
             if (mappings.length == 0) {
-                addHandler(httpHandler, new String[]{""});
+                addHandler(httpHandler, new String[] { "" });
             } else {
                 if (started) {
                     httpHandler.start();
@@ -266,7 +253,7 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
                 if (handlers.put(httpHandler, mappings) == null) {
                     handlersCount++;
                 }
-                
+
                 final String name = httpHandler.getName();
                 if (name != null) {
                     handlersByName.put(name, httpHandler);
@@ -275,39 +262,33 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
                 httpHandler.setDispatcherHelper(dispatchHelper);
 
                 for (HttpHandlerRegistration reg : mappings) {
-                    
+
                     final String ctx = reg.getContextPath();
                     final String wrapper = reg.getUrlPattern();
                     if (ctx.length() != 0) {
-                        mapper.addContext(LOCAL_HOST, ctx, httpHandler,
-                                new String[]{"index.html", "index.htm"}, null);
+                        mapper.addContext(LOCAL_HOST, ctx, httpHandler, new String[] { "index.html", "index.htm" }, null);
                     } else {
                         if (!isRootConfigured && wrapper.startsWith("*.")) {
                             isRootConfigured = true;
                             final HttpHandler a = new HttpHandler() {
 
                                 @Override
-                                public void service(Request request,
-                                        Response response) throws IOException {
+                                public void service(Request request, Response response) throws IOException {
                                     response.sendError(404);
                                 }
                             };
-                            mapper.addContext(LOCAL_HOST, ctx, a,
-                                    new String[]{"index.html", "index.htm"}, null);
+                            mapper.addContext(LOCAL_HOST, ctx, a, new String[] { "index.html", "index.htm" }, null);
                         } else {
-                            mapper.addContext(LOCAL_HOST, ctx, httpHandler,
-                                    new String[]{"index.html", "index.htm"}, null);
+                            mapper.addContext(LOCAL_HOST, ctx, httpHandler, new String[] { "index.html", "index.htm" }, null);
                         }
                     }
                     mapper.addWrapper(LOCAL_HOST, ctx, wrapper, httpHandler);
                 }
-                
+
                 // Check if the only one HttpHandler is registered
                 // and if it's a root HttpHandler - apply optimization
-                if (handlersCount == 1 && mappings.length == 1 &&
-                        ROOT_URLS.containsKey(mappings[0])) {
-                    rootHttpHandler = new RootHttpHandler(httpHandler,
-                            ROOT_URLS.get(mappings[0]));
+                if (handlersCount == 1 && mappings.length == 1 && ROOT_URLS.containsKey(mappings[0])) {
+                    rootHttpHandler = new RootHttpHandler(httpHandler, ROOT_URLS.get(mappings[0]));
                 } else {
                     rootHttpHandler = null;
                 }
@@ -320,6 +301,7 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
 
     /**
      * Remove a {@link HttpHandler}
+     * 
      * @param httpHandler {@link HttpHandler} to remove
      * @return <tt>true</tt> if removed
      */
@@ -327,9 +309,9 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
         if (httpHandler == null) {
             throw new IllegalStateException();
         }
-        
+
         mapperUpdateLock.writeLock().lock();
-        
+
         try {
             final String name = httpHandler.getName();
             if (name != null) {
@@ -340,15 +322,14 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
             if (mappings != null) {
                 for (HttpHandlerRegistration mapping : mappings) {
                     final String contextPath = mapping.getContextPath();
-                    
-                    mapper.removeWrapper(LOCAL_HOST, contextPath,
-                            mapping.getUrlPattern());
-                    
+
+                    mapper.removeWrapper(LOCAL_HOST, contextPath, mapping.getUrlPattern());
+
                     if (mapper.getWrapperNames(LOCAL_HOST, name).length == 0) {
                         mapper.removeContext(LOCAL_HOST, contextPath);
                     }
                 }
-                
+
                 deregisterJmxForHandler(httpHandler);
                 httpHandler.destroy();
 
@@ -356,13 +337,10 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
                 // and if it's a root HttpHandler - apply optimization
                 handlersCount--;
                 if (handlersCount == 1) {
-                    final Map.Entry<HttpHandler, HttpHandlerRegistration[]> entry =
-                            handlers.entrySet().iterator().next();
+                    final Map.Entry<HttpHandler, HttpHandlerRegistration[]> entry = handlers.entrySet().iterator().next();
                     final HttpHandlerRegistration[] lastHttpHandlerMappings = entry.getValue();
-                    if (lastHttpHandlerMappings.length == 1
-                            && ROOT_URLS.containsKey(lastHttpHandlerMappings[0])) {
-                        rootHttpHandler = new RootHttpHandler(httpHandler,
-                                ROOT_URLS.get(lastHttpHandlerMappings[0]));
+                    if (lastHttpHandlerMappings.length == 1 && ROOT_URLS.containsKey(lastHttpHandlerMappings[0])) {
+                        rootHttpHandler = new RootHttpHandler(httpHandler, ROOT_URLS.get(lastHttpHandlerMappings[0]));
                     } else {
                         rootHttpHandler = null;
                     }
@@ -370,8 +348,8 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
                     rootHttpHandler = null;
                 }
             }
-            
-            return (mappings != null);
+
+            return mappings != null;
         } finally {
             mapperUpdateLock.writeLock().unlock();
         }
@@ -379,7 +357,7 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
 
     public void removeAllHttpHandlers() {
         mapperUpdateLock.writeLock().lock();
-        
+
         try {
             for (final HttpHandler handler : handlers.keySet()) {
                 removeHttpHandler(handler);
@@ -388,11 +366,11 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
             mapperUpdateLock.writeLock().unlock();
         }
     }
-    
+
     @Override
     public synchronized void start() {
         mapperUpdateLock.readLock().lock();
-        
+
         try {
             for (HttpHandler httpHandler : handlers.keySet()) {
                 httpHandler.start();
@@ -400,14 +378,14 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
         } finally {
             mapperUpdateLock.readLock().unlock();
         }
-        
+
         started = true;
     }
 
     @Override
     public synchronized void destroy() {
         mapperUpdateLock.writeLock().lock();
-        
+
         try {
             for (HttpHandler httpHandler : handlers.keySet()) {
                 httpHandler.destroy();
@@ -436,16 +414,15 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
     private final class DispatchHelperImpl implements DispatcherHelper {
 
         @Override
-        public void mapPath(final HttpRequestPacket requestPacket, final DataChunk path,
-                final MappingData mappingData) throws Exception {
-            
+        public void mapPath(final HttpRequestPacket requestPacket, final DataChunk path, final MappingData mappingData) throws Exception {
+
             mapper.map(requestPacket, path, mappingData);
         }
 
         @Override
         public void mapName(final DataChunk name, final MappingData mappingData) {
             final String nameStr = name.toString();
-            
+
             final HttpHandler handler = handlersByName.get(nameStr);
             if (handler != null) {
                 mappingData.wrapper = handler;
@@ -453,80 +430,74 @@ public class HttpHandlerChain extends HttpHandler implements JmxEventListener {
             }
         }
     }
-    
+
     private static final class RootHttpHandler {
         private final HttpHandler httpHandler;
         private final PathUpdater pathUpdater;
 
-        public RootHttpHandler(final HttpHandler httpHandler,
-                final PathUpdater pathUpdater) {
+        public RootHttpHandler(final HttpHandler httpHandler, final PathUpdater pathUpdater) {
             this.httpHandler = httpHandler;
             this.pathUpdater = pathUpdater;
         }
     }
-    
+
     private interface PathUpdater {
 
-        void update(HttpHandlerChain handlerChain,
-                    HttpHandler httpHandler, Request request);
+        void update(HttpHandlerChain handlerChain, HttpHandler httpHandler, Request request);
     }
-    
+
     private static class SlashPathUpdater implements PathUpdater {
 
         @Override
-        public void update(final HttpHandlerChain handlerChain,
-                final HttpHandler httpHandler, final Request request) {
+        public void update(final HttpHandlerChain handlerChain, final HttpHandler httpHandler, final Request request) {
 
             request.setContextPath("");
             request.setPathInfo((String) null);
             request.setHttpHandlerPath(handlerChain.fullUrlPathResolver);
         }
-        
+
     }
-    
+
     private static class SlashStarPathUpdater implements PathUpdater {
 
         @Override
-        public void update(final HttpHandlerChain handlerChain,
-                final HttpHandler httpHandler, final Request request) {
+        public void update(final HttpHandlerChain handlerChain, final HttpHandler httpHandler, final Request request) {
             request.setContextPath("");
             request.setPathInfo(handlerChain.fullUrlPathResolver);
             request.setHttpHandlerPath("");
         }
     }
-    
+
     private static class EmptyPathUpdater implements PathUpdater {
 
         @Override
-        public void update(final HttpHandlerChain handlerChain,
-                final HttpHandler httpHandler, final Request request) {
+        public void update(final HttpHandlerChain handlerChain, final HttpHandler httpHandler, final Request request) {
             request.setContextPath("");
             request.setPathInfo((String) null);
             request.setHttpHandlerPath((String) null);
         }
-    }    
-    
+    }
+
     private static class FullUrlPathResolver implements Request.PathResolver {
         private final HttpHandler httpHandler;
 
         public FullUrlPathResolver(HttpHandler httpHandler) {
             this.httpHandler = httpHandler;
         }
-        
+
         @Override
         public String resolve(final Request request) {
             try {
                 final RequestURIRef uriRef = request.getRequest().getRequestURIRef();
                 uriRef.setDefaultURIEncoding(httpHandler.getRequestURIEncoding());
-                final DataChunk decodedURI = uriRef.getDecodedRequestURIBC(
-                        httpHandler.isAllowEncodedSlash());
-                
+                final DataChunk decodedURI = uriRef.getDecodedRequestURIBC(httpHandler.isAllowEncodedSlash());
+
                 final int pos = decodedURI.indexOf(';', 0);
                 return pos < 0 ? decodedURI.toString() : decodedURI.toString(0, pos);
             } catch (CharConversionException e) {
                 throw new IllegalStateException(e);
             }
         }
-        
+
     }
 }

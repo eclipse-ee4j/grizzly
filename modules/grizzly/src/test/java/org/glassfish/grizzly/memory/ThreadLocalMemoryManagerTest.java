@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,23 +16,24 @@
 
 package org.glassfish.grizzly.memory;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.nio.ByteOrder;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.threadpool.GrizzlyExecutorService;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
-import java.util.concurrent.ExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Grizzly;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author oleksiys
@@ -62,20 +63,16 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
                 final int initialSize = mm.getReadyThreadBufferSize();
 
                 Buffer buffer = mm.allocate(allocSize);
-                assertEquals(
-                        initialSize - allocSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize, mm.getReadyThreadBufferSize());
 
                 buffer.position(allocSize / 2);
                 buffer.trim();
 
-                assertEquals(initialSize - allocSize / 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize / 2, mm.getReadyThreadBufferSize());
 
                 buffer.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -99,14 +96,11 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
 
                 Buffer buffer = mm.allocate(allocSize);
 
-                assertEquals(
-                        initialSize - allocSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize, mm.getReadyThreadBufferSize());
 
                 buffer.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -131,44 +125,29 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
                 final int chunkSize = 4096;
 
                 Buffer buffer1 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - chunkSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize, mm.getReadyThreadBufferSize());
 
                 Buffer buffer2 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - chunkSize * 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize * 2, mm.getReadyThreadBufferSize());
 
                 Buffer buffer3 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - chunkSize * 3,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize * 3, mm.getReadyThreadBufferSize());
 
                 Buffer buffer4 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - chunkSize * 4,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize * 4, mm.getReadyThreadBufferSize());
 
                 buffer4.dispose();
-                assertEquals(
-                        initialSize - chunkSize * 3,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize * 3, mm.getReadyThreadBufferSize());
 
                 buffer3.dispose();
-                assertEquals(
-                        initialSize - chunkSize * 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize * 2, mm.getReadyThreadBufferSize());
 
                 buffer2.dispose();
-                assertEquals(
-                        initialSize - chunkSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize, mm.getReadyThreadBufferSize());
 
                 buffer1.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -192,36 +171,25 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
                 final int chunkSize = 4096;
 
                 Buffer buffer1 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - chunkSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize, mm.getReadyThreadBufferSize());
 
                 buffer1.position(chunkSize / 2);
                 buffer1.trim();
-                assertEquals(
-                        initialSize - chunkSize / 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize / 2, mm.getReadyThreadBufferSize());
 
                 Buffer buffer2 = mm.allocate(chunkSize);
-                assertEquals(
-                        initialSize - (chunkSize + chunkSize / 2),
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - (chunkSize + chunkSize / 2), mm.getReadyThreadBufferSize());
 
                 buffer2.position(chunkSize / 2);
                 buffer2.trim();
-                assertEquals(
-                        initialSize - chunkSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize, mm.getReadyThreadBufferSize());
 
                 buffer2.dispose();
-                assertEquals(
-                        initialSize - chunkSize / 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - chunkSize / 2, mm.getReadyThreadBufferSize());
 
                 buffer1.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -254,14 +222,12 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
 
                 compositeBuffer.shrink();
 
-                assertEquals(initialSize - (1228 * 11 - 12280),
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - (1228 * 11 - 12280), mm.getReadyThreadBufferSize());
 
                 compositeBuffer.position(compositeBuffer.limit());
                 compositeBuffer.shrink();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -284,39 +250,31 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
                 final int initialSize = mm.getReadyThreadBufferSize();
 
                 Buffer buffer = mm.allocate(allocSize);
-                assertEquals(
-                        initialSize - allocSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize, mm.getReadyThreadBufferSize());
 
                 buffer.position(allocSize / 2);
                 buffer.trim();
 
-                assertEquals(initialSize - allocSize / 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize / 2, mm.getReadyThreadBufferSize());
 
                 buffer.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
 
                 buffer = mm.allocate(allocSize / 2);
-                assertEquals(initialSize - allocSize / 2,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize / 2, mm.getReadyThreadBufferSize());
 
                 buffer = mm.reallocate(buffer, allocSize);
-                assertEquals(initialSize - allocSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize - allocSize, mm.getReadyThreadBufferSize());
 
                 buffer.dispose();
 
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
         testInWorkerThread(mm, r);
     }
-
 
     @Test
     @SuppressWarnings("unchecked")
@@ -345,9 +303,7 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
 
                 compositeBuffer.dispose();
 
-
-                assertEquals(initialSize,
-                        mm.getReadyThreadBufferSize());
+                assertEquals(initialSize, mm.getReadyThreadBufferSize());
             }
         };
 
@@ -365,8 +321,7 @@ public class ThreadLocalMemoryManagerTest extends AbstractThreadLocalMemoryManag
         }
     }
 
-    private void testInWorkerThread(final MemoryManager mm,
-                                    final Runnable task) throws Exception {
+    private void testInWorkerThread(final MemoryManager mm, final Runnable task) throws Exception {
         final FutureImpl<Boolean> future = SafeFutureImpl.create();
 
         ThreadPoolConfig config = ThreadPoolConfig.defaultConfig();

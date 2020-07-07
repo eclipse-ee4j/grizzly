@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,22 +17,22 @@
 package org.glassfish.grizzly.http.io;
 
 import java.util.Arrays;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.HeapBuffer;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * {@link HeapBuffer} implementation, which might be reset to reference another
- * byte[] at any moment.
- * 
+ * {@link HeapBuffer} implementation, which might be reset to reference another byte[] at any moment.
+ *
  * @author Alexey Stashok
  */
 final class TemporaryHeapBuffer extends HeapBuffer {
 
     boolean isDisposed;
     boolean hasClonedArray;
-    
+
     /**
      * Reset the byte[] this Buffer wraps.
      */
@@ -49,9 +49,9 @@ final class TemporaryHeapBuffer extends HeapBuffer {
 
     Buffer cloneContent(final MemoryManager memoryManager) {
         final Buffer buffer;
-        
+
         final int length = remaining();
-        
+
         if (!hasClonedArray) {
             buffer = memoryManager.allocate(length);
             buffer.put(heap, offset + pos, length);
@@ -62,7 +62,7 @@ final class TemporaryHeapBuffer extends HeapBuffer {
 
         buffer.allowBufferDispose(true);
         dispose();
-        
+
         return buffer;
     }
 
@@ -73,17 +73,17 @@ final class TemporaryHeapBuffer extends HeapBuffer {
             offset = 0;
             hasClonedArray = true;
         }
-        
+
         super.onShareHeap();
     }
-    
+
     @Override
     public void dispose() {
         isDisposed = true;
-        
+
         super.dispose();
     }
-    
+
     boolean isDisposed() {
         return isDisposed;
     }

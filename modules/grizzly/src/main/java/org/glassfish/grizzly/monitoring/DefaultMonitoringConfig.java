@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,9 +21,9 @@ import org.glassfish.grizzly.utils.ArraySet;
 /**
  * Default monitoring configuration, with no JMX support.
  *
- * The {@link #createManagementObject()} method returns null, so if a child
- * class requires JMX support, it has to implement this method properly.
- * 
+ * The {@link #createManagementObject()} method returns null, so if a child class requires JMX support, it has to
+ * implement this method properly.
+ *
  * @author Alexey Stashok
  */
 public class DefaultMonitoringConfig<E> implements MonitoringConfig<E> {
@@ -31,7 +31,7 @@ public class DefaultMonitoringConfig<E> implements MonitoringConfig<E> {
     private final ArraySet<E> monitoringProbes;
 
     public DefaultMonitoringConfig(final Class<E> clazz) {
-        monitoringProbes = new ArraySet<E>(clazz);
+        monitoringProbes = new ArraySet<>(clazz);
     }
 
     /**
@@ -71,7 +71,7 @@ public class DefaultMonitoringConfig<E> implements MonitoringConfig<E> {
     public boolean hasProbes() {
         return !monitoringProbes.isEmpty();
     }
-    
+
     /**
      * {@inheritDoc}
      */

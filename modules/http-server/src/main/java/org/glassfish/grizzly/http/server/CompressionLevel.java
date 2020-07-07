@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,20 +23,18 @@ import org.glassfish.grizzly.http.CompressionConfig.CompressionModeI;
  * @deprecated pls. use {@link org.glassfish.grizzly.http.Compression#CompressionLevel}.
  */
 public enum CompressionLevel implements CompressionModeI {
-    OFF (CompressionMode.OFF),
-    ON (CompressionMode.ON),
-    FORCE (CompressionMode.FORCE);
+    OFF(CompressionMode.OFF), ON(CompressionMode.ON), FORCE(CompressionMode.FORCE);
 
     private final CompressionMode normalizedLevel;
 
     CompressionLevel(final CompressionMode normalizedLevel) {
         this.normalizedLevel = normalizedLevel;
     }
-    
+
     public CompressionMode normalize() {
         return normalizedLevel;
     }
-    
+
     /**
      * Set compression level.
      */

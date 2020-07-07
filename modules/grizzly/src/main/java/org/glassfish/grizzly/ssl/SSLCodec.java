@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,8 +18,10 @@ package org.glassfish.grizzly.ssl;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Codec;
 import org.glassfish.grizzly.Connection;
@@ -27,14 +29,14 @@ import org.glassfish.grizzly.Transformer;
 
 /**
  * SSL Codec, which contains SSL encoder and decoder {@link Transformer}s.
- * 
+ *
  * @author Alexey Stashok
  */
 public class SSLCodec implements Codec<Buffer, Buffer> {
 
     private final SSLEngineConfigurator serverSSLEngineConfig;
     private final SSLEngineConfigurator clientSSLEngineConfig;
-    
+
     private final Transformer<Buffer, Buffer> decoder;
     private final Transformer<Buffer, Buffer> encoder;
 
@@ -47,10 +49,8 @@ public class SSLCodec implements Codec<Buffer, Buffer> {
         decoder = new SSLDecoderTransformer();
         encoder = new SSLEncoderTransformer();
 
-        serverSSLEngineConfig = new SSLEngineConfigurator(sslContext, false,
-                false, false);
-        clientSSLEngineConfig = new SSLEngineConfigurator(sslContext, true,
-                false, false);
+        serverSSLEngineConfig = new SSLEngineConfigurator(sslContext, false, false, false);
+        clientSSLEngineConfig = new SSLEngineConfigurator(sslContext, true, false, false);
     }
 
     /**
@@ -77,13 +77,11 @@ public class SSLCodec implements Codec<Buffer, Buffer> {
         return serverSSLEngineConfig;
     }
 
-    public Future<SSLEngine> handshake(Connection connection)
-            throws IOException {
+    public Future<SSLEngine> handshake(Connection connection) throws IOException {
         return handshake(connection, clientSSLEngineConfig);
     }
 
-    public Future<SSLEngine> handshake(Connection connection,
-            SSLEngineConfigurator configurator) throws IOException {
+    public Future<SSLEngine> handshake(Connection connection, SSLEngineConfigurator configurator) throws IOException {
         return null;
 //        return sslHandshaker.handshake(connection, configurator);
     }

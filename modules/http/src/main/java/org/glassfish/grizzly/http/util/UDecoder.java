@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,16 @@ import java.io.CharConversionException;
 import java.io.IOException;
 
 /**
- *  All URL decoding happens here. This way we can reuse, review, optimize
- *  without adding complexity to the buffers.
+ * All URL decoding happens here. This way we can reuse, review, optimize without adding complexity to the buffers.
  *
- *  The conversion will modify the original buffer.
+ * The conversion will modify the original buffer.
  *
- *  @author Costin Manolache
+ * @author Costin Manolache
  */
 public final class UDecoder {
 
     private static final String ALLOW_ENCODED_SLASH_NAME = "org.glassfish.grizzly.util.buf.UDecoder.ALLOW_ENCODED_SLASH";
-    public static final boolean ALLOW_ENCODED_SLASH =
-            Boolean.valueOf(System.getProperty(ALLOW_ENCODED_SLASH_NAME, "false"));
+    public static final boolean ALLOW_ENCODED_SLASH = Boolean.valueOf(System.getProperty(ALLOW_ENCODED_SLASH_NAME, "false"));
     private boolean allowEncodedSlash;
 
     public UDecoder() {
@@ -43,11 +41,10 @@ public final class UDecoder {
         this.allowEncodedSlash = allowEncodedSlash;
     }
 
-    /** URLDecode, will modify the source.  Includes converting
-     *  '+' to ' '.
+    /**
+     * URLDecode, will modify the source. Includes converting '+' to ' '.
      */
-    public void convert(ByteChunk mb)
-            throws IOException {
+    public void convert(ByteChunk mb) throws IOException {
         convert(mb, true);
     }
 
@@ -61,8 +58,7 @@ public final class UDecoder {
     /**
      * URLDecode the {@link ByteChunk}
      */
-    public static void convert(ByteChunk mb, boolean query, boolean allowEncodedSlash)
-            throws IOException {
+    public static void convert(ByteChunk mb, boolean query, boolean allowEncodedSlash) throws IOException {
         int start = mb.getStart();
         byte buff[] = mb.getBytes();
         int end = mb.getEnd();
@@ -105,8 +101,8 @@ public final class UDecoder {
                 j += 2;
                 int res = x2c(b1, b2);
                 if (noSlash && res == '/') {
-                    throw new CharConversionException("Encoded slashes are not allowed by default.  To enable encoded"
-                            + "slashes, set the property " + ALLOW_ENCODED_SLASH_NAME + " to true.");
+                    throw new CharConversionException("Encoded slashes are not allowed by default.  To enable encoded" + "slashes, set the property "
+                            + ALLOW_ENCODED_SLASH_NAME + " to true.");
                 }
                 buff[idx] = (byte) res;
             }
@@ -118,19 +114,18 @@ public final class UDecoder {
 
     // -------------------- Additional methods --------------------
     // XXX What do we do about charset ????
-    /** In-buffer processing - the buffer will be modified
-     *  Includes converting  '+' to ' '.
+    /**
+     * In-buffer processing - the buffer will be modified Includes converting '+' to ' '.
      */
-    public void convert(CharChunk mb)
-            throws IOException {
+    public void convert(CharChunk mb) throws IOException {
         convert(mb, true);
     }
 
-    /** In-buffer processing - the buffer will be modified
+    /**
+     * In-buffer processing - the buffer will be modified
      */
-    public static void convert(CharChunk mb, boolean query)
-            throws IOException {
-        //        log( "Converting a char chunk ");
+    public static void convert(CharChunk mb, boolean query) throws IOException {
+        // log( "Converting a char chunk ");
         int start = mb.getStart();
         char buff[] = mb.getBuffer();
         int cend = mb.getEnd();
@@ -176,12 +171,11 @@ public final class UDecoder {
         }
         mb.setEnd(idx);
     }
-    
-    /** URLDecode, will modify the source
-     *  Includes converting  '+' to ' '.
+
+    /**
+     * URLDecode, will modify the source Includes converting '+' to ' '.
      */
-    public void convert(MessageBytes mb)
-            throws IOException {
+    public void convert(MessageBytes mb) throws IOException {
         convert(mb, true);
     }
 
@@ -192,27 +186,27 @@ public final class UDecoder {
         convert(mb, query, allowEncodedSlash);
     }
 
-    /** URLDecode, will modify the source
+    /**
+     * URLDecode, will modify the source
      */
-    public static void convert(MessageBytes mb, boolean query, boolean allowEncodingSlash)
-            throws IOException {
+    public static void convert(MessageBytes mb, boolean query, boolean allowEncodingSlash) throws IOException {
 
         switch (mb.getType()) {
-            case MessageBytes.T_STR:
-                String strValue = mb.toString();
-                if (strValue == null) {
-                    return;
-                }
-                mb.setString(convert(strValue, query));
-                break;
-            case MessageBytes.T_CHARS:
-                CharChunk charC = mb.getCharChunk();
-                convert(charC, query);
-                break;
-            case MessageBytes.T_BYTES:
-                ByteChunk bytesC = mb.getByteChunk();
-                convert(bytesC, query, allowEncodingSlash);
-                break;
+        case MessageBytes.T_STR:
+            String strValue = mb.toString();
+            if (strValue == null) {
+                return;
+            }
+            mb.setString(convert(strValue, query));
+            break;
+        case MessageBytes.T_CHARS:
+            CharChunk charC = mb.getCharChunk();
+            convert(charC, query);
+            break;
+        case MessageBytes.T_BYTES:
+            ByteChunk bytesC = mb.getByteChunk();
+            convert(bytesC, query, allowEncodingSlash);
+            break;
         }
     }
 
@@ -231,13 +225,13 @@ public final class UDecoder {
             return str;
         }
 
-        StringBuilder dec = new StringBuilder();    // decoded string output
+        StringBuilder dec = new StringBuilder(); // decoded string output
         int strPos = 0;
         int strLen = str.length();
 
         dec.ensureCapacity(str.length());
         while (strPos < strLen) {
-            int laPos;        // lookahead position
+            int laPos; // lookahead position
 
             // look ahead to next URLencoded metacharacter, if any
             for (laPos = strPos; laPos < strLen; laPos++) {
@@ -266,7 +260,7 @@ public final class UDecoder {
             } else if (metaChar == '%') {
                 // We throw the original exception - the super will deal with
                 // it
-                //                try {
+                // try {
                 dec.append((char) Integer.parseInt(str.substring(strPos + 1, strPos + 3), 16));
                 strPos += 3;
             }
@@ -276,9 +270,7 @@ public final class UDecoder {
     }
 
     private static boolean isHexDigit(int c) {
-        return c >= '0' && c <= '9'
-                || c >= 'a' && c <= 'f'
-                || c >= 'A' && c <= 'F';
+        return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F';
     }
 
     private static int x2c(byte b1, byte b2) {
@@ -301,6 +293,7 @@ public final class UDecoder {
 
     /**
      * Override the default value
+     * 
      * @param allowEncodedSlash
      */
     public void setAllowEncodedSlash(boolean allowEncodedSlash) {

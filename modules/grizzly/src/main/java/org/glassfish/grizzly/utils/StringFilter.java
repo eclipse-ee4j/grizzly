@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,13 +16,14 @@
 
 package org.glassfish.grizzly.utils;
 
+import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.filterchain.AbstractCodecFilter;
-import java.nio.charset.Charset;
 
 /**
  * StringFilter implementation, which performs Buffer <-> String transformation.
- * 
+ *
  * @author Alexey Stashok
  */
 public final class StringFilter extends AbstractCodecFilter<Buffer, String> {
@@ -30,13 +31,12 @@ public final class StringFilter extends AbstractCodecFilter<Buffer, String> {
     public StringFilter() {
         this(null, null);
     }
-    
+
     public StringFilter(final Charset charset) {
         this(charset, null);
     }
 
     public StringFilter(final Charset charset, final String stringTerminatingSymb) {
-        super(new StringDecoder(charset, stringTerminatingSymb),
-                new StringEncoder(charset, stringTerminatingSymb));
+        super(new StringDecoder(charset, stringTerminatingSymb), new StringEncoder(charset, stringTerminatingSymb));
     }
 }

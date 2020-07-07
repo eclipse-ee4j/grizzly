@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.InvalidMarkException;
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.Buffer;
 
 /**
@@ -46,7 +47,7 @@ public class ByteBufferWrapper implements Buffer {
 
     // Dispose underlying Buffer flag
     protected boolean allowBufferDispose = false;
-    
+
     protected Exception disposeStackTrace;
 
     protected ByteBufferWrapper() {
@@ -70,7 +71,7 @@ public class ByteBufferWrapper implements Buffer {
 
     @Override
     public void trim() {
-        checkDispose() ;
+        checkDispose();
         flip();
     }
 
@@ -140,7 +141,9 @@ public class ByteBufferWrapper implements Buffer {
     public final ByteBufferWrapper position(final int newPosition) {
         checkDispose();
         visible.position(newPosition);
-        if (mark > newPosition) mark = -1;
+        if (mark > newPosition) {
+            mark = -1;
+        }
         return this;
     }
 
@@ -154,7 +157,9 @@ public class ByteBufferWrapper implements Buffer {
     public final ByteBufferWrapper limit(final int newLimit) {
         checkDispose();
         visible.limit(newLimit);
-        if (mark > newLimit) mark = -1;
+        if (mark > newLimit) {
+            mark = -1;
+        }
         return this;
     }
 
@@ -221,17 +226,19 @@ public class ByteBufferWrapper implements Buffer {
     public Buffer split(final int splitPosition) {
         checkDispose();
         final int cap = capacity();
-        
+
         if (splitPosition < 0 || splitPosition > cap) {
             throw new IllegalArgumentException("Invalid splitPosition value, should be 0 <= splitPosition <= capacity");
         }
-        
+
         if (splitPosition == cap) {
             return Buffers.EMPTY_BUFFER;
         }
 
-        if (mark >= splitPosition) mark = -1;
-        
+        if (mark >= splitPosition) {
+            mark = -1;
+        }
+
         final int oldPosition = position();
         final int oldLimit = limit();
 
@@ -280,7 +287,6 @@ public class ByteBufferWrapper implements Buffer {
             Buffers.setPositionLimit(visible, oldPosition, oldLimit);
         }
     }
-
 
     @Override
     public ByteBufferWrapper duplicate() {
@@ -344,17 +350,17 @@ public class ByteBufferWrapper implements Buffer {
     public ByteBufferWrapper put(final Buffer src, final int position, final int length) {
         final int oldPos = src.position();
         final int oldLim = limit();
-        
+
         src.position(position);
         limit(position() + length);
-        
+
         try {
             src.get(visible);
         } finally {
             src.position(oldPos);
             limit(oldLim);
         }
-        
+
         return this;
     }
 
@@ -362,11 +368,11 @@ public class ByteBufferWrapper implements Buffer {
     public Buffer get(final ByteBuffer dst) {
         checkDispose();
         final int length = dst.remaining();
-        
+
         if (visible.remaining() < length) {
             throw new BufferUnderflowException();
         }
-        
+
         final int srcPos = visible.position();
         final int oldSrcLim = visible.limit();
         try {
@@ -375,7 +381,7 @@ public class ByteBufferWrapper implements Buffer {
         } finally {
             visible.limit(oldSrcLim);
         }
-        
+
         return this;
     }
 
@@ -385,12 +391,12 @@ public class ByteBufferWrapper implements Buffer {
         if (visible.remaining() < length) {
             throw new BufferUnderflowException();
         }
-        
+
         final int srcPos = visible.position();
         final int oldSrcLim = visible.limit();
         final int oldDstPos = dst.position();
         final int oldDstLim = dst.limit();
-        
+
         Buffers.setPositionLimit(dst, position, position + length);
         try {
             visible.limit(srcPos + length);
@@ -402,7 +408,6 @@ public class ByteBufferWrapper implements Buffer {
 
         return this;
     }
-
 
     @Override
     public Buffer put(final ByteBuffer src) {
@@ -451,7 +456,7 @@ public class ByteBufferWrapper implements Buffer {
         for (int i = 0; i < len; i++) {
             visible.put((byte) s.charAt(i));
         }
-        
+
         return this;
     }
 
@@ -630,7 +635,7 @@ public class ByteBufferWrapper implements Buffer {
         visible.putDouble(index, value);
         return this;
     }
-    
+
     @Override
     public int hashCode() {
         return visible.hashCode();
@@ -660,32 +665,31 @@ public class ByteBufferWrapper implements Buffer {
     @Override
     public int compareTo(Buffer o) {
         // taken from ByteBuffer#compareTo(...)
-	int n = position() + Math.min(remaining(), o.remaining());
-	for (int i = this.position(), j = o.position(); i < n; i++, j++) {
-	    byte v1 = this.get(i);
-	    byte v2 = o.get(j);
-	    if (v1 == v2)
-		continue;
-	    if (v1 < v2)
-		return -1;
-	    return +1;
-	}
+        int n = position() + Math.min(remaining(), o.remaining());
+        for (int i = this.position(), j = o.position(); i < n; i++, j++) {
+            byte v1 = this.get(i);
+            byte v2 = o.get(j);
+            if (v1 == v2) {
+                continue;
+            }
+            if (v1 < v2) {
+                return -1;
+            }
+            return +1;
+        }
 
         return remaining() - o.remaining();
     }
 
     protected void checkDispose() {
         if (visible == null) {
-            throw new IllegalStateException(
-                    "BufferWrapper has already been disposed",
-                    disposeStackTrace) ;
+            throw new IllegalStateException("BufferWrapper has already been disposed", disposeStackTrace);
         }
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("ByteBufferWrapper (" +
-                System.identityHashCode(this) + ") [");
+        StringBuilder sb = new StringBuilder("ByteBufferWrapper (" + System.identityHashCode(this) + ") [");
         sb.append("visible=[").append(visible).append(']');
         sb.append(']');
         return sb.toString();
@@ -759,8 +763,7 @@ public class ByteBufferWrapper implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final ByteBufferArray toByteBufferArray(final int position,
-            final int limit) {
+    public final ByteBufferArray toByteBufferArray(final int position, final int limit) {
         return toByteBufferArray(ByteBufferArray.create(), position, limit);
     }
 
@@ -778,8 +781,7 @@ public class ByteBufferWrapper implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final ByteBufferArray toByteBufferArray(final ByteBufferArray array,
-            final int position, final int limit) {
+    public final ByteBufferArray toByteBufferArray(final ByteBufferArray array, final int position, final int limit) {
         checkDispose();
 
         final int oldPos = visible.position();
@@ -807,8 +809,7 @@ public class ByteBufferWrapper implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final BufferArray toBufferArray(final int position,
-            final int limit) {
+    public final BufferArray toBufferArray(final int position, final int limit) {
         return toBufferArray(BufferArray.create(), position, limit);
     }
 
@@ -826,8 +827,7 @@ public class ByteBufferWrapper implements Buffer {
      * {@inheritDoc}
      */
     @Override
-    public final BufferArray toBufferArray(final BufferArray array,
-            final int position, final int limit) {
+    public final BufferArray toBufferArray(final BufferArray array, final int position, final int limit) {
         checkDispose();
 
         final int oldPos = visible.position();
@@ -874,7 +874,7 @@ public class ByteBufferWrapper implements Buffer {
     private static class DebugLogic {
         static void doDebug(ByteBufferWrapper wrapper) {
             wrapper.visible.clear();
-            while(wrapper.visible.hasRemaining()) {
+            while (wrapper.visible.hasRemaining()) {
                 wrapper.visible.put((byte) 0xFF);
             }
             wrapper.visible.flip();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,18 +16,18 @@
 
 package org.glassfish.grizzly.servlet;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import static org.junit.Assert.*;
-
+import org.junit.Test;
 
 /**
  * Test the servlet's parameter "load-on-startup"
- * 
+ *
  * @author Sebastien Dionne
  *
  */
@@ -60,18 +60,13 @@ public class LoadOnStartupTest {
         s.setLoadOnStartup(2);
         assertEquals(2, s.loadOnStartup);
 
+        java.lang.String[] expectedOrder = { "t3", "t6", "t4", "t5" };
 
-        java.lang.String[] expectedOrder = {
-            "t3", "t6", "t4", "t5"
-        };
-
-        Collection<? extends ServletRegistration> registrations =
-                ctx.getServletRegistrations().values();
+        Collection<? extends ServletRegistration> registrations = ctx.getServletRegistrations().values();
 
         assertTrue(!registrations.isEmpty());
 
-        LinkedList<ServletRegistration> list =
-                new LinkedList<ServletRegistration>(registrations);
+        LinkedList<ServletRegistration> list = new LinkedList<>(registrations);
         Collections.sort(list);
         int i = 0;
         for (ServletRegistration r : list) {

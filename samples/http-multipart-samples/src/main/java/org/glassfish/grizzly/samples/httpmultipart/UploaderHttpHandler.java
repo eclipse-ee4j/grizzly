@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -17,9 +17,11 @@ import java.io.Writer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.ReadHandler;
+import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.multipart.ContentDisposition;
 import org.glassfish.grizzly.http.multipart.MultipartEntry;
 import org.glassfish.grizzly.http.multipart.MultipartEntryHandler;
@@ -27,13 +29,11 @@ import org.glassfish.grizzly.http.multipart.MultipartScanner;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.io.NIOInputStream;
 
 /**
- * The Grizzly {@link HttpHandler} implementation, which is responsible for
- * asynchronous and non-blocking uploading of the file specified in the
- * HTML form {@link FormHttpHandler}.
- * 
+ * The Grizzly {@link HttpHandler} implementation, which is responsible for asynchronous and non-blocking uploading of
+ * the file specified in the HTML form {@link FormHttpHandler}.
+ *
  * @author Alexey Stashok
  */
 public class UploaderHttpHandler extends HttpHandler {
@@ -49,9 +49,8 @@ public class UploaderHttpHandler extends HttpHandler {
      * Service HTTP request.
      */
     @Override
-    public void service(final Request request, final Response response)
-            throws Exception {
-        
+    public void service(final Request request, final Response response) throws Exception {
+
         // Suspend the HTTP request processing
         // (in other words switch to asynchronous HTTP processing mode).
         response.suspend();
@@ -63,23 +62,18 @@ public class UploaderHttpHandler extends HttpHandler {
 
         // Initialize MultipartEntryHandler, responsible for handling
         // multipart entries of this request
-        final UploaderMultipartHandler uploader =
-                new UploaderMultipartHandler(uploadNumber);
+        final UploaderMultipartHandler uploader = new UploaderMultipartHandler(uploadNumber);
 
         // Start the asynchronous multipart request scanning...
-        MultipartScanner.scan(request,
-                uploader,
-                new EmptyCompletionHandler<Request>() {
+        MultipartScanner.scan(request, uploader, new EmptyCompletionHandler<Request>() {
             // CompletionHandler is called once HTTP request processing is completed
             // or failed.
             @Override
             public void completed(final Request request) {
                 // Upload is complete
                 final int bytesUploaded = uploader.getBytesUploaded();
-                
-                LOGGER.log(Level.INFO, "Upload #{0}: is complete. "
-                        + "{1} bytes uploaded",
-                        new Object[] {uploadNumber, bytesUploaded});
+
+                LOGGER.log(Level.INFO, "Upload #{0}: is complete. " + "{1} bytes uploaded", new Object[] { uploadNumber, bytesUploaded });
 
                 // Compose a server response.
                 try {
@@ -102,33 +96,30 @@ public class UploaderHttpHandler extends HttpHandler {
                 response.resume();
             }
 
-
         });
     }
 
     /**
      * {@link MultipartEntryHandler}, responsible for processing the upload.
      */
-    private static final class UploaderMultipartHandler
-            implements MultipartEntryHandler {
-        
+    private static final class UploaderMultipartHandler implements MultipartEntryHandler {
+
         // upload number
         private final int uploadNumber;
         // number of bytes uploaded
         private final AtomicInteger uploadedBytesCounter = new AtomicInteger();
-        
+
         public UploaderMultipartHandler(final int uploadNumber) {
             this.uploadNumber = uploadNumber;
         }
-        
+
         /**
          * {@inheritDoc}
          */
         @Override
         public void handle(final MultipartEntry multipartEntry) throws Exception {
             // get the entry's Content-Disposition
-            final ContentDisposition contentDisposition =
-                    multipartEntry.getContentDisposition();
+            final ContentDisposition contentDisposition = multipartEntry.getContentDisposition();
             // get the multipart entry name
             final String name = contentDisposition.getDispositionParamUnquoted("name");
 
@@ -136,28 +127,22 @@ public class UploaderHttpHandler extends HttpHandler {
             if (FILENAME_ENTRY.equals(name)) {
 
                 // get the filename for Content-Disposition
-                final String filename =
-                        contentDisposition.getDispositionParamUnquoted("filename");
+                final String filename = contentDisposition.getDispositionParamUnquoted("filename");
 
                 // Get the NIOInputStream to read the multipart entry content
                 final NIOInputStream inputStream = multipartEntry.getNIOInputStream();
 
-                LOGGER.log(Level.INFO, "Upload #{0}: uploading file {1}",
-                        new Object[]{uploadNumber, filename});
+                LOGGER.log(Level.INFO, "Upload #{0}: uploading file {1}", new Object[] { uploadNumber, filename });
 
                 // start asynchronous non-blocking content read.
-                inputStream.notifyAvailable(
-                        new UploadReadHandler(uploadNumber, filename,
-                        inputStream, uploadedBytesCounter));
+                inputStream.notifyAvailable(new UploadReadHandler(uploadNumber, filename, inputStream, uploadedBytesCounter));
 
             } else if (DESCRIPTION_NAME.equals(name)) { // if multipart entry contains a description field
-                LOGGER.log(Level.INFO, "Upload #{0}: description came. "
-                        + "Skipping...", uploadNumber);
+                LOGGER.log(Level.INFO, "Upload #{0}: description came. " + "Skipping...", uploadNumber);
                 // skip the multipart entry
                 multipartEntry.skip();
             } else { // Unexpected entry?
-                LOGGER.log(Level.INFO, "Upload #{0}: unknown multipart entry. "
-                        + "Skipping...", uploadNumber);
+                LOGGER.log(Level.INFO, "Upload #{0}: unknown multipart entry. " + "Skipping...", uploadNumber);
                 // skip it
                 multipartEntry.skip();
             }
@@ -165,7 +150,7 @@ public class UploaderHttpHandler extends HttpHandler {
 
         /**
          * Returns the number of bytes uploaded for this multipart entry.
-         * 
+         *
          * @return the number of bytes uploaded for this multipart entry.
          */
         int getBytesUploaded() {
@@ -174,9 +159,8 @@ public class UploaderHttpHandler extends HttpHandler {
     }
 
     /**
-     * Simple {@link ReadHandler} implementation, which is reading HTTP request
-     * content (uploading file) in non-blocking mode and saves the content into
-     * the specific file.
+     * Simple {@link ReadHandler} implementation, which is reading HTTP request content (uploading file) in non-blocking
+     * mode and saves the content into the specific file.
      */
     private static class UploadReadHandler implements ReadHandler {
 
@@ -187,17 +171,14 @@ public class UploaderHttpHandler extends HttpHandler {
 
         // the destination file output stream, where we save the data.
         private final FileOutputStream fileOutputStream;
-        
+
         // temporary buffer
         private final byte[] buf;
 
         // uploaded bytes counter
         private final AtomicInteger uploadedBytesCounter;
-        
-        private UploadReadHandler(final int uploadNumber,
-                final String filename,
-                final NIOInputStream inputStream,
-                final AtomicInteger uploadedBytesCounter)
+
+        private UploadReadHandler(final int uploadNumber, final String filename, final NIOInputStream inputStream, final AtomicInteger uploadedBytesCounter)
                 throws FileNotFoundException {
 
             this.uploadNumber = uploadNumber;
@@ -242,9 +223,8 @@ public class UploaderHttpHandler extends HttpHandler {
         }
 
         /**
-         * Read available file content data out of HTTP request and save the
-         * chunk into local file output stream
-         * 
+         * Read available file content data out of HTTP request and save the chunk into local file output stream
+         *
          * @throws IOException
          */
         private void readAndSaveAvail() throws IOException {

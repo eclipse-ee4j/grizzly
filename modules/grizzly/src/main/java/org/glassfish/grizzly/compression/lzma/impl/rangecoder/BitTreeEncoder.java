@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -41,9 +41,9 @@ public class BitTreeEncoder {
         int m = 1;
         for (int bitIndex = NumBitLevels; bitIndex != 0;) {
             bitIndex--;
-            int bit = (symbol >>> bitIndex) & 1;
+            int bit = symbol >>> bitIndex & 1;
             rangeEncoder.encode(Models, m, bit);
-            m = (m << 1) | bit;
+            m = m << 1 | bit;
         }
     }
 
@@ -52,7 +52,7 @@ public class BitTreeEncoder {
         for (int i = 0; i < NumBitLevels; i++) {
             int bit = symbol & 1;
             rangeEncoder.encode(Models, m, bit);
-            m = (m << 1) | bit;
+            m = m << 1 | bit;
             symbol >>= 1;
         }
     }
@@ -62,7 +62,7 @@ public class BitTreeEncoder {
         int m = 1;
         for (int bitIndex = NumBitLevels; bitIndex != 0;) {
             bitIndex--;
-            int bit = (symbol >>> bitIndex) & 1;
+            int bit = symbol >>> bitIndex & 1;
             price += RangeEncoder.getPrice(Models[m], bit);
             m = (m << 1) + bit;
         }
@@ -76,31 +76,29 @@ public class BitTreeEncoder {
             int bit = symbol & 1;
             symbol >>>= 1;
             price += RangeEncoder.getPrice(Models[m], bit);
-            m = (m << 1) | bit;
+            m = m << 1 | bit;
         }
         return price;
     }
 
-    public static int reverseGetPrice(short[] Models, int startIndex,
-            int NumBitLevels, int symbol) {
+    public static int reverseGetPrice(short[] Models, int startIndex, int NumBitLevels, int symbol) {
         int price = 0;
         int m = 1;
         for (int i = NumBitLevels; i != 0; i--) {
             int bit = symbol & 1;
             symbol >>>= 1;
             price += RangeEncoder.getPrice(Models[startIndex + m], bit);
-            m = (m << 1) | bit;
+            m = m << 1 | bit;
         }
         return price;
     }
 
-    public static void reverseEncode(short[] Models, int startIndex,
-            RangeEncoder rangeEncoder, int NumBitLevels, int symbol) throws IOException {
+    public static void reverseEncode(short[] Models, int startIndex, RangeEncoder rangeEncoder, int NumBitLevels, int symbol) throws IOException {
         int m = 1;
         for (int i = 0; i < NumBitLevels; i++) {
             int bit = symbol & 1;
             rangeEncoder.encode(Models, startIndex + m, bit);
-            m = (m << 1) | bit;
+            m = m << 1 | bit;
             symbol >>= 1;
         }
     }

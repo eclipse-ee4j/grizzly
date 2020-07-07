@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.glassfish.grizzly.http.util;
 
 import java.util.Arrays;
 import java.util.Iterator;
+
 import org.glassfish.grizzly.Buffer;
 
 /* XXX XXX XXX Need a major rewrite  !!!!
@@ -62,55 +63,33 @@ servlet needs direct access to headers).
 
  */
 /**
- *  Memory-efficient repository for Mime Headers. When the object is recycled, it
- *  will keep the allocated headers[] and all the MimeHeaderField - no GC is generated.
+ * Memory-efficient repository for Mime Headers. When the object is recycled, it will keep the allocated headers[] and
+ * all the MimeHeaderField - no GC is generated.
  *
- *  For input headers it is possible to use the DataChunk for Fields - so no GC
- *  will be generated.
+ * For input headers it is possible to use the DataChunk for Fields - so no GC will be generated.
  *
- *  The only garbage is generated when using the String for header names/values -
- *  this can't be avoided when the servlet calls header methods, but is easy
- *  to avoid inside tomcat. The goal is to use _only_ DataChunk-based Fields,
- *  and reduce to 0 the memory overhead of tomcat.
+ * The only garbage is generated when using the String for header names/values - this can't be avoided when the servlet
+ * calls header methods, but is easy to avoid inside tomcat. The goal is to use _only_ DataChunk-based Fields, and
+ * reduce to 0 the memory overhead of tomcat.
  *
- *  TODO:
- *  XXX one-buffer parsing - for HTTP ( other protocols don't need that )
- *  XXX remove unused methods
- *  XXX External enumerations, with 0 GC.
- *  XXX use HeaderName ID
+ * TODO: XXX one-buffer parsing - for HTTP ( other protocols don't need that ) XXX remove unused methods XXX External
+ * enumerations, with 0 GC. XXX use HeaderName ID
  *
  *
  * @author dac@eng.sun.com
  * @author James Todd [gonzo@eng.sun.com]
  * @author Costin Manolache
  * @author kevin seguin
- */public class MimeHeaders {
+ */
+public class MimeHeaders {
 
-    private static final String[] INVALID_TRAILER_NAMES = {
-            Header.CacheControl.getLowerCase(),
-            Header.Expect.getLowerCase(),
-            Header.Host.getLowerCase(),
-            Header.MaxForwards.getLowerCase(),
-            Header.Pragma.getLowerCase(),
-            Header.Range.getLowerCase(),
-            Header.TE.getLowerCase(),
-            Header.SetCookie.getLowerCase(),
-            Header.Authorization.getLowerCase(),
-            Header.WWWAuthenticate.getLowerCase(),
-            Header.ProxyAuthenticate.getLowerCase(),
-            Header.ProxyAuthorization.getLowerCase(),
-            Header.Age.getLowerCase(),
-            Header.Date.getLowerCase(),
-            Header.Location.getLowerCase(),
-            Header.RetryAfter.getLowerCase(),
-            Header.Vary.getLowerCase(),
-            Header.Warnings.getLowerCase(),
-            Header.IfMatch.getLowerCase(),
-            Header.IfNoneMatch.getLowerCase(),
-            Header.IfModifiedSince.getLowerCase(),
-            Header.IfUnmodifiedSince.getLowerCase(),
-            Header.IfRange.getLowerCase()
-    };
+    private static final String[] INVALID_TRAILER_NAMES = { Header.CacheControl.getLowerCase(), Header.Expect.getLowerCase(), Header.Host.getLowerCase(),
+            Header.MaxForwards.getLowerCase(), Header.Pragma.getLowerCase(), Header.Range.getLowerCase(), Header.TE.getLowerCase(),
+            Header.SetCookie.getLowerCase(), Header.Authorization.getLowerCase(), Header.WWWAuthenticate.getLowerCase(),
+            Header.ProxyAuthenticate.getLowerCase(), Header.ProxyAuthorization.getLowerCase(), Header.Age.getLowerCase(), Header.Date.getLowerCase(),
+            Header.Location.getLowerCase(), Header.RetryAfter.getLowerCase(), Header.Vary.getLowerCase(), Header.Warnings.getLowerCase(),
+            Header.IfMatch.getLowerCase(), Header.IfNoneMatch.getLowerCase(), Header.IfModifiedSince.getLowerCase(), Header.IfUnmodifiedSince.getLowerCase(),
+            Header.IfRange.getLowerCase() };
     static {
         Arrays.sort(INVALID_TRAILER_NAMES);
     }
@@ -119,8 +98,9 @@ servlet needs direct access to headers).
 
     public static final int MAX_NUM_HEADERS_DEFAULT = 100;
 
-    /** Initial size - should be == average number of headers per request
-     *  XXX  make it configurable ( fine-tuning of web-apps )
+    /**
+     * Initial size - should be == average number of headers per request XXX make it configurable ( fine-tuning of web-apps
+     * )
      */
     public static final int DEFAULT_HEADER_SIZE = 8;
 
@@ -185,7 +165,7 @@ servlet needs direct access to headers).
     }
 
     /**
-     * EXPENSIVE!!!  only for debugging.
+     * EXPENSIVE!!! only for debugging.
      */
     @Override
     public String toString() {
@@ -194,10 +174,7 @@ servlet needs direct access to headers).
         sb.append("=== MimeHeaders ===\n");
 
         for (int i = 0; i < count; i++) {
-            sb.append(headers[i].nameB)
-                    .append(" = ")
-                    .append(headers[i].valueB)
-                    .append('\n');
+            sb.append(headers[i].nameB).append(" = ").append(headers[i].valueB).append('\n');
         }
 
         return sb.toString();
@@ -264,20 +241,20 @@ servlet needs direct access to headers).
     }
 
     public int trailerSize() {
-        return ((marked) ? (count - mark) : 0);
+        return marked ? count - mark : 0;
     }
 
     /**
-     * Returns the Nth header name, or null if there is no such header.
-     * This may be used to iterate through all header fields.
+     * Returns the Nth header name, or null if there is no such header. This may be used to iterate through all header
+     * fields.
      */
     public DataChunk getName(int n) {
         return n >= 0 && n < count ? headers[n].getName() : null;
     }
 
     /**
-     * Returns the Nth header value, or null if there is no such header.
-     * This may be used to iterate through all header fields.
+     * Returns the Nth header value, or null if there is no such header. This may be used to iterate through all header
+     * fields.
      */
     public DataChunk getValue(int n) {
         return n >= 0 && n < count ? headers[n].getValue() : null;
@@ -301,7 +278,7 @@ servlet needs direct access to headers).
     /**
      * Set the header's "serialized" flag.
      *
-     * @param n        the header index
+     * @param n the header index
      * @param newValue the new value
      * @return the old header "serialized" flag value.
      */
@@ -323,7 +300,7 @@ servlet needs direct access to headers).
      */
     public int indexOf(String name, int fromIndex) {
         // We can use a hash - but it's not clear how much
-        // benefit you can get - there is an  overhead
+        // benefit you can get - there is an overhead
         // and the number of headers is small (4-5 ?)
         // Another problem is that we'll pay the overhead
         // of constructing the hashtable
@@ -342,7 +319,7 @@ servlet needs direct access to headers).
      */
     public int indexOf(final Header header, final int fromIndex) {
         // We can use a hash - but it's not clear how much
-        // benefit you can get - there is an  overhead
+        // benefit you can get - there is an overhead
         // and the number of headers is small (4-5 ?)
         // Another problem is that we'll pay the overhead
         // of constructing the hashtable
@@ -357,20 +334,18 @@ servlet needs direct access to headers).
         return -1;
     }
 
-
     public boolean contains(final Header header) {
-        return (indexOf(header, 0) >= 0);
+        return indexOf(header, 0) >= 0;
     }
 
     public boolean contains(final String header) {
-        return (indexOf(header, 0) >= 0);
+        return indexOf(header, 0) >= 0;
     }
 
     // -------------------- --------------------
     /**
-     * Returns an enumeration of strings representing the header field names.
-     * Field names may appear multiple times in this enumeration, indicating
-     * that multiple fields with that name exist in this header.
+     * Returns an enumeration of strings representing the header field names. Field names may appear multiple times in this
+     * enumeration, indicating that multiple fields with that name exist in this header.
      */
     public Iterable<String> names() {
         return namesIterable;
@@ -417,8 +392,7 @@ servlet needs direct access to headers).
 
     // -------------------- Adding headers --------------------
     /**
-     * Adds a partially constructed field to the header.  This
-     * field has not had its name or value initialized.
+     * Adds a partially constructed field to the header. This field has not had its name or value initialized.
      */
     private MimeHeaderField createHeader() {
         if (maxNumHeaders >= 0 && count == maxNumHeaders) {
@@ -444,8 +418,8 @@ servlet needs direct access to headers).
         return mh;
     }
 
-    /** Create a new named header , return the MessageBytes
-    container for the new value
+    /**
+     * Create a new named header , return the MessageBytes container for the new value
      */
     public DataChunk addValue(String name) {
         if (!isValidName(name)) {
@@ -456,8 +430,8 @@ servlet needs direct access to headers).
         return mh.getValue();
     }
 
-    /** Create a new named header , return the MessageBytes
-    container for the new value
+    /**
+     * Create a new named header , return the MessageBytes container for the new value
      */
     public DataChunk addValue(final Header header) {
         if (!isValidName(header)) {
@@ -468,12 +442,10 @@ servlet needs direct access to headers).
         return mh.getValue();
     }
 
-    /** Create a new named header using un-translated byte[].
-    The conversion to chars can be delayed until
-    encoding is known.
+    /**
+     * Create a new named header using un-translated byte[]. The conversion to chars can be delayed until encoding is known.
      */
-    public DataChunk addValue(final byte[] buffer, final int startN,
-            final int len) {
+    public DataChunk addValue(final byte[] buffer, final int startN, final int len) {
         if (!isValidName(buffer)) {
             return NOOP_CHUNK;
         }
@@ -482,12 +454,10 @@ servlet needs direct access to headers).
         return mhf.getValue();
     }
 
-    /** Create a new named header using un-translated Buffer.
-    The conversion to chars can be delayed until
-    encoding is known.
+    /**
+     * Create a new named header using un-translated Buffer. The conversion to chars can be delayed until encoding is known.
      */
-    public DataChunk addValue(final Buffer buffer, final int startN,
-            final int len) {
+    public DataChunk addValue(final Buffer buffer, final int startN, final int len) {
         if (!isValidName(buffer)) {
             return NOOP_CHUNK;
         }
@@ -497,10 +467,7 @@ servlet needs direct access to headers).
     }
 
     /**
-     * Allow "set" operations -
-     * return a DataChunk container for the
-     * header value ( existing header or new
-     * if this .
+     * Allow "set" operations - return a DataChunk container for the header value ( existing header or new if this .
      */
     public DataChunk setValue(final String name) {
         if (!isValidName(name)) {
@@ -522,10 +489,7 @@ servlet needs direct access to headers).
     }
 
     /**
-     * Allow "set" operations -
-     * return a DataChunk container for the
-     * header value ( existing header or new
-     * if this .
+     * Allow "set" operations - return a DataChunk container for the header value ( existing header or new if this .
      */
     public DataChunk setValue(final Header header) {
         if (!isValidName(header)) {
@@ -548,11 +512,10 @@ servlet needs direct access to headers).
         return mh.getValue();
     }
 
-    //-------------------- Getting headers --------------------
+    // -------------------- Getting headers --------------------
     /**
-     * Finds and returns a header field with the given name.  If no such
-     * field exists, null is returned.  If more than one such field is
-     * in the header, an arbitrary one is returned.
+     * Finds and returns a header field with the given name. If no such field exists, null is returned. If more than one
+     * such field is in the header, an arbitrary one is returned.
      */
     public DataChunk getValue(String name) {
         for (int i = 0; i < count; i++) {
@@ -564,9 +527,8 @@ servlet needs direct access to headers).
     }
 
     /**
-     * Finds and returns a header field with the given name.  If no such
-     * field exists, null is returned.  If more than one such field is
-     * in the header, an arbitrary one is returned.
+     * Finds and returns a header field with the given name. If no such field exists, null is returned. If more than one
+     * such field is in the header, an arbitrary one is returned.
      */
     public DataChunk getValue(final Header header) {
         final byte[] bytes = header.getLowerCaseBytes();
@@ -592,8 +554,8 @@ servlet needs direct access to headers).
 
     // -------------------- Removing --------------------
     /**
-     * Removes a header field with the specified name.  Does nothing
-     * if such a field could not be found.
+     * Removes a header field with the specified name. Does nothing if such a field could not be found.
+     * 
      * @param name the name of the header field to be removed
      */
     public void removeHeader(String name) {
@@ -617,10 +579,8 @@ servlet needs direct access to headers).
 
     }
 
-
     /**
-     * Removes the headers with the given name whose values contain the
-     * given string.
+     * Removes the headers with the given name whose values contain the given string.
      *
      * @param name The name of the headers to be removed
      * @param str The string to check the header values against
@@ -628,18 +588,14 @@ servlet needs direct access to headers).
     @SuppressWarnings("UnusedDeclaration")
     public void removeHeader(final String name, final String str) {
         for (int i = 0; i < count; i++) {
-            if (headers[i].getName().equalsIgnoreCase(name)
-                    && getValue(i) != null
-                    && getValue(i).toString() != null
-                    && getValue(i).toString().contains(str)) {
+            if (headers[i].getName().equalsIgnoreCase(name) && getValue(i) != null && getValue(i).toString() != null && getValue(i).toString().contains(str)) {
                 removeHeader(i--);
             }
         }
     }
 
     /**
-     * Removes the headers with the given name whose values contain the
-     * given string.
+     * Removes the headers with the given name whose values contain the given string.
      *
      * @param name The name of the headers to be removed
      * @param regex The regex string to check the header values against
@@ -647,28 +603,21 @@ servlet needs direct access to headers).
     @SuppressWarnings("UnusedDeclaration")
     public void removeHeaderMatches(final String name, final String regex) {
         for (int i = 0; i < count; i++) {
-            if (headers[i].getName().equalsIgnoreCase(name)
-                    && getValue(i) != null
-                    && getValue(i).toString() != null
-                    && getValue(i).toString().matches(regex)) {
+            if (headers[i].getName().equalsIgnoreCase(name) && getValue(i) != null && getValue(i).toString() != null && getValue(i).toString().matches(regex)) {
                 removeHeader(i--);
             }
         }
     }
 
     /**
-     * Removes the headers with the given name whose values contain the
-     * given string.
+     * Removes the headers with the given name whose values contain the given string.
      *
      * @param header The name of the {@link Header}s to be removed
      * @param regex The regex string to check the header values against
      */
     public void removeHeaderMatches(final Header header, final String regex) {
         for (int i = 0; i < count; i++) {
-            if (headers[i].getName().equalsIgnoreCaseLowerCase(
-                    header.getLowerCaseBytes())
-                    && getValue(i) != null
-                    && getValue(i).toString() != null
+            if (headers[i].getName().equalsIgnoreCaseLowerCase(header.getLowerCaseBytes()) && getValue(i) != null && getValue(i).toString() != null
                     && getValue(i).toString().matches(regex)) {
                 removeHeader(i--);
             }
@@ -677,6 +626,7 @@ servlet needs direct access to headers).
 
     /**
      * reset and swap with last header
+     * 
      * @param idx the index of the header to remove.
      */
     void removeHeader(int idx) {
@@ -688,9 +638,7 @@ servlet needs direct access to headers).
         count--;
     }
 
-
     // ----------------------------------------------------- Max Header Handling
-
 
     public void setMaxNumHeaders(int maxNumHeaders) {
         this.maxNumHeaders = maxNumHeaders;
@@ -709,21 +657,20 @@ servlet needs direct access to headers).
 
     } // END MaxHeaderCountExceededException
 
-
     private boolean isValidName(final String name) {
-        return (!marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.toLowerCase()) < 0);
+        return !marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.toLowerCase()) < 0;
     }
 
     private boolean isValidName(final Header name) {
-        return (!marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.getLowerCase()) < 0);
+        return !marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.getLowerCase()) < 0;
     }
 
     private boolean isValidName(final byte[] name) {
-        return (!marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, new String(name).toLowerCase()) < 0);
+        return !marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, new String(name).toLowerCase()) < 0;
     }
 
     private boolean isValidName(final Buffer name) {
-        return (!marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.toStringContent().toLowerCase()) < 0);
+        return !marked || Arrays.binarySearch(INVALID_TRAILER_NAMES, name.toStringContent().toLowerCase()) < 0;
     }
 
 }
@@ -743,7 +690,9 @@ abstract class BaseIterator implements Iterator<String> {
 
     @Override
     public void remove() {
-        if (currentPos < 0) throw new IllegalStateException("No current element");
+        if (currentPos < 0) {
+            throw new IllegalStateException("No current element");
+        }
         headers.removeHeader(currentPos);
         pos = currentPos;
         currentPos = -1;
@@ -753,9 +702,7 @@ abstract class BaseIterator implements Iterator<String> {
 }
 
 /**
- * Enumerate the distinct header names.
- * Each nextElement() is O(n) ( a comparison is
- * done with all previous elements ).
+ * Enumerate the distinct header names. Each nextElement() is O(n) ( a comparison is done with all previous elements ).
  * This is less frequent than add() - we want to keep add O(1).
  */
 class NamesIterator extends BaseIterator {
@@ -764,11 +711,12 @@ class NamesIterator extends BaseIterator {
 
     NamesIterator(MimeHeaders headers, final boolean trailersOnly) {
         super(headers);
-        pos = ((trailersOnly) ? headers.mark : 0);
+        pos = trailersOnly ? headers.mark : 0;
         size = headers.size();
         findNext();
     }
 
+    @Override
     protected void findNext() {
         next = null;
         for (; pos < size; pos++) {
@@ -805,24 +753,23 @@ class NamesIterator extends BaseIterator {
 
 } // END NamesIterator
 
-/** Enumerate the values for a (possibly ) multiple
-value element.
+/**
+ * Enumerate the values for a (possibly ) multiple value element.
  */
 final class ValuesIterator extends BaseIterator {
 
     DataChunk next;
     final String name;
 
-    ValuesIterator(final MimeHeaders headers,
-                   final String name,
-                   final boolean trailersOnly) {
+    ValuesIterator(final MimeHeaders headers, final String name, final boolean trailersOnly) {
         super(headers);
         this.name = name;
-        pos = ((trailersOnly) ? headers.mark : 0);
+        pos = trailersOnly ? headers.mark : 0;
         size = headers.size();
         findNext();
     }
 
+    @Override
     protected void findNext() {
         next = null;
         for (; pos < size; pos++) {
@@ -856,6 +803,7 @@ final class MimeHeaderField {
     protected final DataChunk valueB = DataChunk.newInstance();
 
     private boolean isSerialized;
+
     /**
      * Creates a new, uninitialized header field.
      */

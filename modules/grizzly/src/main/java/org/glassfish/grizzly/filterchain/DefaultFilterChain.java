@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,8 +22,19 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.glassfish.grizzly.*;
+
 import org.glassfish.grizzly.Appendable;
+import org.glassfish.grizzly.Appender;
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Context;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.IOEvent;
+import org.glassfish.grizzly.ProcessorExecutor;
+import org.glassfish.grizzly.ProcessorResult;
+import org.glassfish.grizzly.ReadResult;
+import org.glassfish.grizzly.WriteResult;
 import org.glassfish.grizzly.asyncqueue.AsyncQueueEnabledTransport;
 import org.glassfish.grizzly.asyncqueue.AsyncQueueWriter;
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
@@ -40,15 +51,14 @@ import org.glassfish.grizzly.utils.NullaryFunction;
  *
  * @see FilterChain
  * @see Filter
- * 
+ *
  * @author Alexey Stashok
  */
 @SuppressWarnings("deprecation")
 public final class DefaultFilterChain extends ListFacadeFilterChain {
 
-    private final FiltersStateFactory filtersStateFactory =
-            new FiltersStateFactory();
-    
+    private final FiltersStateFactory filtersStateFactory = new FiltersStateFactory();
+
     /**
      * Logger
      */
@@ -59,13 +69,15 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     public DefaultFilterChain(Collection<Filter> initialFilters) {
-        super(new ArrayList<Filter>(initialFilters));
+        super(new ArrayList<>(initialFilters));
     }
 
     @Override
     public ProcessorResult process(final Context context) {
-        if (isEmpty()) return ProcessorResult.createComplete();
-        
+        if (isEmpty()) {
+            return ProcessorResult.createComplete();
+        }
+
         final InternalContextImpl internalContext = (InternalContextImpl) context;
         final FilterChainContext filterChainContext = internalContext.filterChainContext;
 
@@ -77,8 +89,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
             } else {
                 // On OP_WRITE - call the async write queue
                 final Connection connection = context.getConnection();
-                final AsyncQueueEnabledTransport transport =
-                        (AsyncQueueEnabledTransport) connection.getTransport();
+                final AsyncQueueEnabledTransport transport = (AsyncQueueEnabledTransport) connection.getTransport();
                 final AsyncQueueWriter writer = transport.getAsyncQueueIO().getWriter();
 
                 return writer.processAsync(context).toProcessorResult();
@@ -87,9 +98,10 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
 
         return execute(filterChainContext);
     }
-    
+
     /**
      * Execute this FilterChain.
+     * 
      * @param ctx {@link FilterChainContext} processing context
      */
     @Override
@@ -108,28 +120,27 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
             do {
                 final FilterExecution execution = executeChainPart(ctx, executor, ctx.getFilterIdx(), end, filtersState);
                 switch (execution.type) {
-                    case FilterExecution.TERMINATE_TYPE:
-                        return ProcessorResult.createTerminate();
-                    case FilterExecution.REEXECUTE_TYPE:
-                        ctx = execution.getContext();
-                        
-                        final int idx = filtersState.peekUnparsedIdx(ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
-                        if (idx != -1) {
-                            // if there is a remainder associated with the connection
-                            // rerun the filter chain with the new context right away
-                            ctx.setMessage(null);
-                            ctx.setFilterIdx(idx);
-                            return ProcessorResult.createRerun(ctx.internalContext);
-                        }
+                case FilterExecution.TERMINATE_TYPE:
+                    return ProcessorResult.createTerminate();
+                case FilterExecution.REEXECUTE_TYPE:
+                    ctx = execution.getContext();
 
-                        // reregister to listen for next operation,
-                        // keeping the current Context
-                        return ProcessorResult.createReregister(ctx.internalContext);
+                    final int idx = filtersState.peekUnparsedIdx(ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
+                    if (idx != -1) {
+                        // if there is a remainder associated with the connection
+                        // rerun the filter chain with the new context right away
+                        ctx.setMessage(null);
+                        ctx.setFilterIdx(idx);
+                        return ProcessorResult.createRerun(ctx.internalContext);
+                    }
+
+                    // reregister to listen for next operation,
+                    // keeping the current Context
+                    return ProcessorResult.createReregister(ctx.internalContext);
                 }
             } while (prepareRemainder(ctx, filtersState));
         } catch (Throwable e) {
-            LOGGER.log(e instanceof IOException ? Level.FINE : Level.WARNING,
-                    LogMessages.WARNING_GRIZZLY_FILTERCHAIN_EXCEPTION(), e);
+            LOGGER.log(e instanceof IOException ? Level.FINE : Level.WARNING, LogMessages.WARNING_GRIZZLY_FILTERCHAIN_EXCEPTION(), e);
             throwChain(ctx, executor, e);
             ctx.getCloseable().closeWithReason(Exceptions.makeIOException(e));
 
@@ -141,19 +152,14 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
 
     /**
      * Sequentially lets each {@link Filter} in chain to process {@link IOEvent}.
-     * 
+     *
      * @param ctx {@link FilterChainContext} processing context
-     * @param executor {@link FilterExecutor}, which will call appropriate
-     *          filter operation to process {@link IOEvent}.
+     * @param executor {@link FilterExecutor}, which will call appropriate filter operation to process {@link IOEvent}.
      * @return TODO: Update
      */
     @SuppressWarnings("unchecked")
-    protected final FilterExecution executeChainPart(FilterChainContext ctx,
-            final FilterExecutor executor,
-            final int start,
-            final int end,
-            final FiltersState filtersState)
-            throws IOException {
+    protected FilterExecution executeChainPart(FilterChainContext ctx, final FilterExecutor executor, final int start, final int end,
+            final FiltersState filtersState) throws IOException {
 
         int i = start;
         Filter currentFilter = null;
@@ -188,12 +194,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
 
             if (chunk != null) {
                 // Store the remainder
-                storeMessage(ctx,
-                        filtersState,
-                        invokeAction.isIncomplete(),
-                        i,
-                        chunk,
-                        invokeAction.getAppender());
+                storeMessage(ctx, filtersState, invokeAction.isIncomplete(), i, chunk, invokeAction.getAppender());
             }
 
             i = executor.getNextFilter(ctx);
@@ -201,99 +202,84 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
         }
 
         switch (lastNextActionType) {
-            case InvokeAction.TYPE:
-                notifyComplete(ctx);
-                break;
-            case StopAction.TYPE:
-                assert currentFilter != null;
+        case InvokeAction.TYPE:
+            notifyComplete(ctx);
+            break;
+        case StopAction.TYPE:
+            assert currentFilter != null;
 
-                // If the next action is StopAction and there is some data to store for the processed Filter - store it
-                final StopAction stopAction = (StopAction) lastNextAction;
-                
-                final Object chunk = stopAction.getIncompleteChunk();
-                if (chunk != null) {
-                    storeMessage(ctx,
-                            filtersState,
-                            true,
-                            i,
-                            chunk,
-                            stopAction.getAppender());
-                }
-                break;
-            case ForkAction.TYPE:
-                final ForkAction forkAction =
-                        (ForkAction) lastNextAction;
-                return FilterExecution.createReExecute(
-                                        forkAction.getContext());
-            case SuspendAction.TYPE: // on suspend - return immediatelly
-                return FilterExecution.createTerminate();
+            // If the next action is StopAction and there is some data to store for the processed Filter - store it
+            final StopAction stopAction = (StopAction) lastNextAction;
+
+            final Object chunk = stopAction.getIncompleteChunk();
+            if (chunk != null) {
+                storeMessage(ctx, filtersState, true, i, chunk, stopAction.getAppender());
+            }
+            break;
+        case ForkAction.TYPE:
+            final ForkAction forkAction = (ForkAction) lastNextAction;
+            return FilterExecution.createReExecute(forkAction.getContext());
+        case SuspendAction.TYPE: // on suspend - return immediatelly
+            return FilterExecution.createTerminate();
         }
 
         return FilterExecution.createContinue();
     }
-    
+
     /**
-     * Execute the {@link Filter}, using specific {@link FilterExecutor} and
-     * {@link FilterChainContext}.
-     * 
+     * Execute the {@link Filter}, using specific {@link FilterExecutor} and {@link FilterChainContext}.
+     *
      * @param executor
      * @param currentFilter
      * @param ctx
      *
      * @return {@link NextAction}.
-     * 
+     *
      * @throws IOException
      */
-    protected NextAction executeFilter(final FilterExecutor executor,
-            final Filter currentFilter, final FilterChainContext ctx)
-            throws IOException {
+    protected NextAction executeFilter(final FilterExecutor executor, final Filter currentFilter, final FilterChainContext ctx) throws IOException {
 
         NextAction nextNextAction;
         do {
             if (LOGGER.isLoggable(Level.FINEST)) {
-                LOGGER.log(Level.FINE, "Execute filter. filter={0} context={1}",
-                        new Object[]{currentFilter, ctx});
+                LOGGER.log(Level.FINE, "Execute filter. filter={0} context={1}", new Object[] { currentFilter, ctx });
             }
             // execute the task
             nextNextAction = executor.execute(currentFilter, ctx);
 
             if (LOGGER.isLoggable(Level.FINEST)) {
-                LOGGER.log(Level.FINE, "after execute filter. filter={0} context={1} nextAction={2}",
-                        new Object[]{currentFilter, ctx, nextNextAction});
+                LOGGER.log(Level.FINE, "after execute filter. filter={0} context={1} nextAction={2}", new Object[] { currentFilter, ctx, nextNextAction });
             }
         } while (nextNextAction.type() == RerunFilterAction.TYPE);
 
         return nextNextAction;
     }
-    
-    /**
-     * Locates a message remainder in the {@link FilterChain}, associated with the
-     * {@link Connection} and prepares the {@link Context} for remainder processing.
-     */
-    private static boolean prepareRemainder(final FilterChainContext ctx,
-            final FiltersState filtersState) {
 
-        final int idx = filtersState.peekUnparsedIdx(
-                ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
-        
+    /**
+     * Locates a message remainder in the {@link FilterChain}, associated with the {@link Connection} and prepares the
+     * {@link Context} for remainder processing.
+     */
+    private static boolean prepareRemainder(final FilterChainContext ctx, final FiltersState filtersState) {
+
+        final int idx = filtersState.peekUnparsedIdx(ctx.getOperation(), ctx.getStartIdx(), ctx.getEndIdx());
+
         if (idx != -1) {
             ctx.setFilterIdx(idx);
             ctx.setMessage(null);
             return true;
         }
-        
+
         return false;
     }
-    
+
     @Override
-    public void read(final Connection connection,
-            final CompletionHandler<ReadResult> completionHandler) {
+    public void read(final Connection connection, final CompletionHandler<ReadResult> completionHandler) {
         final FilterChainContext context = obtainFilterChainContext(connection);
         context.setOperation(FilterChainContext.Operation.READ);
         context.getTransportContext().configureBlocking(true);
-        
+
         ExecutorResolver.resolve(context).initIndexes(context);
-        
+
         try {
             final ReadResult readResult = read(context);
             Futures.notifyResult(null, completionHandler, readResult);
@@ -309,10 +295,8 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
         if (!context.getTransportContext().isBlocking()) {
             throw new IllegalStateException("FilterChain doesn't support standalone non blocking read. Please use Filter instead.");
         } else {
-            final FutureImpl<FilterChainContext> future =
-                    Futures.createUnsafeFuture();
-            context.operationCompletionHandler =
-                    Futures.toCompletionHandler(future);
+            final FutureImpl<FilterChainContext> future = Futures.createUnsafeFuture();
+            context.operationCompletionHandler = Futures.toCompletionHandler(future);
 
             final FilterExecutor executor = ExecutorResolver.resolve(context);
             final FiltersState filtersState = obtainFiltersState(connection);
@@ -322,9 +306,8 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
                     context.setFilterIdx(0);
                     context.setMessage(null);
                 }
-                
-                executeChainPart(context, executor, context.getFilterIdx(),
-                        context.getEndIdx(), filtersState);
+
+                executeChainPart(context, executor, context.getFilterIdx(), context.getEndIdx(), filtersState);
             } while (!future.isDone());
 
             try {
@@ -350,17 +333,12 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     @Override
-    public void write(final Connection connection,
-            final Object dstAddress, final Object message,
-            final CompletionHandler<WriteResult> completionHandler) {
-        write(connection, dstAddress, message, completionHandler,
-                (MessageCloner) null);
+    public void write(final Connection connection, final Object dstAddress, final Object message, final CompletionHandler<WriteResult> completionHandler) {
+        write(connection, dstAddress, message, completionHandler, (MessageCloner) null);
     }
 
     @Override
-    public void write(final Connection connection,
-            final Object dstAddress, final Object message,
-            final CompletionHandler<WriteResult> completionHandler,
+    public void write(final Connection connection, final Object dstAddress, final Object message, final CompletionHandler<WriteResult> completionHandler,
             final MessageCloner messageCloner) {
         final FilterChainContext context = obtainFilterChainContext(connection);
         context.transportFilterContext.completionHandler = completionHandler;
@@ -371,12 +349,9 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
         ProcessorExecutor.execute(context.internalContext);
     }
 
-    
     @Override
     @Deprecated
-    public void write(final Connection connection,
-            final Object dstAddress, final Object message,
-            final CompletionHandler completionHandler,
+    public void write(final Connection connection, final Object dstAddress, final Object message, final CompletionHandler completionHandler,
             final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
 
         final FilterChainContext context = obtainFilterChainContext(connection);
@@ -389,8 +364,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     @Override
-    public void flush(final Connection connection,
-            final CompletionHandler<WriteResult> completionHandler) {
+    public void flush(final Connection connection, final CompletionHandler<WriteResult> completionHandler) {
         final FilterChainContext context = obtainFilterChainContext(connection);
         context.setOperation(Operation.EVENT);
         context.event = TransportFilter.createFlushEvent(completionHandler);
@@ -400,9 +374,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     @Override
-    public void fireEventDownstream(final Connection connection,
-            final FilterChainEvent event,
-            final CompletionHandler<FilterChainContext> completionHandler) {
+    public void fireEventDownstream(final Connection connection, final FilterChainEvent event, final CompletionHandler<FilterChainContext> completionHandler) {
         final FilterChainContext context = obtainFilterChainContext(connection);
         context.operationCompletionHandler = completionHandler;
         context.setOperation(Operation.EVENT);
@@ -413,9 +385,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     @Override
-    public void fireEventUpstream(final Connection connection,
-            final FilterChainEvent event,
-            final CompletionHandler<FilterChainContext> completionHandler) {
+    public void fireEventUpstream(final Connection connection, final FilterChainEvent event, final CompletionHandler<FilterChainContext> completionHandler) {
         final FilterChainContext context = obtainFilterChainContext(connection);
         context.operationCompletionHandler = completionHandler;
         context.setOperation(Operation.EVENT);
@@ -432,11 +402,11 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
 
     /**
      * Notify the filters about error.
+     * 
      * @param ctx {@link FilterChainContext}
      * @return position of the last executed {@link Filter}
      */
-    private void throwChain(final FilterChainContext ctx,
-            final FilterExecutor executor, final Throwable exception) {
+    private void throwChain(final FilterChainContext ctx, final FilterExecutor executor, final Throwable exception) {
 
         notifyFailure(ctx, exception);
 
@@ -469,28 +439,32 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
     }
 
     /**
-     * Checks if {@link Connection} has some stored data related to the processing
-     * {@link Filter}. If yes - appends new context data to the stored one and
-     * set the result as context message.
-     * 
+     * Checks if {@link Connection} has some stored data related to the processing {@link Filter}. If yes - appends new
+     * context data to the stored one and set the result as context message.
+     *
      * @param ctx {@link FilterChainContext}
      * @param filtersState {@link FiltersState} associated with the Connection
      * @param filterIdx the current filter index
      */
     @SuppressWarnings("unchecked")
-    private void checkStoredMessage(final FilterChainContext ctx,
-            final FiltersState filtersState, final int filterIdx) {
+    private void checkStoredMessage(final FilterChainContext ctx, final FiltersState filtersState, final int filterIdx) {
 
         if (filtersState != null) {
-            ctx.setMessage(filtersState.append(ctx.getOperation(),
-                    filterIdx, ctx.getMessage()));
+            Object message = ctx.getMessage();
+            if (message instanceof Buffer) {
+                Buffer bufferMessage = (Buffer) message;
+                if (!bufferMessage.hasRemaining()) {
+                    return;
+                }
+            }
+            ctx.setMessage(filtersState.append(ctx.getOperation(), filterIdx, message));
         }
     }
 
     /**
-     * Stores the Filter associated remainder. This remainder will be reused next
-     * time the same filter will be invoked on this Connection.
-     * 
+     * Stores the Filter associated remainder. This remainder will be reused next time the same filter will be invoked on
+     * this Connection.
+     *
      * @param ctx
      * @param filtersState
      * @param type
@@ -499,29 +473,23 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
      * @param appender
      * @return
      */
-    private <M> void storeMessage(final FilterChainContext ctx,
-            final FiltersState filtersState, final boolean isIncomplete,
-            final int filterIdx, final M messageToStore,
-            final Appender<M> appender) {
-        
+    private <M> void storeMessage(final FilterChainContext ctx, final FiltersState filtersState, final boolean isIncomplete, final int filterIdx,
+            final M messageToStore, final Appender<M> appender) {
+
         assert messageToStore != null;
 
-        filtersState.set(ctx.getOperation(), filterIdx, isIncomplete,
-                messageToStore, appender);
+        filtersState.set(ctx.getOperation(), filterIdx, isIncomplete, messageToStore, appender);
     }
 
     private void notifyComplete(final FilterChainContext context) {
-        final CompletionHandler<FilterChainContext> completionHandler =
-                context.operationCompletionHandler;
+        final CompletionHandler<FilterChainContext> completionHandler = context.operationCompletionHandler;
         if (completionHandler != null) {
             completionHandler.completed(context);
         }
 
-
         // If TransportFilter was invoked on the way - the following CompletionHandler and Future
         // will be null.
-        final CompletionHandler<?> transportCompletionHandler =
-                context.transportFilterContext.completionHandler;
+        final CompletionHandler<?> transportCompletionHandler = context.transportFilterContext.completionHandler;
 
         if (transportCompletionHandler != null) {
             transportCompletionHandler.completed(null);
@@ -552,132 +520,115 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
             state = new FilterStateElement[OPERATIONS_NUM][filtersNum];
         }
 
-        public FilterStateElement get(final Operation operation,
-                final int filterIndex) {
+        public FilterStateElement get(final Operation operation, final int filterIndex) {
             final int opIdx = operation.ordinal();
             final FilterStateElement elem = state[opIdx][filterIndex];
             if (elem != null && elem.isValid) {
                 return elem;
             }
-            
+
             return null;
         }
 
-        public <M> void set(final Operation operation, final int filterIndex,
-                final boolean isIncomplete, final M messageToStore,
-            final Appender<M> appender) {
+        public <M> void set(final Operation operation, final int filterIndex, final boolean isIncomplete, final M messageToStore, final Appender<M> appender) {
             final int opIdx = operation.ordinal();
-            
+
             FilterStateElement elem = state[opIdx][filterIndex];
             if (elem != null) {
                 elem.set(isIncomplete, messageToStore, appender);
             } else {
-                state[opIdx][filterIndex] = FilterStateElement.create(isIncomplete,
-                        messageToStore, appender);
+                state[opIdx][filterIndex] = FilterStateElement.create(isIncomplete, messageToStore, appender);
             }
         }
 
-        public int peekUnparsedIdx(final Operation operation,
-                final int start, final int end) {
-            
+        public int peekUnparsedIdx(final Operation operation, final int start, final int end) {
+
             if (start == end) {
                 return -1;
             }
-            
+
             final int opIdx = operation.ordinal();
             final int diff = end > start ? -1 : 1;
-            
+
             int i = end;
-            
+
             do {
                 i += diff;
                 final FilterStateElement elem = state[opIdx][i];
                 if (elem != null && elem.isValid && !elem.isIncomplete) {
                     return i;
                 }
-                
+
             } while (i != start);
 
             return -1;
-        }        
+        }
 
-        private Object append(final Operation operation, final int filterIdx,
-                final Object currentMessage) {
-            
+        private Object append(final Operation operation, final int filterIdx, final Object currentMessage) {
+
             // Check if there is any data stored for the current Filter
             final FilterStateElement filterState = get(operation, filterIdx);
-            return filterState != null ?
-                    filterState.append(currentMessage) :
-                    currentMessage;
+            return filterState != null ? filterState.append(currentMessage) : currentMessage;
         }
     }
 
     private static final class FilterStateElement {
 
-        static FilterStateElement create(
-                final boolean isIncomplete,
-                final Object remainder) {
+        static FilterStateElement create(final boolean isIncomplete, final Object remainder) {
             if (remainder instanceof Buffer) {
-                return create(isIncomplete, (Buffer) remainder,
-                        Buffers.getBufferAppender(true));
+                return create(isIncomplete, (Buffer) remainder, Buffers.getBufferAppender(true));
             } else {
                 return create(isIncomplete, (Appendable) remainder);
             }
         }
 
-        static FilterStateElement create(
-                final boolean isIncomplete, final Appendable state) {
+        static FilterStateElement create(final boolean isIncomplete, final Appendable state) {
             return new FilterStateElement(isIncomplete, state);
         }
 
-        static <E> FilterStateElement create(
-                final boolean isIncomplete,
-                final E state, final Appender<E> appender) {
+        static <E> FilterStateElement create(final boolean isIncomplete, final E state, final Appender<E> appender) {
             return new FilterStateElement(isIncomplete, state, appender);
         }
-        
+
         private boolean isIncomplete;
         private Object state;
         private Appender appender;
         private boolean isValid = true;
-        
+
         private FilterStateElement(final boolean isIncomplete, Appendable state) {
 
             assert state != null;
-            
+
             this.isIncomplete = isIncomplete;
             this.state = state;
             appender = null;
         }
 
         private <E> FilterStateElement(final boolean isIncomplete, E state, Appender<E> appender) {
-            
+
             assert state != null;
-            
+
             this.isIncomplete = isIncomplete;
             this.state = state;
             this.appender = appender;
         }
 
-        private <E> void set(final boolean isIncomplete, final E state,
-                final Appender<E> appender) {
-            
+        private <E> void set(final boolean isIncomplete, final E state, final Appender<E> appender) {
+
             assert state != null;
-            
+
             this.isIncomplete = isIncomplete;
             this.state = state;
             this.appender = appender;
-            
+
             isValid = true;
         }
-        
+
         @SuppressWarnings("unchecked")
         private Object append(final Object currentMessage) {
-            final Object resultMessage = currentMessage != null ?
-                    (appender != null ?
-                        appender.append(state, currentMessage) :
-                        ((Appendable) state).append(currentMessage)) :
-                    state;
+            final Object resultMessage = currentMessage != null
+                    ? appender != null ? appender.append(state, currentMessage) : ((Appendable) state).append(currentMessage)
+                    : state;
 
             state = null;
             appender = null;
@@ -686,30 +637,27 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
             return resultMessage;
         }
     }
-    
-    private final class FiltersStateFactory implements
-            NullaryFunction<FiltersState> {
+
+    private final class FiltersStateFactory implements NullaryFunction<FiltersState> {
 
         @Override
         public FiltersState evaluate() {
             return new FiltersState(size());
-        }        
+        }
     }
-    
+
     private static final class FilterExecution {
         private static final int CONTINUE_TYPE = 0;
         private static final int TERMINATE_TYPE = 1;
         private static final int REEXECUTE_TYPE = 2;
-        
-        private static final FilterExecution CONTINUE =
-                new FilterExecution(CONTINUE_TYPE, null);
-        
-        private static final FilterExecution TERMINATE =
-                new FilterExecution(TERMINATE_TYPE, null);
-        
+
+        private static final FilterExecution CONTINUE = new FilterExecution(CONTINUE_TYPE, null);
+
+        private static final FilterExecution TERMINATE = new FilterExecution(TERMINATE_TYPE, null);
+
         private final int type;
         private final FilterChainContext context;
-        
+
         public static FilterExecution createContinue() {
             return CONTINUE;
         }
@@ -717,7 +665,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
         public static FilterExecution createTerminate() {
             return TERMINATE;
         }
-        
+
         public static FilterExecution createReExecute(final FilterChainContext context) {
             return new FilterExecution(REEXECUTE_TYPE, context);
         }
@@ -730,7 +678,7 @@ public final class DefaultFilterChain extends ListFacadeFilterChain {
         public int getType() {
             return type;
         }
-        
+
         public FilterChainContext getContext() {
             return context;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.SocketConnectorHandler;
 import org.glassfish.grizzly.WriteResult;
@@ -37,11 +37,12 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.transport.TCPNIOConnection;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.ChunkingFilter;
+
+import junit.framework.TestCase;
 
 /**
  *
@@ -51,7 +52,7 @@ public class ContentTest extends TestCase {
 
     public static final int PORT = 19003;
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void testExplicitContentLength() throws Exception {
         HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("POST").protocol(Protocol.HTTP_1_1).uri("/default").contentLength(10).build();
         httpRequest.addHeader(Header.Host, "localhost:" + PORT);
@@ -60,16 +61,17 @@ public class ContentTest extends TestCase {
         doHttpRequestTest(content);
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void testHeaderContentLength() throws Exception {
-        HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("POST").protocol(Protocol.HTTP_1_1).uri("/default").header("Content-Length", "10").build();
+        HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("POST").protocol(Protocol.HTTP_1_1).uri("/default").header("Content-Length", "10")
+                .build();
         httpRequest.addHeader("Host", "localhost:" + PORT);
         HttpContent content = httpRequest.httpContentBuilder().content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, "1234567890")).build();
 
         doHttpRequestTest(content);
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void testSimpleChunked() throws Exception {
         HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("POST").protocol(Protocol.HTTP_1_1).uri("/default").chunked(true).build();
         httpRequest.addHeader("Host", "localhost:" + PORT);
@@ -78,7 +80,7 @@ public class ContentTest extends TestCase {
         doHttpRequestTest(content);
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void testSeveralChunked() throws Exception {
         HttpRequestPacket httpRequest = HttpRequestPacket.builder().method("POST").protocol(Protocol.HTTP_1_1).uri("/default").chunked(true).build();
         httpRequest.addHeader("Host", "localhost:" + PORT);
@@ -89,8 +91,7 @@ public class ContentTest extends TestCase {
         doHttpRequestTest(content1, content2, content3);
     }
 
-    private void doHttpRequestTest(HttpContent... patternContentMessages)
-            throws Exception {
+    private void doHttpRequestTest(HttpContent... patternContentMessages) throws Exception {
 
         final FutureImpl<HttpPacket> parseResult = SafeFutureImpl.create();
 
@@ -102,7 +103,7 @@ public class ContentTest extends TestCase {
         filterChainBuilder.add(new HttpServerFilter());
         filterChainBuilder.add(new HTTPRequestMergerFilter(parseResult));
         FilterChain filterChain = filterChainBuilder.build();
-        
+
         TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChain);
 
@@ -115,20 +116,17 @@ public class ContentTest extends TestCase {
             clientFilterChainBuilder.add(new ChunkingFilter(2));
             clientFilterChainBuilder.add(new HttpClientFilter());
             FilterChain clientFilterChain = clientFilterChainBuilder.build();
-            
-            SocketConnectorHandler connectorHandler =
-                    TCPNIOConnectorHandler.builder(transport)
-                    .processor(clientFilterChain)
-                    .build();
+
+            SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(transport).processor(clientFilterChain).build();
 
             Future<Connection> future = connectorHandler.connect("localhost", PORT);
-            connection = (TCPNIOConnection) future.get(10, TimeUnit.SECONDS);
+            connection = future.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
 
             final HttpHeader patternHeader = patternContentMessages[0].getHttpHeader();
 
             byte[] patternContent = new byte[0];
-            for(int i = 0; i<patternContentMessages.length; i++) {
+            for (int i = 0; i < patternContentMessages.length; i++) {
                 int oldLen = patternContent.length;
                 final ByteBuffer bb = patternContentMessages[i].getContent().toByteBuffer().duplicate();
                 patternContent = Arrays.copyOf(patternContent, oldLen + bb.remaining());
@@ -149,7 +147,7 @@ public class ContentTest extends TestCase {
             byte[] resultContent = new byte[result.getContent().remaining()];
             result.getContent().get(resultContent);
             assertTrue(Arrays.equals(patternContent, resultContent));
-            
+
         } finally {
             if (connection != null) {
                 connection.closeSilently();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,36 +24,31 @@ package org.glassfish.grizzly.asyncqueue;
 public interface WritableMessage {
 
     /**
-     * Return <code>true</code> if this message has data remaining to be 
-     * written.
-     * 
-     * @return <code>true</code> if this message has data remaining to 
-     * be written.
+     * Return <code>true</code> if this message has data remaining to be written.
+     *
+     * @return <code>true</code> if this message has data remaining to be written.
      */
     boolean hasRemaining();
 
-
     /**
      * Return the number of bytes remaining to be written.
+     * 
      * @return the number of bytes remaining to be written.
      */
     int remaining();
 
-
     /**
-     * Perform message specific actions to release resources held by the
-     * entity backing this <code>WritableMessage</code>.
+     * Perform message specific actions to release resources held by the entity backing this <code>WritableMessage</code>.
+     * 
      * @return true if successfully released
      */
     boolean release();
-    
+
     /**
-     * Returns <tt>true</tt> if the message represents an external resource
-     * (for example {@link org.glassfish.grizzly.FileTransfer}),
-     * which is not loaded in memory.
-     * 
-     * @return <tt>False</tt>, if the message is
-     * located in memory (like {@link org.glassfish.grizzly.Buffer}).
+     * Returns <tt>true</tt> if the message represents an external resource (for example
+     * {@link org.glassfish.grizzly.FileTransfer}), which is not loaded in memory.
+     *
+     * @return <tt>False</tt>, if the message is located in memory (like {@link org.glassfish.grizzly.Buffer}).
      */
     boolean isExternal();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,24 +25,20 @@ import org.glassfish.grizzly.attributes.AttributeStorage;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 
 /**
- * Represents a single logical HTTP transaction.  The target storage provided
- * to the constructor provides a way to look up this transaction at any point
- * in the FilterChain execution.
+ * Represents a single logical HTTP transaction. The target storage provided to the constructor provides a way to look
+ * up this transaction at any point in the FilterChain execution.
  *
  * @since 2.3
  */
 public class HttpContext implements AttributeStorage {
 
-    private static final Attribute<HttpContext> HTTP_CONTEXT_ATTR =
-            AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(HttpContext.class.getName());
+    private static final Attribute<HttpContext> HTTP_CONTEXT_ATTR = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(HttpContext.class.getName());
     private final AttributeStorage contextStorage;
     private final OutputSink outputSink;
     private final Closeable closeable;
     private final HttpRequestPacket request;
-    
-    protected HttpContext(final AttributeStorage attributeStorage,
-            final OutputSink outputSink, final Closeable closeable,
-            final HttpRequestPacket request) {
+
+    protected HttpContext(final AttributeStorage attributeStorage, final OutputSink outputSink, final Closeable closeable, final HttpRequestPacket request) {
         this.contextStorage = attributeStorage;
         this.closeable = closeable;
         this.outputSink = outputSink;
@@ -50,7 +46,7 @@ public class HttpContext implements AttributeStorage {
     }
 
     // ---------------------------------------------------------- Public Methods
-    
+
     public HttpRequestPacket getRequest() {
         return request;
     }
@@ -59,7 +55,7 @@ public class HttpContext implements AttributeStorage {
         HTTP_CONTEXT_ATTR.set(ctx, this);
         return this;
     }
-    
+
     @Override
     public final AttributeHolder getAttributes() {
         return contextStorage.getAttributes();
@@ -72,7 +68,7 @@ public class HttpContext implements AttributeStorage {
     public OutputSink getOutputSink() {
         return outputSink;
     }
-    
+
     public Closeable getCloseable() {
         return closeable;
     }
@@ -80,14 +76,10 @@ public class HttpContext implements AttributeStorage {
     public void close() {
         closeable.closeSilently();
     }
-    
-    public static HttpContext newInstance(
-            final AttributeStorage attributeStorage,
-            final OutputSink outputSink,
-            final Closeable closeable,
+
+    public static HttpContext newInstance(final AttributeStorage attributeStorage, final OutputSink outputSink, final Closeable closeable,
             final HttpRequestPacket request) {
-        return new HttpContext(attributeStorage,
-                outputSink, closeable, request);
+        return new HttpContext(attributeStorage, outputSink, closeable, request);
     }
 
     public static HttpContext get(final FilterChainContext ctx) {

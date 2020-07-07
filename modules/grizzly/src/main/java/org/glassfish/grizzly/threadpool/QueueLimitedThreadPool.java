@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,9 +20,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 
 /**
- * Need to evaluate queue size limit perf implications on this fixedpool variant.
- * The atomic counter can in theory approach synchronized (lack of) scalability
- * in heavy load situations.
+ * Need to evaluate queue size limit perf implications on this fixedpool variant. The atomic counter can in theory
+ * approach synchronized (lack of) scalability in heavy load situations.
  *
  * @author gustav trede
  * @author Tigran Mkrtchyan
@@ -44,7 +43,7 @@ final class QueueLimitedThreadPool extends FixedThreadPool {
     }
 
     @Override
-    public final void execute(Runnable command) {
+    public void execute(Runnable command) {
         if (command == null) { // must nullcheck to ensure queuesize is valid
             throw new IllegalArgumentException("Runnable task is null");
         }
@@ -66,10 +65,8 @@ final class QueueLimitedThreadPool extends FixedThreadPool {
     }
 
     @Override
-    protected final void beforeExecute(final Worker worker, final Thread t,
-            final Runnable r) {
+    protected void beforeExecute(final Worker worker, final Thread t, final Runnable r) {
         super.beforeExecute(worker, t, r);
         queuePermits.release();
     }
 }
-

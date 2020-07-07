@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,7 +24,10 @@ import java.nio.ByteBuffer;
  */
 public interface ByteBufferAware {
     ByteBuffer allocateByteBuffer(int size);
+
     ByteBuffer allocateByteBufferAtLeast(int size);
+
     ByteBuffer reallocateByteBuffer(ByteBuffer oldByteBuffer, int newSize);
+
     void releaseByteBuffer(ByteBuffer byteBuffer);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,20 +20,21 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
+
 import org.glassfish.grizzly.http.server.util.Enumerator;
+
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 
 /**
  * Basic {@link ServletConfig} implementation.
- * 
+ *
  * @author Jeanfrancois Arcand
  */
 public class ServletConfigImpl implements ServletConfig {
 
     protected String name;
-    protected final ConcurrentMap<String, String> initParameters =
-            new ConcurrentHashMap<>(16, 0.75f, 64);
+    protected final ConcurrentMap<String, String> initParameters = new ConcurrentHashMap<>(16, 0.75f, 64);
     protected final WebappContext servletContextImpl;
 
     protected ServletConfigImpl(WebappContext servletContextImpl) {
@@ -72,7 +73,7 @@ public class ServletConfigImpl implements ServletConfig {
     }
 
     /**
-     * Set the name of this servlet. 
+     * Set the name of this servlet.
      *
      * @param name The new name of this servlet
      */
@@ -86,6 +87,6 @@ public class ServletConfigImpl implements ServletConfig {
     @Override
     @SuppressWarnings("unchecked")
     public Enumeration<String> getInitParameterNames() {
-        return (new Enumerator(initParameters.keySet()));
+        return new Enumerator(initParameters.keySet());
     }
 }

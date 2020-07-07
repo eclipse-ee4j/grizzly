@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,19 +24,19 @@ import org.glassfish.grizzly.http.util.DataChunk;
  */
 public class MappingData {
 
-    private static final String CONTEXT_DESC   = "context";
-    private static final String DEFAULT_DESC   = "default";
-    private static final String EXACT_DESC     = "exact";
+    private static final String CONTEXT_DESC = "context";
+    private static final String DEFAULT_DESC = "default";
+    private static final String EXACT_DESC = "exact";
     private static final String EXTENSION_DESC = "extension";
-    private static final String PATH_DESC      = "path";
-    private static final String UNKNOWN_DESC   = "unknown";
+    private static final String PATH_DESC = "path";
+    private static final String UNKNOWN_DESC = "unknown";
 
     public static final byte CONTEXT_ROOT = 0x1;
-    public static final byte DEFAULT      = 0x2;
-    public static final byte EXACT        = 0x4;
-    public static final byte EXTENSION    = 0x8;
-    public static final byte PATH         = 0x10;
-    public static final byte UNKNOWN      = 0x20;
+    public static final byte DEFAULT = 0x2;
+    public static final byte EXACT = 0x4;
+    public static final byte EXTENSION = 0x8;
+    public static final byte PATH = 0x10;
+    public static final byte UNKNOWN = 0x20;
 
     public byte mappingType = UNKNOWN;
     public Object host = null;
@@ -56,6 +56,7 @@ public class MappingData {
     public final DataChunk redirectPath = DataChunk.newInstance();
 
     public final DataChunk tmpMapperDC = DataChunk.newInstance();
+
     public void recycle() {
         mappingType = UNKNOWN;
         host = null;
@@ -93,21 +94,23 @@ public class MappingData {
         return sb.toString();
     }
 
-
     // -------------------------------------------------------- Private Methods
-
 
     private String getMappingDescription() {
         switch (mappingType) {
-            case CONTEXT_ROOT: return CONTEXT_DESC;
-            case DEFAULT: return DEFAULT_DESC;
-            case EXACT: return EXACT_DESC;
-            case EXTENSION: return EXTENSION_DESC;
-            case PATH: return PATH_DESC;
-            default: return UNKNOWN_DESC;
+        case CONTEXT_ROOT:
+            return CONTEXT_DESC;
+        case DEFAULT:
+            return DEFAULT_DESC;
+        case EXACT:
+            return EXACT_DESC;
+        case EXTENSION:
+            return EXTENSION_DESC;
+        case PATH:
+            return PATH_DESC;
+        default:
+            return UNKNOWN_DESC;
         }
     }
-
-
 
 }

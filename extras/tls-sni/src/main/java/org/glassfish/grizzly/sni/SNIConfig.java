@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,75 +17,68 @@
 package org.glassfish.grizzly.sni;
 
 import javax.net.ssl.SSLEngine;
+
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 
 /**
- * The object represents SNI configuration for either server or client side.
- * In order to create a server-side SNI configuration - the {@link #serverConfigBuilder()}
- * has to be used, for client-side SNI configuration please use {@link #clientConfigBuilder()}.
- * 
+ * The object represents SNI configuration for either server or client side. In order to create a server-side SNI
+ * configuration - the {@link #serverConfigBuilder()} has to be used, for client-side SNI configuration please use
+ * {@link #clientConfigBuilder()}.
+ *
  * @author Alexey Stashok
  */
 public class SNIConfig {
-    private static final SSLEngineConfigurator NULL_SERVER_CONFIG =
-            new NullSSLEngineConfigurator();
-    
+    private static final SSLEngineConfigurator NULL_SERVER_CONFIG = new NullSSLEngineConfigurator();
+
     final SSLEngineConfigurator sslEngineConfigurator;
     final String host;
     final boolean isClientConfig;
 
     /**
-     * @param sslEngineConfigurator {@link SSLEngineConfigurator},
-     *          or <tt>null</tt> for the default configuration
+     * @param sslEngineConfigurator {@link SSLEngineConfigurator}, or <tt>null</tt> for the default configuration
      * @return server-side SNI configuration
      */
-    public static SNIConfig newServerConfig(
-        final SSLEngineConfigurator sslEngineConfigurator) {
+    public static SNIConfig newServerConfig(final SSLEngineConfigurator sslEngineConfigurator) {
         return new SNIConfig(sslEngineConfigurator, null, false);
     }
-    
+
     /**
-     * @param host the SNI host name to be sent to a server, or <tt>null</tt>
-     *          to not use SNI extension
+     * @param host the SNI host name to be sent to a server, or <tt>null</tt> to not use SNI extension
      * @return client-side SNI configuration
      */
     public static SNIConfig newClientConfig(final String host) {
         return new SNIConfig(null, host, true);
     }
-    
+
     /**
-     * @param host the SNI host name to be sent to a server, or <tt>null</tt>
-     *          to not use SNI extension
-     * @param sslEngineConfigurator {@link SSLEngineConfigurator},
-     *          or <tt>null</tt> for the default configuration
+     * @param host the SNI host name to be sent to a server, or <tt>null</tt> to not use SNI extension
+     * @param sslEngineConfigurator {@link SSLEngineConfigurator}, or <tt>null</tt> for the default configuration
      * @return client-side SNI configuration
      */
-    public static SNIConfig newClientConfig(final String host,
-        final SSLEngineConfigurator sslEngineConfigurator) {
+    public static SNIConfig newClientConfig(final String host, final SSLEngineConfigurator sslEngineConfigurator) {
         return new SNIConfig(sslEngineConfigurator, host, true);
     }
 
     /**
      * @param host
-     * @return SNIConfig for {@link Connection}, whose SNI host wasn't recognized
-     *          as supported, so the {@link Connection} has to be closed
+     * @return SNIConfig for {@link Connection}, whose SNI host wasn't recognized as supported, so the {@link Connection}
+     * has to be closed
      */
     public static SNIConfig failServerConfig(final String host) {
         return new SNIConfig(NULL_SERVER_CONFIG, host, false);
     }
-    
-    private SNIConfig(final SSLEngineConfigurator engineConfig,
-            final String host, final boolean isClientConfig) {
+
+    private SNIConfig(final SSLEngineConfigurator engineConfig, final String host, final boolean isClientConfig) {
         this.sslEngineConfigurator = engineConfig;
         this.host = host;
         this.isClientConfig = isClientConfig;
     }
-    
+
     private static class NullSSLEngineConfigurator extends SSLEngineConfigurator {
 
         public NullSSLEngineConfigurator() {
         }
-        
+
         @Override
         public SSLEngine createSSLEngine(String peerHost, int peerPort) {
             throw new IllegalStateException("No SNI config found");
@@ -107,8 +100,7 @@ public class SNIConfig {
         }
 
         @Override
-        public SSLEngineConfigurator setProtocolConfigured(
-                boolean isProtocolConfigured) {
+        public SSLEngineConfigurator setProtocolConfigured(boolean isProtocolConfigured) {
             throw new IllegalStateException("Immutable config");
         }
 

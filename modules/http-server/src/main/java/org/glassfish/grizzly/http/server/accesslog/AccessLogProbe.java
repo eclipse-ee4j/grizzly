@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,8 +30,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 /**
- * A {@linkplain HttpServerProbe Grizzly probe} used to provide
- * access logs generation.
+ * A {@linkplain HttpServerProbe Grizzly probe} used to provide access logs generation.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  * @author <a href="http://www.usrz.com/">USRZ.com</a>
@@ -39,8 +38,8 @@ import org.glassfish.grizzly.http.server.Response;
 public class AccessLogProbe extends HttpServerProbe.Adapter {
 
     /**
-     * The minimum <em>response status</em> that will trigger an entry
-     * in an access log configured by this instance (default, log everything).
+     * The minimum <em>response status</em> that will trigger an entry in an access log configured by this instance
+     * (default, log everything).
      */
     public static final int DEFAULT_STATUS_THRESHOLD = Integer.MIN_VALUE;
 
@@ -57,58 +56,62 @@ public class AccessLogProbe extends HttpServerProbe.Adapter {
     private final int statusThreshold;
 
     /**
-     * Create a new {@link AccessLogProbe} formatting data with the specified
-     * {@linkplain AccessLogFormat format} and appending it to the specified
-     * {@linkplain AccessLogAppender appender}.
+     * Create a new {@link AccessLogProbe} formatting data with the specified {@linkplain AccessLogFormat format} and
+     * appending it to the specified {@linkplain AccessLogAppender appender}.
      */
     public AccessLogProbe(AccessLogAppender appender, AccessLogFormat format) {
         this(appender, format, DEFAULT_STATUS_THRESHOLD);
     }
 
     /**
-     * Create a new {@link AccessLogProbe} formatting data with the specified
-     * {@linkplain AccessLogFormat format} and appending it to the specified
-     * {@linkplain AccessLogAppender appender}.
+     * Create a new {@link AccessLogProbe} formatting data with the specified {@linkplain AccessLogFormat format} and
+     * appending it to the specified {@linkplain AccessLogAppender appender}.
      *
-     * <p>Only responses with <em>status</em> over the specified threshold will
-     * be logged, for example a threshold of <code>500</code> will only
-     * generate log entries for requests that terminated in error.</p>
+     * <p>
+     * Only responses with <em>status</em> over the specified threshold will be logged, for example a threshold of
+     * <code>500</code> will only generate log entries for requests that terminated in error.
+     * </p>
      */
     public AccessLogProbe(AccessLogAppender appender, AccessLogFormat format, int statusThreshold) {
-        if (appender == null) throw new NullPointerException("Null access log appender");
-        if (format == null) throw new NullPointerException("Null format");
+        if (appender == null) {
+            throw new NullPointerException("Null access log appender");
+        }
+        if (format == null) {
+            throw new NullPointerException("Null format");
+        }
         this.appender = appender;
         this.format = format;
         this.statusThreshold = statusThreshold;
     }
 
     /**
-     * Instrument the specified {@link Request} with an attribute marking its
-     * <em>received</em> time (in {@linkplain System#nanoTime() nanoseconds}).
+     * Instrument the specified {@link Request} with an attribute marking its <em>received</em> time (in
+     * {@linkplain System#nanoTime() nanoseconds}).
      */
-    @Override @SuppressWarnings("rawtypes")
+    @Override
+    @SuppressWarnings("rawtypes")
     public void onRequestReceiveEvent(HttpServerFilter filter, Connection connection, Request request) {
         request.setAttribute(ATTRIBUTE_TIME_STAMP, System.nanoTime());
         /*
-         * It seems that in some edge cases Grizzly is not caching the
-         * connection addresses in the request / response structure. Internally
-         * the TCPNIOConnectionClass uses a Holder to store those (which
-         * provides lazy initialization). We force the holders to get (and
-         * cache) the values by alling the "get(Local|Peer)Address()" methods.
+         * It seems that in some edge cases Grizzly is not caching the connection addresses in the request / response structure.
+         * Internally the TCPNIOConnectionClass uses a Holder to store those (which provides lazy initialization). We force the
+         * holders to get (and cache) the values by alling the "get(Local|Peer)Address()" methods.
          */
         connection.getLocalAddress();
         connection.getPeerAddress();
     }
 
     /**
-     * Receive notification of the completion of a {@link Response} an possibly
-     * trigger an access log entry generation.
+     * Receive notification of the completion of a {@link Response} an possibly trigger an access log entry generation.
      */
-    @Override @SuppressWarnings("rawtypes")
+    @Override
+    @SuppressWarnings("rawtypes")
     public void onRequestCompleteEvent(HttpServerFilter filter, Connection connection, Response response) {
 
         /* Only call the format/appender if we have to */
-        if (response.getStatus() < statusThreshold) return;
+        if (response.getStatus() < statusThreshold) {
+            return;
+        }
 
         /* Calculate request timing */
         final Long requestNanos = (Long) response.getRequest().getAttribute(ATTRIBUTE_TIME_STAMP);
@@ -117,7 +120,7 @@ public class AccessLogProbe extends HttpServerProbe.Adapter {
         final long nanoStamp = System.nanoTime();
 
         final long responseNanos = requestNanos == null ? -1 : nanoStamp - requestNanos;
-        final Date requestMillis = new Date(timeStamp - (responseNanos / 1000000L));
+        final Date requestMillis = new Date(timeStamp - responseNanos / 1000000L);
 
         /* Create a formatted log entry string and append it */
         try {

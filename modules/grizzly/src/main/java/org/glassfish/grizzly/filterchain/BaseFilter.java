@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,19 +16,19 @@
 
 package org.glassfish.grizzly.filterchain;
 
-import org.glassfish.grizzly.Connection;
 import java.io.IOException;
+
+import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.FilterChainContext.Operation;
 
 /**
  * Provides empty implementation for {@link Filter} processing methods.
  *
  * @see Filter
- * 
+ *
  * @author Alexey Stashok
  */
 public class BaseFilter implements Filter {
-
 
     /**
      * {@inheritDoc}
@@ -87,8 +87,7 @@ public class BaseFilter implements Filter {
      * {@inheritDoc}
      */
     @Override
-    public NextAction handleEvent(final FilterChainContext ctx,
-            final FilterChainEvent event) throws IOException {
+    public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
         return ctx.getInvokeAction();
     }
 
@@ -110,12 +109,9 @@ public class BaseFilter implements Filter {
     public void exceptionOccurred(FilterChainContext ctx, Throwable error) {
     }
 
-
-    public FilterChainContext createContext(final Connection connection,
-            final Operation operation) {
+    public FilterChainContext createContext(final Connection connection, final Operation operation) {
         FilterChain filterChain = (FilterChain) connection.getProcessor();
-        final FilterChainContext ctx =
-                filterChain.obtainFilterChainContext(connection);
+        final FilterChainContext ctx = filterChain.obtainFilterChainContext(connection);
         final int idx = filterChain.indexOf(this);
         ctx.setOperation(operation);
         ctx.setFilterIdx(idx);
@@ -123,7 +119,7 @@ public class BaseFilter implements Filter {
 
         return ctx;
     }
-    
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());

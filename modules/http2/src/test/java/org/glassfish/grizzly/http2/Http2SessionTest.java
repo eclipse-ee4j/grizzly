@@ -1,5 +1,12 @@
 package org.glassfish.grizzly.http2;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.DefaultFilterChain;
 import org.glassfish.grizzly.filterchain.Filter;
@@ -11,19 +18,16 @@ import org.glassfish.grizzly.memory.MemoryManager;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.mockito.Mockito.*;
-
 /**
- * Test {@link Http2Session}
+ * Test {@link Http2Session}.
+ * 
  * @author Sven Diedrichsen (sven.diedrichsen@gmail.com)
  * @since 26.05.18
  */
 public class Http2SessionTest {
 
-    private Http2Configuration configuration =
-            Http2Configuration.builder()
-                .cleanPercentage(1.0f)
-                .streamsHighWaterMark(0.01f).build();
+    private Http2Configuration configuration = Http2Configuration.builder().cleanPercentage(1.0f).streamsHighWaterMark(0.01f).maxConcurrentStreams(150)
+            .initialWindowSize(2).build();
 
     private Http2Session session;
 
@@ -31,15 +35,8 @@ public class Http2SessionTest {
     public void setUp() {
         FilterChain filterChain = newFilterChain();
         Connection<?> connection = newConnectionMock(filterChain);
-        session = new Http2Session(
-            connection,
-            true,
-            new Http2ServerFilter(configuration)
-        );
-        session.setupFilterChains(
-            newFilterChainContext(filterChain, connection),
-            false
-        );
+        session = new Http2Session(connection, true, new Http2ServerFilter(configuration));
+        session.setupFilterChains(newFilterChainContext(filterChain, connection), false);
     }
 
     private FilterChainContext newFilterChainContext(FilterChain filterChain, Connection<?> connection) {
@@ -75,6 +72,16 @@ public class Http2SessionTest {
         session.terminate(ErrorCode.INTERNAL_ERROR, "Test");
 
         verify(stream, times(3)).closedRemotely();
+    }
+
+    @Test
+    public void testCtorInitializesLocalMaxConcurrentStreams() {
+        assertThat("Http2Sessions LocalMaxConcurrentStreams supposed to be taken from configuration.", session.getLocalMaxConcurrentStreams(), is(150));
+    }
+
+    @Test
+    public void testCtorInitializesLocalStreamWindowSize() {
+        assertThat("Http2Sessions LocalStreamWindowSize supposed to be taken from configuration.", session.getLocalStreamWindowSize(), is(2));
     }
 
 }

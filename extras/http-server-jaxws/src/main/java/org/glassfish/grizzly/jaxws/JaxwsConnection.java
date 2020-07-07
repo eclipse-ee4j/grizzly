@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,19 @@
 
 package org.glassfish.grizzly.jaxws;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+
 import com.sun.istack.NotNull;
 import com.sun.xml.ws.api.message.Packet;
 import com.sun.xml.ws.api.server.PortAddressResolver;
@@ -25,19 +38,12 @@ import com.sun.xml.ws.transport.Headers;
 import com.sun.xml.ws.transport.http.HttpAdapter;
 import com.sun.xml.ws.transport.http.WSHTTPConnection;
 
-import javax.xml.ws.handler.MessageContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.Principal;
-import java.util.*;
-import javax.xml.ws.WebServiceException;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
+import jakarta.xml.ws.WebServiceException;
+import jakarta.xml.ws.handler.MessageContext;
 
 /**
  * JAX-WS WSHTTPConnection implementation for grizzly transport
- * 
+ *
  * @author Alexey Stashok
  * @author JAX-WS team
  */
@@ -53,10 +59,8 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
 
     private Headers requestHeaders;
     private Headers responseHeaders;
-    
-    public JaxwsConnection(final HttpAdapter httpAdapter,
-            final Request request, final Response response,
-            final boolean isSecure, final boolean isAsync) {
+
+    public JaxwsConnection(final HttpAdapter httpAdapter, final Request request, final Response response, final boolean isSecure, final boolean isAsync) {
         this.httpAdapter = httpAdapter;
         this.request = request;
         this.response = response;
@@ -65,12 +69,12 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
     }
 
     @Override
-    @Property({MessageContext.HTTP_REQUEST_HEADERS, Packet.INBOUND_TRANSPORT_HEADERS})
+    @Property({ MessageContext.HTTP_REQUEST_HEADERS, Packet.INBOUND_TRANSPORT_HEADERS })
     public @NotNull Map<String, List<String>> getRequestHeaders() {
         if (requestHeaders == null) {
             requestHeaders = new Headers();
             for (String headerName : request.getHeaderNames()) {
-                final List<String> headerValues = new ArrayList<String>(4);
+                final List<String> headerValues = new ArrayList<>(4);
 
                 for (String headerValue : request.getHeaders(headerName)) {
                     headerValues.add(headerValue);
@@ -79,7 +83,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
                 requestHeaders.put(headerName, headerValues);
             }
         }
-        
+
         return requestHeaders;
     }
 
@@ -90,7 +94,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
 
     @Override
     public Set<String> getRequestHeaderNames() {
-    	return getRequestHeaders().keySet();
+        return getRequestHeaders().keySet();
     }
 
     @Override
@@ -120,18 +124,18 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
 
     @Override
     public void setResponseHeader(String key, String value) {
-    	setResponseHeader(key, Collections.singletonList(value));
+        setResponseHeader(key, Collections.singletonList(value));
     }
-    
+
     @Override
     public void setResponseHeader(String key, List<String> value) {
         if (responseHeaders == null) {
             responseHeaders = new Headers();
         }
-    	
+
         responseHeaders.put(key, value);
     }
-    
+
     @Override
     public String getRequestURI() {
         return request.getRequestURI();
@@ -150,8 +154,8 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
     @Override
     public int getServerPort() {
         return request.getServerPort();
-    }    
-    
+    }
+
     @Override
     public void setContentTypeResponseHeader(@NotNull String value) {
         response.setContentType(value);
@@ -185,14 +189,14 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
                     continue;
                 }
                 if (name.equalsIgnoreCase("Content-Type") || name.equalsIgnoreCase("Content-Length")) {
-                    continue;   // ignore headers that interfere with the operation
+                    continue; // ignore headers that interfere with the operation
                 }
                 for (String value : entry.getValue()) {
                     response.addHeader(name, value);
                 }
             }
         }
-        
+
         return response.getOutputStream();
     }
 
@@ -235,8 +239,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
         return getBaseAddress(request);
     }
 
-    static @NotNull
-    String getBaseAddress(Request request) {
+    static @NotNull String getBaseAddress(Request request) {
         StringBuilder buf = new StringBuilder();
         buf.append(request.getScheme());
         buf.append("://");
@@ -255,8 +258,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
 
     @Override
     @Property(MessageContext.HTTP_REQUEST_METHOD)
-    public @NotNull
-    String getRequestMethod() {
+    public @NotNull String getRequestMethod() {
         return request.getMethod().getMethodString();
     }
 
@@ -273,8 +275,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
     }
 
     /**
-     * Override the close to make sure the Grizzly ARP processing completes
-     * Delegate further processing to parent class
+     * Override the close to make sure the Grizzly ARP processing completes Delegate further processing to parent class
      */
     @Override
     public void close() {
@@ -291,6 +292,7 @@ final class JaxwsConnection extends WSHTTPConnection implements WebServiceContex
     protected PropertyMap getPropertyMap() {
         return model;
     }
+
     private static final PropertyMap model;
 
     static {

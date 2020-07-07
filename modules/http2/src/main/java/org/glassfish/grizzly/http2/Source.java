@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,13 +17,14 @@
 package org.glassfish.grizzly.http2;
 
 import java.io.File;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http2.frames.ErrorCode;
 import org.glassfish.grizzly.memory.Buffers;
 
 /**
  * The class represents generic source of data to be sent on {@link Http2Stream}.
- * 
+ *
  * @author Alexey Stashok
  */
 abstract class Source {
@@ -31,39 +32,37 @@ abstract class Source {
      * Returns the number of bytes remaining to be written.
      */
     public abstract int remaining();
-    
+
     /**
      * Returns the number of bytes to be written.
-     * @param length max number of bytes to return.
-     * @return {@link Buffer}, which contains up to <tt>length</tt> bytes
-     *          (could return less) to be written. <tt>null</tt> result is not
-     *          permitted.
      * 
+     * @param length max number of bytes to return.
+     * @return {@link Buffer}, which contains up to <tt>length</tt> bytes (could return less) to be written. <tt>null</tt>
+     * result is not permitted.
+     *
      * @throws Http2StreamException if an error occurs reading from the stream.
      */
     public abstract Buffer read(final int length) throws Http2StreamException;
-    
+
     /**
-     * Returns <tt>true</tt> if there is more data to be written, or <tt>false</tt>
-     *              otherwise.
+     * Returns <tt>true</tt> if there is more data to be written, or <tt>false</tt> otherwise.
      */
     public abstract boolean hasRemaining();
-    
+
     /**
      * The method is called, when the source might be released/closed.
      */
     public abstract void release();
-    
+
     /**
      * Returns the {@link SourceFactory} associated with the {@link Http2Stream}.
      */
     public static SourceFactory factory(final Http2Stream http2Stream) {
         return new SourceFactory(http2Stream);
     }
-    
+
     /**
-     * The helper factory class to create {@link Source}s based on
-     * {@link File}, {@link Buffer}, {@link String} and byte[].
+     * The helper factory class to create {@link Source}s based on {@link File}, {@link Buffer}, {@link String} and byte[].
      */
     public final static class SourceFactory {
 
@@ -94,8 +93,7 @@ abstract class Source {
 
             private final Http2Stream stream;
 
-            protected BufferSource(final Buffer buffer,
-                                   final Http2Stream stream) {
+            protected BufferSource(final Buffer buffer, final Http2Stream stream) {
 
                 this.buffer = buffer;
                 this.stream = stream;
@@ -109,8 +107,7 @@ abstract class Source {
             @Override
             public Buffer read(final int length) throws Http2StreamException {
                 if (isClosed) {
-                    throw new Http2StreamException(stream.getId(),
-                            ErrorCode.INTERNAL_ERROR, "The source was closed");
+                    throw new Http2StreamException(stream.getId(), ErrorCode.INTERNAL_ERROR, "The source was closed");
                 }
 
                 final int remaining = buffer.remaining();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,8 +17,7 @@
 package org.glassfish.grizzly.threadpool;
 
 /**
- * Utility class, which has notification methods for different
- * {@link ThreadPoolProbe} events.
+ * Utility class, which has notification methods for different {@link ThreadPoolProbe} events.
  *
  * @author Alexey Stashok
  */
@@ -53,15 +52,13 @@ final class ProbeNotifier {
         }
     }
 
-
     /**
      * Notify registered {@link ThreadPoolProbe}s about the "thread allocated" event.
      *
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param thread the thread that has been allocated
      */
-    static void notifyThreadAllocated(final AbstractThreadPool threadPool,
-            final Thread thread) {
+    static void notifyThreadAllocated(final AbstractThreadPool threadPool, final Thread thread) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -77,8 +74,7 @@ final class ProbeNotifier {
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param thread the thread that has been allocated
      */
-    static void notifyThreadReleased(final AbstractThreadPool threadPool,
-            final Thread thread) {
+    static void notifyThreadReleased(final AbstractThreadPool threadPool, final Thread thread) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -92,11 +88,9 @@ final class ProbeNotifier {
      * Notify registered {@link ThreadPoolProbe}s about the "max number of threads reached" event.
      *
      * @param threadPool the {@link AbstractThreadPool} being monitored
-     * @param maxNumberOfThreads the maximum number of threads allowed in the
-     *  {@link AbstractThreadPool}
+     * @param maxNumberOfThreads the maximum number of threads allowed in the {@link AbstractThreadPool}
      */
-    static void notifyMaxNumberOfThreads(final AbstractThreadPool threadPool,
-            final int maxNumberOfThreads) {
+    static void notifyMaxNumberOfThreads(final AbstractThreadPool threadPool, final int maxNumberOfThreads) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -112,8 +106,7 @@ final class ProbeNotifier {
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param task a unit of work to be processed
      */
-    static void notifyTaskQueued(final AbstractThreadPool threadPool,
-            final Runnable task) {
+    static void notifyTaskQueued(final AbstractThreadPool threadPool, final Runnable task) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -129,8 +122,7 @@ final class ProbeNotifier {
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param task a unit of work to be processed
      */
-    static void notifyTaskDequeued(final AbstractThreadPool threadPool,
-            final Runnable task) {
+    static void notifyTaskDequeued(final AbstractThreadPool threadPool, final Runnable task) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -146,8 +138,7 @@ final class ProbeNotifier {
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param task a unit of work to be processed
      */
-    static void notifyTaskCancelled(final AbstractThreadPool threadPool,
-            final Runnable task) {
+    static void notifyTaskCancelled(final AbstractThreadPool threadPool, final Runnable task) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
@@ -156,15 +147,14 @@ final class ProbeNotifier {
             }
         }
     }
-    
+
     /**
      * Notify registered {@link ThreadPoolProbe}s about the "task completed" event.
      *
      * @param threadPool the {@link AbstractThreadPool} being monitored
      * @param task a unit of work to be processed
      */
-    static void notifyTaskCompleted(final AbstractThreadPool threadPool,
-            final Runnable task) {
+    static void notifyTaskCompleted(final AbstractThreadPool threadPool, final Runnable task) {
 
         final ThreadPoolProbe[] probes = threadPool.monitoringConfig.getProbesUnsafe();
         if (probes != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,23 +16,9 @@
 
 package org.glassfish.grizzly.http2;
 
-import org.glassfish.grizzly.http.HttpProbe;
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.ConnectionProbe;
-import org.glassfish.grizzly.http.HttpHeader;
-import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.Protocol;
-import org.glassfish.grizzly.http.server.filecache.FileCache;
-import org.glassfish.grizzly.http.server.filecache.FileCacheEntry;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.SocketConnectorHandler;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.http.HttpContent;
-import org.glassfish.grizzly.http.HttpRequestPacket;
-import org.glassfish.grizzly.memory.ByteBufferWrapper;
-import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -52,16 +38,33 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.ConnectionProbe;
+import org.glassfish.grizzly.SocketConnectorHandler;
+import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.HttpHeader;
 import org.glassfish.grizzly.http.HttpPacket;
+import org.glassfish.grizzly.http.HttpProbe;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
-
+import org.glassfish.grizzly.http.server.filecache.FileCache;
+import org.glassfish.grizzly.http.server.filecache.FileCacheEntry;
 import org.glassfish.grizzly.http.server.filecache.FileCacheProbe;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.ByteBufferWrapper;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,11 +72,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import static org.junit.Assert.*;
-
 /**
  * The subset of HTTP File Cache tests to make sure HTTP/2 works fine with FileCache.
- * 
+ *
  * @author Alexey Stashok
  */
 @RunWith(Parameterized.class)
@@ -85,7 +86,7 @@ public class FileCacheTest extends AbstractHttp2Test {
 
     private final boolean isSecure;
     private final boolean priorKnowledge;
-    
+
     public FileCacheTest(final boolean isSecure, final boolean priorKnowledge) {
         this.isSecure = isSecure;
         this.priorKnowledge = priorKnowledge;
@@ -136,9 +137,7 @@ public class FileCacheTest extends AbstractHttp2Test {
                     }
 
                     final Writer writer = res.getWriter();
-                    writer.write(error == null
-                                         ? "Hello not cached data"
-                                         : "Error happened: " + error);
+                    writer.write(error == null ? "Hello not cached data" : "Error happened: " + error);
                     writer.close();
 
                 } catch (Exception ex) {
@@ -148,19 +147,13 @@ public class FileCacheTest extends AbstractHttp2Test {
         });
 
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
-        builder.method(Method.GET)
-                .uri("/somedata")
-                .protocol(Protocol.HTTP_1_1)
-                .host("localhost:" + PORT);
+        builder.method(Method.GET).uri("/somedata").protocol(Protocol.HTTP_1_1).host("localhost:" + PORT);
 
-        final HttpPacket request1 = lastHttpPacket(
-                builder.build());
+        final HttpPacket request1 = lastHttpPacket(builder.build());
 
-        final HttpPacket request2 = lastHttpPacket(
-                builder.build());
+        final HttpPacket request2 = lastHttpPacket(builder.build());
 
-        final HttpPacket request3 = lastHttpPacket(
-                builder.method(Method.POST).contentLength(0).build());
+        final HttpPacket request3 = lastHttpPacket(builder.method(Method.POST).contentLength(0).build());
 
         boolean isOk = false;
         try {
@@ -191,7 +184,7 @@ public class FileCacheTest extends AbstractHttp2Test {
 
             assertNotNull("response3 is null", response3);
             assertEquals("Not cached data mismatch\n" + cacheProbe, "Hello not cached data", response3.getContent().toStringContent());
-            
+
             isOk = true;
         } finally {
             if (!isOk) {
@@ -201,7 +194,7 @@ public class FileCacheTest extends AbstractHttp2Test {
             }
         }
     }
-    
+
 //    /**
 //     * http://java.net/jira/browse/GRIZZLY-1014
 //     * "Content-type for files cached in the file cache is incorrect"
@@ -322,7 +315,7 @@ public class FileCacheTest extends AbstractHttp2Test {
 //        }
 //
 //    }
-//    
+//
 //
 //    @SuppressWarnings("ResultOfMethodCallIgnored")
 //    @Test
@@ -352,7 +345,7 @@ public class FileCacheTest extends AbstractHttp2Test {
 //                DataStructures.getLTQInstance(HttpContent.class);
 //        final Connection c = getConnection("localhost", PORT, inQueue);
 //        c.write(request1);
-//        
+//
 //        final HttpContent response1 = inQueue.poll(10, TimeUnit.SECONDS);
 //        assertNotNull("response1 is null", response1);
 //        assertEquals("Cached data mismatch. Response=" + response1.getHttpHeader(),
@@ -376,7 +369,6 @@ public class FileCacheTest extends AbstractHttp2Test {
 //
 //    }
 
-
     private void configureHttpServer() throws Exception {
         httpServer = createServer(null, PORT, isSecure, true);
         httpServer.getListener("grizzly").getKeepAlive().setIdleTimeoutInSeconds(-1);
@@ -387,20 +379,11 @@ public class FileCacheTest extends AbstractHttp2Test {
         httpServer.start();
     }
 
-    private Connection getConnection(String host,
-                                     int port,
-                                     BlockingQueue<HttpContent> inQueue)
-    throws Exception {
+    private Connection getConnection(String host, int port, BlockingQueue<HttpContent> inQueue) throws Exception {
 
-        final FilterChain clientChain =
-                createClientFilterChainAsBuilder(isSecure, priorKnowledge,
-                new HttpMessageFilter(inQueue))
-                .build();
+        final FilterChain clientChain = createClientFilterChainAsBuilder(isSecure, priorKnowledge, new HttpMessageFilter(inQueue)).build();
 
-        
-        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(
-                httpServer.getListener("grizzly").getTransport())
-                .processor(clientChain)
+        SocketConnectorHandler connectorHandler = TCPNIOConnectorHandler.builder(httpServer.getListener("grizzly").getTransport()).processor(clientChain)
                 .build();
 
         Future<Connection> connectFuture = connectorHandler.connect(host, port);
@@ -410,8 +393,7 @@ public class FileCacheTest extends AbstractHttp2Test {
 
     private static String convertToDate(final long date) {
 
-        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz",
-                                                  Locale.US);
+        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
         format.setTimeZone(TimeZone.getTimeZone("GMT"));
         return format.format(new Date(date));
 
@@ -439,12 +421,9 @@ public class FileCacheTest extends AbstractHttp2Test {
         }
         return f;
     }
-    
+
     private static HttpPacket lastHttpPacket(HttpHeader httpHeader) {
-        return HttpContent.builder(httpHeader)
-                .content(Buffers.EMPTY_BUFFER)
-                .last(true)
-                .build();
+        return HttpContent.builder(httpHeader).content(Buffers.EMPTY_BUFFER).last(true).build();
     }
 
     private static class HttpMessageFilter extends BaseFilter {
@@ -459,11 +438,11 @@ public class FileCacheTest extends AbstractHttp2Test {
         public NextAction handleRead(FilterChainContext ctx) throws IOException {
             final HttpContent content = ctx.getMessage();
 //            try {
-                if (!content.isLast()) {
-                    return ctx.getStopAction(content);
-                }
+            if (!content.isLast()) {
+                return ctx.getStopAction(content);
+            }
 
-                queue.add(content);
+            queue.add(content);
 //            } catch (Exception e) {
 //                future.failure(e);
 //                e.printStackTrace();
@@ -489,10 +468,8 @@ public class FileCacheTest extends AbstractHttp2Test {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("connection-stats[received=")
-            .append(receivedCounter.get())
-            .append(", sent=").append(sentBytesCounter.get())
-            .append("]");
+            final StringBuilder sb = new StringBuilder("connection-stats[received=").append(receivedCounter.get()).append(", sent=")
+                    .append(sentBytesCounter.get()).append("]");
 
             return sb.toString();
         }
@@ -514,15 +491,13 @@ public class FileCacheTest extends AbstractHttp2Test {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("http-stats[received=")
-            .append(receivedCounter.get())
-            .append(", sent=").append(sentBytesCounter.get())
-            .append("]");
+            final StringBuilder sb = new StringBuilder("http-stats[received=").append(receivedCounter.get()).append(", sent=").append(sentBytesCounter.get())
+                    .append("]");
 
             return sb.toString();
         }
     }
-    
+
     private static class StatsCacheProbe implements FileCacheProbe {
 
         final AtomicInteger entryAddedCounter = new AtomicInteger();
@@ -563,25 +538,24 @@ public class FileCacheTest extends AbstractHttp2Test {
         public int getEntryRemovedCounter() {
             return entryRemovedCounter.get();
         }
+
         public int getEntryHitCounter() {
             return entryHitCounter.get();
         }
+
         public int getEntryMissedCounter() {
             return entryMissedCounter.get();
         }
+
         public int getEntryErrorCounter() {
             return entryErrorCounter.get();
         }
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("file-cache-stats[added=")
-            .append(getEntryAddedCounter())
-            .append(", removed=").append(getEntryRemovedCounter())
-            .append(", hit=").append(getEntryHitCounter())
-            .append(", missed=").append(getEntryMissedCounter())
-            .append(", error=").append(getEntryErrorCounter())
-            .append("]");
+            final StringBuilder sb = new StringBuilder("file-cache-stats[added=").append(getEntryAddedCounter()).append(", removed=")
+                    .append(getEntryRemovedCounter()).append(", hit=").append(getEntryHitCounter()).append(", missed=").append(getEntryMissedCounter())
+                    .append(", error=").append(getEntryErrorCounter()).append("]");
 
             return sb.toString();
         }

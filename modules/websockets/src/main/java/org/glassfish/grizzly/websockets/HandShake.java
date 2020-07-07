@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -49,16 +49,12 @@ public abstract class HandShake {
     private int port = 80;
     private String resourcePath;
     private String location;
-    //private final Map<String, String[]> queryParams = new TreeMap<String, String[]>();
-    private List<String> subProtocol = new ArrayList<String>();
-    private List<Extension> extensions = new ArrayList<Extension>(); // client extensions
+    // private final Map<String, String[]> queryParams = new TreeMap<String, String[]>();
+    private List<String> subProtocol = new ArrayList<>();
+    private List<Extension> extensions = new ArrayList<>(); // client extensions
 
     public HandShake(URI url) {
-        builder = HttpRequestPacket.builder()
-                .protocol(Protocol.HTTP_1_1)
-                .method(Method.GET)
-                .header(Header.Connection, "Upgrade")
-                .upgrade("WebSocket");
+        builder = HttpRequestPacket.builder().protocol(Protocol.HTTP_1_1).method(Method.GET).header(Header.Connection, "Upgrade").upgrade("WebSocket");
 
         resourcePath = url.getPath();
         if ("".equals(resourcePath)) {
@@ -70,11 +66,10 @@ public abstract class HandShake {
         serverHostName = url.getHost();
         secure = "wss://".equals(url.getScheme());
         port = url.getPort();
-        
-        final StringBuilder sb = new StringBuilder(32)
-                .append(getScheme()).append("://").append(url.getHost());
+
+        final StringBuilder sb = new StringBuilder(32).append(getScheme()).append("://").append(url.getHost());
         origin = appendPort(sb).toString().toLowerCase(Locale.ENGLISH);
-        
+
         buildLocation();
     }
 
@@ -118,8 +113,6 @@ public abstract class HandShake {
         sb.append(resourcePath);
         location = sb.toString();
     }
-
-
 
     public String getLocation() {
         return location;
@@ -200,11 +193,9 @@ public abstract class HandShake {
             final String value = headers.getHeader(Constants.SEC_WS_PROTOCOL_HEADER);
             boolean found = false;
             if (value != null) {
-                final Set<String> validValues =
-                        new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
-                final List<String> acceptedSubProtocol =
-                        new ArrayList<String>(validValues.size());
-                
+                final Set<String> validValues = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                final List<String> acceptedSubProtocol = new ArrayList<>(validValues.size());
+
                 validValues.addAll(getSubProtocol());
 
                 if (value.contains(",")) {
@@ -229,10 +220,9 @@ public abstract class HandShake {
         }
     }
 
-    private void validate(final String header,
-            final String validValue, final String value) {
+    private void validate(final String header, final String validValue, final String value) {
         boolean found = false;
-        
+
         if (value != null) {
             if (value.contains(",")) {
                 for (String part : value.split(",")) {
@@ -245,7 +235,7 @@ public abstract class HandShake {
                 found = value.equalsIgnoreCase(validValue);
             }
         }
-        
+
         if (!found) {
             throw new HandshakeException(String.format("Invalid %s header returned: '%s'", header, value));
         }
@@ -268,7 +258,7 @@ public abstract class HandShake {
             port = 80;
         } else {
             assert header != null;
-            
+
             serverHostName = header.substring(0, i);
             port = Integer.parseInt(header.substring(i + 1));
         }
@@ -279,8 +269,7 @@ public abstract class HandShake {
         if (port != -1 && port != 80 && port != 443) {
             host += ":" + getPort();
         }
-        builder.uri(getResourcePath())
-                .header(Header.Host, host);
+        builder.uri(getResourcePath()).header(Header.Host, host);
         if (!getSubProtocol().isEmpty()) {
             builder.header(Constants.SEC_WS_PROTOCOL_HEADER, join(getSubProtocol()));
         } else {
@@ -295,35 +284,29 @@ public abstract class HandShake {
 
     public void validateServerResponse(HttpResponsePacket headers) {
         if (Constants.RESPONSE_CODE_VALUE != headers.getStatus()) {
-            throw new HandshakeException(String.format("Response code was not %s: %s %s",
-                Constants.RESPONSE_CODE_VALUE, headers.getStatus(), headers.getReasonPhrase()));
+            throw new HandshakeException(
+                    String.format("Response code was not %s: %s %s", Constants.RESPONSE_CODE_VALUE, headers.getStatus(), headers.getReasonPhrase()));
         }
         checkForHeader(headers, Constants.UPGRADE, Constants.WEBSOCKET);
         checkForHeader(headers, Constants.CONNECTION, Constants.UPGRADE);
         checkForSubProtocol(headers);
     }
 
-    public void respond(final FilterChainContext ctx,
-            final WebSocketApplication application,
-            final HttpResponsePacket response) {
+    public void respond(final FilterChainContext ctx, final WebSocketApplication application, final HttpResponsePacket response) {
 
         response.setProtocol(Protocol.HTTP_1_1);
         response.setStatus(HttpStatus.SWITCHING_PROTOCOLS_101);
         response.setHeader("Upgrade", "websocket");
-        response.setHeader("Connection", "Upgrade");        
+        response.setHeader("Connection", "Upgrade");
         setHeaders(response);
         if (!getSubProtocol().isEmpty()) {
-            response.setHeader(Constants.SEC_WS_PROTOCOL_HEADER,
-                join(application.getSupportedProtocols(getSubProtocol())));
+            response.setHeader(Constants.SEC_WS_PROTOCOL_HEADER, join(application.getSupportedProtocols(getSubProtocol())));
         }
         if (!application.getSupportedExtensions().isEmpty() && !getExtensions().isEmpty()) {
-            List<Extension> intersection =
-                    intersection(getExtensions(),
-                                 application.getSupportedExtensions());
+            List<Extension> intersection = intersection(getExtensions(), application.getSupportedExtensions());
             if (!intersection.isEmpty()) {
                 application.onExtensionNegotiation(intersection);
-                response.setHeader(Constants.SEC_WS_EXTENSIONS_HEADER,
-                                   joinExtensions(intersection));
+                response.setHeader(Constants.SEC_WS_EXTENSIONS_HEADER, joinExtensions(intersection));
             }
         }
 
@@ -343,7 +326,7 @@ public abstract class HandShake {
     }
 
     protected List<Extension> intersection(List<Extension> requested, List<Extension> supported) {
-        List<Extension> intersection = new ArrayList<Extension>(supported.size());
+        List<Extension> intersection = new ArrayList<>(supported.size());
         for (Extension e : requested) {
             for (Extension s : supported) {
                 if (e.getName().equals(s.getName())) {
@@ -356,7 +339,7 @@ public abstract class HandShake {
     }
 
     protected final List<Extension> parseExtensionsHeader(final String headerValue) {
-        List<Extension> resolved = new ArrayList<Extension>();
+        List<Extension> resolved = new ArrayList<>();
         String[] parts = headerValue.split(",");
         for (String part : parts) {
             int idx = part.indexOf(';');
@@ -372,17 +355,14 @@ public abstract class HandShake {
         return resolved;
     }
 
-    protected final void parseParameters(String parameterString,
-                                         List<Extension.Parameter> parameters) {
+    protected final void parseParameters(String parameterString, List<Extension.Parameter> parameters) {
         String[] parts = parameterString.split(";");
-        for (String part: parts) {
+        for (String part : parts) {
             int idx = part.indexOf('=');
             if (idx < 0) {
                 parameters.add(new Extension.Parameter(part.trim(), null));
             } else {
-                parameters.add(
-                        new Extension.Parameter(part.substring(0, idx).trim(),
-                                                part.substring(idx + 1).trim()));
+                parameters.add(new Extension.Parameter(part.substring(0, idx).trim(), part.substring(idx + 1).trim()));
             }
         }
     }
@@ -403,7 +383,7 @@ public abstract class HandShake {
         }
         return builder;
     }
-    
+
     private String getScheme() {
         return isSecure() ? "ws" : "wss";
     }

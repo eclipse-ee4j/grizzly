@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,16 +17,14 @@
 package org.glassfish.grizzly.http.server.jmxbase;
 
 /**
- * Interface that allows arbitrary entities to provide a {@link JmxObject}
- * that can be registered with the {@link org.glassfish.grizzly.monitoring.jmx.GrizzlyJmxManager}.
+ * Interface that allows arbitrary entities to provide a {@link JmxObject} that can be registered with the
+ * {@link org.glassfish.grizzly.monitoring.jmx.GrizzlyJmxManager}.
  */
 public interface Monitorable {
 
     /**
-     * Returns a new JMX {@link Object} that may be registered with the
-     * Grizzly JMX manager.
-     * The returned object has to be of <tt>JmxObject</tt> type, see Grizzly monitoring
-     * module for more details.
+     * Returns a new JMX {@link Object} that may be registered with the Grizzly JMX manager. The returned object has to be
+     * of <tt>JmxObject</tt> type, see Grizzly monitoring module for more details.
      */
     Object createManagementObject();
 

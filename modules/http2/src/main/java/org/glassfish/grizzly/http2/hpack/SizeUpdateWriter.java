@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,7 +24,8 @@ final class SizeUpdateWriter implements BinaryRepresentationWriter {
     private int maxSize;
     private boolean tableUpdated;
 
-    SizeUpdateWriter() { }
+    SizeUpdateWriter() {
+    }
 
     SizeUpdateWriter maxHeaderTableSize(int size) {
         intWriter.configure(size, 5, 0b0010_0000);
