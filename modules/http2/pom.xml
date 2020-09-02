@@ -151,7 +151,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.glassfish.grizzly</groupId>
-                    <artifactId>grizzly-npn-api</artifactId>
+                    <artifactId>grizzly-npn-bootstrap</artifactId>
                     <version>${grizzly.npn.bootstrap.version}</version>
                     <scope>provided</scope>
                 </dependency>
