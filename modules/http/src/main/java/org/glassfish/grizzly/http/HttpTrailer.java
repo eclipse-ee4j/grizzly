@@ -34,7 +34,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
      * @return <tt>true</tt> if passed {@link HttpContent} is a <tt>HttpTrailder</tt>.
      */
     public static boolean isTrailer(HttpContent httpContent) {
-        return HttpTrailer.class.isAssignableFrom(httpContent.getClass());
+        return httpContent != null && HttpTrailer.class.isAssignableFrom(httpContent.getClass());
     }
 
     public static HttpTrailer create() {

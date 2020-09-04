@@ -137,7 +137,7 @@ public class TrailersTest extends AbstractHttp2Test {
                 return ctx.getStopAction();
             }
         };
-        final Connection c = getConnection("localhost", PORT, filter);
+        final Connection<?> c = getConnection("localhost", PORT, filter);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
         HttpRequestPacket request = builder.method(Method.POST).uri("/echo").protocol(Protocol.HTTP_2_0).host("localhost:" + PORT).build();
         c.write(HttpTrailer.builder(request).content(Buffers.wrap(MemoryManager.DEFAULT_MEMORY_MANAGER, "a=b&c=d")).last(true).header("trailer-a", "value-a")
@@ -196,7 +196,7 @@ public class TrailersTest extends AbstractHttp2Test {
                 return ctx.getStopAction();
             }
         };
-        final Connection c = getConnection("localhost", PORT, filter);
+        final Connection<?> c = getConnection("localhost", PORT, filter);
         HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
         HttpRequestPacket request = builder.method(Method.POST).uri("/echo").protocol(Protocol.HTTP_2_0).host("localhost:" + PORT).build();
         c.write(HttpContent.builder(request) // write the request

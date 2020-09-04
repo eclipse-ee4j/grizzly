@@ -70,7 +70,6 @@ public class HttpContent extends HttpPacket implements org.glassfish.grizzly.App
 
     public static HttpContent create(final HttpHeader httpHeader, final boolean isLast, Buffer content) {
         content = content != null ? content : Buffers.EMPTY_BUFFER;
-
         final HttpContent httpContent = ThreadCache.takeFromCache(CACHE_IDX);
         if (httpContent != null) {
             httpContent.httpHeader = httpHeader;
@@ -137,10 +136,8 @@ public class HttpContent extends HttpPacket implements org.glassfish.grizzly.App
     }
 
     /**
-     * Return <tt>true</tt>, if the current content chunk is last, or <tt>false</tt>, if there are content chunks to follow.
-     *
-     * @return <tt>true</tt>, if the current content chunk is last, or <tt>false</tt>, if there are content chunks to
-     * follow.
+     * @return <tt>true</tt>, if the current content chunk is last,
+     * or <tt>false</tt>, if there are content chunks to follow.
      */
     public boolean isLast() {
         return isLast;

@@ -794,9 +794,7 @@ public class SSLBaseFilter extends BaseFilter {
         try {
             return sslCtx.getSslEngine().getSession().getPeerCertificates();
         } catch (Throwable t) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Error getting client certs", t);
-            }
+            LOGGER.log(Level.FINE, "Error getting client certs", t);
             return null;
         }
     }

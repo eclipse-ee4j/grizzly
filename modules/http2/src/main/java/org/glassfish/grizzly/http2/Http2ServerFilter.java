@@ -176,8 +176,8 @@ public class Http2ServerFilter extends Http2BaseFilter {
 
     private final Attribute<Connection> CIPHER_CHECKED = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("BLACK_LIST_CIPHER_SUITE_CHEKCED");
 
-    private Collection<Connection> activeConnections = new HashSet<>(1024);
-    private AtomicBoolean shuttingDown = new AtomicBoolean();
+    private final Collection<Connection> activeConnections = new HashSet<>(1024);
+    private final AtomicBoolean shuttingDown = new AtomicBoolean();
 
     /**
      * Create a new {@link Http2ServerFilter} using the specified {@link Http2Configuration}. Configuration may be changed
@@ -188,24 +188,26 @@ public class Http2ServerFilter extends Http2BaseFilter {
     }
 
     /**
-     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec doesn't clearly state whether
-     * they support payload. Known "undefined" methods are: GET, HEAD, DELETE.
+     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec
+     * doesn't clearly state whether they support payload.
+     * <p>
+     * Known "undefined" methods are: GET, HEAD, DELETE.
      *
      * @return <tt>true</tt> if "undefined" methods support payload, or <tt>false</tt> otherwise
      */
-    @SuppressWarnings("unused")
     public boolean isAllowPayloadForUndefinedHttpMethods() {
         return allowPayloadForUndefinedHttpMethods;
     }
 
     /**
-     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec doesn't clearly state whether
-     * they support payload. Known "undefined" methods are: GET, HEAD, DELETE.
+     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec
+     * doesn't clearly state whether they support payload.
+     * <p>
+     * Known "undefined" methods are: GET, HEAD, DELETE.
      *
-     * @param allowPayloadForUndefinedHttpMethods <tt>true</tt> if "undefined" methods support payload, or <tt>false</tt>
-     * otherwise
+     * @param allowPayloadForUndefinedHttpMethods <tt>true</tt> if "undefined" methods support
+     *            payload, or <tt>false</tt> otherwise
      */
-    @SuppressWarnings("unused")
     public void setAllowPayloadForUndefinedHttpMethods(boolean allowPayloadForUndefinedHttpMethods) {
         this.allowPayloadForUndefinedHttpMethods = allowPayloadForUndefinedHttpMethods;
     }
@@ -226,13 +228,13 @@ public class Http2ServerFilter extends Http2BaseFilter {
         return ctx.getInvokeAction();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
-
+        LOGGER.finest(() -> String.format("handleRead(ctx=%s)", ctx));
         // if it's a stream chain (the stream is already assigned) - just
         // bypass the parsing part
         if (checkIfHttp2StreamChain(ctx)) {
+            LOGGER.finest("Already registered HTTP2 stream chain, invoking action.");
             return ctx.getInvokeAction();
         }
 
@@ -240,7 +242,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
         Http2State http2State = Http2State.get(connection);
 
         if (http2State != null && http2State.isNeverHttp2()) {
-            // NOT HTTP2 connection and never will be
+            LOGGER.finest("Not a HTTP2 connection, invoking action.");
             return ctx.getInvokeAction();
         }
 
@@ -254,24 +256,24 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 // ALPN should've set the Http2State, but in our case it's null.
                 // It means ALPN was bypassed - SSL without ALPN shouldn't work.
                 // Don't try HTTP/2 in this case.
+                LOGGER.finest("Secure connection, but http2State was null, ALPN was bypassed. Invoking action.");
                 Http2State.create(connection).setNeverHttp2();
                 return ctx.getInvokeAction();
             }
 
             final HttpRequestPacket httpRequest = (HttpRequestPacket) httpHeader;
 
-            if (!Method.PRI.equals(httpRequest.getMethod())) {
+            if (Method.PRI.equals(httpRequest.getMethod())) {
+                // PRI method
+                // DIRECT HTTP/2.0 request
+                http2State = doDirectUpgrade(ctx);
+            } else {
                 final boolean isLast = httpContent.isLast();
                 if (tryHttpUpgrade(ctx, httpRequest, isLast) && isLast) {
                     enableOpReadNow(ctx);
                 }
-
                 return ctx.getInvokeAction();
             }
-
-            // PRI method
-            // DIRECT HTTP/2.0 request
-            http2State = doDirectUpgrade(ctx);
         }
 
         final Http2Session http2Session = obtainHttp2Session(http2State, ctx, true);
@@ -346,6 +348,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
     @Override
     public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
 
+        LOGGER.finest(() -> String.format("handleEvent(ctx=%s, event=%s)", ctx, event));
         final Object type = event.type();
 
         if (type == ShutdownEvent.TYPE) {
@@ -431,6 +434,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
     }
 
     private Http2State doDirectUpgrade(final FilterChainContext ctx) {
+        LOGGER.finest(() -> String.format("doDirectUpgrade(ctx=%s)", ctx));
         final Connection connection = ctx.getConnection();
 
         final Http2Session http2Session = new Http2Session(connection, true, this);
@@ -452,7 +456,8 @@ public class Http2ServerFilter extends Http2BaseFilter {
         return activeConnections;
     }
 
-    private boolean tryHttpUpgrade(final FilterChainContext ctx, final HttpRequestPacket httpRequest, final boolean isLast) throws Http2StreamException {
+    private boolean tryHttpUpgrade(final FilterChainContext ctx, final HttpRequestPacket httpRequest, final boolean isLast)
+        throws Http2StreamException {
 
         if (!checkHttpMethodOnUpgrade(httpRequest)) {
             return false;
@@ -740,6 +745,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
     }
 
     private void doPush(final FilterChainContext ctx, final PushEvent pushEvent) {
+        LOGGER.finest(() -> String.format("doPush(ctx=%s, pushEvent=%s)", ctx, pushEvent));
         final Http2Session http2Session = Http2Session.get(ctx.getConnection());
         if (http2Session == null) {
             throw new IllegalStateException("Unable to find valid Http2Session");

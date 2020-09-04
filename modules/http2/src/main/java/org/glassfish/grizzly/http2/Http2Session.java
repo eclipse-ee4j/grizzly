@@ -390,7 +390,6 @@ public class Http2Session {
     /**
      * @return The max <tt>payload</tt> size to be accepted by the peer
      */
-    @SuppressWarnings("unused")
     public int getPeerMaxFramePayloadSize() {
         return peerMaxFramePayloadSize;
     }
@@ -443,12 +442,10 @@ public class Http2Session {
         return localConnectionWindowSize;
     }
 
-    @SuppressWarnings("unused")
     public void setLocalConnectionWindowSize(final int localConnectionWindowSize) {
         this.localConnectionWindowSize = localConnectionWindowSize;
     }
 
-    @SuppressWarnings("unused")
     public int getAvailablePeerConnectionWindowSize() {
         return outputSink.getAvailablePeerConnectionWindowSize();
     }
@@ -872,7 +869,7 @@ public class Http2Session {
     private List<Http2Frame> completeHeadersProviderFrameSerialization(final HeaderBlockFragment.HeaderBlockFragmentBuilder builder, final int streamId,
             final Buffer compressedHeaders, List<Http2Frame> toList) {
         // we assume deflaterLock is acquired and held by this thread
-        assert deflaterLock.isHeldByCurrentThread();
+        assert getDeflaterLock().isHeldByCurrentThread();
 
         if (toList == null) {
             toList = tmpHeaderFramesList;
