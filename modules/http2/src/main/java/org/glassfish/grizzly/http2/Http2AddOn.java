@@ -61,7 +61,8 @@ public class Http2AddOn implements AddOn {
         final TCPNIOTransport transport = networkListener.getTransport();
 
         if (networkListener.isSecure() && !AlpnSupport.isEnabled()) {
-            LOGGER.warning("TLS ALPN (Application-Layer Protocol Negotiation) support is not available. HTTP/2 support will not be enabled.");
+            LOGGER.warning("TLS ALPN (Application-Layer Protocol Negotiation) support is not available."
+                + " HTTP/2 support will not be enabled.");
             return;
         }
 
