@@ -40,8 +40,8 @@ import org.glassfish.grizzly.http2.frames.ErrorCode;
 import org.glassfish.grizzly.http2.frames.Http2Frame;
 
 /**
- * Class represents an output sink associated with specific {@link Http2Session} and is responsible for session
- * (connection) level flow control.
+ * Class represents an output sink associated with specific {@link Http2Session}
+ * and is responsible for session (connection) level flow control.
  *
  * @author Alexey Stashok
  */
@@ -77,18 +77,24 @@ public class Http2SessionOutputSink {
 
     protected void writeDownStream(final Http2Frame frame) {
 
-        http2Session.getHttp2SessionChain().write(http2Session.getConnection(), null, frameCodec().serializeAndRecycle(http2Session, frame), null,
-                (MessageCloner) null);
+        http2Session.getHttp2SessionChain().write(
+                http2Session.getConnection(), null,
+                frameCodec().serializeAndRecycle(http2Session, frame),
+                null, (MessageCloner) null);
     }
 
     protected void writeDownStream(final List<Http2Frame> frames) {
 
-        http2Session.getHttp2SessionChain().write(http2Session.getConnection(), null, frameCodec().serializeAndRecycle(http2Session, frames), null,
-                (MessageCloner) null);
+        http2Session.getHttp2SessionChain().write(
+                http2Session.getConnection(), null,
+                frameCodec().serializeAndRecycle(http2Session, frames),
+                null, (MessageCloner) null);
     }
 
     @SuppressWarnings("unchecked")
-    protected <K> void writeDownStream(final K anyMessage, final CompletionHandler<WriteResult> completionHandler, final MessageCloner<Buffer> messageCloner) {
+    protected <K> void writeDownStream(final K anyMessage,
+            final CompletionHandler<WriteResult> completionHandler,
+            final MessageCloner<Buffer> messageCloner) {
 
         // Encode Http2Frame -> Buffer
         final Object msg;
@@ -151,7 +157,6 @@ public class Http2SessionOutputSink {
             }
 
             writeDownStream(msg, completionHandler, messageCloner);
-
             return;
         } else if (headerFrames != null && !headerFrames.isEmpty()) {
             // flush the headers now in this thread,
