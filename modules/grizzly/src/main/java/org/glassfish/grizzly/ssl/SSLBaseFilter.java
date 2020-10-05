@@ -15,7 +15,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  * 
  * Contributors:
- *  Payara Services - Add support for JDK 9 ALPN API
+ *   Payara Services - Add support for JDK 9 ALPN API
+ *                   - Propagate stop action on a closed SSL connection
  */
 
 package org.glassfish.grizzly.ssl;
@@ -402,7 +403,11 @@ public class SSLBaseFilter extends BaseFilter {
 
             if (output.hasRemaining() || isClosed) {
                 ctx.setMessage(output);
-                return ctx.getInvokeAction(makeInputRemainder(sslCtx, ctx, input));
+                if (!isClosed) {
+                    return ctx.getInvokeAction(makeInputRemainder(sslCtx, ctx, input));
+                } else {
+                    LOGGER.finer("Closed SSL connection detected, terminating chain.");
+                }
             }
         }
 
