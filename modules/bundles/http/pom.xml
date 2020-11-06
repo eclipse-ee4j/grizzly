@@ -70,6 +70,7 @@
                 <configuration>
                     <instructions>
                         <Import-Package>
+                            !android.os,
                             *,
                         </Import-Package>
                         <Export-Package>

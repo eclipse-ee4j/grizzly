@@ -83,6 +83,7 @@
                     <instructions>
                         <Import-Package>
                             org.glassfish.grizzly*;version=${project.version},
+                            !android.os,
                             *,
                         </Import-Package>
                         <Export-Package>

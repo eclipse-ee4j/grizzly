@@ -121,7 +121,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit-version>4.13</junit-version>
         <maven-plugin.version>1.0.0</maven-plugin.version>
-        <servlet-version>5.0.0-M1</servlet-version>
+        <servlet-version>5.0.0</servlet-version>
         <felix-version>4.2.1</felix-version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
