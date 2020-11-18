@@ -16,10 +16,12 @@
 
 package org.glassfish.grizzly.http2;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Buffer;
@@ -49,6 +51,15 @@ import org.glassfish.grizzly.ssl.SSLFilter;
  * @author Alexey Stashok
  */
 public abstract class AbstractHttp2Test {
+    static {
+        try {
+            LogManager.getLogManager().readConfiguration(AbstractHttp2Test.class.getResourceAsStream("/logging.properties"));
+        } catch (SecurityException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     protected static final Logger LOGGER = Grizzly.logger(AbstractHttp2Test.class);
 
     private volatile static SSLEngineConfigurator clientSSLEngineConfigurator;
