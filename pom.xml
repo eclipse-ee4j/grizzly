@@ -125,8 +125,10 @@
         <felix-version>4.2.1</felix-version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
+        <grizzly.npn.api.version>2.0</grizzly.npn.api.version>
+        <grizzly.npn.bootstrap.version>2.0</grizzly.npn.bootstrap.version>
+        <openjsse.version>1.1.5</openjsse.version>
         <osgi.version>4.2.0</osgi.version>
-        <grizzly.alpn.version>2.0</grizzly.alpn.version>
         <release.arguments></release.arguments>
     </properties>
 
@@ -218,7 +220,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <!-- Restricts the Java version to 1.8 -->
             <plugin>
                 <inherited>true</inherited>
@@ -230,7 +232,7 @@
                     <compilerArgument>-Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</compilerArgument>
                 </configuration>
             </plugin>
-            
+
             <plugin><inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -246,7 +248,7 @@
                     </archive>
                 </configuration>
             </plugin>
-            
+
             <plugin><inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -259,7 +261,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <!-- Configure the jar with the javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -271,7 +273,7 @@
                     <doctitle>${project.name} ${project.version}</doctitle>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.glassfish.copyright</groupId>
                 <artifactId>glassfish-copyright-maven-plugin</artifactId>

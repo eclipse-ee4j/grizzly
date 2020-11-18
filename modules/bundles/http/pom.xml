@@ -52,14 +52,13 @@
         <dependency>
             <groupId>org.glassfish.grizzly</groupId>
             <artifactId>grizzly-npn-api</artifactId>
-            <version>${grizzly.alpn.version}</version>
+            <version>${grizzly.npn.api.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.grizzly</groupId>
             <artifactId>grizzly-http-server-multipart</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <defaultGoal>install</defaultGoal>
         <plugins>
