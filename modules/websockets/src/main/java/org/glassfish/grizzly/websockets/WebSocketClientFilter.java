@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,31 +16,31 @@
 
 package org.glassfish.grizzly.websockets;
 
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-
 public class WebSocketClientFilter extends BaseWebSocketFilter {
     private static final Logger LOGGER = Grizzly.logger(WebSocketClientFilter.class);
 
     // ----------------------------------------------------- Methods from Filter
-    
+
     /**
-     * Method handles Grizzly {@link Connection} connect phase. Check if the {@link Connection} is a client-side {@link
-     * WebSocket}, if yes - creates websocket handshake packet and send it to a server. Otherwise, if it's not websocket
-     * connection - pass processing to the next {@link Filter} in a chain.
+     * Method handles Grizzly {@link Connection} connect phase. Check if the {@link Connection} is a client-side
+     * {@link WebSocket}, if yes - creates websocket handshake packet and send it to a server. Otherwise, if it's not
+     * websocket connection - pass processing to the next {@link Filter} in a chain.
      *
      * @param ctx {@link FilterChainContext}
      *
      * @return {@link NextAction} instruction for {@link FilterChain}, how it should continue the execution
-     * 
+     *
      * @throws java.io.IOException
      */
     @Override
@@ -58,24 +58,21 @@ public class WebSocketClientFilter extends BaseWebSocketFilter {
         // call the next filter in the chain
         return ctx.getInvokeAction();
     }
-    
-    // ---------------------------------------- Methods from BaseWebSocketFilter
 
+    // ---------------------------------------- Methods from BaseWebSocketFilter
 
     @Override
     protected NextAction handleHandshake(FilterChainContext ctx, HttpContent content) throws IOException {
         return handleClientHandShake(ctx, content);
     }
 
-
     // --------------------------------------------------------- Private Methods
-
 
     private static NextAction handleClientHandShake(FilterChainContext ctx, HttpContent content) {
         final WebSocketHolder holder = WebSocketHolder.get(ctx.getConnection());
         holder.handshake.validateServerResponse((HttpResponsePacket) content.getHttpHeader());
         holder.webSocket.onConnect();
-        
+
         if (content.getContent().hasRemaining()) {
             return ctx.getRerunFilterAction();
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,10 +20,9 @@ import org.glassfish.grizzly.memory.ByteBufferWrapper;
 import org.glassfish.grizzly.nio.DirectByteBufferRecord;
 
 /**
- * Input {@link org.glassfish.grizzly.Buffer} to read SSL packets to.
- * This {@link org.glassfish.grizzly.Buffer} has to be used by a Transport
- * to read data.
- * 
+ * Input {@link org.glassfish.grizzly.Buffer} to read SSL packets to. This {@link org.glassfish.grizzly.Buffer} has to
+ * be used by a Transport to read data.
+ *
  * @author Alexey Stashok
  */
 final class InputBufferWrapper extends ByteBufferWrapper {
@@ -36,7 +35,7 @@ final class InputBufferWrapper extends ByteBufferWrapper {
         final DirectByteBufferRecord recordLocal = DirectByteBufferRecord.get();
         this.record = recordLocal;
         this.visible = recordLocal.allocate(size);
-        
+
         return this;
     }
 
@@ -46,5 +45,5 @@ final class InputBufferWrapper extends ByteBufferWrapper {
         record = null;
         super.dispose();
     }
-    
+
 }

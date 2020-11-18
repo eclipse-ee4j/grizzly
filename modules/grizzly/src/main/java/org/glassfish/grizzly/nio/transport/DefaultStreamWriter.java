@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.nio.transport;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -40,11 +41,8 @@ public final class DefaultStreamWriter extends AbstractStreamWriter {
     }
 
     @Override
-    public GrizzlyFuture<Integer> flush(
-            final CompletionHandler<Integer> completionHandler)
-            throws IOException {
-        return super.flush(new ResetCounterCompletionHandler(
-                (Output) output, completionHandler));
+    public GrizzlyFuture<Integer> flush(final CompletionHandler<Integer> completionHandler) throws IOException {
+        return super.flush(new ResetCounterCompletionHandler((Output) output, completionHandler));
     }
 
     public final static class Output extends BufferedOutput {
@@ -56,20 +54,16 @@ public final class DefaultStreamWriter extends AbstractStreamWriter {
             this.connection = connection;
         }
 
-
         @Override
-        protected GrizzlyFuture<Integer> flush0(Buffer buffer,
-                final CompletionHandler<Integer> completionHandler)
-                throws IOException {
-            
+        protected GrizzlyFuture<Integer> flush0(Buffer buffer, final CompletionHandler<Integer> completionHandler) throws IOException {
+
             final FutureImpl<Integer> future = SafeFutureImpl.create();
-            
+
             if (buffer == null) {
                 buffer = Buffers.EMPTY_BUFFER;
             }
 
-            connection.write(buffer,
-                    new CompletionHandlerAdapter(this, future, completionHandler));
+            connection.write(buffer, new CompletionHandlerAdapter(this, future, completionHandler));
             return future;
         }
 
@@ -89,16 +83,13 @@ public final class DefaultStreamWriter extends AbstractStreamWriter {
         }
     }
 
-    private final static class CompletionHandlerAdapter
-            implements CompletionHandler<WriteResult<Buffer, SocketAddress>> {
+    private final static class CompletionHandlerAdapter implements CompletionHandler<WriteResult<Buffer, SocketAddress>> {
 
         private final Output output;
         private final FutureImpl<Integer> future;
         private final CompletionHandler<Integer> completionHandler;
 
-        public CompletionHandlerAdapter(Output output,
-                FutureImpl<Integer> future,
-                CompletionHandler<Integer> completionHandler) {
+        public CompletionHandlerAdapter(Output output, FutureImpl<Integer> future, CompletionHandler<Integer> completionHandler) {
             this.output = output;
             this.future = future;
             this.completionHandler = completionHandler;
@@ -143,20 +134,17 @@ public final class DefaultStreamWriter extends AbstractStreamWriter {
         @Override
         public void updated(WriteResult result) {
             if (completionHandler != null) {
-                completionHandler.updated(output.sentBytesCounter
-                        + (int) result.getWrittenSize());
+                completionHandler.updated(output.sentBytesCounter + (int) result.getWrittenSize());
             }
         }
     }
 
-    private final static class ResetCounterCompletionHandler
-            implements CompletionHandler<Integer> {
+    private final static class ResetCounterCompletionHandler implements CompletionHandler<Integer> {
 
         private final Output output;
         private final CompletionHandler<Integer> parentCompletionHandler;
 
-        public ResetCounterCompletionHandler(Output output,
-                CompletionHandler<Integer> parentCompletionHandler) {
+        public ResetCounterCompletionHandler(Output output, CompletionHandler<Integer> parentCompletionHandler) {
             this.output = output;
             this.parentCompletionHandler = parentCompletionHandler;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,7 +22,7 @@ import org.glassfish.grizzly.http.util.MimeHeaders;
 
 /**
  * Common interface for {@link HttpPacket}s, which contain mimeheaders.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface MimeHeadersPacket {
@@ -35,6 +35,7 @@ public interface MimeHeadersPacket {
 
     /**
      * Get the value, of the specific HTTP mime header.
+     * 
      * @param name the mime header name
      *
      * @return the value, of the specific HTTP mime header
@@ -43,6 +44,7 @@ public interface MimeHeadersPacket {
 
     /**
      * Get the value, of the specific HTTP mime header.
+     * 
      * @param header the mime {@link Header}
      *
      * @return the value, of the specific HTTP mime header
@@ -64,11 +66,11 @@ public interface MimeHeadersPacket {
      *
      * @param name the mime header name
      * @param value the mime header value
-     * 
+     *
      * @since 2.3.8
      */
     void setHeader(String name, HeaderValue value);
-    
+
     /**
      * Set the value, of the specific HTTP mime header.
      *
@@ -88,7 +90,7 @@ public interface MimeHeadersPacket {
      * @since 2.3.8
      */
     void setHeader(final Header header, HeaderValue value);
-    
+
     /**
      * Add the HTTP mime header.
      *
@@ -102,11 +104,11 @@ public interface MimeHeadersPacket {
      *
      * @param name the mime header name
      * @param value the mime header value
-     * 
+     *
      * @since 2.3.8
      */
     void addHeader(String name, HeaderValue value);
-    
+
     /**
      * Add the HTTP mime header.
      *
@@ -126,26 +128,26 @@ public interface MimeHeadersPacket {
      * @since 2.3.8
      */
     void addHeader(final Header header, final HeaderValue value);
-    
+
     /**
-     * Returns <tt>true</tt>, if the mime header with the specific name is present
-     * among the <tt>HttpHeader</tt> mime headers, or <tt>false</tt> otherwise.
+     * Returns <tt>true</tt>, if the mime header with the specific name is present among the <tt>HttpHeader</tt> mime
+     * headers, or <tt>false</tt> otherwise.
      *
      * @param name the mime header name
      *
-     * @return <tt>true</tt>, if the mime header with the specific name is present
-     * among the <tt>HttpHeader</tt> mime headers, or <tt>false</tt> otherwise
+     * @return <tt>true</tt>, if the mime header with the specific name is present among the <tt>HttpHeader</tt> mime
+     * headers, or <tt>false</tt> otherwise
      */
     boolean containsHeader(String name);
 
     /**
-     * Returns <tt>true</tt>, if the mime {@link Header} is present
-     * among the <tt>HttpHeader</tt> mime headers, otherwise returns <tt>false</tt>.
+     * Returns <tt>true</tt>, if the mime {@link Header} is present among the <tt>HttpHeader</tt> mime headers, otherwise
+     * returns <tt>false</tt>.
      *
      * @param header the mime {@link Header}
      *
-     * @return <tt>true</tt>, if the mime {@link Header} is present
-     * among the <tt>HttpHeader</tt> mime headers, otherwise returns <tt>false</tt>
+     * @return <tt>true</tt>, if the mime {@link Header} is present among the <tt>HttpHeader</tt> mime headers, otherwise
+     * returns <tt>false</tt>
      *
      * @since 2.1.2
      */

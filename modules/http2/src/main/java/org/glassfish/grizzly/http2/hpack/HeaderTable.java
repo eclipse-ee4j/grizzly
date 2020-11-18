@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,12 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
+import static java.lang.String.format;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
-import static java.lang.String.format;
 
 //
 // Header Table combined from two tables: static and dynamic.
@@ -32,70 +32,23 @@ import static java.lang.String.format;
 //
 final class HeaderTable {
 
-    private static final HeaderField[] staticTable = {
-            null, // To make index 1-based, instead of 0-based
-            new HeaderField(":authority"),
-            new HeaderField(":method", "GET"),
-            new HeaderField(":method", "POST"),
-            new HeaderField(":path", "/"),
-            new HeaderField(":path", "/index.html"),
-            new HeaderField(":scheme", "http"),
-            new HeaderField(":scheme", "https"),
-            new HeaderField(":status", "200"),
-            new HeaderField(":status", "204"),
-            new HeaderField(":status", "206"),
-            new HeaderField(":status", "304"),
-            new HeaderField(":status", "400"),
-            new HeaderField(":status", "404"),
-            new HeaderField(":status", "500"),
-            new HeaderField("accept-charset"),
-            new HeaderField("accept-encoding", "gzip, deflate"),
-            new HeaderField("accept-language"),
-            new HeaderField("accept-ranges"),
-            new HeaderField("accept"),
-            new HeaderField("access-control-allow-origin"),
-            new HeaderField("age"),
-            new HeaderField("allow"),
-            new HeaderField("authorization"),
-            new HeaderField("cache-control"),
-            new HeaderField("content-disposition"),
-            new HeaderField("content-encoding"),
-            new HeaderField("content-language"),
-            new HeaderField("content-length"),
-            new HeaderField("content-location"),
-            new HeaderField("content-range"),
-            new HeaderField("content-type"),
-            new HeaderField("cookie"),
-            new HeaderField("date"),
-            new HeaderField("etag"),
-            new HeaderField("expect"),
-            new HeaderField("expires"),
-            new HeaderField("from"),
-            new HeaderField("host"),
-            new HeaderField("if-match"),
-            new HeaderField("if-modified-since"),
-            new HeaderField("if-none-match"),
-            new HeaderField("if-range"),
-            new HeaderField("if-unmodified-since"),
-            new HeaderField("last-modified"),
-            new HeaderField("link"),
-            new HeaderField("location"),
-            new HeaderField("max-forwards"),
-            new HeaderField("proxy-authenticate"),
-            new HeaderField("proxy-authorization"),
-            new HeaderField("range"),
-            new HeaderField("referer"),
-            new HeaderField("refresh"),
-            new HeaderField("retry-after"),
-            new HeaderField("server"),
-            new HeaderField("set-cookie"),
-            new HeaderField("strict-transport-security"),
-            new HeaderField("transfer-encoding"),
-            new HeaderField("user-agent"),
-            new HeaderField("vary"),
-            new HeaderField("via"),
-            new HeaderField("www-authenticate")
-    };
+    private static final HeaderField[] staticTable = { null, // To make index 1-based, instead of 0-based
+            new HeaderField(":authority"), new HeaderField(":method", "GET"), new HeaderField(":method", "POST"), new HeaderField(":path", "/"),
+            new HeaderField(":path", "/index.html"), new HeaderField(":scheme", "http"), new HeaderField(":scheme", "https"), new HeaderField(":status", "200"),
+            new HeaderField(":status", "204"), new HeaderField(":status", "206"), new HeaderField(":status", "304"), new HeaderField(":status", "400"),
+            new HeaderField(":status", "404"), new HeaderField(":status", "500"), new HeaderField("accept-charset"),
+            new HeaderField("accept-encoding", "gzip, deflate"), new HeaderField("accept-language"), new HeaderField("accept-ranges"),
+            new HeaderField("accept"), new HeaderField("access-control-allow-origin"), new HeaderField("age"), new HeaderField("allow"),
+            new HeaderField("authorization"), new HeaderField("cache-control"), new HeaderField("content-disposition"), new HeaderField("content-encoding"),
+            new HeaderField("content-language"), new HeaderField("content-length"), new HeaderField("content-location"), new HeaderField("content-range"),
+            new HeaderField("content-type"), new HeaderField("cookie"), new HeaderField("date"), new HeaderField("etag"), new HeaderField("expect"),
+            new HeaderField("expires"), new HeaderField("from"), new HeaderField("host"), new HeaderField("if-match"), new HeaderField("if-modified-since"),
+            new HeaderField("if-none-match"), new HeaderField("if-range"), new HeaderField("if-unmodified-since"), new HeaderField("last-modified"),
+            new HeaderField("link"), new HeaderField("location"), new HeaderField("max-forwards"), new HeaderField("proxy-authenticate"),
+            new HeaderField("proxy-authorization"), new HeaderField("range"), new HeaderField("referer"), new HeaderField("refresh"),
+            new HeaderField("retry-after"), new HeaderField("server"), new HeaderField("set-cookie"), new HeaderField("strict-transport-security"),
+            new HeaderField("transfer-encoding"), new HeaderField("user-agent"), new HeaderField("vary"), new HeaderField("via"),
+            new HeaderField("www-authenticate") };
 
     private static final int STATIC_TABLE_LENGTH = staticTable.length - 1;
     private static final int ENTRY_SIZE = 32;
@@ -105,7 +58,7 @@ final class HeaderTable {
         staticIndexes = new HashMap<>(STATIC_TABLE_LENGTH);
         for (int i = 1; i <= STATIC_TABLE_LENGTH; i++) {
             HeaderField f = staticTable[i];
-            LinkedHashMap<String,Integer> values = staticIndexes.get(f.name);
+            LinkedHashMap<String, Integer> values = staticIndexes.get(f.name);
             if (values == null) {
                 values = new LinkedHashMap<>();
                 values.put(f.value, i);
@@ -217,14 +170,13 @@ final class HeaderTable {
 
     void setMaxSize(int maxSize) {
         if (maxSize < 0) {
-            throw new IllegalArgumentException
-                    ("maxSize >= 0: maxSize=" + maxSize);
+            throw new IllegalArgumentException("maxSize >= 0: maxSize=" + maxSize);
         }
         while (maxSize < size && size != 0) {
             evictEntry();
         }
         this.maxSize = maxSize;
-        int upperBound = (maxSize / ENTRY_SIZE) + 1;
+        int upperBound = maxSize / ENTRY_SIZE + 1;
         this.dynamicTable.setCapacity(upperBound);
     }
 
@@ -236,16 +188,13 @@ final class HeaderTable {
 
     @Override
     public String toString() {
-        double used = maxSize == 0 ? 0 : 100 * (((double) size) / maxSize);
-        return format("entries: %d; used %s/%s (%.1f%%)", dynamicTable.size(),
-                size, maxSize, used);
+        double used = maxSize == 0 ? 0 : 100 * ((double) size / maxSize);
+        return format("entries: %d; used %s/%s (%.1f%%)", dynamicTable.size(), size, maxSize, used);
     }
 
     int checkIndex(int index) {
         if (index < 1 || index > STATIC_TABLE_LENGTH + dynamicTable.size()) {
-            throw new IllegalArgumentException(
-                    format("1 <= index <= length(): index=%s, length()=%s",
-                            index, length()));
+            throw new IllegalArgumentException(format("1 <= index <= length(): index=%s, length()=%s", index, length()));
         }
         return index;
     }
@@ -266,8 +215,7 @@ final class HeaderTable {
         StringBuilder b = new StringBuilder();
         for (int i = 1, size = dynamicTable.size(); i <= size; i++) {
             HeaderField e = dynamicTable.get(i);
-            b.append(format("[%3d] (s = %3d) %s: %s%n", i,
-                    sizeOf(e), e.name, e.value));
+            b.append(format("[%3d] (s = %3d) %s: %s%n", i, sizeOf(e), e.name, e.value));
         }
         b.append(format("      Table size:%4s", this.size));
         return b.toString();
@@ -320,11 +268,11 @@ final class HeaderTable {
     //
     // We have a queue with an O(1) lookup by index:
     //
-    //     get: index -> x
+    // get: index -> x
     //
     // What we want is an O(1) reverse lookup:
     //
-    //     indexOf: x -> index
+    // indexOf: x -> index
     //
     // # Solution:
     //
@@ -333,7 +281,7 @@ final class HeaderTable {
     // become invalid. Namely, the new element is assigned with an index of 1,
     // and each index i, i > 1 becomes shifted by 1 to the left:
     //
-    //     1, 1, 2, 3, ... , n-1, n
+    // 1, 1, 2, 3, ... , n-1, n
     //
     // Re-establishing the invariant would seem to require a pass through the
     // map incrementing all indexes (map values) by 1, which is O(n).
@@ -345,7 +293,7 @@ final class HeaderTable {
     // incremented. Then the resulting value of the 'counter_x' is then put as a
     // value under key 'x' to the map:
     //
-    //    map.put(x, counter_x)
+    // map.put(x, counter_x)
     //
     // It gives us a map that maps an element to a value the counter had at the
     // time the element had been added.
@@ -355,7 +303,7 @@ final class HeaderTable {
     // counter at the time when the 'x' was added) from the current value of the
     // counter. This operation basically answers the question:
     //
-    //     How many elements ago 'x' was the tail of the queue?
+    // How many elements ago 'x' was the tail of the queue?
     //
     // Which is the same as its index in the queue now. Given, of course, it's
     // still in the queue.
@@ -364,13 +312,13 @@ final class HeaderTable {
     // not too practical to add recalibrating code, but a pedantic person might
     // want to do so:
     //
-    //     if (counter == Long.MAX_VALUE) {
-    //         recalibrate();
-    //     }
+    // if (counter == Long.MAX_VALUE) {
+    // recalibrate();
+    // }
     //
     // Where 'recalibrate()' goes through the table doing this:
     //
-    //     value -= counter
+    // value -= counter
     //
     // That's given, of course, the size of the table itself is less than
     // Long.MAX_VALUE :-)
@@ -435,13 +383,13 @@ final class HeaderTable {
         }
     }
 
-    //                    head
-    //                    v
+    // head
+    // v
     // [ ][ ][A][B][C][D][ ][ ][ ]
-    //        ^
-    //        tail
+    // ^
+    // tail
     //
-    //       |<- size ->| (4)
+    // |<- size ->| (4)
     // |<------ capacity ------->| (9)
     //
     static final class CircularBuffer<E> {
@@ -456,8 +404,7 @@ final class HeaderTable {
 
         void add(E elem) {
             if (size == capacity) {
-                throw new IllegalStateException(
-                        format("No room for '%s': capacity=%s", elem, capacity));
+                throw new IllegalStateException(format("No room for '%s': capacity=%s", elem, capacity));
             }
             elements[head] = elem;
             head = (head + 1) % capacity;
@@ -479,19 +426,15 @@ final class HeaderTable {
         @SuppressWarnings("unchecked")
         E get(int index) {
             if (index < 0 || index >= size) {
-                throw new IndexOutOfBoundsException(
-                        format("0 <= index <= capacity: index=%s, capacity=%s",
-                                index, capacity));
+                throw new IndexOutOfBoundsException(format("0 <= index <= capacity: index=%s, capacity=%s", index, capacity));
             }
-            int idx = (tail + (size - index - 1)) % capacity;
+            int idx = (tail + size - index - 1) % capacity;
             return (E) elements[idx];
         }
 
         public void resize(int newCapacity) {
             if (newCapacity < size) {
-                throw new IllegalStateException(
-                        format("newCapacity >= size: newCapacity=%s, size=%s",
-                                newCapacity, size));
+                throw new IllegalStateException(format("newCapacity >= size: newCapacity=%s, size=%s", newCapacity, size));
             }
 
             Object[] newElements = new Object[newCapacity];

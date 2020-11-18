@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,14 +23,12 @@ import org.glassfish.grizzly.http.util.HeaderValue;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 
 /**
- * {@link HttpContent} message, which represents HTTP trailer message.
- * Applicable only for chunked HTTP messages.
- * 
+ * {@link HttpContent} message, which represents HTTP trailer message. Applicable only for chunked HTTP messages.
+ *
  * @author Alexey Stashok
  */
 public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
-    private static final ThreadCache.CachedTypeIndex<HttpTrailer> CACHE_IDX =
-            ThreadCache.obtainIndex(HttpTrailer.class, 16);
+    private static final ThreadCache.CachedTypeIndex<HttpTrailer> CACHE_IDX = ThreadCache.obtainIndex(HttpTrailer.class, 16);
 
     /**
      * @return <tt>true</tt> if passed {@link HttpContent} is a <tt>HttpTrailder</tt>.
@@ -44,8 +42,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
     }
 
     public static HttpTrailer create(HttpHeader httpHeader) {
-        final HttpTrailer httpTrailer =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final HttpTrailer httpTrailer = ThreadCache.takeFromCache(CACHE_IDX);
         if (httpTrailer != null) {
             httpTrailer.httpHeader = httpHeader;
             return httpTrailer;
@@ -65,7 +62,6 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
 
     private MimeHeaders trailers;
 
-
     protected HttpTrailer(HttpHeader httpHeader) {
         super(httpHeader);
         trailers = new MimeHeaders();
@@ -74,7 +70,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
 
     /**
      * Always true <tt>true</tt> for the trailer message.
-     * 
+     *
      * @return Always true <tt>true</tt> for the trailer message.
      */
     @Override
@@ -150,7 +146,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
         }
         value.serializeToDataChunk(trailers.setValue(header));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -172,7 +168,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
         }
         value.serializeToDataChunk(trailers.setValue(name));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -216,6 +212,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
 
     /**
      * Set the mime trailers.
+     * 
      * @param trailers {@link MimeHeaders}.
      */
     @SuppressWarnings("unused")
@@ -233,7 +230,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
         trailers.mark();
         super.reset();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -256,12 +253,11 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
         /**
          * Set the mime trailers.
          *
-         * This method will overwrite any trailers provided via
-         * {@link #header(String, String)} before this invocation.
+         * This method will overwrite any trailers provided via {@link #header(String, String)} before this invocation.
          *
          * @param mimeTrailers {@link MimeHeaders}.
          */
-        public final Builder headers(MimeHeaders mimeTrailers) {
+        public Builder headers(MimeHeaders mimeTrailers) {
             this.mimeTrailers = mimeTrailers;
             mimeTrailers.mark(); // this is idempotent
             return this;
@@ -273,7 +269,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
          * @param name the mime header name.
          * @param value the mime header value.
          */
-        public final Builder header(String name, String value) {
+        public Builder header(String name, String value) {
             if (mimeTrailers == null) {
                 mimeTrailers = new MimeHeaders();
                 mimeTrailers.mark();
@@ -291,7 +287,7 @@ public class HttpTrailer extends HttpContent implements MimeHeadersPacket {
          * @return <tt>HttpTrailer</tt>
          */
         @Override
-        public final HttpTrailer build() {
+        public HttpTrailer build() {
             HttpTrailer trailer = (HttpTrailer) super.build();
             if (mimeTrailers != null) {
                 trailer.trailers = mimeTrailers;

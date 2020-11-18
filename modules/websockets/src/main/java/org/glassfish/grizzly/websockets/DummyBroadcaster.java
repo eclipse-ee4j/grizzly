@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,11 +17,10 @@
 package org.glassfish.grizzly.websockets;
 
 /**
- * The default {@link Broadcaster}, which iterates over set of clients and sends
- * the same text of binary message separately to each client.
- * So the text/binary -> websocket-frame transformation is being done for
- * each client separately.
- * 
+ * The default {@link Broadcaster}, which iterates over set of clients and sends the same text of binary message
+ * separately to each client. So the text/binary -> websocket-frame transformation is being done for each client
+ * separately.
+ *
  * @author Alexey Stashok
  */
 public class DummyBroadcaster implements Broadcaster {
@@ -30,9 +29,8 @@ public class DummyBroadcaster implements Broadcaster {
      * {@inheritDoc}
      */
     @Override
-    public void broadcast(final Iterable<? extends WebSocket> recipients,
-            final String text) {
-        
+    public void broadcast(final Iterable<? extends WebSocket> recipients, final String text) {
+
         for (WebSocket websocket : recipients) {
             if (websocket.isConnected()) {
                 try {
@@ -42,14 +40,13 @@ public class DummyBroadcaster implements Broadcaster {
             }
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void broadcast(final Iterable<? extends WebSocket> recipients,
-            final byte[] binary) {
-        
+    public void broadcast(final Iterable<? extends WebSocket> recipients, final byte[] binary) {
+
         for (WebSocket websocket : recipients) {
             if (websocket.isConnected()) {
                 try {
@@ -58,14 +55,13 @@ public class DummyBroadcaster implements Broadcaster {
                 }
             }
         }
-    }    
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void broadcastFragment(final Iterable<? extends WebSocket> recipients,
-            final String text, final boolean last) {
+    public void broadcastFragment(final Iterable<? extends WebSocket> recipients, final String text, final boolean last) {
         for (WebSocket websocket : recipients) {
             if (websocket.isConnected()) {
                 try {
@@ -80,9 +76,8 @@ public class DummyBroadcaster implements Broadcaster {
      * {@inheritDoc}
      */
     @Override
-    public void broadcastFragment(final Iterable<? extends WebSocket> recipients,
-            final byte[] binary, final boolean last) {
-        
+    public void broadcastFragment(final Iterable<? extends WebSocket> recipients, final byte[] binary, final boolean last) {
+
         for (WebSocket websocket : recipients) {
             if (websocket.isConnected()) {
                 try {
@@ -92,6 +87,5 @@ public class DummyBroadcaster implements Broadcaster {
             }
         }
     }
-    
-    
+
 }

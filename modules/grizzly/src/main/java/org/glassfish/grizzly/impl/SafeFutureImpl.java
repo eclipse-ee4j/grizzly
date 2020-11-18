@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,7 +19,11 @@ package org.glassfish.grizzly.impl;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 import org.glassfish.grizzly.CompletionHandler;
@@ -48,8 +52,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
             synchronized (chSync) {
                 if (!isDone()) {
                     if (completionHandlers == null) {
-                        completionHandlers =
-                                new HashSet<CompletionHandler<R>>(2);
+                        completionHandlers = new HashSet<>(2);
                     }
 
                     completionHandlers.add(completionHandler);
@@ -67,7 +70,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
      */
     @SuppressWarnings("unchecked")
     public static <R> SafeFutureImpl<R> create() {
-        return new SafeFutureImpl<R>();
+        return new SafeFutureImpl<>();
     }
 
     /**
@@ -122,11 +125,8 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
         return null;
     }
 
-
-
     /**
-     * The method is called when this <tt>SafeFutureImpl</tt> is marked as completed.
-     * Subclasses can override this method.
+     * The method is called when this <tt>SafeFutureImpl</tt> is marked as completed. Subclasses can override this method.
      */
     protected void onComplete() {
     }
@@ -152,8 +152,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
         final R result = sync.result;
         final Throwable error = sync.exception;
 
-        for (Iterator<CompletionHandler<R>> it = localSet.iterator();
-             it.hasNext(); ) {
+        for (Iterator<CompletionHandler<R>> it = localSet.iterator(); it.hasNext();) {
             final CompletionHandler<R> completionHandler = it.next();
             it.remove();
             try {
@@ -190,7 +189,6 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
             }
         }
     }
-
 
     // FROM FUTURETASK =========================================================
 
@@ -235,19 +233,15 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
      * @throws CancellationException {@inheritDoc}
      */
     @Override
-    public R get(long timeout, TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return sync.innerGet(unit.toNanos(timeout));
     }
 
     /**
-     * Protected method invoked when this task transitions to state
-     * <tt>isDone</tt> (whether normally or via cancellation). The
-     * default implementation does nothing.  Subclasses may override
-     * this method to invoke completion callbacks or perform
-     * bookkeeping. Note that you can query status inside the
-     * implementation of this method to determine whether this task
-     * has been cancelled.
+     * Protected method invoked when this task transitions to state <tt>isDone</tt> (whether normally or via cancellation).
+     * The default implementation does nothing. Subclasses may override this method to invoke completion callbacks or
+     * perform bookkeeping. Note that you can query status inside the implementation of this method to determine whether
+     * this task has been cancelled.
      */
     protected void done() {
         notifyCompletionHandlers();
@@ -255,10 +249,9 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
     }
 
     /**
-     * Synchronization control for FutureTask. Note that this must be
-     * a non-static inner class in order to invoke the protected
-     * <tt>done</tt> method. For clarity, all inner class support
-     * methods are same as outer, prefixed with "inner".
+     * Synchronization control for FutureTask. Note that this must be a non-static inner class in order to invoke the
+     * protected <tt>done</tt> method. For clarity, all inner class support methods are same as outer, prefixed with
+     * "inner".
      * <p/>
      * Uses AQS sync state to represent run status
      */
@@ -304,8 +297,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
         }
 
         /**
-         * Implements AQS base release to always signal after setting
-         * final done status by nulling runner thread.
+         * Implements AQS base release to always signal after setting final done status by nulling runner thread.
          */
         @Override
         protected boolean tryReleaseShared(int ignore) {
@@ -327,8 +319,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
             return result;
         }
 
-        R innerGet(long nanosTimeout)
-        throws InterruptedException, ExecutionException, TimeoutException {
+        R innerGet(long nanosTimeout) throws InterruptedException, ExecutionException, TimeoutException {
             if (!tryAcquireSharedNanos(0, nanosTimeout)) {
                 throw new TimeoutException();
             }
@@ -365,7 +356,7 @@ public class SafeFutureImpl<R> implements FutureImpl<R> {
                 done();
                 return true;
             }
-            
+
             return false;
         }
     }

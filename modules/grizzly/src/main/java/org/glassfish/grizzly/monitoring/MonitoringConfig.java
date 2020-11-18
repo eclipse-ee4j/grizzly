@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -37,25 +37,23 @@ public interface MonitoringConfig<E> {
     boolean removeProbes(E... probes);
 
     /**
-     * Get the the monitoring probes, which are registered on the objet.
-     * Please note, it's not appropriate to modify the returned array's content.
-     * Please use {@link #addProbes(Object[])} and
-     * {@link #removeProbes(Object[])} instead.
+     * Get the the monitoring probes, which are registered on the objet. Please note, it's not appropriate to modify the
+     * returned array's content. Please use {@link #addProbes(Object[])} and {@link #removeProbes(Object[])} instead.
      *
      * @return the the monitoring probes, which are registered on the object.
      */
     E[] getProbes();
 
     boolean hasProbes();
-    
+
     /**
      * Removes all the monitoring probes, which are registered on the object.
      */
     void clearProbes();
-    
+
     /**
      * Create the JMX {@link Object}, which represents this object.
-     * 
+     *
      * @return the JMX {@link Object}, which represents this object.
      */
     Object createManagementObject();

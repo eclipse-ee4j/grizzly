@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,29 +25,31 @@ import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.DispatcherType;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.servlet.HttpServerAbstractTest;
 import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Basic {@link AsyncContext} tests.
  */
 public class AsyncDispatchTest extends HttpServerAbstractTest {
     private static final Logger LOGGER = Grizzly.logger(AsyncDispatchTest.class);
-    
-    public static final int PORT = 18890 + 16;
 
-    public void testAsyncContextDispatchZeroArg() throws IOException {
+    public static final int PORT = PORT();
+
+    public void testAsyncContextDispatchZeroArg() throws Exception {
         System.out.println("testAsyncContextDispatchZeroArg");
         try {
             newHttpServer(PORT);
@@ -64,14 +66,12 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                         req.setAttribute("MYNAME", "MYVALUE");
 
                         Timer asyncTimer = new Timer("AsyncTimer", true);
-                        asyncTimer.schedule(
-                                new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        ac.dispatch();
-                                    }
-                                },
-                                1000);
+                        asyncTimer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                ac.dispatch();
+                            }
+                        }, 1000);
                     } else {
                         // Async re-dispatched request
                         res.getWriter().println("Hello world");
@@ -79,6 +79,8 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                 }
             });
             ctx.deploy(httpServer);
+            
+            Thread.sleep(10);
             httpServer.start();
             HttpURLConnection conn = getConnection("/contextPath/servletPath/pathInfo", PORT);
             assertEquals(200, conn.getResponseCode());
@@ -88,7 +90,7 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
             stopHttpServer();
         }
     }
-    
+
     public void testAsyncContextDispatchToPath() throws IOException {
         System.out.println("testAsyncContextDispatchToPath");
         try {
@@ -108,31 +110,26 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                     final String target = req.getParameter("target");
 
                     Timer asyncTimer = new Timer("AsyncTimer", true);
-                    asyncTimer.schedule(
-                            new TimerTask() {
-                                @Override
-                                public void run() {
-                                    ac.dispatch(target);
-                                }
-                            },
-                            1000);
+                    asyncTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            ac.dispatch(target);
+                        }
+                    }, 1000);
                 }
             });
             addServlet(ctx, "DispatchTarget", "/DispatchTargetWithPath", new HttpServlet() {
-                private static final String EXPECTED_ASYNC_REQUEST_URI =
-                    "/contextPath/TestServlet";
+                private static final String EXPECTED_ASYNC_REQUEST_URI = "/contextPath/TestServlet";
 
-                private static final String EXPECTED_ASYNC_SERVLET_PATH =
-                    "/TestServlet";
+                private static final String EXPECTED_ASYNC_SERVLET_PATH = "/TestServlet";
 
-                private static final String EXPECTED_ASYNC_QUERY_STRING =
-                    "target=DispatchTargetWithPath";
+                private static final String EXPECTED_ASYNC_QUERY_STRING = "target=DispatchTargetWithPath";
+
                 @Override
                 protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
                     Enumeration<String> attrNames = req.getAttributeNames();
                     if (attrNames == null) {
-                        throw new ServletException("Missing ASYNC dispatch related "
-                                + "request attributes");
+                        throw new ServletException("Missing ASYNC dispatch related " + "request attributes");
                     }
 
                     if (!"MYVALUE".equals(req.getAttribute("MYNAME"))) {
@@ -143,64 +140,45 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                     while (attrNames.hasMoreElements()) {
                         String attrName = attrNames.nextElement();
                         if (AsyncContext.ASYNC_REQUEST_URI.equals(attrName)) {
-                            if (!EXPECTED_ASYNC_REQUEST_URI.equals(
-                                    req.getAttribute(attrName))) {
-                                throw new ServletException("Wrong value for "
-                                        + AsyncContext.ASYNC_REQUEST_URI
-                                        + " request attribute. Found: "
-                                        + req.getAttribute(attrName) + ", expected: "
-                                        + EXPECTED_ASYNC_REQUEST_URI);
+                            if (!EXPECTED_ASYNC_REQUEST_URI.equals(req.getAttribute(attrName))) {
+                                throw new ServletException("Wrong value for " + AsyncContext.ASYNC_REQUEST_URI + " request attribute. Found: "
+                                        + req.getAttribute(attrName) + ", expected: " + EXPECTED_ASYNC_REQUEST_URI);
                             }
                             asyncRequestAttributeFound++;
                         } else if (AsyncContext.ASYNC_CONTEXT_PATH.equals(attrName)) {
-                            if (!getServletContext().getContextPath().equals(
-                                    req.getAttribute(attrName))) {
-                                throw new ServletException("Wrong value for "
-                                        + AsyncContext.ASYNC_CONTEXT_PATH
-                                        + " request attribute. Found: "
-                                        + req.getAttribute(attrName) + ", expected: "
-                                        + getServletContext().getContextPath());
+                            if (!getServletContext().getContextPath().equals(req.getAttribute(attrName))) {
+                                throw new ServletException("Wrong value for " + AsyncContext.ASYNC_CONTEXT_PATH + " request attribute. Found: "
+                                        + req.getAttribute(attrName) + ", expected: " + getServletContext().getContextPath());
                             }
                             asyncRequestAttributeFound++;
                         } else if (AsyncContext.ASYNC_PATH_INFO.equals(attrName)) {
                             if (req.getAttribute(attrName) != null) {
-                                throw new ServletException("Wrong value for "
-                                        + AsyncContext.ASYNC_PATH_INFO
-                                        + " request attribute");
+                                throw new ServletException("Wrong value for " + AsyncContext.ASYNC_PATH_INFO + " request attribute");
                             }
                             asyncRequestAttributeFound++;
                         } else if (AsyncContext.ASYNC_SERVLET_PATH.equals(attrName)) {
-                            if (!EXPECTED_ASYNC_SERVLET_PATH.equals(
-                                    req.getAttribute(attrName))) {
-                                throw new ServletException("Wrong value for "
-                                        + AsyncContext.ASYNC_SERVLET_PATH
-                                        + " request attribute. Found "
-                                        + req.getAttribute(attrName) + ", expected: "
-                                        + EXPECTED_ASYNC_SERVLET_PATH);
+                            if (!EXPECTED_ASYNC_SERVLET_PATH.equals(req.getAttribute(attrName))) {
+                                throw new ServletException("Wrong value for " + AsyncContext.ASYNC_SERVLET_PATH + " request attribute. Found "
+                                        + req.getAttribute(attrName) + ", expected: " + EXPECTED_ASYNC_SERVLET_PATH);
                             }
                             asyncRequestAttributeFound++;
                         } else if (AsyncContext.ASYNC_QUERY_STRING.equals(attrName)) {
-                            if (!EXPECTED_ASYNC_QUERY_STRING.equals(
-                                    req.getAttribute(attrName))) {
-                                throw new ServletException("Wrong value for "
-                                        + AsyncContext.ASYNC_QUERY_STRING
-                                        + " request attribute. Found: "
-                                        + req.getAttribute(attrName) + ", expected: "
-                                        + EXPECTED_ASYNC_QUERY_STRING);
+                            if (!EXPECTED_ASYNC_QUERY_STRING.equals(req.getAttribute(attrName))) {
+                                throw new ServletException("Wrong value for " + AsyncContext.ASYNC_QUERY_STRING + " request attribute. Found: "
+                                        + req.getAttribute(attrName) + ", expected: " + EXPECTED_ASYNC_QUERY_STRING);
                             }
                             asyncRequestAttributeFound++;
                         }
                     }
 
                     if (asyncRequestAttributeFound != 5) {
-                        throw new ServletException("Wrong number of ASYNC dispatch "
-                                + "related request attributes");
+                        throw new ServletException("Wrong number of ASYNC dispatch " + "related request attributes");
                     }
 
                     res.getWriter().println("Hello world");
                 }
             });
-            
+
             ctx.deploy(httpServer);
             httpServer.start();
             HttpURLConnection conn = getConnection("/contextPath/TestServlet?target=DispatchTargetWithPath", PORT);
@@ -217,7 +195,7 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
         try {
             newHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test", "/contextPath");
-            
+
             addServlet(ctx, "foobar", "/servletPath/*", new HttpServlet() {
 
                 @Override
@@ -233,8 +211,7 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                         ac.addListener(new AsyncListener() {
                             @Override
                             public void onComplete(AsyncEvent event) throws IOException {
-                                event.getAsyncContext().getResponse().getWriter().println(
-                                        "onComplete");
+                                event.getAsyncContext().getResponse().getWriter().println("onComplete");
                             }
 
                             @Override
@@ -249,27 +226,22 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
 
                             @Override
                             public void onStartAsync(AsyncEvent event) throws IOException {
-                                event.getAsyncContext().getResponse().getWriter().print(
-                                        "onStartAsync,");
+                                event.getAsyncContext().getResponse().getWriter().print("onStartAsync,");
                                 /*
-                                 * ServletRequest#startAsync clears the list of AsyncListener
-                                 * instances registered with the AsyncContext - after calling
-                                 * each AsyncListener at its onStartAsync method, which is the 
-                                 * method we're in.
-                                 * Register ourselves again, so we continue to get notified
+                                 * ServletRequest#startAsync clears the list of AsyncListener instances registered with the AsyncContext - after calling
+                                 * each AsyncListener at its onStartAsync method, which is the method we're in. Register ourselves again, so we continue
+                                 * to get notified
                                  */
                                 event.getAsyncContext().addListener(this);
                             }
                         });
                         Timer asyncTimer = new Timer("AsyncTimer", true);
-                        asyncTimer.schedule(
-                                new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        ac.dispatch();
-                                    }
-                                },
-                                1000);
+                        asyncTimer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                ac.dispatch();
+                            }
+                        }, 1000);
                     } else if (req.getDispatcherType() == DispatcherType.ASYNC) {
                         if ("DEF".equals(req.getAttribute("ABC"))) {
                             // First async dispatch
@@ -298,7 +270,7 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
         try {
             newHttpServer(PORT);
             WebappContext ctx = new WebappContext("Test", "/contextPath");
-            
+
             addServlet(ctx, "test.AsyncDispatch", "/asyncdispatch", new HttpServlet() {
 
                 @Override
@@ -306,46 +278,46 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
                     System.out.println("AD: dispatcher type: " + req.getDispatcherType());
                     boolean withArgs = Boolean.parseBoolean(req.getParameter("withargs"));
                     boolean forceAsync = Boolean.parseBoolean(req.getParameter("forceasync"));
-                    if (!req.getDispatcherType().equals(DispatcherType.ASYNC)
-                            || forceAsync) {
+                    if (!req.getDispatcherType().equals(DispatcherType.ASYNC) || forceAsync) {
 
-                        final AsyncContext ac =
-                                ((withArgs) ? req.startAsync(req, res) : req.startAsync());
+                        final AsyncContext ac = withArgs ? req.startAsync(req, res) : req.startAsync();
 
                         ac.addListener(new AsyncListener() {
+                            @Override
                             public void onComplete(AsyncEvent event) {
                                 System.out.println("AD: AsyncListener.onComplete");
                             }
 
+                            @Override
                             public void onError(AsyncEvent event) {
                                 System.out.println("AD: AsyncListener.onError");
                             }
 
+                            @Override
                             public void onStartAsync(AsyncEvent event) {
                                 System.out.println("AD: AsyncListener.onStartAsync");
                             }
 
+                            @Override
                             public void onTimeout(AsyncEvent event) {
                                 System.out.println("AD: AsyncListener.onTimeout");
                             }
                         });
 
                         Timer timer = new Timer("AsyncTimer", true);
-                        timer.schedule(
-                                new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        ac.dispatch();
-                                    }
-                                },
-                                3000);
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                ac.dispatch();
+                            }
+                        }, 3000);
                     } else {
                         PrintWriter writer = res.getWriter();
                         writer.write("Hello from AsyncDispatch\n");
                     }
                 }
             });
-            
+
             addServlet(ctx, "test.DispatchForward", "/dispatchforward", new HttpServlet() {
 
                 @Override
@@ -398,10 +370,10 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
 
                 }
             });
-            
+
             ctx.deploy(httpServer);
             httpServer.start();
-            
+
             assertEquals("Hello from DispatchForward", doTest("/contextPath/dispatchforward"));
             assertEquals("Hello from AsyncDispatch", doTest("/contextPath/dispatchforward?withargs=true"));
 
@@ -413,25 +385,21 @@ public class AsyncDispatchTest extends HttpServerAbstractTest {
             stopHttpServer();
         }
     }
-    
+
     private String doTest(String uri) throws IOException {
         HttpURLConnection conn = getConnection(uri, PORT);
         assertEquals(200, conn.getResponseCode());
-        
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
         return reader.readLine();
     }
-    
-    private ServletRegistration addServlet(final WebappContext ctx,
-            final String name,
-            final String alias,
-            Servlet servlet
-            ) {
-        
+
+    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias, Servlet servlet) {
+
         final ServletRegistration reg = ctx.addServlet(name, servlet);
         reg.addMapping(alias);
 
         return reg;
-    }    
+    }
 }

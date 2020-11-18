@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019 Oracle and/or its affiliates and others.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -20,6 +20,8 @@
 
 package org.glassfish.grizzly.http2;
 
+import static org.glassfish.grizzly.http2.Termination.IN_FIN_TERMINATION;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +36,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.net.ssl.SSLEngine;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -56,6 +61,7 @@ import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.server.http2.PushEvent;
+import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.http.util.FastHttpDateFormat;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
@@ -70,11 +76,6 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.ssl.SSLUtils;
 
-import javax.net.ssl.SSLEngine;
-import org.glassfish.grizzly.http.util.DataChunk;
-
-import static org.glassfish.grizzly.http2.Termination.IN_FIN_TERMINATION;
-
 /**
  *
  * @author oleksiys
@@ -82,314 +83,114 @@ import static org.glassfish.grizzly.http2.Termination.IN_FIN_TERMINATION;
 public class Http2ServerFilter extends Http2BaseFilter {
     private final static Logger LOGGER = Grizzly.logger(Http2ServerFilter.class);
 
-    private static final String[] CIPHER_SUITE_BLACK_LIST = {
-            "TLS_NULL_WITH_NULL_NULL",
-            "TLS_RSA_WITH_NULL_MD5",
-            "TLS_RSA_WITH_NULL_SHA",
-            "TLS_RSA_EXPORT_WITH_RC4_40_MD5",
-            "TLS_RSA_WITH_RC4_128_MD5",
-            "TLS_RSA_WITH_RC4_128_SHA",
-            "TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5",
-            "TLS_RSA_WITH_IDEA_CBC_SHA",
-            "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_RSA_WITH_DES_CBC_SHA",
-            "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_DH_DSS_WITH_DES_CBC_SHA",
-            "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_DH_RSA_WITH_DES_CBC_SHA",
-            "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_DHE_DSS_WITH_DES_CBC_SHA",
-            "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_DHE_RSA_WITH_DES_CBC_SHA",
-            "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DH_anon_EXPORT_WITH_RC4_40_MD5",
-            "TLS_DH_anon_WITH_RC4_128_MD5",
-            "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
-            "TLS_DH_anon_WITH_DES_CBC_SHA",
-            "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA",
-            "TLS_KRB5_WITH_DES_CBC_SHA",
-            "TLS_KRB5_WITH_3DES_EDE_CBC_SHA",
-            "TLS_KRB5_WITH_RC4_128_SHA",
-            "TLS_KRB5_WITH_IDEA_CBC_SHA",
-            "TLS_KRB5_WITH_DES_CBC_MD5",
-            "TLS_KRB5_WITH_3DES_EDE_CBC_MD5",
-            "TLS_KRB5_WITH_RC4_128_MD5",
-            "TLS_KRB5_WITH_IDEA_CBC_MD5",
-            "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
-            "TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA",
-            "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
-            "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
-            "TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5",
-            "TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
-            "TLS_PSK_WITH_NULL_SHA",
-            "TLS_DHE_PSK_WITH_NULL_SHA",
-            "TLS_RSA_PSK_WITH_NULL_SHA",
-            "TLS_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_DH_DSS_WITH_AES_128_CBC_SHA",
-            "TLS_DH_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_DH_anon_WITH_AES_128_CBC_SHA",
-            "TLS_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_DH_DSS_WITH_AES_256_CBC_SHA",
-            "TLS_DH_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_DH_anon_WITH_AES_256_CBC_SHA",
-            "TLS_RSA_WITH_NULL_SHA256",
-            "TLS_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_DH_DSS_WITH_AES_128_CBC_SHA256",
-            "TLS_DH_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
-            "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_DH_DSS_WITH_AES_256_CBC_SHA256",
-            "TLS_DH_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
-            "TLS_DH_anon_WITH_AES_128_CBC_SHA256",
-            "TLS_DH_anon_WITH_AES_256_CBC_SHA256",
-            "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA",
-            "TLS_PSK_WITH_RC4_128_SHA",
-            "TLS_PSK_WITH_3DES_EDE_CBC_SHA",
-            "TLS_PSK_WITH_AES_128_CBC_SHA",
-            "TLS_PSK_WITH_AES_256_CBC_SHA",
-            "TLS_DHE_PSK_WITH_RC4_128_SHA",
-            "TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA",
-            "TLS_DHE_PSK_WITH_AES_128_CBC_SHA",
-            "TLS_DHE_PSK_WITH_AES_256_CBC_SHA",
-            "TLS_RSA_PSK_WITH_RC4_128_SHA",
-            "TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA",
-            "TLS_RSA_PSK_WITH_AES_128_CBC_SHA",
-            "TLS_RSA_PSK_WITH_AES_256_CBC_SHA",
-            "TLS_RSA_WITH_SEED_CBC_SHA",
-            "TLS_DH_DSS_WITH_SEED_CBC_SHA",
-            "TLS_DH_RSA_WITH_SEED_CBC_SHA",
-            "TLS_DHE_DSS_WITH_SEED_CBC_SHA",
-            "TLS_DHE_RSA_WITH_SEED_CBC_SHA",
-            "TLS_DH_anon_WITH_SEED_CBC_SHA",
-            "TLS_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_DH_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_DH_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_DH_DSS_WITH_AES_128_GCM_SHA256",
-            "TLS_DH_DSS_WITH_AES_256_GCM_SHA384",
-            "TLS_DH_anon_WITH_AES_128_GCM_SHA256",
-            "TLS_DH_anon_WITH_AES_256_GCM_SHA384",
-            "TLS_PSK_WITH_AES_128_GCM_SHA256",
-            "TLS_PSK_WITH_AES_256_GCM_SHA384",
-            "TLS_RSA_PSK_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_PSK_WITH_AES_256_GCM_SHA384",
-            "TLS_PSK_WITH_AES_128_CBC_SHA256",
-            "TLS_PSK_WITH_AES_256_CBC_SHA384",
-            "TLS_PSK_WITH_NULL_SHA256",
-            "TLS_PSK_WITH_NULL_SHA384",
-            "TLS_DHE_PSK_WITH_AES_128_CBC_SHA256",
-            "TLS_DHE_PSK_WITH_AES_256_CBC_SHA384",
-            "TLS_DHE_PSK_WITH_NULL_SHA256",
-            "TLS_DHE_PSK_WITH_NULL_SHA384",
-            "TLS_RSA_PSK_WITH_AES_128_CBC_SHA256",
-            "TLS_RSA_PSK_WITH_AES_256_CBC_SHA384",
-            "TLS_RSA_PSK_WITH_NULL_SHA256",
-            "TLS_RSA_PSK_WITH_NULL_SHA384",
-            "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256",
-            "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
-            "TLS_ECDH_ECDSA_WITH_NULL_SHA",
-            "TLS_ECDH_ECDSA_WITH_RC4_128_SHA",
-            "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA",
-            "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_ECDSA_WITH_NULL_SHA",
-            "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",
-            "TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDH_RSA_WITH_NULL_SHA",
-            "TLS_ECDH_RSA_WITH_RC4_128_SHA",
-            "TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_RSA_WITH_NULL_SHA",
-            "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
-            "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_ECDH_anon_WITH_NULL_SHA",
-            "TLS_ECDH_anon_WITH_RC4_128_SHA",
-            "TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDH_anon_WITH_AES_128_CBC_SHA",
-            "TLS_ECDH_anon_WITH_AES_256_CBC_SHA",
-            "TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA",
-            "TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA",
-            "TLS_SRP_SHA_WITH_AES_128_CBC_SHA",
-            "TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA",
-            "TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA",
-            "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
-            "TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA",
-            "TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_PSK_WITH_RC4_128_SHA",
-            "TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA",
-            "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA",
-            "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA",
-            "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256",
-            "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384",
-            "TLS_ECDHE_PSK_WITH_NULL_SHA",
-            "TLS_ECDHE_PSK_WITH_NULL_SHA256",
-            "TLS_ECDHE_PSK_WITH_NULL_SHA384",
-            "TLS_RSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_RSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DH_DSS_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DH_DSS_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DH_RSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DH_RSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DHE_DSS_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DHE_DSS_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DHE_RSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DHE_RSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DH_anon_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DH_anon_WITH_ARIA_256_CBC_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_ECDH_RSA_WITH_ARIA_128_CBC_SHA256",
-            "TLS_ECDH_RSA_WITH_ARIA_256_CBC_SHA384",
-            "TLS_RSA_WITH_ARIA_128_GCM_SHA256",
-            "TLS_RSA_WITH_ARIA_256_GCM_SHA384",
-            "TLS_DH_RSA_WITH_ARIA_128_GCM_SHA256",
-            "TLS_DH_RSA_WITH_ARIA_256_GCM_SHA384",
-            "TLS_DH_DSS_WITH_ARIA_128_GCM_SHA256",
-            "TLS_DH_DSS_WITH_ARIA_256_GCM_SHA384",
-            "TLS_DH_anon_WITH_ARIA_128_GCM_SHA256",
-            "TLS_DH_anon_WITH_ARIA_256_GCM_SHA384",
-            "TLS_ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256",
-            "TLS_ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384",
-            "TLS_ECDH_RSA_WITH_ARIA_128_GCM_SHA256",
-            "TLS_ECDH_RSA_WITH_ARIA_256_GCM_SHA384",
-            "TLS_PSK_WITH_ARIA_128_CBC_SHA256",
-            "TLS_PSK_WITH_ARIA_256_CBC_SHA384",
-            "TLS_DHE_PSK_WITH_ARIA_128_CBC_SHA256",
-            "TLS_DHE_PSK_WITH_ARIA_256_CBC_SHA384",
-            "TLS_RSA_PSK_WITH_ARIA_128_CBC_SHA256",
-            "TLS_RSA_PSK_WITH_ARIA_256_CBC_SHA384",
-            "TLS_PSK_WITH_ARIA_128_GCM_SHA256",
-            "TLS_PSK_WITH_ARIA_256_GCM_SHA384",
-            "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256",
-            "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384",
-            "TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256",
-            "TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_RSA_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_RSA_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_DH_RSA_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_DH_RSA_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_DH_DSS_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_DH_DSS_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_DH_anon_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_DH_anon_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_PSK_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256",
-            "TLS_RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384",
-            "TLS_PSK_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_PSK_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256",
-            "TLS_ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384",
-            "TLS_RSA_WITH_AES_128_CCM",
-            "TLS_RSA_WITH_AES_256_CCM",
-            "TLS_RSA_WITH_AES_128_CCM_8",
-            "TLS_RSA_WITH_AES_256_CCM_8",
-            "TLS_PSK_WITH_AES_128_CCM",
-            "TLS_PSK_WITH_AES_256_CCM",
-            "TLS_PSK_WITH_AES_128_CCM_8",
-            "TLS_PSK_WITH_AES_256_CCM_8"
-    };
+    private static final String[] CIPHER_SUITE_BLACK_LIST = { "TLS_NULL_WITH_NULL_NULL", "TLS_RSA_WITH_NULL_MD5", "TLS_RSA_WITH_NULL_SHA",
+            "TLS_RSA_EXPORT_WITH_RC4_40_MD5", "TLS_RSA_WITH_RC4_128_MD5", "TLS_RSA_WITH_RC4_128_SHA", "TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5",
+            "TLS_RSA_WITH_IDEA_CBC_SHA", "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA", "TLS_RSA_WITH_DES_CBC_SHA", "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+            "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA", "TLS_DH_DSS_WITH_DES_CBC_SHA", "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA", "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA",
+            "TLS_DH_RSA_WITH_DES_CBC_SHA", "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA", "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", "TLS_DHE_DSS_WITH_DES_CBC_SHA",
+            "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA", "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "TLS_DHE_RSA_WITH_DES_CBC_SHA", "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
+            "TLS_DH_anon_EXPORT_WITH_RC4_40_MD5", "TLS_DH_anon_WITH_RC4_128_MD5", "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA", "TLS_DH_anon_WITH_DES_CBC_SHA",
+            "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA", "TLS_KRB5_WITH_DES_CBC_SHA", "TLS_KRB5_WITH_3DES_EDE_CBC_SHA", "TLS_KRB5_WITH_RC4_128_SHA",
+            "TLS_KRB5_WITH_IDEA_CBC_SHA", "TLS_KRB5_WITH_DES_CBC_MD5", "TLS_KRB5_WITH_3DES_EDE_CBC_MD5", "TLS_KRB5_WITH_RC4_128_MD5",
+            "TLS_KRB5_WITH_IDEA_CBC_MD5", "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA", "TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA", "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
+            "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5", "TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5", "TLS_KRB5_EXPORT_WITH_RC4_40_MD5", "TLS_PSK_WITH_NULL_SHA",
+            "TLS_DHE_PSK_WITH_NULL_SHA", "TLS_RSA_PSK_WITH_NULL_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_DH_DSS_WITH_AES_128_CBC_SHA",
+            "TLS_DH_RSA_WITH_AES_128_CBC_SHA", "TLS_DHE_DSS_WITH_AES_128_CBC_SHA", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "TLS_DH_anon_WITH_AES_128_CBC_SHA",
+            "TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_DH_DSS_WITH_AES_256_CBC_SHA", "TLS_DH_RSA_WITH_AES_256_CBC_SHA", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA",
+            "TLS_DHE_RSA_WITH_AES_256_CBC_SHA", "TLS_DH_anon_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_NULL_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_DH_DSS_WITH_AES_128_CBC_SHA256", "TLS_DH_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA", "TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA",
+            "TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA", "TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA", "TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA",
+            "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256", "TLS_DH_DSS_WITH_AES_256_CBC_SHA256",
+            "TLS_DH_RSA_WITH_AES_256_CBC_SHA256", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256", "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
+            "TLS_DH_anon_WITH_AES_128_CBC_SHA256", "TLS_DH_anon_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA",
+            "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA", "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA", "TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA",
+            "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA", "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA", "TLS_PSK_WITH_RC4_128_SHA", "TLS_PSK_WITH_3DES_EDE_CBC_SHA",
+            "TLS_PSK_WITH_AES_128_CBC_SHA", "TLS_PSK_WITH_AES_256_CBC_SHA", "TLS_DHE_PSK_WITH_RC4_128_SHA", "TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA",
+            "TLS_DHE_PSK_WITH_AES_128_CBC_SHA", "TLS_DHE_PSK_WITH_AES_256_CBC_SHA", "TLS_RSA_PSK_WITH_RC4_128_SHA", "TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA",
+            "TLS_RSA_PSK_WITH_AES_128_CBC_SHA", "TLS_RSA_PSK_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_SEED_CBC_SHA", "TLS_DH_DSS_WITH_SEED_CBC_SHA",
+            "TLS_DH_RSA_WITH_SEED_CBC_SHA", "TLS_DHE_DSS_WITH_SEED_CBC_SHA", "TLS_DHE_RSA_WITH_SEED_CBC_SHA", "TLS_DH_anon_WITH_SEED_CBC_SHA",
+            "TLS_RSA_WITH_AES_128_GCM_SHA256", "TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_DH_RSA_WITH_AES_128_GCM_SHA256", "TLS_DH_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_DH_DSS_WITH_AES_128_GCM_SHA256", "TLS_DH_DSS_WITH_AES_256_GCM_SHA384", "TLS_DH_anon_WITH_AES_128_GCM_SHA256",
+            "TLS_DH_anon_WITH_AES_256_GCM_SHA384", "TLS_PSK_WITH_AES_128_GCM_SHA256", "TLS_PSK_WITH_AES_256_GCM_SHA384", "TLS_RSA_PSK_WITH_AES_128_GCM_SHA256",
+            "TLS_RSA_PSK_WITH_AES_256_GCM_SHA384", "TLS_PSK_WITH_AES_128_CBC_SHA256", "TLS_PSK_WITH_AES_256_CBC_SHA384", "TLS_PSK_WITH_NULL_SHA256",
+            "TLS_PSK_WITH_NULL_SHA384", "TLS_DHE_PSK_WITH_AES_128_CBC_SHA256", "TLS_DHE_PSK_WITH_AES_256_CBC_SHA384", "TLS_DHE_PSK_WITH_NULL_SHA256",
+            "TLS_DHE_PSK_WITH_NULL_SHA384", "TLS_RSA_PSK_WITH_AES_128_CBC_SHA256", "TLS_RSA_PSK_WITH_AES_256_CBC_SHA384", "TLS_RSA_PSK_WITH_NULL_SHA256",
+            "TLS_RSA_PSK_WITH_NULL_SHA384", "TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256", "TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA256", "TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA256", "TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256", "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256", "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA256",
+            "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA256", "TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256", "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256",
+            "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256", "TLS_EMPTY_RENEGOTIATION_INFO_SCSV", "TLS_ECDH_ECDSA_WITH_NULL_SHA", "TLS_ECDH_ECDSA_WITH_RC4_128_SHA",
+            "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA",
+            "TLS_ECDHE_ECDSA_WITH_NULL_SHA", "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA", "TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDH_RSA_WITH_NULL_SHA", "TLS_ECDH_RSA_WITH_RC4_128_SHA",
+            "TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_NULL_SHA",
+            "TLS_ECDHE_RSA_WITH_RC4_128_SHA", "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+            "TLS_ECDH_anon_WITH_NULL_SHA", "TLS_ECDH_anon_WITH_RC4_128_SHA", "TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA", "TLS_ECDH_anon_WITH_AES_128_CBC_SHA",
+            "TLS_ECDH_anon_WITH_AES_256_CBC_SHA", "TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA", "TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA",
+            "TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA", "TLS_SRP_SHA_WITH_AES_128_CBC_SHA", "TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA",
+            "TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA", "TLS_SRP_SHA_WITH_AES_256_CBC_SHA", "TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA",
+            "TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384",
+            "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_PSK_WITH_RC4_128_SHA", "TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA",
+            "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA", "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA", "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_PSK_WITH_NULL_SHA", "TLS_ECDHE_PSK_WITH_NULL_SHA256", "TLS_ECDHE_PSK_WITH_NULL_SHA384",
+            "TLS_RSA_WITH_ARIA_128_CBC_SHA256", "TLS_RSA_WITH_ARIA_256_CBC_SHA384", "TLS_DH_DSS_WITH_ARIA_128_CBC_SHA256",
+            "TLS_DH_DSS_WITH_ARIA_256_CBC_SHA384", "TLS_DH_RSA_WITH_ARIA_128_CBC_SHA256", "TLS_DH_RSA_WITH_ARIA_256_CBC_SHA384",
+            "TLS_DHE_DSS_WITH_ARIA_128_CBC_SHA256", "TLS_DHE_DSS_WITH_ARIA_256_CBC_SHA384", "TLS_DHE_RSA_WITH_ARIA_128_CBC_SHA256",
+            "TLS_DHE_RSA_WITH_ARIA_256_CBC_SHA384", "TLS_DH_anon_WITH_ARIA_128_CBC_SHA256", "TLS_DH_anon_WITH_ARIA_256_CBC_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384", "TLS_ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256",
+            "TLS_ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_ARIA_256_CBC_SHA384",
+            "TLS_ECDH_RSA_WITH_ARIA_128_CBC_SHA256", "TLS_ECDH_RSA_WITH_ARIA_256_CBC_SHA384", "TLS_RSA_WITH_ARIA_128_GCM_SHA256",
+            "TLS_RSA_WITH_ARIA_256_GCM_SHA384", "TLS_DH_RSA_WITH_ARIA_128_GCM_SHA256", "TLS_DH_RSA_WITH_ARIA_256_GCM_SHA384",
+            "TLS_DH_DSS_WITH_ARIA_128_GCM_SHA256", "TLS_DH_DSS_WITH_ARIA_256_GCM_SHA384", "TLS_DH_anon_WITH_ARIA_128_GCM_SHA256",
+            "TLS_DH_anon_WITH_ARIA_256_GCM_SHA384", "TLS_ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256", "TLS_ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384",
+            "TLS_ECDH_RSA_WITH_ARIA_128_GCM_SHA256", "TLS_ECDH_RSA_WITH_ARIA_256_GCM_SHA384", "TLS_PSK_WITH_ARIA_128_CBC_SHA256",
+            "TLS_PSK_WITH_ARIA_256_CBC_SHA384", "TLS_DHE_PSK_WITH_ARIA_128_CBC_SHA256", "TLS_DHE_PSK_WITH_ARIA_256_CBC_SHA384",
+            "TLS_RSA_PSK_WITH_ARIA_128_CBC_SHA256", "TLS_RSA_PSK_WITH_ARIA_256_CBC_SHA384", "TLS_PSK_WITH_ARIA_128_GCM_SHA256",
+            "TLS_PSK_WITH_ARIA_256_GCM_SHA384", "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256", "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384",
+            "TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256", "TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384", "TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384", "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256", "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384",
+            "TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384", "TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384", "TLS_RSA_WITH_CAMELLIA_128_GCM_SHA256", "TLS_RSA_WITH_CAMELLIA_256_GCM_SHA384",
+            "TLS_DH_RSA_WITH_CAMELLIA_128_GCM_SHA256", "TLS_DH_RSA_WITH_CAMELLIA_256_GCM_SHA384", "TLS_DH_DSS_WITH_CAMELLIA_128_GCM_SHA256",
+            "TLS_DH_DSS_WITH_CAMELLIA_256_GCM_SHA384", "TLS_DH_anon_WITH_CAMELLIA_128_GCM_SHA256", "TLS_DH_anon_WITH_CAMELLIA_256_GCM_SHA384",
+            "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256", "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384", "TLS_ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256",
+            "TLS_ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384", "TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256", "TLS_PSK_WITH_CAMELLIA_256_GCM_SHA384",
+            "TLS_RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256", "TLS_RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384", "TLS_PSK_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_PSK_WITH_CAMELLIA_256_CBC_SHA384", "TLS_DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256", "TLS_DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384",
+            "TLS_RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256", "TLS_RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384", "TLS_ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256",
+            "TLS_ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384", "TLS_RSA_WITH_AES_128_CCM", "TLS_RSA_WITH_AES_256_CCM", "TLS_RSA_WITH_AES_128_CCM_8",
+            "TLS_RSA_WITH_AES_256_CCM_8", "TLS_PSK_WITH_AES_128_CCM", "TLS_PSK_WITH_AES_256_CCM", "TLS_PSK_WITH_AES_128_CCM_8", "TLS_PSK_WITH_AES_256_CCM_8" };
 
     static {
         Arrays.sort(CIPHER_SUITE_BLACK_LIST);
     }
-    
+
     // flag, which enables/disables payload support for HTTP methods,
     // for which HTTP spec doesn't clearly state whether they support payload.
     // Known "undefined" methods are: GET, HEAD, DELETE
     private boolean allowPayloadForUndefinedHttpMethods;
 
-    private final Attribute<Connection> CIPHER_CHECKED =
-            AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("BLACK_LIST_CIPHER_SUITE_CHEKCED");
+    private final Attribute<Connection> CIPHER_CHECKED = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("BLACK_LIST_CIPHER_SUITE_CHEKCED");
 
     private Collection<Connection> activeConnections = new HashSet<>(1024);
     private AtomicBoolean shuttingDown = new AtomicBoolean();
 
     /**
-     * Create a new {@link Http2ServerFilter} using the specified {@link Http2Configuration}.
-     * Configuration may be changed post-construction by calling {@link #getConfiguration()}.
+     * Create a new {@link Http2ServerFilter} using the specified {@link Http2Configuration}. Configuration may be changed
+     * post-construction by calling {@link #getConfiguration()}.
      */
     public Http2ServerFilter(final Http2Configuration configuration) {
         super(configuration);
     }
 
-
     /**
-     * The flag, which enables/disables payload support for HTTP methods,
-     * for which HTTP spec doesn't clearly state whether they support payload.
-     * Known "undefined" methods are: GET, HEAD, DELETE.
-     * 
+     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec doesn't clearly state whether
+     * they support payload. Known "undefined" methods are: GET, HEAD, DELETE.
+     *
      * @return <tt>true</tt> if "undefined" methods support payload, or <tt>false</tt> otherwise
      */
     @SuppressWarnings("unused")
@@ -398,11 +199,11 @@ public class Http2ServerFilter extends Http2BaseFilter {
     }
 
     /**
-     * The flag, which enables/disables payload support for HTTP methods,
-     * for which HTTP spec doesn't clearly state whether they support payload.
-     * Known "undefined" methods are: GET, HEAD, DELETE.
-     * 
-     * @param allowPayloadForUndefinedHttpMethods <tt>true</tt> if "undefined" methods support payload, or <tt>false</tt> otherwise
+     * The flag, which enables/disables payload support for HTTP methods, for which HTTP spec doesn't clearly state whether
+     * they support payload. Known "undefined" methods are: GET, HEAD, DELETE.
+     *
+     * @param allowPayloadForUndefinedHttpMethods <tt>true</tt> if "undefined" methods support payload, or <tt>false</tt>
+     * otherwise
      */
     @SuppressWarnings("unused")
     public void setAllowPayloadForUndefinedHttpMethods(boolean allowPayloadForUndefinedHttpMethods) {
@@ -427,26 +228,25 @@ public class Http2ServerFilter extends Http2BaseFilter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public NextAction handleRead(final FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
 
         // if it's a stream chain (the stream is already assigned) - just
         // bypass the parsing part
         if (checkIfHttp2StreamChain(ctx)) {
             return ctx.getInvokeAction();
         }
-        
+
         final Connection connection = ctx.getConnection();
         Http2State http2State = Http2State.get(connection);
-        
+
         if (http2State != null && http2State.isNeverHttp2()) {
             // NOT HTTP2 connection and never will be
             return ctx.getInvokeAction();
         }
-        
+
         final HttpContent httpContent = ctx.getMessage();
         final HttpHeader httpHeader = httpContent.getHttpHeader();
-        
+
         if (http2State == null) { // Not HTTP/2 (yet?)
             assert httpHeader.isRequest();
 
@@ -457,26 +257,24 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 Http2State.create(connection).setNeverHttp2();
                 return ctx.getInvokeAction();
             }
-            
-            final HttpRequestPacket httpRequest =
-                    (HttpRequestPacket) httpHeader;
-            
+
+            final HttpRequestPacket httpRequest = (HttpRequestPacket) httpHeader;
+
             if (!Method.PRI.equals(httpRequest.getMethod())) {
                 final boolean isLast = httpContent.isLast();
                 if (tryHttpUpgrade(ctx, httpRequest, isLast) && isLast) {
                     enableOpReadNow(ctx);
                 }
-                
+
                 return ctx.getInvokeAction();
             }
-            
+
             // PRI method
             // DIRECT HTTP/2.0 request
             http2State = doDirectUpgrade(ctx);
         }
-        
-        final Http2Session http2Session =
-                obtainHttp2Session(http2State, ctx, true);
+
+        final Http2Session http2Session = obtainHttp2Session(http2State, ctx, true);
 
         if (httpHeader.isSecure() && !getConfiguration().isDisableCipherCheck() && !CIPHER_CHECKED.isSet(connection)) {
             CIPHER_CHECKED.set(connection, connection);
@@ -488,23 +286,23 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 }
             }
         }
-        
+
         final Buffer framePayload;
         if (!http2Session.isHttp2InputEnabled()) { // Preface is not received yet
-            
+
             if (http2State.isHttpUpgradePhase()) {
                 // It's plain HTTP/1.1 data coming with upgrade request
                 if (httpContent.isLast()) {
                     http2State.setDirectUpgradePhase(); // expecting preface
                     enableOpReadNow(ctx);
                 }
-                
+
                 return ctx.getInvokeAction();
             }
-            
+
             final HttpRequestPacket httpRequest = (HttpRequestPacket) httpHeader;
-             
-           // PRI message hasn't been checked
+
+            // PRI message hasn't been checked
             try {
                 if (!checkPRI(httpRequest, httpContent)) {
                     // Not enough PRI content read
@@ -527,31 +325,27 @@ public class Http2ServerFilter extends Http2BaseFilter {
         } else {
             framePayload = httpContent.getContent();
         }
-        
+
         httpContent.recycle();
 
-        // Prime the initial value of push.  Will be overridden if the settings contain a
+        // Prime the initial value of push. Will be overridden if the settings contain a
         // new value.
         if (connection.getAttributes().getAttribute(HTTP2_PUSH_ENABLED) == null) {
             connection.getAttributes().setAttribute(HTTP2_PUSH_ENABLED, Boolean.TRUE);
         }
-        
-        final List<Http2Frame> framesList =
-                frameCodec.parse(http2Session,
-                        http2State.getFrameParsingState(),
-                        framePayload);
+
+        final List<Http2Frame> framesList = frameCodec.parse(http2Session, http2State.getFrameParsingState(), framePayload);
 
         if (!processFrames(ctx, http2Session, framesList)) {
             return ctx.getSuspendAction();
         }
-        
+
         return ctx.getStopAction();
     }
 
     @Override
-    public NextAction handleEvent(final FilterChainContext ctx,
-            final FilterChainEvent event) throws IOException {
-        
+    public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
+
         final Object type = event.type();
 
         if (type == ShutdownEvent.TYPE) {
@@ -579,26 +373,25 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 });
             }
         }
-        
+
         if (type == HttpEvents.IncomingHttpUpgradeEvent.TYPE) {
-            final HttpHeader header
-                    = ((HttpEvents.IncomingHttpUpgradeEvent) event).getHttpHeader();
+            final HttpHeader header = ((HttpEvents.IncomingHttpUpgradeEvent) event).getHttpHeader();
             if (header.isRequest()) {
-                //@TODO temporary not optimal solution, because we check the req here and in the handleRead()
+                // @TODO temporary not optimal solution, because we check the req here and in the handleRead()
                 if (checkRequestHeadersOnUpgrade((HttpRequestPacket) header)) {
                     // for the HTTP/2 upgrade request we want to obey HTTP/1.1
                     // content modifiers (transfer and content encodings)
                     header.setIgnoreContentModifiers(false);
-                    
+
                     return ctx.getStopAction();
                 }
             }
-            
+
             return ctx.getInvokeAction();
         }
 
         final Http2State state = Http2State.get(ctx.getConnection());
-        
+
         if (state == null || state.isNeverHttp2()) {
             return ctx.getInvokeAction();
         }
@@ -607,22 +400,22 @@ public class Http2ServerFilter extends Http2BaseFilter {
             doPush(ctx, (PushEvent) event);
             return ctx.getSuspendAction();
         }
-        
+
         if (type == HttpEvents.ResponseCompleteEvent.TYPE) {
             final HttpContext httpContext = HttpContext.get(ctx);
             final Http2Stream stream = (Http2Stream) httpContext.getContextStorage();
             stream.onProcessingComplete();
-            
+
             final Http2Session http2Session = stream.getHttp2Session();
-            
+
             if (!http2Session.isHttp2InputEnabled()) {
                 // it's the first HTTP/1.1 -> HTTP/2.0 upgrade request.
                 // We have to notify regular HTTP codec filter as well
                 state.finishHttpUpgradePhase(); // mark HTTP upgrade as finished (in case it's still on)
-                
+
                 return ctx.getInvokeAction();
             }
-            
+
             // it's pure HTTP/2.0 request processing
             return ctx.getStopAction();
         }
@@ -636,22 +429,21 @@ public class Http2ServerFilter extends Http2BaseFilter {
         // from a client
         http2Session.sendPreface();
     }
-    
+
     private Http2State doDirectUpgrade(final FilterChainContext ctx) {
         final Connection connection = ctx.getConnection();
-        
-        final Http2Session http2Session =
-            new Http2Session(connection, true, this);
+
+        final Http2Session http2Session = new Http2Session(connection, true, this);
 
         // Create HTTP/2.0 connection for the given Grizzly Connection
         final Http2State http2State = Http2State.create(connection);
         http2State.setHttp2Session(http2Session);
         http2State.setDirectUpgradePhase();
         http2Session.setupFilterChains(ctx, true);
-        
+
         // server preface
         http2Session.sendPreface();
-        
+
         return http2State;
     }
 
@@ -660,42 +452,38 @@ public class Http2ServerFilter extends Http2BaseFilter {
         return activeConnections;
     }
 
-    private boolean tryHttpUpgrade(final FilterChainContext ctx,
-                                   final HttpRequestPacket httpRequest, final boolean isLast)
-            throws Http2StreamException {
-        
+    private boolean tryHttpUpgrade(final FilterChainContext ctx, final HttpRequestPacket httpRequest, final boolean isLast) throws Http2StreamException {
+
         if (!checkHttpMethodOnUpgrade(httpRequest)) {
             return false;
         }
-        
+
         if (!checkRequestHeadersOnUpgrade(httpRequest)) {
             return false;
         }
-        
+
         final boolean http2Upgrade = isHttp2UpgradingVersion(httpRequest);
-        
+
         if (!http2Upgrade) {
             // Not HTTP/2.0 HTTP packet
             return false;
         }
 
-        final SettingsFrame settingsFrame =
-                getHttp2UpgradeSettings(httpRequest);
-        
+        final SettingsFrame settingsFrame = getHttp2UpgradeSettings(httpRequest);
+
         if (settingsFrame == null) {
             // Not HTTP/2.0 HTTP packet
             return false;
         }
-        
+
         final Connection connection = ctx.getConnection();
-        
-        final Http2Session http2Session =
-                new Http2Session(connection, true, this);
+
+        final Http2Session http2Session = new Http2Session(connection, true, this);
         // Create HTTP/2.0 connection for the given Grizzly Connection
         final Http2State http2State = Http2State.create(connection);
         http2State.setHttp2Session(http2Session);
         http2Session.setupFilterChains(ctx, true);
-        
+
         if (isLast) {
             http2State.setDirectUpgradePhase(); // expecting preface
         }
@@ -706,21 +494,19 @@ public class Http2ServerFilter extends Http2BaseFilter {
             Http2State.remove(connection);
             return false;
         }
-        
+
         // Send 101 Switch Protocols back to the client
         final HttpResponsePacket httpResponse = httpRequest.getResponse();
         httpResponse.setStatus(HttpStatus.SWITCHING_PROTOCOLS_101);
         httpResponse.setHeader(Header.Connection, "Upgrade");
         httpResponse.setHeader(Header.Upgrade, HTTP2_CLEAR);
         httpResponse.setIgnoreContentModifiers(true);
-        
+
         ctx.write(httpResponse);
 
         // un-commit the response
         httpResponse.setCommitted(false);
-        
 
-        
         // server preface
         http2Session.sendPreface();
 
@@ -738,28 +524,24 @@ public class Http2ServerFilter extends Http2BaseFilter {
             return false;
         }
         // create a virtual stream for this request
-        final Http2Stream stream = http2Session.acceptUpgradeStream(
-                httpRequest, 0, !httpRequest.isExpectContent());
-        
+        final Http2Stream stream = http2Session.acceptUpgradeStream(httpRequest, 0, !httpRequest.isExpectContent());
+
         // replace the HttpContext
-        final HttpContext httpContext = HttpContext.newInstance(stream,
-                stream, stream, httpRequest);
+        final HttpContext httpContext = HttpContext.newInstance(stream, stream, stream, httpRequest);
         httpRequest.getProcessingState().setHttpContext(httpContext);
         // add read-only HTTP2Stream attribute
         httpRequest.setAttribute(Http2Stream.HTTP2_STREAM_ATTRIBUTE, stream);
         httpContext.attach(ctx);
-        
+
         return true;
     }
-    
-    private boolean checkHttpMethodOnUpgrade(
-            final HttpRequestPacket httpRequest) {
-        
+
+    private boolean checkHttpMethodOnUpgrade(final HttpRequestPacket httpRequest) {
+
         return httpRequest.getMethod() != Method.CONNECT;
     }
-    
-    private boolean checkPRI(final HttpRequestPacket httpRequest,
-                             final HttpContent httpContent) {
+
+    private boolean checkPRI(final HttpRequestPacket httpRequest, final HttpContent httpContent) {
         if (!Method.PRI.equals(httpRequest.getMethod())) {
             // If it's not PRI after upgrade is completed - it must be an error
             throw new HttpBrokenContentException();
@@ -778,24 +560,20 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 throw new HttpBrokenContentException();
             }
         }
-        
+
         return true;
     }
 
     @Override
-    protected void processCompleteHeader(
-            final Http2Session http2Session,
-            final FilterChainContext context,
-            final HeaderBlockHead firstHeaderFrame) throws IOException {
+    protected void processCompleteHeader(final Http2Session http2Session, final FilterChainContext context, final HeaderBlockHead firstHeaderFrame)
+            throws IOException {
 
         if (!ignoreFrameForStreamId(http2Session, firstHeaderFrame.getStreamId())) {
             processInRequest(http2Session, context, (HeadersFrame) firstHeaderFrame);
         }
     }
-    
-    private void processInRequest(final Http2Session http2Session,
-            final FilterChainContext context, final HeadersFrame headersFrame)
-            throws IOException {
+
+    private void processInRequest(final Http2Session http2Session, final FilterChainContext context, final HeadersFrame headersFrame) throws IOException {
 
         final Http2Request request = Http2Request.create();
         request.setConnection(context.getConnection());
@@ -811,14 +589,12 @@ public class Http2ServerFilter extends Http2BaseFilter {
             }
 
             if (!headersFrame.isEndStream()) {
-                throw new Http2StreamException(stream.getId(),
-                                               ErrorCode.PROTOCOL_ERROR,
-                                               "Received second HEADERS frame, but was not marked fin.");
+                throw new Http2StreamException(stream.getId(), ErrorCode.PROTOCOL_ERROR, "Received second HEADERS frame, but was not marked fin.");
             }
 
             try {
                 stream.onRcvHeaders(headersFrame.isEndStream());
-                final Map<String,String> capture = ((NetLogger.isActive()) ? new HashMap<>() : null);
+                final Map<String, String> capture = NetLogger.isActive() ? new HashMap<>() : null;
                 DecoderUtils.decodeTrailerHeaders(http2Session, stream.getRequest(), capture);
                 NetLogger.log(Context.RX, http2Session, headersFrame, capture);
             } catch (IOException ioe) {
@@ -832,9 +608,8 @@ public class Http2ServerFilter extends Http2BaseFilter {
             }
             if (headersFrame.isTruncated()) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.log(Level.WARNING,
-                               "[{0}, {1}] Trailer headers truncated.  Some headers may not be available.",
-                               new Object[] { http2Session.toString(), headersFrame.getStreamId()});
+                    LOGGER.log(Level.WARNING, "[{0}, {1}] Trailer headers truncated.  Some headers may not be available.",
+                            new Object[] { http2Session.toString(), headersFrame.getStreamId() });
                 }
             }
             stream.flushInputData();
@@ -842,18 +617,14 @@ public class Http2ServerFilter extends Http2BaseFilter {
             return;
         }
 
-        stream = http2Session.acceptStream(request,
-                                              headersFrame.getStreamId(),
-                                              headersFrame.getStreamDependency(),
-                                              headersFrame.isExclusive(),
-                                              0);
+        stream = http2Session.acceptStream(request, headersFrame.getStreamId(), headersFrame.getStreamDependency(), headersFrame.isExclusive(), 0);
         if (stream == null) { // GOAWAY has been sent, so ignoring this request
             request.recycle();
             return;
         }
 
         try {
-            final Map<String,String> capture = ((NetLogger.isActive()) ? new LinkedHashMap<>() : null);
+            final Map<String, String> capture = NetLogger.isActive() ? new LinkedHashMap<>() : null;
             DecoderUtils.decodeRequestHeaders(http2Session, request, capture);
             NetLogger.log(Context.RX, http2Session, headersFrame, capture);
         } catch (IOException ioe) {
@@ -878,10 +649,10 @@ public class Http2ServerFilter extends Http2BaseFilter {
         request.getHeaders().mark();
 
         prepareIncomingRequest(stream, request);
-        
+
         final boolean isEOS = headersFrame.isEndStream();
         stream.onRcvHeaders(isEOS);
-        
+
         // stream HEADERS frame will be transformed to HTTP request packet
         if (isEOS) {
             request.setExpectContent(false);
@@ -892,18 +663,14 @@ public class Http2ServerFilter extends Http2BaseFilter {
             stream.inputBuffer.terminate(IN_FIN_TERMINATION);
         }
 
-        sendUpstream(http2Session,
-                     stream,
-                     request.httpContentBuilder().content(Buffers.EMPTY_BUFFER).last(!isExpectContent).build());
+        sendUpstream(http2Session, stream, request.httpContentBuilder().content(Buffers.EMPTY_BUFFER).last(!isExpectContent).build());
     }
-
 
     /**
      * @inheritDoc
      */
     @Override
-    protected void onHttpHeadersParsed(final HttpHeader httpHeader,
-            final FilterChainContext ctx) {
+    protected void onHttpHeadersParsed(final HttpHeader httpHeader, final FilterChainContext ctx) {
 
         Http2Request request = (Http2Request) httpHeader;
 
@@ -956,9 +723,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
      */
     @Override
     @SuppressWarnings("unchecked")
-    protected void processOutgoingHttpHeader(final FilterChainContext ctx,
-            final Http2Session http2Session,
-            final HttpHeader httpHeader,
+    protected void processOutgoingHttpHeader(final FilterChainContext ctx, final Http2Session http2Session, final HttpHeader httpHeader,
             final HttpPacket entireHttpPacket) throws IOException {
 
         final HttpResponsePacket response = (HttpResponsePacket) httpHeader;
@@ -971,10 +736,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
 
         final FilterChainContext.TransportContext transportContext = ctx.getTransportContext();
 
-        stream.getOutputSink().writeDownStream(entireHttpPacket,
-                                   ctx,
-                                   transportContext.getCompletionHandler(),
-                                   transportContext.getMessageCloner());
+        stream.getOutputSink().writeDownStream(entireHttpPacket, ctx, transportContext.getCompletionHandler(), transportContext.getMessageCloner());
     }
 
     private void doPush(final FilterChainContext ctx, final PushEvent pushEvent) {
@@ -1018,20 +780,15 @@ public class Http2ServerFilter extends Http2BaseFilter {
 
             http2Session.getNewClientStreamLock().lock();
             try {
-                pushStream = http2Session.openStream(
-                        request,
-                        http2Session.getNextLocalStreamId(), parentStream.getId(),
-                        false, 0);
+                pushStream = http2Session.openStream(request, http2Session.getNextLocalStreamId(), parentStream.getId(), false, 0);
                 pushStream.inputBuffer.terminate(IN_FIN_TERMINATION);
 
                 http2Session.getDeflaterLock().lock();
                 try {
                     boolean logging = NetLogger.isActive();
-                    final Map<String,String> capture = ((logging) ? new LinkedHashMap<>() : null);
-                    List<Http2Frame> pushPromiseFrames =
-                            http2Session.encodeHttpRequestAsPushPromiseFrames(
-                                    ctx, pushStream.getRequest(), parentStream.getId(),
-                                    pushStream.getId(), null, capture);
+                    final Map<String, String> capture = logging ? new LinkedHashMap<>() : null;
+                    List<Http2Frame> pushPromiseFrames = http2Session.encodeHttpRequestAsPushPromiseFrames(ctx, pushStream.getRequest(), parentStream.getId(),
+                            pushStream.getId(), null, capture);
                     if (logging) {
                         for (Http2Frame http2Frame : pushPromiseFrames) {
                             if (http2Frame.getType() == PushPromiseFrame.TYPE) {
@@ -1050,31 +807,23 @@ public class Http2ServerFilter extends Http2BaseFilter {
                 http2Session.getNewClientStreamLock().unlock();
             }
 
-            request.getProcessingState().setHttpContext(
-                    HttpContext.newInstance(pushStream, pushStream, pushStream, request));
+            request.getProcessingState().setHttpContext(HttpContext.newInstance(pushStream, pushStream, pushStream, request));
             // now send the request upstream...
 
             submit(ctx.getConnection(), new Runnable() {
                 @Override
                 public void run() {
-                    http2Session.sendMessageUpstream(pushStream,
-                                            HttpContent
-                                                .builder(request)
-                                                .content(Buffers.EMPTY_BUFFER)
-                                                    .build());
+                    http2Session.sendMessageUpstream(pushStream, HttpContent.builder(request).content(Buffers.EMPTY_BUFFER).build());
                 }
             });
 
-
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE,
-                    "Unable to push resource identified by path [{0}]", pushEvent.getPath());
+            LOGGER.log(Level.SEVERE, "Unable to push resource identified by path [{0}]", pushEvent.getPath());
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
         } finally {
             pushEvent.recycle();
             ctx.resume(ctx.getStopAction());
         }
-
 
     }
 
@@ -1106,8 +855,7 @@ public class Http2ServerFilter extends Http2BaseFilter {
         }
 
         if (!response.containsHeader(Header.Date)) {
-            response.getHeaders().addValue(Header.Date)
-                    .setBytes(FastHttpDateFormat.getCurrentDateBytes());
+            response.getHeaders().addValue(Header.Date).setBytes(FastHttpDateFormat.getCurrentDateBytes());
         }
     }
 

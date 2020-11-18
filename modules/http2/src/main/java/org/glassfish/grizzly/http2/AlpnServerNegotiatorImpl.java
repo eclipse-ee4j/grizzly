@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,11 +19,12 @@ package org.glassfish.grizzly.http2;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.SSLEngine;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.npn.AlpnServerNegotiator;
-
 
 final class AlpnServerNegotiatorImpl extends AlpnNegotiatorBase implements AlpnServerNegotiator {
     private final static Logger LOGGER = Grizzly.logger(AlpnServerNegotiatorImpl.class);
@@ -40,7 +41,8 @@ final class AlpnServerNegotiatorImpl extends AlpnNegotiatorBase implements AlpnS
     public String selectProtocol(SSLEngine sslEngine, String[] clientProtocols) {
         final Connection connection = AlpnSupport.getConnection(sslEngine);
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "Alpn selectProtocol. Connection={0} sslEngine={1} clientProtocols={2}", new Object[]{connection, sslEngine, Arrays.toString(clientProtocols)});
+            LOGGER.log(Level.FINE, "Alpn selectProtocol. Connection={0} sslEngine={1} clientProtocols={2}",
+                    new Object[] { connection, sslEngine, Arrays.toString(clientProtocols) });
         }
         for (String supportedProtocol : SUPPORTED_PROTOCOLS) {
             for (String clientProtocol : clientProtocols) {
@@ -53,20 +55,19 @@ final class AlpnServerNegotiatorImpl extends AlpnNegotiatorBase implements AlpnS
                 }
             }
         }
-        
+
         // Never try HTTP2 for this connection
         Http2State.create(connection).setNeverHttp2();
-        
+
         return null;
     }
 
     private void configureHttp2(final Connection connection, final String supportedProtocol) {
         if (HTTP2.equals(supportedProtocol)) {
-        // If HTTP2 is supported - initialize HTTP2 connection
+            // If HTTP2 is supported - initialize HTTP2 connection
             // Create HTTP2 connection and bind it to the Grizzly connection
-            final Http2Session http2Session =
-                    filter.createHttp2Session(connection, true);
-            
+            final Http2Session http2Session = filter.createHttp2Session(connection, true);
+
             // we expect client preface
             http2Session.getHttp2State().setDirectUpgradePhase();
             // !!! DON'T SEND PREFACE HERE
@@ -77,5 +78,5 @@ final class AlpnServerNegotiatorImpl extends AlpnNegotiatorBase implements AlpnS
 //            http2Session.sendPreface();
         }
     }
-    
+
 } // END ProtocolNegotiator

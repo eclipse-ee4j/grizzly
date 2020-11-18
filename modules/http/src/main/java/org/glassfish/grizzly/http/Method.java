@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,45 +17,37 @@
 package org.glassfish.grizzly.http;
 
 import java.io.UnsupportedEncodingException;
+
 import org.glassfish.grizzly.http.util.DataChunk;
 
 /**
  * Predefined HTTP methods
- * 
+ *
  * @author Alexey Stashok
  */
 public final class Method {
-    public enum PayloadExpectation {ALLOWED, NOT_ALLOWED, UNDEFINED}
+    public enum PayloadExpectation {
+        ALLOWED, NOT_ALLOWED, UNDEFINED
+    }
 
-    public static final Method OPTIONS =
-            new Method("OPTIONS", PayloadExpectation.ALLOWED);
-    public static final Method GET =
-            new Method("GET", PayloadExpectation.UNDEFINED);
-    public static final Method HEAD =
-            new Method("HEAD", PayloadExpectation.UNDEFINED);
-    public static final Method POST
-            = new Method("POST", PayloadExpectation.ALLOWED);
-    public static final Method PUT
-            = new Method("PUT", PayloadExpectation.ALLOWED);
-    public static final Method DELETE
-            = new Method("DELETE", PayloadExpectation.UNDEFINED);
-    public static final Method TRACE
-            = new Method("TRACE", PayloadExpectation.NOT_ALLOWED);
-    public static final Method CONNECT
-            = new Method("CONNECT", PayloadExpectation.NOT_ALLOWED);
-    public static final Method PATCH
-            = new Method("PATCH", PayloadExpectation.ALLOWED);
-    public static final Method PRI
-            = new Method("PRI", PayloadExpectation.NOT_ALLOWED);
+    public static final Method OPTIONS = new Method("OPTIONS", PayloadExpectation.ALLOWED);
+    public static final Method GET = new Method("GET", PayloadExpectation.UNDEFINED);
+    public static final Method HEAD = new Method("HEAD", PayloadExpectation.UNDEFINED);
+    public static final Method POST = new Method("POST", PayloadExpectation.ALLOWED);
+    public static final Method PUT = new Method("PUT", PayloadExpectation.ALLOWED);
+    public static final Method DELETE = new Method("DELETE", PayloadExpectation.UNDEFINED);
+    public static final Method TRACE = new Method("TRACE", PayloadExpectation.NOT_ALLOWED);
+    public static final Method CONNECT = new Method("CONNECT", PayloadExpectation.NOT_ALLOWED);
+    public static final Method PATCH = new Method("PATCH", PayloadExpectation.ALLOWED);
+    public static final Method PRI = new Method("PRI", PayloadExpectation.NOT_ALLOWED);
 
     public static Method CUSTOM(final String methodName) {
         return CUSTOM(methodName, PayloadExpectation.ALLOWED);
     }
 
-    public static Method CUSTOM(final String methodName,
-            final PayloadExpectation payloadExpectation) {
+    public static Method CUSTOM(final String methodName, final PayloadExpectation payloadExpectation) {
         return new Method(methodName, payloadExpectation);
-    }    
+    }
 
     public static Method valueOf(final DataChunk methodC) {
         if (methodC.equals(Method.GET.getMethodString())) {
@@ -113,9 +105,8 @@ public final class Method {
     private final byte[] methodBytes;
 
     private final PayloadExpectation payloadExpectation;
-    
-    private Method(final String methodString,
-            final PayloadExpectation payloadExpectation) {
+
+    private Method(final String methodString, final PayloadExpectation payloadExpectation) {
         this.methodString = methodString;
         try {
             this.methodBytes = methodString.getBytes("US-ASCII");
@@ -123,7 +114,7 @@ public final class Method {
             // Should never get here
             throw new IllegalStateException(e);
         }
-        
+
         this.payloadExpectation = payloadExpectation;
     }
 
@@ -145,6 +136,6 @@ public final class Method {
     }
 
     public boolean matchesMethod(final String method) {
-        return (this.methodString.equals(method));
+        return this.methodString.equals(method);
     }
 }

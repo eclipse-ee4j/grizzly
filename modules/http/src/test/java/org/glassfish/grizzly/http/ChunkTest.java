@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,14 +16,13 @@
 
 package org.glassfish.grizzly.http;
 
+import static org.junit.Assert.assertEquals;
+
 import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-
 
 public class ChunkTest {
 
@@ -35,9 +34,7 @@ public class ChunkTest {
     private final static String TRIM3 = "red fish,  \nblue fish";
     private final static String TRIM4 = "blue fish";
 
-
     // ---------------------------------------------------------------------------------------------------- Test Methods
-
 
     @Test
     public void testTrimLeft() throws Exception {
@@ -52,9 +49,7 @@ public class ChunkTest {
         trimAndAssertCorrect(dc);
     }
 
-
     // ------------------------------------------------------------------------------------------------- Private Methods
-
 
     private static void trimAndAssertCorrect(final DataChunk dc) {
         assertEquals(CONTENT, dc.toString(Charsets.UTF8_CHARSET));

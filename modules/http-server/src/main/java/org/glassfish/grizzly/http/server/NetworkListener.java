@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.SSLEngine;
 
 import org.glassfish.grizzly.Connection;
@@ -64,34 +65,33 @@ public class NetworkListener {
     private static final Logger LOGGER = Grizzly.logger(NetworkListener.class);
 
     /**
-     * The default network host to which the {@link HttpServer} will bind to in order to service <code>HTTP</code>
-     * requests.
+     * The default network host to which the {@link HttpServer} will bind to in order to service <code>HTTP</code> requests.
      */
     public static final String DEFAULT_NETWORK_HOST = "0.0.0.0";
 
     /**
-     * The default network port to which the {@link HttpServer} will bind to in order to service <code>HTTP</code>
-     * requests.
+     * The default network port to which the {@link HttpServer} will bind to in order to service <code>HTTP</code> requests.
      */
     public static final int DEFAULT_NETWORK_PORT = 8080;
 
     /**
-     * The network host to which the <code>HttpServer<code> will bind to in order to service <code>HTTP</code> requests.
-     * If not explicitly set, the value of {@link #DEFAULT_NETWORK_HOST} will be used.
+     * The network host to which the <code>HttpServer<code> will bind to in order to service <code>HTTP</code> requests. If
+     * not explicitly set, the value of {@link #DEFAULT_NETWORK_HOST} will be used.
      */
     private String host = DEFAULT_NETWORK_HOST;
 
     /**
-     * The network port to which the <code>HttpServer<code> will bind to in order to service <code>HTTP</code> requests.
-     * If not explicitly set, the value of {@link #DEFAULT_NETWORK_PORT} will be used.
+     * The network port to which the <code>HttpServer<code> will bind to in order to service <code>HTTP</code> requests. If
+     * not explicitly set, the value of {@link #DEFAULT_NETWORK_PORT} will be used.
      */
     private int port = DEFAULT_NETWORK_PORT;
     /**
      * The flag indicates if the <code>HttpServer<code> will be bounnd to an inherited Channel.
-     * If not explicitly set, the <code>HttpServer</code> will be bound to  {@link #DEFAULT_NETWORK_HOST}:{@link #DEFAULT_NETWORK_PORT}.
+     * If not explicitly set, the <code>HttpServer</code> will be bound to
+     * {@link #DEFAULT_NETWORK_HOST}:{@link #DEFAULT_NETWORK_PORT}.
      */
     private final boolean isBindToInherited;
-    
+
     /**
      * The time, in seconds, for which a request must complete processing.
      */
@@ -99,15 +99,13 @@ public class NetworkListener {
 
     /**
      * The network port range to which the <code>HttpServer<code> will bind to
-     * in order to service <code>HTTP</code> requests.
-     * If not explicitly set, the value of {@link #port} will be used.
+     * in order to service <code>HTTP</code> requests. If not explicitly set, the value of {@link #port} will be used.
      */
     private PortRange portRange;
 
     /**
-     * If a {@link #portRange} is specified, a value of <code>true</code> will
-     * make a random port in the range be the first one the server will attempt
-     * to bind to.
+     * If a {@link #portRange} is specified, a value of <code>true</code> will make a random port in the range be the first
+     * one the server will attempt to bind to.
      */
     private boolean randomStartPort;
 
@@ -130,34 +128,28 @@ public class NetworkListener {
     /**
      * TCP Server {@link Connection} responsible for accepting client connections
      */
-    private TCPNIOServerConnection serverConnection;    
-    
+    private TCPNIOServerConnection serverConnection;
+
     /**
      * The default error page generator
      */
     private ErrorPageGenerator defaultErrorPageGenerator;
-    
+
     /**
      * The HTTP server {@link SessionManager}.
      */
     private SessionManager sessionManager;
-    
+
     {
         final TCPNIOTransportBuilder builder = TCPNIOTransportBuilder.newInstance();
         final int coresCount = Runtime.getRuntime().availableProcessors() * 2;
-        
-        transport = builder
-                .setIOStrategy(SameThreadIOStrategy.getInstance())
-                .setWorkerThreadPoolConfig(ThreadPoolConfig.defaultConfig()
-                .setPoolName("Grizzly-worker")
-                .setCorePoolSize(coresCount)
-                .setMaxPoolSize(coresCount)
-                .setMemoryManager(builder.getMemoryManager()))
-                .build();
+
+        transport = builder.setIOStrategy(SameThreadIOStrategy.getInstance()).setWorkerThreadPoolConfig(ThreadPoolConfig.defaultConfig()
+                .setPoolName("Grizzly-worker").setCorePoolSize(coresCount).setMaxPoolSize(coresCount).setMemoryManager(builder.getMemoryManager())).build();
     }
-    
+
     /**
-     * Flag indicating whether or not this listener is secure.  Defaults to <code>false</code>
+     * Flag indicating whether or not this listener is secure. Defaults to <code>false</code>
      */
     private boolean secure;
 
@@ -167,7 +159,7 @@ public class NetworkListener {
     private final ArraySet<AddOn> addons = new ArraySet<>(AddOn.class);
 
     /**
-     * Flag indicating whether or not the chunked transfer encoding is enabled.  Defaults to <code>true</code>.
+     * Flag indicating whether or not the chunked transfer encoding is enabled. Defaults to <code>true</code>.
      */
     private boolean chunkingEnabled = true;
     /**
@@ -210,7 +202,7 @@ public class NetworkListener {
      * {@link CompressionConfig}
      */
     private final CompressionConfig compressionConfig = new CompressionConfig();
-    
+
     private boolean authPassThroughEnabled;
     private int maxFormPostSize = 2 * 1024 * 1024;
     private int maxBufferedPostSize = 2 * 1024 * 1024;
@@ -220,10 +212,10 @@ public class NetworkListener {
     private boolean traceEnabled;
     private String uriEncoding;
     private Boolean sendFileEnabled;
-    
+
     /**
-     * The auxiliary configuration, which might be used, when Grizzly HttpServer
-     * is running behind some HTTP gateway like reverse proxy or load balancer.
+     * The auxiliary configuration, which might be used, when Grizzly HttpServer is running behind some HTTP gateway like
+     * reverse proxy or load balancer.
      */
     private BackendConfiguration backendConfiguration;
 
@@ -233,8 +225,10 @@ public class NetworkListener {
     // ------------------------------------------------------------ Constructors
 
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>.  The listener's host and
-     * port will default to {@link #DEFAULT_NETWORK_HOST} and {@link #DEFAULT_NETWORK_PORT}. </p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code>. The listener's host and port
+     * will default to {@link #DEFAULT_NETWORK_HOST} and {@link #DEFAULT_NETWORK_PORT}.
+     * </p>
      *
      * @param name the logical name of the listener.
      */
@@ -243,14 +237,15 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, which,
-     * depending on <code>isBindToInherited</code> will or will not be bound to an inherited Channel.</p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, which, depending on
+     * <code>isBindToInherited</code> will or will not be bound to an inherited Channel.
+     * </p>
      *
      * @param name the logical name of the listener.
-     * @param isBindToInherited if <tt>true</tt> the <code>NetworkListener</code> will be
-     * bound to an inherited Channel, otherwise default {@link #DEFAULT_NETWORK_HOST} and {@link #DEFAULT_NETWORK_PORT}
-     * will be used.
-     * 
+     * @param isBindToInherited if <tt>true</tt> the <code>NetworkListener</code> will be bound to an inherited Channel,
+     * otherwise default {@link #DEFAULT_NETWORK_HOST} and {@link #DEFAULT_NETWORK_PORT} will be used.
+     *
      * @see System#inheritedChannel()
      */
     public NetworkListener(final String name, final boolean isBindToInherited) {
@@ -258,10 +253,12 @@ public class NetworkListener {
         this.name = name;
         this.isBindToInherited = isBindToInherited;
     }
-    
+
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code> and <code>host</code>.
-     * The listener's port will default to {@link #DEFAULT_NETWORK_PORT}. </p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code> and <code>host</code>. The
+     * listener's port will default to {@link #DEFAULT_NETWORK_PORT}.
+     * </p>
      *
      * @param name the logical name of the listener.
      * @param host the network host to which this listener will bind.
@@ -271,8 +268,10 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
-     * <code>port</code>. </p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
+     * <code>port</code>.
+     * </p>
      *
      * @param name the logical name of the listener.
      * @param host the network host to which this listener will bind.
@@ -291,32 +290,31 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
-     * <code>port</code>. </p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
+     * <code>port</code>.
+     * </p>
      *
      * @param name the logical name of the listener.
      * @param host the network host to which this listener will bind.
      * @param portRange the network port range to which this listener will bind..
      */
-    public NetworkListener(final String name,
-        final String host,
-        final PortRange portRange) {
+    public NetworkListener(final String name, final String host, final PortRange portRange) {
         this(name, host, portRange, true);
     }
 
     /**
-     * <p> Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
-     * <code>port</code>. </p>
+     * <p>
+     * Constructs a new <code>NetworkListener</code> using the specified <code>name</code>, <code>host</code>, and
+     * <code>port</code>.
+     * </p>
      *
      * @param name the logical name of the listener.
      * @param host the network host to which this listener will bind.
      * @param portRange the network port range to which this listener will bind.
      * @param randomStartPort whether to pick a random port in the range initially.
      */
-    public NetworkListener(final String name,
-        final String host,
-        final PortRange portRange,
-        final boolean randomStartPort) {
+    public NetworkListener(final String name, final String host, final PortRange portRange, final boolean randomStartPort) {
         validateArg("name", name);
         validateArg("host", host);
 
@@ -347,14 +345,10 @@ public class NetworkListener {
     }
 
     /**
-     * @return the network port to which this listener is configured to bind to.
-     * If the {@link HttpServer} has not been started yet - the returned value
-     * may be:
-     * <tt>-1</tt>, if {@link PortRange} will be used to bind the listener;
-     * <tt>0</tt>, if the port will be assigned by OS;
-     * <tt>0 < N < 65536</tt>, the port this listener will be bound to.
-     * If {@link HttpServer} has been started - the value returned is the port the
-     * this listener is bound to.
+     * @return the network port to which this listener is configured to bind to. If the {@link HttpServer} has not been
+     * started yet - the returned value may be: <tt>-1</tt>, if {@link PortRange} will be used to bind the listener;
+     * <tt>0</tt>, if the port will be assigned by OS; <tt>0 < N < 65536</tt>, the port this listener will be bound to. If
+     * {@link HttpServer} has been started - the value returned is the port the this listener is bound to.
      */
     public int getPort() {
         return port;
@@ -386,10 +380,13 @@ public class NetworkListener {
     }
 
     /**
-     * <p> This allows the developer to specify a custom {@link TCPNIOTransport} implementation to be used by this
-     * listener. </p>
+     * <p>
+     * This allows the developer to specify a custom {@link TCPNIOTransport} implementation to be used by this listener.
+     * </p>
      * <p/>
-     * <p> Attempts to change the transport implementation while the listener is running will be ignored. </p>
+     * <p>
+     * Attempts to change the transport implementation while the listener is running will be ignored.
+     * </p>
      *
      * @param transport a custom {@link TCPNIOTransport} implementation.
      */
@@ -405,17 +402,15 @@ public class NetworkListener {
     }
 
     /**
-     * @return Grizzly server {@link Connection}, that is responsible for
-     *      accepting incoming client connections
+     * @return Grizzly server {@link Connection}, that is responsible for accepting incoming client connections
      * @since 2.3.24
      */
     public Connection<?> getServerConnection() {
         return serverConnection;
     }
-    
+
     /**
-     * Return the array of the registered {@link AddOn}s.
-     * Please note, possible array modifications wont affect the
+     * Return the array of the registered {@link AddOn}s. Please note, possible array modifications wont affect the
      * {@link NetworkListener}'s addons list.
      *
      * @return the array of the registered {@link AddOn}s.
@@ -426,6 +421,7 @@ public class NetworkListener {
 
     /**
      * Returns the direct addons collection, registered on the NetworkListener.
+     * 
      * @return the direct addons collection, registered on the NetworkListener.
      */
     protected ArraySet<AddOn> getAddOnSet() {
@@ -434,11 +430,11 @@ public class NetworkListener {
 
     /**
      * Registers {@link AddOn} on this NetworkListener.
+     * 
      * @param addon the {@link AddOn} to be registered.
      *
-     * @return <tt>true</tt>, if the {@link AddOn} wasn't registered before,
-     *  otherwise the existing {@link AddOn} will be replaced and this method
-     *  returns <tt>false</tt>.
+     * @return <tt>true</tt>, if the {@link AddOn} wasn't registered before, otherwise the existing {@link AddOn} will be
+     * replaced and this method returns <tt>false</tt>.
      */
     public boolean registerAddOn(final AddOn addon) {
         return addons.add(addon);
@@ -446,11 +442,11 @@ public class NetworkListener {
 
     /**
      * Deregisters {@link AddOn} from this NetworkListener.
+     * 
      * @param addon the {@link AddOn} to deregister.
      *
-     * @return <tt>true</tt>, if the {@link AddOn} was successfully removed, or
-     *          <tt>false</tt> the the {@link AddOn} wasn't registered on the
-     *          NetworkListener.
+     * @return <tt>true</tt>, if the {@link AddOn} was successfully removed, or <tt>false</tt> the the {@link AddOn} wasn't
+     * registered on the NetworkListener.
      */
     public boolean deregisterAddOn(final AddOn addon) {
         return addons.remove(addon);
@@ -458,7 +454,7 @@ public class NetworkListener {
 
     /**
      * @return <code>true</code> if the HTTP response bodies should be chunked if not content length has been explicitly
-     *         specified.
+     * specified.
      */
     public boolean isChunkingEnabled() {
         return chunkingEnabled;
@@ -466,7 +462,7 @@ public class NetworkListener {
     }
 
     /**
-     * Enable/disable chunking of an HTTP response body if no content length has been explictly specified.  Chunking is
+     * Enable/disable chunking of an HTTP response body if no content length has been explictly specified. Chunking is
      * enabled by default.
      *
      * @param chunkingEnabled <code>true</code> to enable chunking; <code>false</code> to disable.
@@ -476,8 +472,8 @@ public class NetworkListener {
     }
 
     /**
-     * @return <code>true</code> if this is a secure listener, otherwise <code>false</code>.  Listeners are not secure
-     *         by default.
+     * @return <code>true</code> if this is a secure listener, otherwise <code>false</code>. Listeners are not secure by
+     * default.
      */
     public boolean isSecure() {
         return secure;
@@ -485,9 +481,13 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Enable or disable security for this listener. </p>
+     * <p>
+     * Enable or disable security for this listener.
+     * </p>
      * <p/>
-     * <p> Attempts to change this value while the listener is running will be ignored. </p>
+     * <p>
+     * Attempts to change this value while the listener is running will be ignored.
+     * </p>
      *
      * @param secure if <code>true</code> this listener will be secure.
      */
@@ -500,11 +500,10 @@ public class NetworkListener {
     }
 
     /**
-     * Get the HTTP request scheme, which if non-null overrides default one
-     * picked up by framework during runtime.
+     * Get the HTTP request scheme, which if non-null overrides default one picked up by framework during runtime.
      *
      * @return the HTTP request scheme
-     * 
+     *
      * @since 2.2.4
      */
     public String getScheme() {
@@ -513,11 +512,10 @@ public class NetworkListener {
     }
 
     /**
-     * Set the HTTP request scheme, which if non-null overrides default one
-     * picked up by framework during runtime.
+     * Set the HTTP request scheme, which if non-null overrides default one picked up by framework during runtime.
      *
      * @param scheme the HTTP request scheme
-     * 
+     *
      * @since 2.2.4
      */
     public void setScheme(String scheme) {
@@ -525,24 +523,24 @@ public class NetworkListener {
         if (config == null) {
             config = new BackendConfiguration();
         }
-        
+
         config.setScheme(scheme);
         this.backendConfiguration = config;
     }
-    
+
     /**
-     * @return the auxiliary configuration, which might be used, when Grizzly
-     * HttpServer is running behind HTTP gateway like reverse proxy or load balancer.
+     * @return the auxiliary configuration, which might be used, when Grizzly HttpServer is running behind HTTP gateway like
+     * reverse proxy or load balancer.
      *
      * @since 2.3.18
-     */    
+     */
     public BackendConfiguration getBackendConfiguration() {
         return backendConfiguration;
     }
 
     /**
-     * Sets the auxiliary configuration, which might be used, when Grizzly HttpServer
-     * is running behind HTTP gateway like reverse proxy or load balancer.
+     * Sets the auxiliary configuration, which might be used, when Grizzly HttpServer is running behind HTTP gateway like
+     * reverse proxy or load balancer.
      *
      * @param backendConfiguration {@link BackendConfiguration}
      * @since 2.3.18
@@ -563,8 +561,7 @@ public class NetworkListener {
     /**
      * Sets the maximum number of headers allowed for a request.
      *
-     * If the specified value is less than zero, then there may be an
-     * unlimited number of headers (memory permitting).
+     * If the specified value is less than zero, then there may be an unlimited number of headers (memory permitting).
      *
      * @since 2.2.11
      */
@@ -584,8 +581,7 @@ public class NetworkListener {
     /**
      * Sets the maximum number of headers allowed for a response.
      *
-     * If the specified value is less than zero, then there may be an
-     * unlimited number of headers (memory permitting).
+     * If the specified value is less than zero, then there may be an unlimited number of headers (memory permitting).
      *
      * @since 2.2.11
      */
@@ -601,9 +597,13 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Provides customization of the {@link SSLEngine} used by this listener. </p>
+     * <p>
+     * Provides customization of the {@link SSLEngine} used by this listener.
+     * </p>
      * <p/>
-     * <p> Attempts to change this value while the listener is running will be ignored. </p>
+     * <p>
+     * Attempts to change this value while the listener is running will be ignored.
+     * </p>
      *
      * @param sslEngineConfig custom SSL configuration.
      */
@@ -624,9 +624,13 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Configures the maximum header size for an HTTP request. </p>
+     * <p>
+     * Configures the maximum header size for an HTTP request.
+     * </p>
      * <p/>
-     * <p> Attempts to change this value while the listener is running will be ignored. </p>
+     * <p>
+     * Attempts to change this value while the listener is running will be ignored.
+     * </p>
      *
      * @param maxHttpHeaderSize the maximum header size for an HTTP request.
      */
@@ -647,10 +651,13 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Specifies the {@link FilterChain} to be used by the {@link TCPNIOTransport} associated with this listener.
+     * <p>
+     * Specifies the {@link FilterChain} to be used by the {@link TCPNIOTransport} associated with this listener.
      * </p>
      * <p/>
-     * <p> Attempts to change this value while the listener is running will be ignored. </p>
+     * <p>
+     * Attempts to change this value while the listener is running will be ignored.
+     * </p>
      *
      * @param filterChain the {@link FilterChain}.
      */
@@ -672,9 +679,8 @@ public class NetworkListener {
     }
 
     /**
-     * @return the maximum size, in bytes, of all data waiting to be written to the associated {@link Connection}.
-     *  If not explicitly set, the value will be -1 which effectively disables
-     *  resource enforcement.
+     * @return the maximum size, in bytes, of all data waiting to be written to the associated {@link Connection}. If not
+     * explicitly set, the value will be -1 which effectively disables resource enforcement.
      */
     public int getMaxPendingBytes() {
         return maxPendingBytes;
@@ -682,16 +688,16 @@ public class NetworkListener {
     }
 
     /**
-     * The maximum size, in bytes, of all data waiting to be written to the associated {@link Connection}.
-     * If the value is zero or less, then no resource enforcement will take place.
+     * The maximum size, in bytes, of all data waiting to be written to the associated {@link Connection}. If the value is
+     * zero or less, then no resource enforcement will take place.
      *
-     * @param maxPendingBytes the maximum size, in bytes, of all data waiting to be written to the associated {@link
-     * Connection}.
+     * @param maxPendingBytes the maximum size, in bytes, of all data waiting to be written to the associated
+     * {@link Connection}.
      */
     public void setMaxPendingBytes(int maxPendingBytes) {
         this.maxPendingBytes = maxPendingBytes;
         transport.getAsyncQueueIO().getWriter().setMaxPendingBytesPerConnection(maxPendingBytes);
-        }
+    }
 
     // ---------------------------------------------------------- Public Methods
 
@@ -711,7 +717,9 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Starts the listener. </p>
+     * <p>
+     * Starts the listener.
+     * </p>
      *
      * @throws IOException if an error occurs when attempting to start the listener.
      */
@@ -719,7 +727,7 @@ public class NetworkListener {
         if (isStarted()) {
             return;
         }
-        
+
         shutdownFuture = null;
         if (filterChain == null) {
             throw new IllegalStateException("No FilterChain available."); // i18n
@@ -729,11 +737,10 @@ public class NetworkListener {
         if (isBindToInherited) {
             serverConnection = transport.bindToInherited();
         } else {
-            serverConnection = (port != -1) ?
-                transport.bind(host, port) :
-                transport.bind(host, portRange, randomStartPort, transport.getServerConnectionBackLog());
+            serverConnection = port != -1 ? transport.bind(host, port)
+                    : transport.bind(host, portRange, randomStartPort, transport.getServerConnectionBackLog());
         }
-        
+
         port = ((InetSocketAddress) serverConnection.getLocalAddress()).getPort();
 
         transport.addShutdownListener(new GracefulShutdownListener() {
@@ -741,58 +748,51 @@ public class NetworkListener {
             public void shutdownRequested(final ShutdownContext shutdownContext) {
                 final FutureImpl<NetworkListener> shutdownFutureLocal = shutdownFuture;
 
+                filterChain.fireEventDownstream(serverConnection, shutdownEvent, new EmptyCompletionHandler<FilterChainContext>() {
 
-                filterChain.fireEventDownstream(serverConnection,
-                                                shutdownEvent,
-                                                new EmptyCompletionHandler<FilterChainContext>() {
+                    @Override
+                    public void completed(final FilterChainContext result) {
+                        final Set<Callable<Filter>> tasks = shutdownEvent.getShutdownTasks();
+                        if (!tasks.isEmpty()) {
+                            final ExecutorService shutdownService = Executors.newFixedThreadPool(Math.min(5, tasks.size()) + 1);
 
-                                                    @Override
-                                                    public void completed(final FilterChainContext result) {
-                                                        final Set<Callable<Filter>> tasks = shutdownEvent.getShutdownTasks();
-                                                        if (!tasks.isEmpty()) {
-                                                            final ExecutorService shutdownService = Executors.newFixedThreadPool(Math.min(5, tasks.size()) + 1);
+                            shutdownService.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
 
-                                                            shutdownService.submit(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    try {
+                                        final List<Future<Filter>> futures;
+                                        if (shutdownEvent.getGracePeriod() == -1) {
+                                            futures = shutdownService.invokeAll(tasks);
+                                        } else {
+                                            futures = shutdownService.invokeAll(tasks, shutdownEvent.getGracePeriod(), shutdownEvent.getTimeUnit());
+                                        }
 
-                                                                        final List<Future<Filter>> futures;
-                                                                        if (shutdownEvent.getGracePeriod() == -1) {
-                                                                            futures = shutdownService.invokeAll(tasks);
-                                                                        } else {
-                                                                            futures = shutdownService.invokeAll(tasks,
-                                                                                      shutdownEvent.getGracePeriod(),
-                                                                                      shutdownEvent.getTimeUnit());
-                                                                        }
-
-                                                                        for (Future<Filter> future : futures) {
-                                                                            try {
-                                                                                future.get();
-                                                                            } catch (ExecutionException e) {
-                                                                                if (LOGGER.isLoggable(Level.SEVERE)) {
-                                                                                    LOGGER.log(Level.SEVERE,
-                                                                                               "Error processing shutdown task filter.",
-                                                                                               e);
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                        shutdownFutureLocal.result(NetworkListener.this);
-                                                                        shutdownContext.ready();
-                                                                        shutdownService.shutdownNow();
-                                                                    } catch (InterruptedException e) {
-                                                                        if (LOGGER.isLoggable(Level.WARNING)) {
-                                                                            LOGGER.warning("NetworkListener shutdown interrupted.");
-                                                                        }
-                                                                        if (LOGGER.isLoggable(Level.FINE)) {
-                                                                            LOGGER.log(Level.FINE, e.toString(), e);
-                                                                        }
-                                                                    }
-                                                                }
-                                                            });
-                                                        }
-                                                    }
-                                                });
+                                        for (Future<Filter> future : futures) {
+                                            try {
+                                                future.get();
+                                            } catch (ExecutionException e) {
+                                                if (LOGGER.isLoggable(Level.SEVERE)) {
+                                                    LOGGER.log(Level.SEVERE, "Error processing shutdown task filter.", e);
+                                                }
+                                            }
+                                        }
+                                        shutdownFutureLocal.result(NetworkListener.this);
+                                        shutdownContext.ready();
+                                        shutdownService.shutdownNow();
+                                    } catch (InterruptedException e) {
+                                        if (LOGGER.isLoggable(Level.WARNING)) {
+                                            LOGGER.warning("NetworkListener shutdown interrupted.");
+                                        }
+                                        if (LOGGER.isLoggable(Level.FINE)) {
+                                            LOGGER.log(Level.FINE, e.toString(), e);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
             }
 
             @Override
@@ -809,19 +809,14 @@ public class NetworkListener {
         state = State.RUNNING;
 
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO,
-                "Started listener bound to [{0}]",
-                host + ':' + port);
+            LOGGER.log(Level.INFO, "Started listener bound to [{0}]", host + ':' + port);
         }
 
     }
 
-    public synchronized GrizzlyFuture<NetworkListener> shutdown(final long gracePeriod,
-                                                                final TimeUnit timeUnit) {
-        if (state == State.STOPPING
-                || state == State.STOPPED) {
-            return shutdownFuture != null ? shutdownFuture :
-                    Futures.createReadyFuture(this);
+    public synchronized GrizzlyFuture<NetworkListener> shutdown(final long gracePeriod, final TimeUnit timeUnit) {
+        if (state == State.STOPPING || state == State.STOPPED) {
+            return shutdownFuture != null ? shutdownFuture : Futures.createReadyFuture(this);
         } else if (state == State.PAUSED) {
             resume();
         }
@@ -832,11 +827,13 @@ public class NetworkListener {
         transport.shutdown(gracePeriod, timeUnit);
         return shutdownFuture;
     }
-    
+
     /**
-     * <p> Gracefully shuts down the listener. </p>   Any exceptions
-     * thrown during the shutdown process will be propagated to the returned
-     * {@link GrizzlyFuture}.
+     * <p>
+     * Gracefully shuts down the listener.
+     * </p>
+     * Any exceptions thrown during the shutdown process will be propagated to the returned {@link GrizzlyFuture}.
+     * 
      * @return {@link GrizzlyFuture}
      */
     public synchronized GrizzlyFuture<NetworkListener> shutdown() {
@@ -844,7 +841,9 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Immediately shuts down the listener. </p>
+     * <p>
+     * Immediately shuts down the listener.
+     * </p>
      *
      * @throws IOException if an error occurs when attempting to shut down the listener
      */
@@ -852,14 +851,12 @@ public class NetworkListener {
         if (state == State.STOPPED) {
             return;
         }
-        
+
         try {
             serverConnection = null;
             transport.shutdownNow();
             if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.log(Level.INFO,
-                    "Stopped listener bound to [{0}]",
-                    host + ':' + port);
+                LOGGER.log(Level.INFO, "Stopped listener bound to [{0}]", host + ':' + port);
             }
         } finally {
             state = State.STOPPED;
@@ -870,17 +867,22 @@ public class NetworkListener {
     }
 
     /**
-     * <p> Immediately shuts down the listener. </p>
+     * <p>
+     * Immediately shuts down the listener.
+     * </p>
      *
      * @throws IOException if an error occurs when attempting to shut down the listener
      * @deprecated use {@link #shutdownNow()}
      */
+    @Deprecated
     public void stop() throws IOException {
         shutdownNow();
     }
 
     /**
-     * <p> Pauses the listener. </p>
+     * <p>
+     * Pauses the listener.
+     * </p>
      */
     public synchronized void pause() {
         if (state != State.RUNNING) {
@@ -889,15 +891,15 @@ public class NetworkListener {
         transport.pause();
         state = State.PAUSED;
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO,
-                "Paused listener bound to [{0}]",
-                host + ':' + port);
+            LOGGER.log(Level.INFO, "Paused listener bound to [{0}]", host + ':' + port);
         }
 
     }
 
     /**
-     * <p> Resumes a paused listener. </p>
+     * <p>
+     * Resumes a paused listener.
+     * </p>
      */
     public synchronized void resume() {
         if (state != State.PAUSED) {
@@ -906,9 +908,7 @@ public class NetworkListener {
         transport.resume();
         state = State.RUNNING;
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO,
-                "Resumed listener bound to [{0}]",
-                host + ':' + port);
+            LOGGER.log(Level.INFO, "Resumed listener bound to [{0}]", host + ':' + port);
         }
 
     }
@@ -918,19 +918,11 @@ public class NetworkListener {
      */
     @Override
     public String toString() {
-        return "NetworkListener{" +
-            "name='" + name + '\'' +
-            ", host='" + host + '\'' +
-            ", port=" + port +
-            ", secure=" + secure +
-            ", state=" + state +
-            '}';
+        return "NetworkListener{" + "name='" + name + '\'' + ", host='" + host + '\'' + ", port=" + port + ", secure=" + secure + ", state=" + state + '}';
     }
 
     public Object createManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.http.server.jmx.NetworkListener",
-                this, NetworkListener.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.http.server.jmx.NetworkListener", this, NetworkListener.class);
     }
 
     public HttpServerFilter getHttpServerFilter() {
@@ -939,7 +931,7 @@ public class NetworkListener {
             if (idx == -1) {
                 return null;
             }
-            
+
             httpServerFilter = (HttpServerFilter) filterChain.get(idx);
         }
         return httpServerFilter;
@@ -952,7 +944,7 @@ public class NetworkListener {
             if (idx == -1) {
                 return null;
             }
-            
+
             httpCodecFilter = (HttpCodecFilter) filterChain.get(idx);
         }
         return httpCodecFilter;
@@ -962,12 +954,7 @@ public class NetworkListener {
 
     private static void validateArg(final String name, final String value) {
         if (value == null || value.length() == 0) {
-            throw new IllegalArgumentException("Argument "
-                + name
-                + " cannot be "
-                + (value == null
-                ? "null"
-                : "have a zero length")); // I18n
+            throw new IllegalArgumentException("Argument " + name + " cannot be " + (value == null ? "null" : "have a zero length")); // I18n
         }
 
     }
@@ -982,7 +969,7 @@ public class NetworkListener {
 
     /**
      * Returns {@link CompressionConfig} configuration.
-     * 
+     *
      * @since 2.3.5
      */
     public CompressionConfig getCompressionConfig() {
@@ -992,6 +979,7 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().getCompressionMode().name()</tt>
      */
+    @Deprecated
     public String getCompression() {
         return compressionConfig.getCompressionMode().name();
     }
@@ -999,13 +987,15 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().setCompressionMode(mode)</tt>
      */
+    @Deprecated
     public void setCompression(final String compression) {
         compressionConfig.setCompressionMode(CompressionMode.fromString(compression));
     }
-    
+
     /**
      * @deprecated use <tt>getCompressionConfig().getCompressionMinSize()</tt>
      */
+    @Deprecated
     public int getCompressionMinSize() {
         return compressionConfig.getCompressionMinSize();
     }
@@ -1013,6 +1003,7 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().setCompressionMinSize(int)</tt>
      */
+    @Deprecated
     public void setCompressionMinSize(final int compressionMinSize) {
         compressionConfig.setCompressionMinSize(compressionMinSize);
     }
@@ -1020,6 +1011,7 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().getCompressibleMimeTypes()</tt>
      */
+    @Deprecated
     public String getCompressibleMimeTypes() {
         return setToString(compressionConfig.getCompressibleMimeTypes());
     }
@@ -1027,13 +1019,15 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().setCompressibleMimeTypes(Set&lt;String&gt;)</tt>
      */
+    @Deprecated
     public void setCompressibleMimeTypes(final String compressibleMimeTypes) {
         compressionConfig.setCompressibleMimeTypes(stringToSet(compressibleMimeTypes));
     }
-    
+
     /**
      * @deprecated use <tt>getCompressionConfig().getNoCompressionUserAgents()</tt>
      */
+    @Deprecated
     public String getNoCompressionUserAgents() {
         return setToString(compressionConfig.getNoCompressionUserAgents());
     }
@@ -1041,10 +1035,11 @@ public class NetworkListener {
     /**
      * @deprecated use <tt>getCompressionConfig().setNoCompressionUserAgents(Set&lt;String&gt;)</tt>
      */
+    @Deprecated
     public void setNoCompressionUserAgents(final String noCompressionUserAgents) {
         compressionConfig.setNoCompressionUserAgents(stringToSet(noCompressionUserAgents));
     }
-    
+
     public boolean isDisableUploadTimeout() {
         return disableUploadTimeout;
     }
@@ -1054,9 +1049,8 @@ public class NetworkListener {
     }
 
     /**
-     * Gets the maximum size of the POST body generated by an HTML form.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Gets the maximum size of the POST body generated by an HTML form. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3
      */
     public int getMaxFormPostSize() {
@@ -1064,9 +1058,8 @@ public class NetworkListener {
     }
 
     /**
-     * Sets the maximum size of the POST body generated by an HTML form.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Sets the maximum size of the POST body generated by an HTML form. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3
      */
     public void setMaxFormPostSize(final int maxFormPostSize) {
@@ -1074,8 +1067,7 @@ public class NetworkListener {
     }
 
     /**
-     * Gets the maximum POST body size, which can buffered in memory.
-     * <code>-1</code> value means no size limits applied.
+     * Gets the maximum POST body size, which can buffered in memory. <code>-1</code> value means no size limits applied.
      *
      * @since 2.3
      */
@@ -1084,8 +1076,7 @@ public class NetworkListener {
     }
 
     /**
-     * Sets the maximum POST body size, which can buffered in memory.
-     * <code>-1</code> value means no size limits applied.
+     * Sets the maximum POST body size, which can buffered in memory. <code>-1</code> value means no size limits applied.
      *
      * @since 2.3
      */
@@ -1126,20 +1117,17 @@ public class NetworkListener {
     }
 
     /**
-     * @return The timeout, in seconds, within which a request must complete
-     *  its processing. If not explicitly set, no transaction timeout will
-     *  be enforced.
+     * @return The timeout, in seconds, within which a request must complete its processing. If not explicitly set, no
+     * transaction timeout will be enforced.
      */
     public int getTransactionTimeout() {
         return transactionTimeout;
     }
 
     /**
-     * Sets the time, in seconds, within which a request must complete its
-     * processing.  A value less than or equal to zero will disable this
-     * timeout. Note that this configuration option is only considered when the
-     * transport's {@link org.glassfish.grizzly.Transport#getWorkerThreadPool()}
-     * thread pool is used to run a {@link HttpHandler}.
+     * Sets the time, in seconds, within which a request must complete its processing. A value less than or equal to zero
+     * will disable this timeout. Note that this configuration option is only considered when the transport's
+     * {@link org.glassfish.grizzly.Transport#getWorkerThreadPool()} thread pool is used to run a {@link HttpHandler}.
      *
      * @param transactionTimeout timeout in seconds
      */
@@ -1174,18 +1162,17 @@ public class NetworkListener {
 
     /**
      * Sets the <tt>NetworkListener</tt> default {@link ErrorPageGenerator}.
-     * 
-     * @param defaultErrorPageGenerator 
+     *
+     * @param defaultErrorPageGenerator
      */
-    public void setDefaultErrorPageGenerator(
-            final ErrorPageGenerator defaultErrorPageGenerator) {
+    public void setDefaultErrorPageGenerator(final ErrorPageGenerator defaultErrorPageGenerator) {
         this.defaultErrorPageGenerator = defaultErrorPageGenerator;
     }
 
     /**
      * @return the HTTP server {@link SessionManager}
      *
-     * @see		#setSessionManager
+     * @see #setSessionManager
      */
     public SessionManager getSessionManager() {
         return sessionManager;
@@ -1194,14 +1181,14 @@ public class NetworkListener {
     /**
      * Sets the HTTP server {@link SessionManager}.
      *
-     * @param sessionManager	{@link SessionManager}
-     */    
+     * @param sessionManager {@link SessionManager}
+     */
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
-    
+
     boolean isSendFileExplicitlyConfigured() {
-        return (sendFileEnabled != null);
+        return sendFileEnabled != null;
     }
 
     private boolean isStopped() {
@@ -1214,19 +1201,19 @@ public class NetworkListener {
             if (sb.length() > 0) {
                 sb.append(',');
             }
-            
+
             sb.append(elem);
         }
-        
+
         return sb.toString();
     }
-    
+
     private static Set<String> stringToSet(final String s) {
         if (s == null) {
             return null;
         }
-        
+
         return new HashSet<>(Arrays.asList(s.split(",")));
-    }    
-    
+    }
+
 }

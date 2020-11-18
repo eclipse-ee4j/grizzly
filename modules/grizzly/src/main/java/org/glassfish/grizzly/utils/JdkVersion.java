@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -28,10 +29,9 @@ import org.glassfish.grizzly.Grizzly;
  */
 public class JdkVersion implements Comparable<JdkVersion> {
     private static final Logger LOGGER = Grizzly.logger(JdkVersion.class);
-    
+
     // take max 4 parts of the JDK version and cut the rest (usually the build number)
-    private static final Pattern VERSION_PATTERN = Pattern.compile(
-                "([0-9]+)(\\.([0-9]+))?(\\.([0-9]+))?([_\\.]([0-9]+))?.*");
+    private static final Pattern VERSION_PATTERN = Pattern.compile("([0-9]+)(\\.([0-9]+))?(\\.([0-9]+))?([_\\.]([0-9]+))?.*");
 
     private static final JdkVersion UNKNOWN_VERSION = new JdkVersion(-1, -1, -1, -1);
     private static final JdkVersion JDK_VERSION = parseVersion(System.getProperty("java.version"));
@@ -43,10 +43,7 @@ public class JdkVersion implements Comparable<JdkVersion> {
 
     // ------------------------------------------------------------ Constructors
 
-    private JdkVersion(final int major,
-                       final int minor,
-                       final int maintenance,
-                       final int update) {
+    private JdkVersion(final int major, final int minor, final int maintenance, final int update) {
         this.major = major;
         this.minor = minor;
         this.maintenance = maintenance;
@@ -60,18 +57,13 @@ public class JdkVersion implements Comparable<JdkVersion> {
         try {
             final Matcher matcher = VERSION_PATTERN.matcher(versionString);
             if (matcher.matches()) {
-                return new JdkVersion(parseInt(matcher.group(1)),
-                        parseInt(matcher.group(3)),
-                        parseInt(matcher.group(5)),
-                        parseInt(matcher.group(7)));
+                return new JdkVersion(parseInt(matcher.group(1)), parseInt(matcher.group(3)), parseInt(matcher.group(5)), parseInt(matcher.group(7)));
             }
-            
-            LOGGER.log(Level.FINE,
-                    "Can't parse the JDK version {0}", versionString);
-            
+
+            LOGGER.log(Level.FINE, "Can't parse the JDK version {0}", versionString);
+
         } catch (Exception e) {
-            LOGGER.log(Level.FINE,
-                    "Error parsing the JDK version " + versionString, e);
+            LOGGER.log(Level.FINE, "Error parsing the JDK version " + versionString, e);
         }
 
         return UNKNOWN_VERSION;

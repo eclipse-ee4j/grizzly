@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,112 +19,97 @@ package org.glassfish.grizzly.servlet;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
+
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 
 /**
  * Allows customization of a {@link Filter} registered with the {@link WebappContext}.
  *
  * @since 2.2
  */
-public class FilterRegistration extends Registration implements javax.servlet.FilterRegistration.Dynamic {
+public class FilterRegistration extends Registration implements jakarta.servlet.FilterRegistration.Dynamic {
 
     protected Class<? extends Filter> filterClass;
     protected Filter filter;
-    
+
     protected boolean isAsyncSupported;
 
     // ------------------------------------------------------------ Constructors
 
     /**
-     * Creates a new FilterRegistration associated with the specified
-     * {@link WebappContext}.
+     * Creates a new FilterRegistration associated with the specified {@link WebappContext}.
      *
      * @param ctx the owning {@link WebappContext}.
      * @param name the name of the Filter.
-     * @param filterClassName the fully qualified class name of the {@link Filter}
-     *  implementation.
+     * @param filterClassName the fully qualified class name of the {@link Filter} implementation.
      */
-    protected FilterRegistration(final WebappContext ctx,
-                                 final String name,
-                                 final String filterClassName) {
+    protected FilterRegistration(final WebappContext ctx, final String name, final String filterClassName) {
 
         super(ctx, name, filterClassName);
-        initParameters = new HashMap<String, String>(4, 1.0f);
+        initParameters = new HashMap<>(4, 1.0f);
 
     }
 
     /**
-     * Creates a new FilterRegistration associated with the specified
-     * {@link WebappContext}.
+     * Creates a new FilterRegistration associated with the specified {@link WebappContext}.
      *
      * @param ctx the owning {@link WebappContext}.
      * @param name name the name of the Filter.
      * @param filter the class of the {@link Filter} implementation
      */
-    protected FilterRegistration(final WebappContext ctx,
-                                 final String name,
-                                 final Class<? extends Filter> filter) {
+    protected FilterRegistration(final WebappContext ctx, final String name, final Class<? extends Filter> filter) {
         this(ctx, name, filter.getName());
         this.filterClass = filter;
 
     }
 
     /**
-     * Creates a new FilterRegistration associated with the specified
-     * {@link WebappContext}.
+     * Creates a new FilterRegistration associated with the specified {@link WebappContext}.
      *
      * @param ctx the owning {@link WebappContext}.
      * @param name name the name of the Filter.
      * @param filter the {@link Filter} instance.
      */
-    protected FilterRegistration(final WebappContext ctx,
-                                 final String name,
-                                 final Filter filter) {
+    protected FilterRegistration(final WebappContext ctx, final String name, final Filter filter) {
         this(ctx, name, filter.getClass());
         this.filter = filter;
     }
 
-
     // ---------------------------------------------------------- Public Methods
 
-
     /**
-     * Adds a filter mapping with the given servlet names and dispatcher
-     * types for the Filter represented by this FilterRegistration.
+     * Adds a filter mapping with the given servlet names and dispatcher types for the Filter represented by this
+     * FilterRegistration.
      *
-     * <p>Filter mappings are matched in the order in which they were
-     * added.
+     * <p>
+     * Filter mappings are matched in the order in which they were added.
      *
-     * <p>If this method is called multiple times, each successive call
-     * adds to the effects of the former.
+     * <p>
+     * If this method is called multiple times, each successive call adds to the effects of the former.
      *
-     * @param dispatcherTypes the dispatcher types of the filter mapping,
-     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * @param dispatcherTypes the dispatcher types of the filter mapping, or null if the default
+     * <tt>DispatcherType.REQUEST</tt> is to be used
      * @param servletNames the servlet names of the filter mapping
      *
-     * @throws IllegalArgumentException if <tt>servletNames</tt> is null or
-     * empty
-     * @throws IllegalStateException if the ServletContext from which this
-     * FilterRegistration was obtained has already been initialized
+     * @throws IllegalArgumentException if <tt>servletNames</tt> is null or empty
+     * @throws IllegalStateException if the ServletContext from which this FilterRegistration was obtained has already been
+     * initialized
      */
-    public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes,
-                                          String... servletNames) {
+    public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes, String... servletNames) {
         addMappingForServletNames(dispatcherTypes, true, servletNames);
     }
-
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes,
-            boolean isMatchAfter, String... servletNames) {
+    public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... servletNames) {
         if (ctx.deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
 
-        if ((servletNames==null) || (servletNames.length==0)) {
+        if (servletNames == null || servletNames.length == 0) {
             throw new IllegalArgumentException("'servletNames' is null or zero-length");
         }
 
@@ -139,15 +124,14 @@ public class FilterRegistration extends Registration implements javax.servlet.Fi
     }
 
     /**
-     * Gets the currently available servlet name mappings
-     * of the Filter represented by this <code>FilterRegistration</code>.
+     * Gets the currently available servlet name mappings of the Filter represented by this <code>FilterRegistration</code>.
      *
-     * <p>If permitted, any changes to the returned <code>Collection</code> must not
-     * affect this <code>FilterRegistration</code>.
+     * <p>
+     * If permitted, any changes to the returned <code>Collection</code> must not affect this
+     * <code>FilterRegistration</code>.
      *
-     * @return a (possibly empty) <code>Collection</code> of the currently
-     * available servlet name mappings of the Filter represented by this
-     * <code>FilterRegistration</code>
+     * @return a (possibly empty) <code>Collection</code> of the currently available servlet name mappings of the Filter
+     * represented by this <code>FilterRegistration</code>
      */
     @Override
     public Collection<String> getServletNameMappings() {
@@ -155,26 +139,24 @@ public class FilterRegistration extends Registration implements javax.servlet.Fi
     }
 
     /**
-     * Adds a filter mapping with the given url patterns and dispatcher
-     * types for the Filter represented by this FilterRegistration.
+     * Adds a filter mapping with the given url patterns and dispatcher types for the Filter represented by this
+     * FilterRegistration.
      *
-     * <p>Filter mappings are matched in the order in which they were
-     * added.
+     * <p>
+     * Filter mappings are matched in the order in which they were added.
      *
-     * <p>If this method is called multiple times, each successive call
-     * adds to the effects of the former.
+     * <p>
+     * If this method is called multiple times, each successive call adds to the effects of the former.
      *
-     * @param dispatcherTypes the dispatcher types of the filter mapping,
-     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * @param dispatcherTypes the dispatcher types of the filter mapping, or null if the default
+     * <tt>DispatcherType.REQUEST</tt> is to be used
      * @param urlPatterns the url patterns of the filter mapping
      *
-     * @throws IllegalArgumentException if <tt>urlPatterns</tt> is null or
-     * empty
-     * @throws IllegalStateException if the ServletContext from which this
-     * FilterRegistration was obtained has already been initialized
+     * @throws IllegalArgumentException if <tt>urlPatterns</tt> is null or empty
+     * @throws IllegalStateException if the ServletContext from which this FilterRegistration was obtained has already been
+     * initialized
      */
-    public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes,
-                                         String... urlPatterns) {
+    public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes, String... urlPatterns) {
         addMappingForUrlPatterns(dispatcherTypes, true, urlPatterns);
     }
 
@@ -182,13 +164,12 @@ public class FilterRegistration extends Registration implements javax.servlet.Fi
      * {@inheritDoc}
      */
     @Override
-    public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes,
-            boolean isMatchAfter, String... urlPatterns) {
+    public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... urlPatterns) {
         if (ctx.deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
 
-        if ((urlPatterns==null) || (urlPatterns.length==0)) {
+        if (urlPatterns == null || urlPatterns.length == 0) {
             throw new IllegalArgumentException("'urlPatterns' is null or zero-length");
         }
 
@@ -203,15 +184,14 @@ public class FilterRegistration extends Registration implements javax.servlet.Fi
     }
 
     /**
-     * Gets the currently available URL pattern mappings of the Filter
-     * represented by this <code>FilterRegistration</code>.
+     * Gets the currently available URL pattern mappings of the Filter represented by this <code>FilterRegistration</code>.
      *
-     * <p>If permitted, any changes to the returned <code>Collection</code> must not
-     * affect this <code>FilterRegistration</code>.
+     * <p>
+     * If permitted, any changes to the returned <code>Collection</code> must not affect this
+     * <code>FilterRegistration</code>.
      *
-     * @return a (possibly empty) <code>Collection</code> of the currently
-     * available URL pattern mappings of the Filter represented by this
-     * <code>FilterRegistration</code>
+     * @return a (possibly empty) <code>Collection</code> of the currently available URL pattern mappings of the Filter
+     * represented by this <code>FilterRegistration</code>
      */
     @Override
     public Collection<String> getUrlPatternMappings() {

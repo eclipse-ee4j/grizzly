@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,8 +24,8 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
- * The thread safe set implementation, which uses array to hold its elements.
- * This set could be used, for cases, which require minimum set modifications.
+ * The thread safe set implementation, which uses array to hold its elements. This set could be used, for cases, which
+ * require minimum set modifications.
  *
  * @author Alexey Stashok
  */
@@ -35,12 +35,12 @@ public class ArraySet<T> implements Set<T> {
     private final Object sync = new Object();
     private final Class<T> clazz;
     private final boolean replaceElementIfEquals;
-    
+
     @SuppressWarnings("unchecked")
     public ArraySet(final Class<T> clazz) {
         this(clazz, true);
     }
-    
+
     @SuppressWarnings("unchecked")
     public ArraySet(final Class<T> clazz, final boolean replaceElementIfEquals) {
         this.clazz = clazz;
@@ -51,10 +51,9 @@ public class ArraySet<T> implements Set<T> {
      * Add the element(s) to the set.
      *
      * @param elements the elements to add.
-     * @return <tt>true</tt>, if at least one element was added to the set and,
-     * as result, the size of the set was increased, or <tt>false</tt>, all
-     * element(s) was/were present in the set and, as the result, the set values
-     * were just reset.
+     * @return <tt>true</tt>, if at least one element was added to the set and, as result, the size of the set was
+     * increased, or <tt>false</tt>, all element(s) was/were present in the set and, as the result, the set values were just
+     * reset.
      */
     @SuppressWarnings("unchecked")
     public final boolean addAll(final T... elements) {
@@ -78,7 +77,7 @@ public class ArraySet<T> implements Set<T> {
                 final T[] oldArray = array;
                 array = ArrayUtils.addUnique(array, element, replaceElementIfEquals);
 
-                result |= (oldArray != array);
+                result |= oldArray != array;
             }
 
             return result;
@@ -112,7 +111,7 @@ public class ArraySet<T> implements Set<T> {
                 final T[] oldArray = array;
                 array = ArrayUtils.addUnique(array, element, replaceElementIfEquals);
 
-                result |= (oldArray != array);
+                result |= oldArray != array;
             }
 
             return result;
@@ -123,10 +122,9 @@ public class ArraySet<T> implements Set<T> {
      * Add all the elements from the source <tt>ArraySet</tt>.
      *
      * @param source the elements to add.
-     * @return <tt>true</tt>, if at least one element was added to the set and,
-     * as result, the size of the set was increased, or <tt>false</tt>, all
-     * element(s) was/were present in the set and, as the result, the set values
-     * were just reset.
+     * @return <tt>true</tt>, if at least one element was added to the set and, as result, the size of the set was
+     * increased, or <tt>false</tt>, all element(s) was/were present in the set and, as the result, the set values were just
+     * reset.
      */
     public final boolean add(ArraySet<T> source) {
         final T[] sourceArraySet = source.getArray();
@@ -149,7 +147,7 @@ public class ArraySet<T> implements Set<T> {
                 final T[] oldArray = array;
                 array = ArrayUtils.addUnique(array, element, replaceElementIfEquals);
 
-                result |= (oldArray != array);
+                result |= oldArray != array;
             }
 
             return result;
@@ -160,8 +158,7 @@ public class ArraySet<T> implements Set<T> {
      * Remove element(s) from the set.
      *
      * @param elements the element(s) to remove.
-     * @return <tt>true</tt>, if at least one element was found and removed,
-     * or <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if at least one element was found and removed, or <tt>false</tt> otherwise.
      */
     public final boolean removeAll(Object... elements) {
         if (elements.length == 0) {
@@ -177,10 +174,9 @@ public class ArraySet<T> implements Set<T> {
             for (Object element : elements) {
                 final T[] oldArray = array;
 
-
                 array = ArrayUtils.remove(array, element);
 
-                result |= (oldArray != array);
+                result |= oldArray != array;
             }
 
             return result;
@@ -188,9 +184,8 @@ public class ArraySet<T> implements Set<T> {
     }
 
     /**
-     * Get the underlying array.
-     * Please note, it's not appropriate to modify the returned array's content.
-     * Please use {@link #add(Object)} and {@link #remove(Object)} instead.
+     * Get the underlying array. Please note, it's not appropriate to modify the returned array's content. Please use
+     * {@link #add(Object)} and {@link #remove(Object)} instead.
      *
      * @return the array.
      */
@@ -199,11 +194,10 @@ public class ArraySet<T> implements Set<T> {
     }
 
     /**
-     * Get the copy of the underlying array. If the underlying array is 
-     * <tt>null</tt> - then <tt>null</tt> will be returned.
-     * 
-     * @return the copy of the underlying array. If the underlying array is
-     * <tt>null</tt> - then <tt>null</tt> will be returned.
+     * Get the copy of the underlying array. If the underlying array is <tt>null</tt> - then <tt>null</tt> will be returned.
+     *
+     * @return the copy of the underlying array. If the underlying array is <tt>null</tt> - then <tt>null</tt> will be
+     * returned.
      */
     public final T[] getArrayCopy() {
         final T[] localArray = array;
@@ -215,16 +209,17 @@ public class ArraySet<T> implements Set<T> {
     }
 
     /**
-     * Get the copy of the underlying array. If the underlying array is
-     * <tt>null</tt> - then empty array will be returned.
+     * Get the copy of the underlying array. If the underlying array is <tt>null</tt> - then empty array will be returned.
      *
-     * @return the copy of the underlying array. If the underlying array is
-     * <tt>null</tt> - then empty array will be returned.
+     * @return the copy of the underlying array. If the underlying array is <tt>null</tt> - then empty array will be
+     * returned.
      */
     @SuppressWarnings("unchecked")
     public final T[] obtainArrayCopy() {
         final T[] localArray = array;
-        if (localArray == null) return (T[]) Array.newInstance(clazz, 0);
+        if (localArray == null) {
+            return (T[]) Array.newInstance(clazz, 0);
+        }
 
         return Arrays.copyOf(localArray, localArray.length);
     }
@@ -237,7 +232,7 @@ public class ArraySet<T> implements Set<T> {
         array = null;
     }
 
-    //===================== java.util.Set =================================
+    // ===================== java.util.Set =================================
     /**
      * {@inheritDoc}
      */
@@ -374,8 +369,7 @@ public class ArraySet<T> implements Set<T> {
             return false;
         }
 
-        final T[] newArray = (T[]) Array.newInstance(clazz, 
-                Math.min(localArray.length, collection.size()));
+        final T[] newArray = (T[]) Array.newInstance(clazz, Math.min(localArray.length, collection.size()));
         int newSize = 0;
         for (int i = 0; i < localArray.length; i++) {
             final T elem = localArray[i];
@@ -451,11 +445,13 @@ public class ArraySet<T> implements Set<T> {
         @SuppressWarnings("unchecked")
         @Override
         public T next() {
-            if (nextElem == null) throw new NoSuchElementException();
+            if (nextElem == null) {
+                throw new NoSuchElementException();
+            }
 
             lastRet = nextElem;
             advance();
-            
+
             return lastRet;
         }
 
@@ -475,7 +471,7 @@ public class ArraySet<T> implements Set<T> {
             final Object[] localArray = array;
             if (localArray == null || cursor >= localArray.length) {
                 nextElem = null;
-                
+
                 return;
             }
 

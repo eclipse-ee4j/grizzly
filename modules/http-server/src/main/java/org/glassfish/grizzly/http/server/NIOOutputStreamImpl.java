@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http.server;
 
 import java.io.IOException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.WriteHandler;
@@ -31,72 +32,78 @@ import org.glassfish.grizzly.http.io.OutputBuffer;
  */
 class NIOOutputStreamImpl extends NIOOutputStream implements Cacheable {
 
-
     private OutputBuffer outputBuffer;
-
 
     // ----------------------------------------------- Methods from OutputStream
 
     /**
      * {@inheritDoc}
      */
-    @Override public void write(final int b) throws IOException {
+    @Override
+    public void write(final int b) throws IOException {
         outputBuffer.writeByte(b);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void write(final byte[] b) throws IOException {
+    @Override
+    public void write(final byte[] b) throws IOException {
         outputBuffer.write(b);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void write(final byte[] b, final int off, final int len)
-    throws IOException {
+    @Override
+    public void write(final byte[] b, final int off, final int len) throws IOException {
         outputBuffer.write(b, off, len);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void flush() throws IOException {
+    @Override
+    public void flush() throws IOException {
         outputBuffer.flush();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         outputBuffer.close();
     }
 
-
     // ---------------------------------------------- Methods from OutputSink
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated the <code>length</code> parameter will be ignored. Pls use {@link #canWrite()}.
+     */
+    @Deprecated
+    @Override
+    public boolean canWrite(final int length) {
+        return outputBuffer.canWrite();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canWrite() {
+        return outputBuffer.canWrite();
+    }
 
     /**
      * {@inheritDoc}
      * 
-     * @deprecated the <code>length</code> parameter will be ignored. Pls use {@link #canWrite()}.
+     * @deprecated the <code>length</code> parameter will be ignored. Pls. use
+     * {@link #notifyCanWrite(org.glassfish.grizzly.WriteHandler)}.
      */
-    @Override public boolean canWrite(final int length) {
-        return outputBuffer.canWrite();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public boolean canWrite() {
-        return outputBuffer.canWrite();
-    }
-
-    /**
-     * {@inheritDoc}
-     * @deprecated the <code>length</code> parameter will be ignored. Pls. use {@link #notifyCanWrite(org.glassfish.grizzly.WriteHandler)}.
-     */
+    @Deprecated
     @Override
     public void notifyCanWrite(final WriteHandler handler, final int length) {
         outputBuffer.notifyCanWrite(handler);
@@ -112,7 +119,6 @@ class NIOOutputStreamImpl extends NIOOutputStream implements Cacheable {
 
     // ---------------------------------------- Methods from BinaryNIOOutputSink
 
-
     /**
      * {@inheritDoc}
      */
@@ -121,9 +127,7 @@ class NIOOutputStreamImpl extends NIOOutputStream implements Cacheable {
         outputBuffer.writeBuffer(buffer);
     }
 
-
     // -------------------------------------------------- Methods from Cacheable
-
 
     @Override
     public void recycle() {
@@ -132,9 +136,7 @@ class NIOOutputStreamImpl extends NIOOutputStream implements Cacheable {
 
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     public void setOutputBuffer(final OutputBuffer outputBuffer) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,33 +16,28 @@
 
 package org.glassfish.grizzly;
 
+import static junit.framework.Assert.assertEquals;
+
 import org.glassfish.grizzly.memory.DefaultMemoryManagerFactory;
 import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
-
 public class TestDefaults2 {
     @BeforeClass
     public static void init() {
-        System.setProperty(DefaultMemoryManagerFactory.DMMF_PROP_NAME,
-                           TestFactory.class.getName());
+        System.setProperty(DefaultMemoryManagerFactory.DMMF_PROP_NAME, TestFactory.class.getName());
     }
 
-
     // ------------------------------------------------------------ Test Methods
-
 
     @Test
     public void testDefaults() throws Exception {
 
-        assertEquals(MemoryManager.DEFAULT_MEMORY_MANAGER.getClass(),
-                     TestManager2.class);
+        assertEquals(MemoryManager.DEFAULT_MEMORY_MANAGER.getClass(), TestManager2.class);
 
     }
-
 
     // ---------------------------------------------------------- Nested Classes
 

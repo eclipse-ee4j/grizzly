@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
  */
 
 package org.glassfish.grizzly.http.server;
+
+import static org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARACTER_ENCODING;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
@@ -56,8 +59,6 @@ import org.glassfish.grizzly.http.server.io.ServerOutputBuffer;
 import org.glassfish.grizzly.http.server.util.Globals;
 import org.glassfish.grizzly.http.server.util.HtmlHelper;
 import org.glassfish.grizzly.http.util.CharChunk;
-
-import static org.glassfish.grizzly.http.util.Constants.*;
 import org.glassfish.grizzly.http.util.ContentType;
 import org.glassfish.grizzly.http.util.CookieSerializerUtils;
 import org.glassfish.grizzly.http.util.FastHttpDateFormat;
@@ -87,14 +88,11 @@ public class Response {
 
     private static final Logger LOGGER = Grizzly.logger(Response.class);
 
-    static DelayQueue<SuspendTimeout> createDelayQueue(
-            final DelayedExecutor delayedExecutor) {
-        return delayedExecutor.createDelayQueue(new DelayQueueWorker(),
-                new DelayQueueResolver());
+    static DelayQueue<SuspendTimeout> createDelayQueue(final DelayedExecutor delayedExecutor) {
+        return delayedExecutor.createDelayQueue(new DelayQueueWorker(), new DelayQueueResolver());
     }
 
     // ----------------------------------------------------------- Constructors
-
 
     protected Response() {
 
@@ -102,31 +100,25 @@ public class Response {
 
     }
 
-
     // ----------------------------------------------------- Instance Variables
     private boolean cacheEnabled = false;
-
 
     /**
      * Default locale as mandated by the spec.
      */
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();
 
-    private static final String HTTP_RESPONSE_DATE_HEADER =
-        "EEE, dd MMM yyyy HH:mm:ss zzz";
+    private static final String HTTP_RESPONSE_DATE_HEADER = "EEE, dd MMM yyyy HH:mm:ss zzz";
 
     /**
      * The date format we will use for creating date headers.
      */
     protected SimpleDateFormat format = null;
 
-
     /**
      * Descriptive information about this Response implementation.
      */
-    protected static final String info =
-        "org.glassfish.grizzly.http.server.Response/2.0";
-
+    protected static final String info = "org.glassfish.grizzly.http.server.Response/2.0";
 
     // ------------------------------------------------------------- Properties
     /**
@@ -134,21 +126,18 @@ public class Response {
      */
     protected Request request = null;
 
-
     /**
      * Coyote response.
      */
     protected HttpResponsePacket response;
 
     /**
-     * Grizzly {@link org.glassfish.grizzly.filterchain.FilterChain} context,
-     * related to this HTTP request/response
+     * Grizzly {@link org.glassfish.grizzly.filterchain.FilterChain} context, related to this HTTP request/response
      */
     protected FilterChainContext ctx;
 
     /**
-     * Grizzly {@link HttpContext} associated with the current Request/Response
-     * processing.
+     * Grizzly {@link HttpContext} associated with the current Request/Response processing.
      */
     protected HttpContext httpContext;
 
@@ -156,7 +145,6 @@ public class Response {
      * The associated output buffer.
      */
     protected final ServerOutputBuffer outputBuffer = new ServerOutputBuffer();
-
 
     /**
      * The associated output stream.
@@ -168,42 +156,35 @@ public class Response {
      */
     private final NIOWriterImpl writer = new NIOWriterImpl();
 
-
     /**
      * The application commit flag.
      */
     protected boolean appCommitted = false;
-
 
     /**
      * The error flag.
      */
     protected boolean error = false;
 
-
     /**
      * Using output stream flag.
      */
     protected boolean usingOutputStream = false;
-
 
     /**
      * Using writer flag.
      */
     protected boolean usingWriter = false;
 
-
     /**
      * URL encoder.
      */
     protected final UEncoder urlEncoder = new UEncoder();
 
-
     /**
      * Recyclable buffer to hold the redirect URL.
      */
     protected final CharChunk redirectURLCC = new CharChunk();
-
 
     protected DelayedExecutor.DelayQueue<SuspendTimeout> delayQueue;
 
@@ -213,20 +194,16 @@ public class Response {
 
     private SuspendStatus suspendStatus;
     private boolean sendFileEnabled;
-    
+
     private ErrorPageGenerator errorPageGenerator;
-    
+
     // --------------------------------------------------------- Public Methods
 
-    public void initialize(final Request request,
-                           final HttpResponsePacket response,
-                           final FilterChainContext ctx,
-                           final DelayedExecutor.DelayQueue<SuspendTimeout> delayQueue,
-                           final HttpServerFilter serverFilter) {
+    public void initialize(final Request request, final HttpResponsePacket response, final FilterChainContext ctx,
+            final DelayedExecutor.DelayQueue<SuspendTimeout> delayQueue, final HttpServerFilter serverFilter) {
         this.request = request;
         this.response = response;
-        sendFileEnabled = ((serverFilter != null)
-                && serverFilter.getConfiguration().isSendFileEnabled());
+        sendFileEnabled = serverFilter != null && serverFilter.getConfiguration().isSendFileEnabled();
         outputBuffer.initialize(this, ctx);
         this.ctx = ctx;
         this.httpContext = HttpContext.get(ctx);
@@ -245,7 +222,6 @@ public class Response {
         return request;
     }
 
-
     /**
      * Get the {@link HttpResponsePacket}.
      */
@@ -253,10 +229,8 @@ public class Response {
         return response;
     }
 
-
     /**
-     * Release all object references, and initialize instance variables, in
-     * preparation for reuse of this object.
+     * Release all object references, and initialize instance variables, in preparation for reuse of this object.
      */
     protected void recycle() {
         delayQueue = null;
@@ -278,26 +252,19 @@ public class Response {
         cacheEnabled = false;
     }
 
-
-
-
     // ------------------------------------------------------- Response Methods
 
     /**
-     * Set the supplier of trailer headers.
-     * The supplier will be called within the scope of whatever thread/call
-     * causes the response content to be completed. Typically this will
-     * be any thread calling close() on the output stream or writer.
+     * Set the supplier of trailer headers. The supplier will be called within the scope of whatever thread/call causes the
+     * response content to be completed. Typically this will be any thread calling close() on the output stream or writer.
      *
-     * The trailers that run afoul of the provisions of section 4.1.2 of
-     * RFC 7230 are ignored.
+     * The trailers that run afoul of the provisions of section 4.1.2 of RFC 7230 are ignored.
      *
      * @param trailerSupplier the supplier of trailer headers
      *
-     * @throws IllegalStateException if it is invoked after the response has
-     *         has been committed, or trailers cannot be supported given
-     *         the current protocol and/or configuration (chunked transfer
-     *         encoding disabled in HTTP/1.1 as an example).
+     * @throws IllegalStateException if it is invoked after the response has has been committed, or trailers cannot be
+     * supported given the current protocol and/or configuration (chunked transfer encoding disabled in HTTP/1.1 as an
+     * example).
      *
      * @since 2.4.0
      */
@@ -328,8 +295,7 @@ public class Response {
     }
 
     /**
-     * Encode the session identifier associated with this response
-     * into the specified URL, if necessary.
+     * Encode the session identifier associated with this response into the specified URL, if necessary.
      *
      * @param url URL to be encoded
      */
@@ -338,19 +304,18 @@ public class Response {
         String absolute = toAbsolute(url, false);
         if (isEncodeable(absolute)) {
             // W3c spec clearly said
-            if (url.equalsIgnoreCase("")){
+            if (url.equalsIgnoreCase("")) {
                 url = absolute;
             }
-            return toEncoded(url,request.getSession().getIdInternal());
+            return toEncoded(url, request.getSession().getIdInternal());
         } else {
-            return (url);
+            return url;
         }
 
     }
 
     /**
-     * Encode the session identifier associated with this response
-     * into the specified redirect URL, if necessary.
+     * Encode the session identifier associated with this response into the specified redirect URL, if necessary.
      *
      * @param url URL to be encoded
      */
@@ -360,95 +325,93 @@ public class Response {
         } else {
             return url;
         }
-    }    
+    }
 
     /**
-     * Return <tt>true</tt> if the specified URL should be encoded with
-     * a session identifier.  This will be true if all of the following
-     * conditions are met:
+     * Return <tt>true</tt> if the specified URL should be encoded with a session identifier. This will be true if all of
+     * the following conditions are met:
      * <ul>
      * <li>The request we are responding to asked for a valid session
      * <li>The requested session ID was not received via a cookie
-     * <li>The specified URL points back to somewhere within the web
-     *     application that is responding to this request
+     * <li>The specified URL points back to somewhere within the web application that is responding to this request
      * </ul>
      *
      * @param location Absolute URL to be validated
      */
     protected boolean isEncodeable(final String location) {
 
-        if (location == null)
-            return (false);
+        if (location == null) {
+            return false;
+        }
 
         // Is this an intra-document reference?
-        if (location.startsWith("#"))
-            return (false);
+        if (location.startsWith("#")) {
+            return false;
+        }
 
         final Session session = request.getSession(false);
-        return (session != null
-                  && !request.isRequestedSessionIdFromCookie()
-                  && doIsEncodeable(request, session, location));
+        return session != null && !request.isRequestedSessionIdFromCookie() && doIsEncodeable(request, session, location);
 
     }
 
-    private static boolean doIsEncodeable(Request request, Session session,
-                                   String location){
+    private static boolean doIsEncodeable(Request request, Session session, String location) {
         // Is this a valid absolute URL?
         URL url;
         try {
             url = new URL(location);
         } catch (MalformedURLException e) {
-            return (false);
+            return false;
         }
 
         // Does this URL match down to (and including) the context path?
-        if (!request.getScheme().equalsIgnoreCase(url.getProtocol()))
-            return (false);
-        if (!request.getServerName().equalsIgnoreCase(url.getHost()))
-            return (false);
+        if (!request.getScheme().equalsIgnoreCase(url.getProtocol())) {
+            return false;
+        }
+        if (!request.getServerName().equalsIgnoreCase(url.getHost())) {
+            return false;
+        }
         int serverPort = request.getServerPort();
         if (serverPort == -1) {
-            if ("https".equals(request.getScheme()))
+            if ("https".equals(request.getScheme())) {
                 serverPort = 443;
-            else
+            } else {
                 serverPort = 80;
+            }
         }
         int urlPort = url.getPort();
         if (urlPort == -1) {
-            if ("https".equals(url.getProtocol()))
+            if ("https".equals(url.getProtocol())) {
                 urlPort = 443;
-            else
+            } else {
                 urlPort = 80;
+            }
         }
-        if (serverPort != urlPort)
-            return (false);
+        if (serverPort != urlPort) {
+            return false;
+        }
 
         String contextPath = "/";
 
         String file = url.getFile();
-        if ((file == null) || !file.startsWith(contextPath)) {
-            return (false);
+        if (file == null || !file.startsWith(contextPath)) {
+            return false;
         }
         if (file.contains(";jsessionid=" + session.getIdInternal())) {
-            return (false);
+            return false;
         }
 
-
         // This URL belongs to our web application, so it is encodeable
-        return (true);
+        return true;
 
     }
 
-
     /**
-     * Return descriptive information about this Response implementation and
-     * the corresponding version number, in the format
+     * Return descriptive information about this Response implementation and the corresponding version number, in the format
      * <code>&lt;description&gt;/&lt;version&gt;</code>.
      */
     public String getInfo() {
         return info;
     }
-
 
     /**
      * Set the error flag.
@@ -456,7 +419,6 @@ public class Response {
     public void setError() {
         error = true;
     }
-
 
     /**
      * Error flag accessor.
@@ -466,17 +428,17 @@ public class Response {
     }
 
     /**
-     * @return the {@link ErrorPageGenerator} to be used by
-     * {@link #sendError(int)} or {@link #sendError(int, java.lang.String)}.
+     * @return the {@link ErrorPageGenerator} to be used by {@link #sendError(int)} or
+     * {@link #sendError(int, java.lang.String)}.
      */
     public ErrorPageGenerator getErrorPageGenerator() {
         return errorPageGenerator;
     }
 
     /**
-     * Sets the {@link ErrorPageGenerator} to be used by
-     * {@link #sendError(int)} or {@link #sendError(int, java.lang.String)}.
-     * 
+     * Sets the {@link ErrorPageGenerator} to be used by {@link #sendError(int)} or
+     * {@link #sendError(int, java.lang.String)}.
+     *
      * @param errorPageGenerator the custom {@link ErrorPageGenerator}.
      */
     public void setErrorPageGenerator(ErrorPageGenerator errorPageGenerator) {
@@ -494,7 +456,6 @@ public class Response {
         response.setReasonPhrase(message);
     }
 
-
     /**
      * Gets detail error message.
      *
@@ -507,10 +468,8 @@ public class Response {
     }
     // END S1AS 4878272
 
-
     /**
-     * Perform whatever actions are required to flush and close the output
-     * stream or writer, in a single operation.
+     * Perform whatever actions are required to flush and close the output stream or writer, in a single operation.
      */
     public void finish() {
         // Writing leftover bytes
@@ -518,17 +477,14 @@ public class Response {
             outputBuffer.endRequest();
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.FINEST)) {
-                LOGGER.log(Level.FINEST,
-                        LogMessages.WARNING_GRIZZLY_HTTP_SERVER_RESPONSE_FINISH_ERROR(), e);
+                LOGGER.log(Level.FINEST, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_RESPONSE_FINISH_ERROR(), e);
             }
         } catch (Throwable t) {
             if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_HTTP_SERVER_RESPONSE_FINISH_ERROR(), t);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_RESPONSE_FINISH_ERROR(), t);
             }
         }
     }
-
 
     /**
      * Return the content length that was set or calculated for this Response.
@@ -547,17 +503,15 @@ public class Response {
     }
 
     /**
-     * Return the content type that was set or calculated for this response,
-     * or <code>null</code> if no content type was set.
+     * Return the content type that was set or calculated for this response, or <code>null</code> if no content type was
+     * set.
      */
     public String getContentType() {
         checkResponse();
         return response.getContentType();
     }
 
-
     // ------------------------------------------------ ServletResponse Methods
-
 
     /**
      * Return the actual buffer size used for this Response.
@@ -567,7 +521,6 @@ public class Response {
         return outputBuffer.getBufferSize();
 
     }
-
 
     /**
      * Return the character encoding used for this Response.
@@ -584,28 +537,28 @@ public class Response {
     }
 
     /*
-     * Overrides the name of the character encoding used in the body
-     * of the request. This method must be called prior to reading
-     * request parameters or reading input using getReader().
+     * Overrides the name of the character encoding used in the body of the request. This method must be called prior to
+     * reading request parameters or reading input using getReader().
      *
      * @param charset String containing the name of the chararacter encoding.
      */
     public void setCharacterEncoding(String charset) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         // Ignore any call made after the getWriter has been invoked
         // The default should be used
-        if (usingWriter)
+        if (usingWriter) {
             return;
+        }
 
         response.setCharacterEncoding(charset);
     }
 
     /**
-     * Create and return a ServletOutputStream to write the content
-     * associated with this Response.
+     * Create and return a ServletOutputStream to write the content associated with this Response.
      */
     public NIOOutputStream createOutputStream() {
         outputStream.setOutputBuffer(outputBuffer);
@@ -614,16 +567,16 @@ public class Response {
 
     /**
      * <p>
-     * Return the {@link NIOOutputStream} associated with this {@link Response}.
-     * This {@link NIOOutputStream} will write content in a non-blocking manner.
+     * Return the {@link NIOOutputStream} associated with this {@link Response}. This {@link NIOOutputStream} will write
+     * content in a non-blocking manner.
      * </p>
      *
-     * @throws IllegalStateException if {@link #getWriter()} or {@link #getNIOWriter()}
-     *  were already invoked.
+     * @throws IllegalStateException if {@link #getWriter()} or {@link #getNIOWriter()} were already invoked.
      */
     public NIOOutputStream getNIOOutputStream() {
-        if (usingWriter)
+        if (usingWriter) {
             throw new IllegalStateException("Illegal attempt to call getOutputStream() after getWriter() has already been called.");
+        }
 
         usingOutputStream = true;
         outputStream.setOutputBuffer(outputBuffer);
@@ -634,16 +587,14 @@ public class Response {
      * <p>
      * Return the {@link OutputStream} associated with this {@link Response}.
      * </p>
-     * 
-     * By default the returned {@link NIOOutputStream} will work as blocking
-     * {@link java.io.OutputStream}, but it will be possible to call {@link NIOOutputStream#canWrite()} or
-     * {@link NIOOutputStream#notifyCanWrite(org.glassfish.grizzly.WriteHandler)} to
-     * avoid blocking.
+     *
+     * By default the returned {@link NIOOutputStream} will work as blocking {@link java.io.OutputStream}, but it will be
+     * possible to call {@link NIOOutputStream#canWrite()} or
+     * {@link NIOOutputStream#notifyCanWrite(org.glassfish.grizzly.WriteHandler)} to avoid blocking.
      *
      * @return the {@link NIOOutputStream} associated with this {@link Response}.
      *
-     * @throws IllegalStateException if {@link #getWriter()} or {@link #getNIOWriter()}
-     *  were already invoked.
+     * @throws IllegalStateException if {@link #getWriter()} or {@link #getNIOWriter()} were already invoked.
      *
      * @since 2.1.2
      */
@@ -664,52 +615,44 @@ public class Response {
         return locale;
     }
 
-
     /**
      * <p>
      * Return the {@link NIOWriter} associated with this {@link Response}.
      * </p>
-     * 
-     * By default the returned {@link NIOWriter} will work as blocking
-     * {@link java.io.Writer}, but it will be possible to call {@link NIOWriter#canWrite()} or
-     * {@link NIOWriter#notifyCanWrite(org.glassfish.grizzly.WriteHandler)} to
-     * avoid blocking.
      *
-     * @throws IllegalStateException if {@link #getOutputStream()} or
-     *  {@link #getNIOOutputStream()} were already invoked.
+     * By default the returned {@link NIOWriter} will work as blocking {@link java.io.Writer}, but it will be possible to
+     * call {@link NIOWriter#canWrite()} or {@link NIOWriter#notifyCanWrite(org.glassfish.grizzly.WriteHandler)} to avoid
+     * blocking.
+     *
+     * @throws IllegalStateException if {@link #getOutputStream()} or {@link #getNIOOutputStream()} were already invoked.
      */
     public Writer getWriter() {
         return getNIOWriter();
     }
 
-
     /**
      * <p>
-     * Return the {@link NIOWriter} associated with this {@link Response}.
-     * The {@link NIOWriter} will write content in a non-blocking manner.
+     * Return the {@link NIOWriter} associated with this {@link Response}. The {@link NIOWriter} will write content in a
+     * non-blocking manner.
      * </p>
      *
      * @return the {@link NIOWriter} associated with this {@link Response}.
      *
-     * @throws IllegalStateException if {@link #getOutputStream()} or
-     *  {@link #getNIOOutputStream()} were already invoked.
+     * @throws IllegalStateException if {@link #getOutputStream()} or {@link #getNIOOutputStream()} were already invoked.
      *
      * @since 2.1.2
      */
     public NIOWriter getNIOWriter() {
-        if (usingOutputStream)
+        if (usingOutputStream) {
             throw new IllegalStateException("Illegal attempt to call getWriter() after getOutputStream() has already been called.");
+        }
 
         /*
-         * If the response's character encoding has not been specified as
-         * described in <code>getCharacterEncoding</code> (i.e., the method
-         * just returns the default value <code>ISO-8859-1</code>),
-         * <code>getWriter</code> updates it to <code>ISO-8859-1</code>
-         * (with the effect that a subsequent call to getContentType() will
-         * include a charset=ISO-8859-1 component which will also be
-         * reflected in the Content-Type response header, thereby satisfying
-         * the Servlet spec requirement that containers must communicate the
-         * character encoding used for the servlet response's writer to the
+         * If the response's character encoding has not been specified as described in <code>getCharacterEncoding</code> (i.e.,
+         * the method just returns the default value <code>ISO-8859-1</code>), <code>getWriter</code> updates it to
+         * <code>ISO-8859-1</code> (with the effect that a subsequent call to getContentType() will include a charset=ISO-8859-1
+         * component which will also be reflected in the Content-Type response header, thereby satisfying the Servlet spec
+         * requirement that containers must communicate the character encoding used for the servlet response's writer to the
          * client).
          */
         setCharacterEncoding(getCharacterEncoding());
@@ -728,31 +671,26 @@ public class Response {
         return response.isCommitted();
     }
 
-
     /**
      * Flush the current buffered content to the network.
+     * 
      * @throws IOException if an occur occurs flushing to the wire.
      */
     public void flush() throws IOException {
         outputBuffer.flush();
     }
 
-
     /**
-     * @return the {@link OutputBuffer} associated with this
-     *  <code>Response</code>.
+     * @return the {@link OutputBuffer} associated with this <code>Response</code>.
      */
     public OutputBuffer getOutputBuffer() {
         return outputBuffer;
     }
 
-
     /**
-     * Clears any data that exists in the buffer as well as the status code
-     * and headers.
+     * Clears any data that exists in the buffer as well as the status code and headers.
      *
-     * @exception IllegalStateException if this response has already
-     *  been committed
+     * @exception IllegalStateException if this response has already been committed
      */
     public void reset() {
         checkResponse();
@@ -774,33 +712,28 @@ public class Response {
         usingOutputStream = false;
     }
 
-
     /**
      * Reset the data buffer but not any status or header information.
      *
-     * @exception IllegalStateException if the response has already
-     *  been committed
+     * @exception IllegalStateException if the response has already been committed
      */
     public void resetBuffer() {
         resetBuffer(false);
     }
 
-
     /**
-     * Reset the data buffer and the using Writer/Stream flags but not any
-     * status or header information.
+     * Reset the data buffer and the using Writer/Stream flags but not any status or header information.
      *
-     * @param resetWriterStreamFlags <code>true</code> if the internal
-     *        <code>usingWriter</code>, <code>usingOutputStream</code>,
-     *        <code>isCharacterEncodingSet</code> flags should also be reset
+     * @param resetWriterStreamFlags <code>true</code> if the internal <code>usingWriter</code>,
+     * <code>usingOutputStream</code>, <code>isCharacterEncodingSet</code> flags should also be reset
      *
-     * @exception IllegalStateException if the response has already
-     *  been committed
+     * @exception IllegalStateException if the response has already been committed
      */
     public void resetBuffer(final boolean resetWriterStreamFlags) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Cannot reset buffer after response has been committed.");
+        }
 
         outputBuffer.reset();
 
@@ -811,60 +744,55 @@ public class Response {
 
     }
 
-
     /**
      * Set the buffer size to be used for this Response.
      *
      * @param size The new buffer size
      *
-     * @exception IllegalStateException if this method is called after
-     *  output has been committed for this response
+     * @exception IllegalStateException if this method is called after output has been committed for this response
      */
     public void setBufferSize(final int size) {
 
         if (isCommitted()) {
-            throw new IllegalStateException("Unable to change buffer size as the response has been committed"); 
+            throw new IllegalStateException("Unable to change buffer size as the response has been committed");
         }
         outputBuffer.setBufferSize(size);
 
     }
 
-
     /**
      * Set the content length (in bytes) for this Response.
      *
-     * If the <code>length</code> argument is negative - then {@link org.glassfish.grizzly.http.HttpPacket}
-     * content-length value will be reset to <tt>-1</tt> and
-     * <tt>Content-Length</tt> header (if present) will be removed.
-     * 
+     * If the <code>length</code> argument is negative - then {@link org.glassfish.grizzly.http.HttpPacket} content-length
+     * value will be reset to <tt>-1</tt> and <tt>Content-Length</tt> header (if present) will be removed.
+     *
      * @param length The new content length
      */
     public void setContentLengthLong(final long length) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
-        if (usingWriter)
+        if (usingWriter) {
             return;
+        }
 
         response.setContentLengthLong(length);
 
     }
 
-
     /**
      * Set the content length (in bytes) for this Response.
-     * 
-     * If the <code>length</code> argument is negative - then {@link org.glassfish.grizzly.http.HttpPacket}
-     * content-length value will be reset to <tt>-1</tt> and
-     * <tt>Content-Length</tt> header (if present) will be removed.
+     *
+     * If the <code>length</code> argument is negative - then {@link org.glassfish.grizzly.http.HttpPacket} content-length
+     * value will be reset to <tt>-1</tt> and <tt>Content-Length</tt> header (if present) will be removed.
      *
      * @param length The new content length
      */
     public void setContentLength(final int length) {
         setContentLengthLong(length);
     }
-
 
     /**
      * Set the content type for this Response.
@@ -873,8 +801,9 @@ public class Response {
      */
     public void setContentType(String type) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         // Ignore charset if getWriter() has already been called
         if (usingWriter) {
@@ -897,14 +826,15 @@ public class Response {
      */
     public void setContentType(final ContentType type) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         if (type == null) {
             response.setContentType((String) null);
             return;
         }
-        
+
         if (!usingWriter) {
             response.setContentType(type);
         } else {
@@ -912,42 +842,36 @@ public class Response {
             response.setContentType(type.getMimeType());
         }
     }
-    
+
     /**
-     * Set the Locale that is appropriate for this response, including
-     * setting the appropriate character encoding.
+     * Set the Locale that is appropriate for this response, including setting the appropriate character encoding.
      *
      * @param locale The new locale
      */
     public void setLocale(final Locale locale) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setLocale(locale);
     }
 
-
     // --------------------------------------------------- HttpResponsePacket Methods
 
-
     /**
-     * Return an array of all cookies set for this response, or
-     * a zero-length array if no cookies have been set.
+     * Return an array of all cookies set for this response, or a zero-length array if no cookies have been set.
      */
     public Cookie[] getCookies() {
         final Cookies cookies = new Cookies();
         cookies.setHeaders(response.getHeaders(), false);
-        
+
         return cookies.get();
     }
 
-
     /**
-     * Return the value for the specified header, or <code>null</code> if this
-     * header has not been set.  If more than one value was added for this
-     * name, only the first is returned; use getHeaderValues() to retrieve all
-     * of them.
+     * Return the value for the specified header, or <code>null</code> if this header has not been set. If more than one
+     * value was added for this name, only the first is returned; use getHeaderValues() to retrieve all of them.
      *
      * @param name Header name to look up
      */
@@ -956,10 +880,8 @@ public class Response {
         return response.getHeader(name);
     }
 
-
     /**
-     * Return an array of all the header names set for this response, or
-     * a zero-length array if no headers have been set.
+     * Return an array of all the header names set for this response, or a zero-length array if no headers have been set.
      */
     public String[] getHeaderNames() {
         checkResponse();
@@ -973,11 +895,9 @@ public class Response {
 
     }
 
-
     /**
-     * Return an array of all the header values associated with the
-     * specified header name, or an zero-length array if there are no such
-     * header values.
+     * Return an array of all the header values associated with the specified header name, or an zero-length array if there
+     * are no such header values.
      *
      * @param name Header name to look up
      */
@@ -987,20 +907,17 @@ public class Response {
         for (final String headerValue : response.getHeaders().values(name)) {
             result.add(headerValue);
         }
-        
+
         return result.toArray(new String[result.size()]);
     }
 
-
     /**
-     * Return the error message that was set with <code>sendError()</code>
-     * for this Response.
+     * Return the error message that was set with <code>sendError()</code> for this Response.
      */
     public String getMessage() {
         checkResponse();
         return response.getReasonPhrase();
     }
-
 
     /**
      * Return the HTTP status code associated with this Response.
@@ -1010,38 +927,33 @@ public class Response {
         return response.getStatus();
     }
 
-
     /**
-     * Reset this response, and specify the values for the HTTP status code
-     * and corresponding message.
+     * Reset this response, and specify the values for the HTTP status code and corresponding message.
      *
-     * @exception IllegalStateException if this response has already been
-     *  committed
+     * @exception IllegalStateException if this response has already been committed
      */
     public void reset(final int status, final String message) {
         reset();
         setStatus(status, message);
     }
 
-
     // -------------------------------------------- HttpServletResponse Methods
 
-
     /**
-     * Add the specified Cookie to those that will be included with
-     * this Response.
+     * Add the specified Cookie to those that will be included with this Response.
      *
      * @param cookie Cookie to be added
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void addCookie(final Cookie cookie) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         final StringBuilder sb = new StringBuilder();
-        //web application code can receive a IllegalArgumentException
-        //from the appendCookieValue invokation
+        // web application code can receive a IllegalArgumentException
+        // from the appendCookieValue invokation
         if (System.getSecurityManager() != null) {
             AccessController.doPrivileged(new PrivilegedAction() {
                 @Override
@@ -1062,20 +974,20 @@ public class Response {
     }
 
     /**
-     * Special method for adding a session cookie as we should be overriding 
-     * any previous 
+     * Special method for adding a session cookie as we should be overriding any previous
      */
     protected void addSessionCookieInternal(final Cookie cookie) {
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         String name = cookie.getName();
         final String headername = Header.SetCookie.toString();
         final String startsWith = name + "=";
 
         final StringBuilder sb = new StringBuilder();
-        //web application code can receive a IllegalArgumentException
-        //from the appendCookieValue invokation
+        // web application code can receive a IllegalArgumentException
+        // from the appendCookieValue invokation
         if (System.getSecurityManager() != null) {
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 @Override
@@ -1087,9 +999,9 @@ public class Response {
         } else {
             CookieSerializerUtils.serializeServerCookie(sb, cookie);
         }
-        
+
         final String cookieString = sb.toString();
-        
+
         boolean set = false;
         MimeHeaders headers = response.getHeaders();
         int n = headers.size();
@@ -1105,21 +1017,18 @@ public class Response {
             addHeader(headername, cookieString);
         }
     }
-    
+
     /**
-     * Removes any Set-Cookie response headers whose value contains the
-     * string "JSESSIONID=" or "JSESSIONIDSSO="
+     * Removes any Set-Cookie response headers whose value contains the string "JSESSIONID=" or "JSESSIONIDSSO="
      */
     @SuppressWarnings("unused")
     protected void removeSessionCookies() {
         final String sessionCookieName = request.getSessionCookieName();
-        final String pattern = sessionCookieName != null
-                ? '^' + sessionCookieName + "(?:SSO)?=.*"
-                : Globals.SESSION_COOKIE_PATTERN;
-        
+        final String pattern = sessionCookieName != null ? '^' + sessionCookieName + "(?:SSO)?=.*" : Globals.SESSION_COOKIE_PATTERN;
+
         response.getHeaders().removeHeaderMatches(Header.SetCookie, pattern);
     }
-    
+
     /**
      * Add the specified date header to the specified value.
      *
@@ -1128,12 +1037,12 @@ public class Response {
      */
     public void addDateHeader(final String name, final long value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         if (format == null) {
-            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER,
-                                          Locale.US);
+            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER, Locale.US);
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
 
@@ -1151,19 +1060,18 @@ public class Response {
      */
     public void addDateHeader(final Header header, final long value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         if (format == null) {
-            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER,
-                                          Locale.US);
+            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER, Locale.US);
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
 
         addHeader(header, FastHttpDateFormat.formatDate(value, format));
 
     }
-
 
     /**
      * Add the specified header to the specified value.
@@ -1173,8 +1081,9 @@ public class Response {
      */
     public void addHeader(final String name, final String value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addHeader(name, value);
     }
@@ -1184,13 +1093,14 @@ public class Response {
      *
      * @param name Name of the header to set
      * @param value Value to be set
-     * 
+     *
      * @since 2.3.8
      */
     public void addHeader(final String name, final HeaderValue value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addHeader(name, value);
     }
@@ -1205,8 +1115,9 @@ public class Response {
      */
     public void addHeader(final Header header, final String value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addHeader(header, value);
     }
@@ -1221,8 +1132,9 @@ public class Response {
      */
     public void addHeader(final Header header, final HeaderValue value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.addHeader(header, value);
     }
@@ -1235,8 +1147,9 @@ public class Response {
      */
     public void addIntHeader(final String name, final int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         addHeader(name, "" + value);
 
@@ -1253,13 +1166,13 @@ public class Response {
     @SuppressWarnings("unused")
     public void addIntHeader(final Header header, final int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         addHeader(header, Integer.toString(value));
 
     }
-
 
     /**
      * Has the specified header been set already in this response?
@@ -1284,39 +1197,33 @@ public class Response {
         return response.containsHeader(header);
     }
 
-
     /**
-     * Send an acknowledgment of a request.   An acknowledgment in this
-     * case is simply an HTTP response status line, i.e.
+     * Send an acknowledgment of a request. An acknowledgment in this case is simply an HTTP response status line, i.e.
      * <code>HTTP/1.1 [STATUS] [REASON-PHRASE]<code>.
      *
      * @exception java.io.IOException if an input/output error occurs
      */
     public void sendAcknowledgement() throws IOException {
-        if (isCommitted() || !request.requiresAcknowledgement())
+        if (isCommitted() || !request.requiresAcknowledgement()) {
             return;
+        }
 
         response.setAcknowledgement(true);
         outputBuffer.acknowledge();
 
     }
 
-
     /**
-     * Send an error response with the specified status and a
-     * default message.
+     * Send an error response with the specified status and a default message.
      *
      * @param status HTTP status code to send
      *
-     * @exception IllegalStateException if this response has
-     *  already been committed
+     * @exception IllegalStateException if this response has already been committed
      * @exception java.io.IOException if an input/output error occurs
      */
-    public void sendError(int status)
-        throws IOException {
+    public void sendError(int status) throws IOException {
         sendError(status, null);
     }
-
 
     /**
      * Send an error response with the specified status and message.
@@ -1324,15 +1231,14 @@ public class Response {
      * @param status HTTP status code to send
      * @param message Corresponding message to send
      *
-     * @exception IllegalStateException if this response has
-     *  already been committed
+     * @exception IllegalStateException if this response has already been committed
      * @exception java.io.IOException if an input/output error occurs
      */
-    public void sendError(final int status, final String message)
-            throws IOException {
+    public void sendError(final int status, final String message) throws IOException {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to call sendError() after the response has been committed.");
+        }
 
         setError();
 
@@ -1346,9 +1252,9 @@ public class Response {
         outputBuffer.reset();
         usingWriter = false;
         usingOutputStream = false;
-        
+
         setStatus(status, message);
-        
+
         String nonNullMsg = message;
         if (nonNullMsg == null) {
             final HttpStatus httpStatus = HttpStatus.getHttpStatus(status);
@@ -1358,28 +1264,25 @@ public class Response {
                 nonNullMsg = "Unknown Error";
             }
         }
-        
-        HtmlHelper.sendErrorPage(request, this, getErrorPageGenerator(),
-                status, nonNullMsg, nonNullMsg, null);
-        
+
+        HtmlHelper.sendErrorPage(request, this, getErrorPageGenerator(), status, nonNullMsg, nonNullMsg, null);
+
         finish();
     }
-
 
     /**
      * Send a temporary redirect to the specified redirect location URL.
      *
      * @param location Location URL to redirect to
      *
-     * @exception IllegalStateException if this response has
-     *  already been committed
+     * @exception IllegalStateException if this response has already been committed
      * @exception java.io.IOException if an input/output error occurs
      */
-    public void sendRedirect(String location)
-        throws IOException {
+    public void sendRedirect(String location) throws IOException {
 
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to redirect the response as the response has been committed.");
+        }
 
         // Clear any data content that has been buffered
         resetBuffer();
@@ -1414,11 +1317,10 @@ public class Response {
                 getWriter().flush();
             } catch (IllegalStateException ise1) {
                 try {
-                   getOutputStream().write(sb.toString().getBytes(
-                           org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET));
+                    getOutputStream().write(sb.toString().getBytes(org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET));
                 } catch (IllegalStateException ise2) {
-                   // ignore; the RFC says "SHOULD" so it is acceptable
-                   // to omit the body in case of an error
+                    // ignore; the RFC says "SHOULD" so it is acceptable
+                    // to omit the body in case of an error
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -1428,7 +1330,6 @@ public class Response {
         finish();
     }
 
-
     /**
      * Set the specified date header to the specified value.
      *
@@ -1437,12 +1338,12 @@ public class Response {
      */
     public void setDateHeader(String name, long value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         if (format == null) {
-            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER,
-                                          Locale.US);
+            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER, Locale.US);
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
 
@@ -1461,19 +1362,18 @@ public class Response {
     @SuppressWarnings("unused")
     public void setDateHeader(final Header header, long value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         if (format == null) {
-            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER,
-                                          Locale.US);
+            format = new SimpleDateFormat(HTTP_RESPONSE_DATE_HEADER, Locale.US);
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
 
         setHeader(header, FastHttpDateFormat.formatDate(value, format));
 
     }
-
 
     /**
      * Set the specified header to the specified value.
@@ -1483,8 +1383,9 @@ public class Response {
      */
     public void setHeader(final String name, final String value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setHeader(name, value);
     }
@@ -1494,17 +1395,18 @@ public class Response {
      *
      * @param name Name of the header to set
      * @param value Value to be set
-     * 
+     *
      * @since 2.3.8
      */
     public void setHeader(final String name, final HeaderValue value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setHeader(name, value);
     }
-    
+
     /**
      * Set the specified header to the specified value.
      *
@@ -1515,8 +1417,9 @@ public class Response {
      */
     public void setHeader(final Header header, final String value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setHeader(header, value);
     }
@@ -1531,8 +1434,9 @@ public class Response {
      */
     public void setHeader(final Header header, final HeaderValue value) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setHeader(header, value);
     }
@@ -1545,13 +1449,13 @@ public class Response {
      */
     public void setIntHeader(String name, int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         setHeader(name, "" + value);
 
     }
-
 
     /**
      * Set the specified integer header to the specified value.
@@ -1564,13 +1468,13 @@ public class Response {
     @SuppressWarnings("unused")
     public void setIntHeader(final Header header, final int value) {
 
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         setHeader(header, Integer.toString(value));
 
     }
-
 
     /**
      * Set the HTTP status to be returned with this response.
@@ -1581,7 +1485,6 @@ public class Response {
         setStatus(status, null);
     }
 
-
     /**
      * Set the HTTP status and message to be returned with this response.
      *
@@ -1591,43 +1494,43 @@ public class Response {
      */
     public void setStatus(int status, String message) {
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         response.setStatus(status);
         response.setReasonPhrase(message);
 
     }
 
-
     /**
      * Set the HTTP status and message to be returned with this response.
+     * 
      * @param status {@link HttpStatus} to set
      */
     public void setStatus(HttpStatus status) {
 
         checkResponse();
-        if (isCommitted())
+        if (isCommitted()) {
             return;
+        }
 
         status.setValues(response);
 
     }
 
-
     // ------------------------------------------------------ Protected Methods
 
     /**
-     * Convert (if necessary) and return the absolute URL that represents the
-     * resource referenced by this possibly relative URL.  If this URL is
-     * already absolute, return it unchanged.
+     * Convert (if necessary) and return the absolute URL that represents the resource referenced by this possibly relative
+     * URL. If this URL is already absolute, return it unchanged.
      *
      * @param location URL to be (possibly) converted and then returned
      *
-     * @exception IllegalArgumentException if a MalformedURLException is
-     *  thrown when converting the relative URL to an absolute one
+     * @exception IllegalArgumentException if a MalformedURLException is thrown when converting the relative URL to an
+     * absolute one
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     protected String toAbsolute(final String location, final boolean normalize) {
 
         if (location == null) {
@@ -1636,22 +1539,21 @@ public class Response {
 
         final boolean leadingSlash = location.startsWith("/");
 
-        if (leadingSlash || (!location.contains("://"))) {
+        if (leadingSlash || !location.contains("://")) {
 
             final String scheme = request.getScheme();
 
             final String name = request.getServerName();
             final int port = request.getServerPort();
-            
+
             redirectURLCC.recycle();
             final CharChunk cc = redirectURLCC;
-            
+
             try {
                 cc.append(scheme, 0, scheme.length());
                 cc.append("://", 0, 3);
                 cc.append(name, 0, name.length());
-                if ((scheme.equals("http") && port != 80)
-                        || (scheme.equals("https") && port != 443)) {
+                if (scheme.equals("http") && port != 80 || scheme.equals("https") && port != 443) {
                     cc.append(':');
                     String portS = port + "";
                     cc.append(portS, 0, portS.length());
@@ -1665,13 +1567,12 @@ public class Response {
                     if (System.getSecurityManager() != null) {
                         try {
                             final String frelativePath = relativePath;
-                            encodedURI = AccessController.doPrivileged(
-                                    new PrivilegedExceptionAction<String>() {
-                                        @Override
-                                        public String run() throws IOException {
-                                            return urlEncoder.encodeURL(frelativePath);
-                                        }
-                                    });
+                            encodedURI = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
+                                @Override
+                                public String run() throws IOException {
+                                    return urlEncoder.encodeURL(frelativePath);
+                                }
+                            });
                         } catch (PrivilegedActionException pae) {
                             throw new IllegalArgumentException(location, pae.getCause());
                         }
@@ -1687,7 +1588,7 @@ public class Response {
                 throw new IllegalArgumentException(location, e);
             }
 
-            if (normalize){
+            if (normalize) {
                 HttpRequestURIDecoder.normalizeChars(cc);
             }
 
@@ -1698,18 +1599,17 @@ public class Response {
         }
     }
 
-
     /**
-     * Filter the specified message string for characters that are sensitive
-     * in HTML.  This avoids potential attacks caused by including JavaScript
-     * codes in the request URL that is often reported in error messages.
+     * Filter the specified message string for characters that are sensitive in HTML. This avoids potential attacks caused
+     * by including JavaScript codes in the request URL that is often reported in error messages.
      *
      * @param message The message string to be filtered
      */
     public static String filter(String message) {
 
-        if (message == null)
-            return (null);
+        if (message == null) {
+            return null;
+        }
 
         char content[] = new char[message.length()];
         message.getChars(0, message.length(), content, 0);
@@ -1732,21 +1632,21 @@ public class Response {
                 result.append(content[i]);
             }
         }
-        return (result.toString());
+        return result.toString();
 
     }
 
     /**
-     * Return the specified URL with the specified session identifier
-     * suitably encoded.
+     * Return the specified URL with the specified session identifier suitably encoded.
      *
      * @param url URL to be encoded with the session id
      * @param sessionId Session id to be included in the encoded URL
      */
     protected String toEncoded(String url, String sessionId) {
 
-        if ((url == null) || (sessionId == null))
-            return (url);
+        if (url == null || sessionId == null) {
+            return url;
+        }
 
         String path = url;
         String query = "";
@@ -1762,7 +1662,7 @@ public class Response {
             path = path.substring(0, pound);
         }
         StringBuilder sb = new StringBuilder(path);
-        if( sb.length() > 0 ) { // jsessionid can't be first.
+        if (sb.length() > 0) { // jsessionid can't be first.
             sb.append(";jsessionid=");
             sb.append(sessionId);
         }
@@ -1775,7 +1675,7 @@ public class Response {
 
         sb.append(anchor);
         sb.append(query);
-        return (sb.toString());
+        return sb.toString();
 
     }
 
@@ -1795,10 +1695,11 @@ public class Response {
     public SuspendContext getSuspendContext() {
         return suspendedContext;
     }
-    
+
     /**
      * Return <tt>true<//tt> if that {@link Response#suspend()} has been
      * invoked and set to <tt>true</tt>
+     * 
      * @return <tt>true<//tt> if that {@link Response#suspend()} has been
      * invoked and set to <tt>true</tt>
      */
@@ -1809,15 +1710,13 @@ public class Response {
         synchronized (suspendedContext) {
             state = suspendState;
         }
-        
-        return state == SuspendState.SUSPENDED || state == SuspendState.RESUMING
-                || state == SuspendState.CANCELLING;
+
+        return state == SuspendState.SUSPENDED || state == SuspendState.RESUMING || state == SuspendState.CANCELLING;
     }
 
     /**
-     * Suspend the {@link Response}. Suspending a {@link Response} will
-     * tell the underlying container to avoid recycling objects associated with
-     * the current instance, and also to avoid committing response.
+     * Suspend the {@link Response}. Suspending a {@link Response} will tell the underlying container to avoid recycling
+     * objects associated with the current instance, and also to avoid committing response.
      */
     @SuppressWarnings("deprecation")
     public void suspend() {
@@ -1825,75 +1724,60 @@ public class Response {
     }
 
     /**
-     * Suspend the {@link Response}. Suspending a {@link Response} will
-     * tell the underlying container to avoid recycling objects associated with
-     * the current instance, and also to avoid committing response.
+     * Suspend the {@link Response}. Suspending a {@link Response} will tell the underlying container to avoid recycling
+     * objects associated with the current instance, and also to avoid committing response.
      *
-     * @param timeout The maximum amount of time,
-     * a {@link Response} can be suspended. When the timeout expires (because
-     * nothing has been written or because the {@link Response#resume()}
-     * or {@link Response#cancel()}), the {@link Response} will be automatically
-     * resumed and committed. Usage of any methods of a {@link Response} that
-     * times out will throw an {@link IllegalStateException}.
+     * @param timeout The maximum amount of time, a {@link Response} can be suspended. When the timeout expires (because
+     * nothing has been written or because the {@link Response#resume()} or {@link Response#cancel()}), the {@link Response}
+     * will be automatically resumed and committed. Usage of any methods of a {@link Response} that times out will throw an
+     * {@link IllegalStateException}.
      * @param timeunit timeout units
      *
      * @deprecated timeout parameters don't make any sense without CompletionHandler
      */
+    @Deprecated
     public void suspend(final long timeout, final TimeUnit timeunit) {
         suspend(timeout, timeunit, null);
     }
 
     /**
-     * Suspend the {@link Response}. Suspending a {@link Response} will
-     * tell the underlying container to avoid recycling objects associated with
-     * the current instance, and also to avoid committing response. When the
-     * {@link Response#resume()} is invoked, the container will
-     * make sure {@link CompletionHandler#completed(Object)}
-     * is invoked with the original <tt>attachment</tt>. When the
-     * {@link Response#cancel()} is invoked, the container will
-     * make sure {@link org.glassfish.grizzly.CompletionHandler#cancelled()}
-     * is invoked with the original <tt>attachment</tt>. If the timeout expires, the
-     * {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original <tt>attachment</tt> and
-     * the {@link Response} committed.
+     * Suspend the {@link Response}. Suspending a {@link Response} will tell the underlying container to avoid recycling
+     * objects associated with the current instance, and also to avoid committing response. When the
+     * {@link Response#resume()} is invoked, the container will make sure {@link CompletionHandler#completed(Object)} is
+     * invoked with the original <tt>attachment</tt>. When the {@link Response#cancel()} is invoked, the container will make
+     * sure {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original <tt>attachment</tt>. If
+     * the timeout expires, the {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original
+     * <tt>attachment</tt> and the {@link Response} committed.
      *
-     * @param timeout The maximum amount of time the {@link Response} can be suspended.
-     * When the timeout expires (because nothing has been written or because the
-     * {@link Response#resume()} or {@link Response#cancel()}), the {@link Response}
-     * will be automatically resumed and committed. Usage of any methods of a
-     * {@link Response} that times out will throw an {@link IllegalStateException}.
+     * @param timeout The maximum amount of time the {@link Response} can be suspended. When the timeout expires (because
+     * nothing has been written or because the {@link Response#resume()} or {@link Response#cancel()}), the {@link Response}
+     * will be automatically resumed and committed. Usage of any methods of a {@link Response} that times out will throw an
+     * {@link IllegalStateException}.
      * @param timeunit timeout units
      * @param completionHandler a {@link org.glassfish.grizzly.CompletionHandler}
      */
-    public void suspend(final long timeout, final TimeUnit timeunit,
-            final CompletionHandler<Response> completionHandler) {
+    public void suspend(final long timeout, final TimeUnit timeunit, final CompletionHandler<Response> completionHandler) {
         suspend(timeout, timeunit, completionHandler, null);
     }
 
     /**
-     * Suspend the {@link Response}. Suspending a {@link Response} will
-     * tell the underlying container to avoid recycling objects associated with
-     * the current instance, and also to avoid committing response. When the
-     * {@link Response#resume()} is invoked, the container will
-     * make sure {@link CompletionHandler#completed(Object)}
-     * is invoked with the original <tt>attachment</tt>. When the
-     * {@link Response#cancel()} is invoked, the container will
-     * make sure {@link org.glassfish.grizzly.CompletionHandler#cancelled()}
-     * is invoked with the original <tt>attachment</tt>. If the timeout expires, the
-     * {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original <tt>attachment</tt> and
-     * the {@link Response} committed.
+     * Suspend the {@link Response}. Suspending a {@link Response} will tell the underlying container to avoid recycling
+     * objects associated with the current instance, and also to avoid committing response. When the
+     * {@link Response#resume()} is invoked, the container will make sure {@link CompletionHandler#completed(Object)} is
+     * invoked with the original <tt>attachment</tt>. When the {@link Response#cancel()} is invoked, the container will make
+     * sure {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original <tt>attachment</tt>. If
+     * the timeout expires, the {@link org.glassfish.grizzly.CompletionHandler#cancelled()} is invoked with the original
+     * <tt>attachment</tt> and the {@link Response} committed.
      *
-     * @param timeout The maximum amount of time the {@link Response} can be suspended.
-     * When the timeout expires (because nothing has been written or because the
-     * {@link Response#resume()} or {@link Response#cancel()}), the {@link Response}
-     * will be automatically resumed and committed. Usage of any methods of a
-     * {@link Response} that times out will throw an {@link IllegalStateException}.
+     * @param timeout The maximum amount of time the {@link Response} can be suspended. When the timeout expires (because
+     * nothing has been written or because the {@link Response#resume()} or {@link Response#cancel()}), the {@link Response}
+     * will be automatically resumed and committed. Usage of any methods of a {@link Response} that times out will throw an
+     * {@link IllegalStateException}.
      * @param timeunit timeout units
      * @param completionHandler a {@link org.glassfish.grizzly.CompletionHandler}
      * @param timeoutHandler {@link TimeoutHandler} to customize the suspended <tt>Response</tt> timeout logic.
      */
-    public void suspend(final long timeout, final TimeUnit timeunit,
-            final CompletionHandler<Response> completionHandler,
-            final TimeoutHandler timeoutHandler) {
+    public void suspend(final long timeout, final TimeUnit timeunit, final CompletionHandler<Response> completionHandler, final TimeoutHandler timeoutHandler) {
 
         checkResponse();
 
@@ -1907,28 +1791,24 @@ public class Response {
 
         suspendedContext.init(completionHandler, timeoutHandler);
 
-        HttpServerProbeNotifier.notifyRequestSuspend(
-                request.httpServerFilter, ctx.getConnection(), request);
+        HttpServerProbeNotifier.notifyRequestSuspend(request.httpServerFilter, ctx.getConnection(), request);
 
         httpContext.getCloseable().addCloseListener(suspendedContext.closeListener);
 
         if (timeout > 0) {
-            final long timeoutMillis =
-                    TimeUnit.MILLISECONDS.convert(timeout, timeunit);
+            final long timeoutMillis = TimeUnit.MILLISECONDS.convert(timeout, timeunit);
 
-            delayQueue.add(suspendedContext.suspendTimeout,
-                    timeoutMillis, TimeUnit.MILLISECONDS);
+            delayQueue.add(suspendedContext.suspendTimeout, timeoutMillis, TimeUnit.MILLISECONDS);
             suspendedContext.suspendTimeout.delayMillis = timeoutMillis;
         }
     }
 
     /**
-     * Complete the {@link Response} and finish/commit it. If a
-     * {@link CompletionHandler} has been defined, its {@link CompletionHandler#completed(Object)}
-     * will first be invoked, then the {@link Response#finish()}.
-     * Those operations commit the response.
+     * Complete the {@link Response} and finish/commit it. If a {@link CompletionHandler} has been defined, its
+     * {@link CompletionHandler#completed(Object)} will first be invoked, then the {@link Response#finish()}. Those
+     * operations commit the response.
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public void resume() {
         checkResponse();
 
@@ -1937,29 +1817,28 @@ public class Response {
     }
 
     /**
-     * Cancel the {@link Response} and finish/commit it. If a
-     * {@link CompletionHandler} has been defined, its {@link CompletionHandler#cancelled()}
-     * will first be invoked, then the {@link Response#finish()}.
-     * Those operations commit the response.
-     * 
+     * Cancel the {@link Response} and finish/commit it. If a {@link CompletionHandler} has been defined, its
+     * {@link CompletionHandler#cancelled()} will first be invoked, then the {@link Response#finish()}. Those operations
+     * commit the response.
+     *
      * @deprecated pls. use {@link #resume()}
      */
+    @Deprecated
     public void cancel() {
         checkResponse();
 
-        //noinspection deprecation
+        // noinspection deprecation
         suspendedContext.markCancelled();
 
         ctx.resume();
     }
-    
+
     /**
      * Make sure the {@link Response} object has been set.
      */
     final void checkResponse() {
         if (response == null) {
-            throw new IllegalStateException("Internal " +
-                    "org.glassfish.grizzly.http.server.Response has not been set");
+            throw new IllegalStateException("Internal " + "org.glassfish.grizzly.http.server.Response has not been set");
         }
     }
 
@@ -1970,28 +1849,26 @@ public class Response {
     public final class SuspendedContextImpl implements SuspendContext {
 
         private int modCount;
-        
+
         CompletionHandler<Response> completionHandler;
         SuspendTimeout suspendTimeout;
-        
+
         private CloseListener closeListener;
-        
+
         /**
-         * Marks {@link Response} as resumed, but doesn't resume associated
-         * {@link FilterChainContext} invocation.
+         * Marks {@link Response} as resumed, but doesn't resume associated {@link FilterChainContext} invocation.
          */
         public synchronized boolean markResumed() {
             modCount++;
-            
+
             if (suspendState != SuspendState.SUSPENDED) {
-                if (suspendState == SuspendState.CANCELLED ||
-                        suspendState == SuspendState.CANCELLING) { // Siletly return if processing has been cancelled
+                if (suspendState == SuspendState.CANCELLED || suspendState == SuspendState.CANCELLING) { // Siletly return if processing has been cancelled
                     return false;
                 }
-                
+
                 throw new IllegalStateException("Not Suspended");
             }
-            
+
             suspendState = SuspendState.RESUMING;
 
             httpContext.getCloseable().removeCloseListener(closeListener);
@@ -2004,30 +1881,28 @@ public class Response {
 
             suspendState = SuspendState.RESUMED;
 
-            HttpServerProbeNotifier.notifyRequestResume(request.httpServerFilter,
-                    ctx.getConnection(), request);
-            
+            HttpServerProbeNotifier.notifyRequestResume(request.httpServerFilter, ctx.getConnection(), request);
+
             return true;
         }
 
         /**
-         * Marks {@link Response} as cancelled, if expectedModCount corresponds
-         * to the current modCount. This method doesn't resume associated
-         * {@link FilterChainContext} invocation.
+         * Marks {@link Response} as cancelled, if expectedModCount corresponds to the current modCount. This method doesn't
+         * resume associated {@link FilterChainContext} invocation.
          */
         protected synchronized boolean markCancelled(final int expectedModCount) {
             if (modCount != expectedModCount) {
                 return false;
             }
-            
+
             modCount++;
-            
+
             if (suspendState != SuspendState.SUSPENDED) {
                 throw new IllegalStateException("Not Suspended");
             }
 
             suspendState = SuspendState.CANCELLING;
-            
+
             httpContext.getCloseable().removeCloseListener(closeListener);
 
             if (completionHandler != null) {
@@ -2037,33 +1912,32 @@ public class Response {
             suspendState = SuspendState.CANCELLED;
             reset();
 
-            HttpServerProbeNotifier.notifyRequestCancel(
-                    request.httpServerFilter, ctx.getConnection(), request);
-            
+            HttpServerProbeNotifier.notifyRequestCancel(request.httpServerFilter, ctx.getConnection(), request);
+
             final InputBuffer inputBuffer = request.getInputBuffer();
             if (!inputBuffer.isFinished()) {
                 inputBuffer.terminate();
             }
-            
+
             return true;
         }
-        
+
         /**
-         * Marks {@link Response} as cancelled, but doesn't resume associated
-         * {@link FilterChainContext} invocation.
+         * Marks {@link Response} as cancelled, but doesn't resume associated {@link FilterChainContext} invocation.
+         * 
          * @deprecated
          */
+        @Deprecated
         public synchronized void markCancelled() {
             markCancelled(modCount);
         }
 
-        private void init(final CompletionHandler<Response> completionHandler,
-                final TimeoutHandler timeoutHandler) {
+        private void init(final CompletionHandler<Response> completionHandler, final TimeoutHandler timeoutHandler) {
             this.completionHandler = completionHandler;
             this.suspendTimeout = new SuspendTimeout(modCount, timeoutHandler);
             closeListener = new SuspendCloseListener(modCount);
         }
-        
+
         void reset() {
             suspendTimeout.reset();
             suspendTimeout = null;
@@ -2089,11 +1963,10 @@ public class Response {
         @Override
         public void setTimeout(final long timeout, final TimeUnit timeunit) {
             synchronized (suspendedContext) {
-                if (suspendState != SuspendState.SUSPENDED ||
-                        suspendTimeout == null) {
+                if (suspendState != SuspendState.SUSPENDED || suspendTimeout == null) {
                     return;
                 }
-                
+
                 suspendTimeout.setTimeout(timeout, timeunit);
             }
         }
@@ -2102,11 +1975,11 @@ public class Response {
         public boolean isSuspended() {
             return Response.this.isSuspended();
         }
-        
+
         public SuspendStatus getSuspendStatus() {
             return suspendStatus;
-        }        
-        
+        }
+
         @SuppressWarnings("deprecation")
         private class SuspendCloseListener implements GenericCloseListener {
             private final int expectedModCount;
@@ -2114,10 +1987,9 @@ public class Response {
             public SuspendCloseListener(int expectedModCount) {
                 this.expectedModCount = expectedModCount;
             }
-            
+
             @Override
-            public void onClosed(final Closeable connection,
-                    final CloseType closeType) throws IOException {
+            public void onClosed(final Closeable connection, final CloseType closeType) throws IOException {
                 checkResponse();
 
                 if (suspendedContext.markCancelled(expectedModCount)) {
@@ -2133,7 +2005,7 @@ public class Response {
 
         TimeoutHandler timeoutHandler;
         long delayMillis;
-        
+
         volatile long timeoutTimeMillis;
 
         private SuspendTimeout(int modCount, TimeoutHandler timeoutHandler) {
@@ -2144,15 +2016,13 @@ public class Response {
         boolean onTimeout() {
             timeoutTimeMillis = DelayedExecutor.UNSET_TIMEOUT;
             final TimeoutHandler localTimeoutHandler = timeoutHandler;
-            if (localTimeoutHandler == null
-                    || localTimeoutHandler.onTimeout(Response.this)) {
-                HttpServerProbeNotifier.notifyRequestTimeout(
-                        request.httpServerFilter, ctx.getConnection(), request);
+            if (localTimeoutHandler == null || localTimeoutHandler.onTimeout(Response.this)) {
+                HttpServerProbeNotifier.notifyRequestTimeout(request.httpServerFilter, ctx.getConnection(), request);
 
                 try {
                     checkResponse();
 
-                    //noinspection StatementWithEmptyBody
+                    // noinspection StatementWithEmptyBody
                     if (suspendedContext.markCancelled(expectedModCount)) {
 //                        ctx.resume();
                     }
@@ -2188,19 +2058,17 @@ public class Response {
             timeoutHandler = null;
         }
     }
-    
-    private static class DelayQueueWorker implements
-            DelayedExecutor.Worker<SuspendTimeout> {
+
+    private static class DelayQueueWorker implements DelayedExecutor.Worker<SuspendTimeout> {
 
         @Override
         public boolean doWork(final SuspendTimeout element) {
             return element.onTimeout();
         }
-        
+
     }
 
-    private static class DelayQueueResolver implements
-            DelayedExecutor.Resolver<SuspendTimeout> {
+    private static class DelayQueueResolver implements DelayedExecutor.Resolver<SuspendTimeout> {
 
         @Override
         public boolean removeTimeout(final SuspendTimeout element) {

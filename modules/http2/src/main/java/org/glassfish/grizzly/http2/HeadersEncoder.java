@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,12 @@
 
 package org.glassfish.grizzly.http2;
 
+import java.util.Map;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http2.hpack.Encoder;
 import org.glassfish.grizzly.memory.CompositeBuffer;
 import org.glassfish.grizzly.memory.MemoryManager;
-
-import java.util.Map;
 
 /**
  *
@@ -29,25 +29,22 @@ import java.util.Map;
  */
 public class HeadersEncoder {
 
-    private static final String DEFAULT_BUFFER_SIZE_PROP_NAME =
-            "org.glassfish.grizzly.http2.HeadersEncoder.DEFAULT_BUFFER_SIZE";
+    private static final String DEFAULT_BUFFER_SIZE_PROP_NAME = "org.glassfish.grizzly.http2.HeadersEncoder.DEFAULT_BUFFER_SIZE";
     private static final String DEFAULT_BUFFER_SIZE_STRING = "8192";
 
-    private static final int DEFAULT_BUFFER_SIZE =
-            Integer.parseInt(System.getProperty(DEFAULT_BUFFER_SIZE_PROP_NAME, DEFAULT_BUFFER_SIZE_STRING));
+    private static final int DEFAULT_BUFFER_SIZE = Integer.parseInt(System.getProperty(DEFAULT_BUFFER_SIZE_PROP_NAME, DEFAULT_BUFFER_SIZE_STRING));
 
     private final Encoder hpackEncoder;
     private final MemoryManager memoryManager;
 
     private CompositeBuffer buffer;
 
-    public HeadersEncoder(final MemoryManager memoryManager,
-                          final int maxHeaderTableSize) {
+    public HeadersEncoder(final MemoryManager memoryManager, final int maxHeaderTableSize) {
         this.memoryManager = memoryManager;
         hpackEncoder = new Encoder(maxHeaderTableSize);
     }
-    
-    public void encodeHeader(final String name, final String value, final Map<String,String> capture) {
+
+    public void encodeHeader(final String name, final String value, final Map<String, String> capture) {
         if (capture != null) {
             capture.put(name, value);
         }
@@ -57,7 +54,7 @@ public class HeadersEncoder {
             buffer.append(memoryManager.allocate(DEFAULT_BUFFER_SIZE));
         }
     }
-    
+
     public Buffer flushHeaders() {
         final Buffer bufferLocal = buffer;
         bufferLocal.trim();

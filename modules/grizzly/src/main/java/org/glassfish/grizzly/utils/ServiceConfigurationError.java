@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,15 +17,15 @@
 package org.glassfish.grizzly.utils;
 
 /**
- * Error thrown when something goes wrong while looking up service providers.
- * In particular, this error will be thrown in the following situations:
+ * Error thrown when something goes wrong while looking up service providers. In particular, this error will be thrown
+ * in the following situations:
  *
- *   <ul>
- *   <li> A concrete provider class cannot be found,
- *   <li> A concrete provider class cannot be instantiated,
- *   <li> The format of a provider-configuration file is illegal, or
- *   <li> An IOException occurs while reading a provider-configuration file.
- *   </ul>
+ * <ul>
+ * <li>A concrete provider class cannot be found,
+ * <li>A concrete provider class cannot be instantiated,
+ * <li>The format of a provider-configuration file is illegal, or
+ * <li>An IOException occurs while reading a provider-configuration file.
+ * </ul>
  *
  * @author Mark Reinhold
  * @version 1.7, 03/12/19

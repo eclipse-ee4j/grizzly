@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ld.
  *
  * This program and the accompanying materials are made available under the
@@ -34,66 +34,54 @@ public interface Writeable<L> extends OutputSink {
      *
      * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
-     * @return {@link Future}, using which it's possible to check the
-     *         result
+     * @return {@link Future}, using which it's possible to check the result
      */
-     <M> GrizzlyFuture<WriteResult<M, L>> write(M message);
+    <M> GrizzlyFuture<WriteResult<M, L>> write(M message);
 
     /**
      * Method writes the <tt>buffer</tt>.
      *
      * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
-     * @param completionHandler {@link CompletionHandler},
-     *        which will get notified, when write will be completed
+     * @param completionHandler {@link CompletionHandler}, which will get notified, when write will be completed
      */
-     <M> void write(M message,
-            CompletionHandler<WriteResult<M, L>> completionHandler);
+    <M> void write(M message, CompletionHandler<WriteResult<M, L>> completionHandler);
 
     /**
      * Method writes the <tt>buffer</tt>.
      *
      * @param <M> type of data to be written
      * @param message the buffer, from which the data will be written
-     * @param completionHandler {@link CompletionHandler},
-     *        which will get notified, when write will be completed
-     * @param pushbackHandler {@link org.glassfish.grizzly.asyncqueue.PushBackHandler}, which will be notified
-     *        if message was accepted by transport write queue or refused
+     * @param completionHandler {@link CompletionHandler}, which will get notified, when write will be completed
+     * @param pushbackHandler {@link org.glassfish.grizzly.asyncqueue.PushBackHandler}, which will be notified if message
+     * was accepted by transport write queue or refused
      * @deprecated push back logic is deprecated
      */
-     <M> void write(M message,
-            CompletionHandler<WriteResult<M, L>> completionHandler,
-            org.glassfish.grizzly.asyncqueue.PushBackHandler pushbackHandler);
+    @Deprecated
+    <M> void write(M message, CompletionHandler<WriteResult<M, L>> completionHandler, org.glassfish.grizzly.asyncqueue.PushBackHandler pushbackHandler);
 
     /**
      * Method writes the <tt>buffer</tt> to the specific address.
      *
      * @param <M> type of data to be written
-     * @param dstAddress the destination address the <tt>buffer</tt> will be
-     *        sent to
+     * @param dstAddress the destination address the <tt>buffer</tt> will be sent to
      * @param message the buffer, from which the data will be written
-     * @param completionHandler {@link CompletionHandler},
-     *        which will get notified, when write will be completed
+     * @param completionHandler {@link CompletionHandler}, which will get notified, when write will be completed
      */
-     <M> void write(L dstAddress,
-            M message,
-            CompletionHandler<WriteResult<M, L>> completionHandler);
+    <M> void write(L dstAddress, M message, CompletionHandler<WriteResult<M, L>> completionHandler);
 
-     /**
+    /**
      * Method writes the <tt>buffer</tt> to the specific address.
      *
      * @param <M> type of data to be written
-     * @param dstAddress the destination address the <tt>buffer</tt> will be
-     *        sent to
+     * @param dstAddress the destination address the <tt>buffer</tt> will be sent to
      * @param message the buffer, from which the data will be written
-     * @param completionHandler {@link CompletionHandler},
-     *        which will get notified, when write will be completed
-     * @param pushbackHandler {@link org.glassfish.grizzly.asyncqueue.PushBackHandler}, which will be notified
-     *        if message was accepted by transport write queue or refused
+     * @param completionHandler {@link CompletionHandler}, which will get notified, when write will be completed
+     * @param pushbackHandler {@link org.glassfish.grizzly.asyncqueue.PushBackHandler}, which will be notified if message
+     * was accepted by transport write queue or refused
      * @deprecated push back logic is deprecated
      */
-     <M> void write(L dstAddress,
-            M message,
-            CompletionHandler<WriteResult<M, L>> completionHandler,
+    @Deprecated
+    <M> void write(L dstAddress, M message, CompletionHandler<WriteResult<M, L>> completionHandler,
             org.glassfish.grizzly.asyncqueue.PushBackHandler pushbackHandler);
 }

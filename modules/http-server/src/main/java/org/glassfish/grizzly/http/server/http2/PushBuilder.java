@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,12 @@
 
 package org.glassfish.grizzly.http.server.http2;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.server.Request;
@@ -24,107 +30,73 @@ import org.glassfish.grizzly.http.server.Session;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-
 /**
- * Build a request to be pushed.  This is based on Servlet 4.0's PushBuilder.
+ * Build a request to be pushed. This is based on Servlet 4.0's PushBuilder.
  *
- * According section 8.2 of RFC 7540, a promised request must be cacheable and
- * safe without a request body.
+ * According section 8.2 of RFC 7540, a promised request must be cacheable and safe without a request body.
  *
- * <p>A PushBuilder is obtained by calling {@link
- * Request#newPushBuilder()}.  Each call to this method will
- * return a new instance of a PushBuilder based off the current {@code
- * HttpServletRequest}.  Any mutations to the returned PushBuilder are
- * not reflected on future returns.</p>
+ * <p>
+ * A PushBuilder is obtained by calling {@link Request#newPushBuilder()}. Each call to this method will return a new
+ * instance of a PushBuilder based off the current {@code
+ * HttpServletRequest}. Any mutations to the returned PushBuilder are not reflected on future returns.
+ * </p>
  *
- * <p>The instance is initialized as follows:</p>
+ * <p>
+ * The instance is initialized as follows:
+ * </p>
  *
  * <ul>
  *
  * <li>The method is initialized to "GET"</li>
  *
- * <li>The existing request headers of the current {@link Request}
- * are added to the builder, except for:
+ * <li>The existing request headers of the current {@link Request} are added to the builder, except for:
  *
  * <ul>
- *   <li>Conditional headers (eg. If-Modified-Since)
- *   <li>Range headers
- *   <li>Expect headers
- *   <li>Authorization headers
- *   <li>Referrer headers
+ * <li>Conditional headers (eg. If-Modified-Since)
+ * <li>Range headers
+ * <li>Expect headers
+ * <li>Authorization headers
+ * <li>Referrer headers
  * </ul>
  *
  * </li>
  *
- * <li>The {@link Request#getRequestedSessionId()} value,
- * unless at the time of the call {@link
- * Request#getSession(boolean)} has previously been called to
- * create a new {@link Session}, in which case the new session ID
- * will be used as the PushBuilder's requested session ID. The source of
- * the requested session id will be the same as for the request</li>
+ * <li>The {@link Request#getRequestedSessionId()} value, unless at the time of the call
+ * {@link Request#getSession(boolean)} has previously been called to create a new {@link Session}, in which case the new
+ * session ID will be used as the PushBuilder's requested session ID. The source of the requested session id will be the
+ * same as for the request</li>
  *
- * <li>The Referer(sic) header will be set to {@link
- * Request#getRequestURL()} plus any {@link
- * Request#getQueryString()} </li>
+ * <li>The Referer(sic) header will be set to {@link Request#getRequestURL()} plus any {@link Request#getQueryString()}
+ * </li>
  *
- * <li>If {@link Response#addCookie(Cookie)} has been called
- * on the associated response, then a corresponding Cookie header will be added
- * to the PushBuilder, unless the {@link Cookie#getMaxAge()} is &lt;=0, in which
- * case the Cookie will be removed from the builder.</li>
+ * <li>If {@link Response#addCookie(Cookie)} has been called on the associated response, then a corresponding Cookie
+ * header will be added to the PushBuilder, unless the {@link Cookie#getMaxAge()} is &lt;=0, in which case the Cookie
+ * will be removed from the builder.</li>
  *
  * </ul>
  *
- * <p>The {@link #path} method must be called on the {@code PushBuilder}
- * instance before the call to {@link #push}.  Failure to do so must
- * cause an exception to be thrown from {@link
- * #push}, as specified in that method.</p>
+ * <p>
+ * The {@link #path} method must be called on the {@code PushBuilder} instance before the call to {@link #push}. Failure
+ * to do so must cause an exception to be thrown from {@link #push}, as specified in that method.
+ * </p>
  *
- * <p>A PushBuilder can be customized by chained calls to mutator
- * methods before the {@link #push()} method is called to initiate an
- * asynchronous push request with the current state of the builder.
- * After the call to {@link #push()}, the builder may be reused for
- * another push, however the path and conditional headers are cleared
- * before returning from {@link #push}.  All other values are retained
- * over calls to {@link #push()}.
+ * <p>
+ * A PushBuilder can be customized by chained calls to mutator methods before the {@link #push()} method is called to
+ * initiate an asynchronous push request with the current state of the builder. After the call to {@link #push()}, the
+ * builder may be reused for another push, however the path and conditional headers are cleared before returning from
+ * {@link #push}. All other values are retained over calls to {@link #push()}.
  *
  * @since 2.3.30
  */
 @SuppressWarnings("UnusedReturnValue")
 public final class PushBuilder {
 
-    private static final Header[] REMOVE_HEADERS = {
-            Header.Cookie,
-            Header.ETag,
-            Header.IfModifiedSince,
-            Header.IfNoneMatch,
-            Header.IfRange,
-            Header.IfUnmodifiedSince,
-            Header.IfMatch,
-            Header.LastModified,
-            Header.Referer,
-            Header.AcceptRanges,
-            Header.Range,
-            Header.AcceptRanges,
-            Header.ContentRange,
-            Header.Authorization,
-            Header.ProxyAuthenticate,
-            Header.ProxyAuthorization,
-            Header.WWWAuthenticate
-    };
+    private static final Header[] REMOVE_HEADERS = { Header.Cookie, Header.ETag, Header.IfModifiedSince, Header.IfNoneMatch, Header.IfRange,
+            Header.IfUnmodifiedSince, Header.IfMatch, Header.LastModified, Header.Referer, Header.AcceptRanges, Header.Range, Header.AcceptRanges,
+            Header.ContentRange, Header.Authorization, Header.ProxyAuthenticate, Header.ProxyAuthorization, Header.WWWAuthenticate };
 
-    private static final Header[] CONDITIONAL_HEADERS = {
-            Header.IfModifiedSince,
-            Header.IfNoneMatch,
-            Header.IfRange,
-            Header.IfUnmodifiedSince,
-            Header.IfMatch,
-    };
+    private static final Header[] CONDITIONAL_HEADERS = { Header.IfModifiedSince, Header.IfNoneMatch, Header.IfRange, Header.IfUnmodifiedSince,
+            Header.IfMatch, };
 
     String method = Method.GET.getMethodString();
     String queryString;
@@ -186,26 +158,24 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Set the method to be used for the push.</p>
+     * <p>
+     * Set the method to be used for the push.
+     * </p>
      *
      * @param method the method to be used for the push.
      *
      * @return this builder.
      *
-     * @throws NullPointerException     if the argument is {@code null}
-     * @throws IllegalArgumentException if the argument is the empty String,
-     *                                  or any non-cacheable or unsafe methods defined in RFC 7231,
-     *                                  which are POST, PUT, DELETE, CONNECT, OPTIONS and TRACE.
+     * @throws NullPointerException if the argument is {@code null}
+     * @throws IllegalArgumentException if the argument is the empty String, or any non-cacheable or unsafe methods defined
+     * in RFC 7231, which are POST, PUT, DELETE, CONNECT, OPTIONS and TRACE.
      */
     public PushBuilder method(final String method) {
         if (method == null) {
             throw new NullPointerException();
         }
-        if (Method.POST.getMethodString().equals(method)
-                || Method.PUT.getMethodString().equals(method)
-                || Method.DELETE.getMethodString().equals(method)
-                || Method.CONNECT.getMethodString().equals(method)
-                || Method.OPTIONS.getMethodString().equals(method)
+        if (Method.POST.getMethodString().equals(method) || Method.PUT.getMethodString().equals(method) || Method.DELETE.getMethodString().equals(method)
+                || Method.CONNECT.getMethodString().equals(method) || Method.OPTIONS.getMethodString().equals(method)
                 || Method.TRACE.getMethodString().equals(method)) {
             throw new IllegalArgumentException();
         }
@@ -216,11 +186,9 @@ public final class PushBuilder {
     /**
      * Set the query string to be used for the push.
      * <p>
-     * Will be appended to any query String included in a call to {@link
-     * #path(String)}.  Any duplicate parameters must be preserved. This
-     * method should be used instead of a query in {@link #path(String)}
-     * when multiple {@link #push()} calls are to be made with the same
-     * query string.
+     * Will be appended to any query String included in a call to {@link #path(String)}. Any duplicate parameters must be
+     * preserved. This method should be used instead of a query in {@link #path(String)} when multiple {@link #push()} calls
+     * are to be made with the same query string.
      *
      * @param queryString the query string to be used for the push.
      *
@@ -232,12 +200,9 @@ public final class PushBuilder {
     }
 
     /**
-     * Set the SessionID to be used for the push.
-     * The session ID will be set in the same way it was on the associated request (ie
-     * as a cookie if the associated request used a cookie, or as a url parameter if
-     * the associated request used a url parameter).
-     * Defaults to the requested session ID or any newly assigned session id from
-     * a newly created session.
+     * Set the SessionID to be used for the push. The session ID will be set in the same way it was on the associated
+     * request (ie as a cookie if the associated request used a cookie, or as a url parameter if the associated request used
+     * a url parameter). Defaults to the requested session ID or any newly assigned session id from a newly created session.
      *
      * @param sessionId the SessionID to be used for the push.
      *
@@ -249,10 +214,12 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Set a request header to be used for the push.  If the builder has an
-     * existing header with the same name, its value is overwritten.</p>
+     * <p>
+     * Set a request header to be used for the push. If the builder has an existing header with the same name, its value is
+     * overwritten.
+     * </p>
      *
-     * @param name  The header name to set
+     * @param name The header name to set
      * @param value The header value to set
      *
      * @return this builder.
@@ -265,10 +232,12 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Set a request header to be used for the push.  If the builder has an
-     * existing header with the same name, its value is overwritten.</p>
+     * <p>
+     * Set a request header to be used for the push. If the builder has an existing header with the same name, its value is
+     * overwritten.
+     * </p>
      *
-     * @param name  The {@link Header} to set
+     * @param name The {@link Header} to set
      * @param value The header value to set
      *
      * @return this builder.
@@ -281,9 +250,11 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Add a request header to be used for the push.</p>
+     * <p>
+     * Add a request header to be used for the push.
+     * </p>
      *
-     * @param name  The header name to add
+     * @param name The header name to add
      * @param value The header value to add
      *
      * @return this builder.
@@ -296,9 +267,11 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Add a request header to be used for the push.</p>
+     * <p>
+     * Add a request header to be used for the push.
+     * </p>
      *
-     * @param name  The {@link Header} to add
+     * @param name The {@link Header} to add
      * @param value The header value to add
      *
      * @return this builder.
@@ -311,8 +284,9 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Remove the named request header.  If the header does not exist, take
-     * no action.</p>
+     * <p>
+     * Remove the named request header. If the header does not exist, take no action.
+     * </p>
      *
      * @param name The name of the header to remove
      *
@@ -328,8 +302,9 @@ public final class PushBuilder {
     }
 
     /**
-     * <p>Remove the named request header.  If the header does not exist, take
-     * no action.</p>
+     * <p>
+     * Remove the named request header. If the header does not exist, take no action.
+     * </p>
      *
      * @param name The {@link Header} to remove
      *
@@ -343,17 +318,13 @@ public final class PushBuilder {
     }
 
     /**
-     * Set the URI path to be used for the push.  The path may start
-     * with "/" in which case it is treated as an absolute path,
-     * otherwise it is relative to the context path of the associated
-     * request.  There is no path default and path(String) must
-     * be called before every call to {@link #push()}.  If a query
-     * string is present in the argument {@code path}, its contents must
-     * be merged with the contents previously passed to {@link
-     * #queryString}, preserving duplicates.
+     * Set the URI path to be used for the push. The path may start with "/" in which case it is treated as an absolute
+     * path, otherwise it is relative to the context path of the associated request. There is no path default and
+     * path(String) must be called before every call to {@link #push()}. If a query string is present in the argument
+     * {@code path}, its contents must be merged with the contents previously passed to {@link #queryString}, preserving
+     * duplicates.
      *
-     * @param path the URI path to be used for the push, which may include a
-     *             query string.
+     * @param path the URI path to be used for the push, which may include a query string.
      *
      * @return this builder.
      */
@@ -365,19 +336,19 @@ public final class PushBuilder {
     /**
      * Push a resource given the current state of the builder without blocking.
      * <p>
-     * <p>Push a resource based on the current state of the PushBuilder.
-     * Calling this method does not guarantee the resource will actually
-     * be pushed, since it is possible the client can decline acceptance
-     * of the pushed resource using the underlying HTTP/2 protocol.</p>
+     * <p>
+     * Push a resource based on the current state of the PushBuilder. Calling this method does not guarantee the resource
+     * will actually be pushed, since it is possible the client can decline acceptance of the pushed resource using the
+     * underlying HTTP/2 protocol.
+     * </p>
      *
-     * <p>Before returning from this method, the builder has its path set to null
-     * and all conditional headers removed. All other fields are left as
-     * is for possible reuse in another push.</p>
+     * <p>
+     * Before returning from this method, the builder has its path set to null and all conditional headers removed. All
+     * other fields are left as is for possible reuse in another push.
+     * </p>
      *
-     * @throws IllegalStateException    if there was no call to {@link
-     *                                  #path} on this instance either between its instantiation or the
-     *                                  last call to {@code push()} that did not throw an
-     *                                  IllegalStateException.
+     * @throws IllegalStateException if there was no call to {@link #path} on this instance either between its instantiation
+     * or the last call to {@code push()} that did not throw an IllegalStateException.
      */
     public void push() {
         if (path == null) {
@@ -388,20 +359,16 @@ public final class PushBuilder {
             return;
         }
 
-        String pathLocal = ((path.charAt(0) == '/') ? path : request.getContextPath() + '/' + path);
+        String pathLocal = path.charAt(0) == '/' ? path : request.getContextPath() + '/' + path;
         if (queryString != null) {
-            pathLocal += ((pathLocal.indexOf('?') != -1)
-                    ? '&' + queryString
-                    : '?' + queryString);
+            pathLocal += pathLocal.indexOf('?') != -1 ? '&' + queryString : '?' + queryString;
         }
 
         if (sessionId != null) {
-            if (sessionFromURL){
+            if (sessionFromURL) {
                 pathLocal += ';' + request.getSessionCookieName() + '=' + sessionId;
             } else {
-                headers.addValue(Header.Cookie)
-                        .setString(new Cookie(
-                                request.getSessionCookieName(), sessionId).asClientCookieString());
+                headers.addValue(Header.Cookie).setString(new Cookie(request.getSessionCookieName(), sessionId).asClientCookieString());
             }
         }
 
@@ -473,20 +440,18 @@ public final class PushBuilder {
         return path;
     }
 
-
     // -------------------------------------------------------- Private Methods
-
 
     private static boolean nameAndValueValid(final String name, final String value) {
         return validValue(name) && validValue(value);
     }
 
     private static boolean validValue(final String value) {
-        return (value != null && !value.isEmpty());
+        return value != null && !value.isEmpty();
     }
 
     private static String validate(final String value) {
-        return ((validValue(value)) ? value : null);
+        return validValue(value) ? value : null;
     }
 
     private String composeReferrerHeader(final Request request) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,13 @@
 
 package org.glassfish.grizzly.websockets;
 
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -25,22 +32,14 @@ import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.websockets.frametypes.PingFrameType;
 import org.glassfish.grizzly.websockets.frametypes.PongFrameType;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
-
 /**
- * Generic WebSocket implementation.  Typically used by client implementations.
+ * Generic WebSocket implementation. Typically used by client implementations.
  */
 public class SimpleWebSocket implements WebSocket {
 
     private static final Logger LOGGER = Grizzly.logger(DefaultWebSocket.class);
 
-    protected final Queue<WebSocketListener> listeners =
-            new ConcurrentLinkedQueue<WebSocketListener>();
+    protected final Queue<WebSocketListener> listeners = new ConcurrentLinkedQueue<>();
 
     protected final ProtocolHandler protocolHandler;
 
@@ -51,11 +50,9 @@ public class SimpleWebSocket implements WebSocket {
     }
 
     protected final EnumSet<State> connected = EnumSet.range(State.CONNECTED, State.CLOSING);
-    protected final AtomicReference<State> state = new AtomicReference<State>(State.NEW);
+    protected final AtomicReference<State> state = new AtomicReference<>(State.NEW);
 
-
-    public SimpleWebSocket(final ProtocolHandler protocolHandler,
-                            final WebSocketListener... listeners) {
+    public SimpleWebSocket(final ProtocolHandler protocolHandler, final WebSocketListener... listeners) {
 
         this.protocolHandler = protocolHandler;
         for (WebSocketListener listener : listeners) {
@@ -192,8 +189,7 @@ public class SimpleWebSocket implements WebSocket {
     }
 
     @Override
-    public void broadcast(Iterable<? extends WebSocket> recipients,
-                          String data) {
+    public void broadcast(Iterable<? extends WebSocket> recipients, String data) {
         if (state.get() == State.CONNECTED) {
             broadcaster.broadcast(recipients, data);
         } else {
@@ -202,8 +198,7 @@ public class SimpleWebSocket implements WebSocket {
     }
 
     @Override
-    public void broadcast(Iterable<? extends WebSocket> recipients,
-                          byte[] data) {
+    public void broadcast(Iterable<? extends WebSocket> recipients, byte[] data) {
         if (state.get() == State.CONNECTED) {
             broadcaster.broadcast(recipients, data);
         } else {
@@ -212,8 +207,7 @@ public class SimpleWebSocket implements WebSocket {
     }
 
     @Override
-    public void broadcastFragment(Iterable<? extends WebSocket> recipients,
-                                  String data, boolean last) {
+    public void broadcastFragment(Iterable<? extends WebSocket> recipients, String data, boolean last) {
         if (state.get() == State.CONNECTED) {
             broadcaster.broadcastFragment(recipients, data, last);
         } else {
@@ -222,15 +216,13 @@ public class SimpleWebSocket implements WebSocket {
     }
 
     @Override
-    public void broadcastFragment(Iterable<? extends WebSocket> recipients,
-                                  byte[] data, boolean last) {
+    public void broadcastFragment(Iterable<? extends WebSocket> recipients, byte[] data, boolean last) {
         if (state.get() == State.CONNECTED) {
             broadcaster.broadcastFragment(recipients, data, last);
         } else {
             throw new RuntimeException("Socket is already closed.");
         }
     }
-
 
     /**
      * {@inheritDoc}

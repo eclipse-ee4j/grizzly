@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,17 +19,15 @@ package org.glassfish.grizzly.filterchain;
 import org.glassfish.grizzly.Appender;
 
 /**
- * {@link NextAction}, which instructs {@link FilterChain} to stop executing
- * phase and start post executing filters.
- * 
+ * {@link NextAction}, which instructs {@link FilterChain} to stop executing phase and start post executing filters.
+ *
  * @author Alexey Stashok
  */
 final class StopAction extends AbstractNextAction {
     static final int TYPE = 1;
-    
+
     private Appender appender;
     private Object incompleteChunk;
-
 
     StopAction() {
         super(TYPE);

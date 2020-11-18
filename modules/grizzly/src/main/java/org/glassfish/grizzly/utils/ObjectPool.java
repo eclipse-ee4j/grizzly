@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,13 +18,13 @@ package org.glassfish.grizzly.utils;
 
 /**
  * Basic interface for object pool implementations
- * 
+ *
  * @author Alexey Stashok
  */
 public interface ObjectPool<E extends PoolableObject> {
     E poll();
 
     void offer(E object);
-    
+
     void clear();
 }

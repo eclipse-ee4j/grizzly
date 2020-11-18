@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,14 +18,14 @@ package org.glassfish.grizzly.http;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.http.util.Constants;
+import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringAware;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
-import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
 
 /**
  * Web container configuration for keep-alive HTTP connections.
- * 
+ *
  * @author Alexey Stashok
  */
 public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
@@ -33,7 +33,7 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * Keep alive probes
      */
     protected final DefaultMonitoringConfig<KeepAliveProbe> monitoringConfig;
-    
+
     /**
      * The number int seconds a connection may be idle before being timed out.
      */
@@ -57,6 +57,7 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
 
     /**
      * The copy constructor.
+     * 
      * @param keepAlive the {@link KeepAlive} to copy
      */
     public KeepAlive(final KeepAlive keepAlive) {
@@ -65,10 +66,8 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
         this.maxRequestsCount = keepAlive.maxRequestsCount;
     }
 
-
     /**
-     * @return the number in seconds a connection may be idle before being
-     *  timed out.
+     * @return the number in seconds a connection may be idle before being timed out.
      */
     public int getIdleTimeoutInSeconds() {
 
@@ -76,14 +75,13 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
 
     }
 
-
     /**
      * <p>
      * Configures idle connection timeout behavior.
      * </p>
      *
-     * @param idleTimeoutInSeconds the number in seconds a connection may
-     *  be idle before being timed out.  Values less than zero are considered as FOREVER.
+     * @param idleTimeoutInSeconds the number in seconds a connection may be idle before being timed out. Values less than
+     * zero are considered as FOREVER.
      */
     public void setIdleTimeoutInSeconds(final int idleTimeoutInSeconds) {
 
@@ -107,8 +105,8 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * Configures the max number of HTTP requests allowed to be processed on one keep-alive connection.
      * </p>
      *
-     * @param maxRequestsCount the max number of HTTP requests allowed to be
-     * processed on one keep-alive connection. Values less than zero are considered as UNLIMITED.
+     * @param maxRequestsCount the max number of HTTP requests allowed to be processed on one keep-alive connection. Values
+     * less than zero are considered as UNLIMITED.
      */
     public void setMaxRequestsCount(int maxRequestsCount) {
         this.maxRequestsCount = maxRequestsCount;
@@ -123,8 +121,7 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
     }
 
     protected Object createJmxManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.http.jmx.KeepAlive", this, KeepAlive.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.http.jmx.KeepAlive", this, KeepAlive.class);
     }
 
     /**
@@ -133,10 +130,8 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * @param keepAlive the <tt>KeepAlive</tt> event occurred on.
      * @param connection {@link Connection} been accepted.
      */
-    protected static void notifyProbesConnectionAccepted(
-            final KeepAlive keepAlive, final Connection connection) {
-        final KeepAliveProbe[] probes =
-                keepAlive.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesConnectionAccepted(final KeepAlive keepAlive, final Connection connection) {
+        final KeepAliveProbe[] probes = keepAlive.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (KeepAliveProbe probe : probes) {
                 probe.onConnectionAcceptEvent(connection);
@@ -151,12 +146,9 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * @param connection {@link Connection} been hit.
      * @param requestNumber the request number being processed on the given {@link Connection}.
      */
-    protected static void notifyProbesHit(
-            final KeepAlive keepAlive, final Connection connection,
-            final int requestNumber) {
-        
-        final KeepAliveProbe[] probes =
-                keepAlive.monitoringConfig.getProbesUnsafe();
+    protected static void notifyProbesHit(final KeepAlive keepAlive, final Connection connection, final int requestNumber) {
+
+        final KeepAliveProbe[] probes = keepAlive.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (KeepAliveProbe probe : probes) {
                 probe.onHitEvent(connection, requestNumber);
@@ -170,11 +162,9 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * @param keepAlive the <tt>KeepAlive</tt> event occurred on.
      * @param connection {@link Connection} been refused.
      */
-    protected static void notifyProbesRefused(
-            final KeepAlive keepAlive, final Connection connection) {
+    protected static void notifyProbesRefused(final KeepAlive keepAlive, final Connection connection) {
 
-        final KeepAliveProbe[] probes =
-                keepAlive.monitoringConfig.getProbesUnsafe();
+        final KeepAliveProbe[] probes = keepAlive.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (KeepAliveProbe probe : probes) {
                 probe.onRefuseEvent(connection);
@@ -188,11 +178,9 @@ public final class KeepAlive implements MonitoringAware<KeepAliveProbe> {
      * @param keepAlive the <tt>KeepAlive</tt> event occurred on.
      * @param connection {@link Connection} been timeout.
      */
-    protected static void notifyProbesTimeout(
-            final KeepAlive keepAlive, final Connection connection) {
+    protected static void notifyProbesTimeout(final KeepAlive keepAlive, final Connection connection) {
 
-        final KeepAliveProbe[] probes =
-                keepAlive.monitoringConfig.getProbesUnsafe();
+        final KeepAliveProbe[] probes = keepAlive.monitoringConfig.getProbesUnsafe();
         if (probes != null) {
             for (KeepAliveProbe probe : probes) {
                 probe.onTimeoutEvent(connection);

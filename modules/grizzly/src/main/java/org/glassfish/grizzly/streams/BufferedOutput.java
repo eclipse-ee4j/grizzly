@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly.streams;
 
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -23,8 +26,6 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.ReadyFutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.CompositeBuffer;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -33,14 +34,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class BufferedOutput implements Output {
 
     protected static final Integer ZERO = 0;
-    protected static final GrizzlyFuture<Integer> ZERO_READY_FUTURE =
-            ReadyFutureImpl.create(0);
-    
+    protected static final GrizzlyFuture<Integer> ZERO_READY_FUTURE = ReadyFutureImpl.create(0);
+
     protected final int bufferSize;
     protected CompositeBuffer multiBufferWindow;
     private Buffer buffer;
     private int lastSlicedPosition;
-    
+
     protected final AtomicBoolean isClosed = new AtomicBoolean();
 
     public BufferedOutput() {
@@ -53,9 +53,7 @@ public abstract class BufferedOutput implements Output {
 
     protected abstract void onClosed() throws IOException;
 
-    protected abstract GrizzlyFuture<Integer> flush0(final Buffer buffer,
-            final CompletionHandler<Integer> completionHandler)
-            throws IOException;
+    protected abstract GrizzlyFuture<Integer> flush0(final Buffer buffer, final CompletionHandler<Integer> completionHandler) throws IOException;
 
     protected abstract Buffer newBuffer(int size);
 
@@ -73,13 +71,11 @@ public abstract class BufferedOutput implements Output {
             multiBufferWindow = CompositeBuffer.newBuffer();
         }
 
-        final boolean isInternalBufferEmpty = buffer == null ||
-                (buffer.position() - lastSlicedPosition) == 0;
-        
+        final boolean isInternalBufferEmpty = buffer == null || buffer.position() - lastSlicedPosition == 0;
+
         if (!isInternalBufferEmpty) {
-            final Buffer slice =
-                    buffer.slice(lastSlicedPosition, buffer.position());
-            
+            final Buffer slice = buffer.slice(lastSlicedPosition, buffer.position());
+
             multiBufferWindow.append(slice);
 
             lastSlicedPosition = buffer.position();
@@ -109,8 +105,10 @@ public abstract class BufferedOutput implements Output {
             overflow(null);
         }
 
-        if (size == 0) return;
-        
+        if (size == 0) {
+            return;
+        }
+
         if (buffer != null) {
             final int bufferRemaining = buffer.remaining();
             if (bufferRemaining < size) {
@@ -122,20 +120,16 @@ public abstract class BufferedOutput implements Output {
         }
     }
 
-    private GrizzlyFuture<Integer> overflow(
-            final CompletionHandler<Integer> completionHandler)
-            throws IOException {
+    private GrizzlyFuture<Integer> overflow(final CompletionHandler<Integer> completionHandler) throws IOException {
         if (multiBufferWindow != null) {
             if (buffer != null && buffer.position() > lastSlicedPosition) {
-                final Buffer slice =
-                        buffer.slice(lastSlicedPosition, buffer.position());
+                final Buffer slice = buffer.slice(lastSlicedPosition, buffer.position());
 
                 lastSlicedPosition = buffer.position();
                 multiBufferWindow.append(slice);
             }
 
-            final GrizzlyFuture<Integer> future = flush0(multiBufferWindow,
-                    completionHandler);
+            final GrizzlyFuture<Integer> future = flush0(multiBufferWindow, completionHandler);
 
             if (future.isDone()) {
                 multiBufferWindow.removeAll();
@@ -153,13 +147,12 @@ public abstract class BufferedOutput implements Output {
                 buffer = null;
                 lastSlicedPosition = 0;
             }
-            
+
             return future;
         } else if (buffer != null && buffer.position() > 0) {
             buffer.flip();
 
-            final GrizzlyFuture<Integer> future = flush0(buffer,
-                    completionHandler);
+            final GrizzlyFuture<Integer> future = flush0(buffer, completionHandler);
             if (future.isDone() && !buffer.isComposite()) {
                 buffer.clear();
             } else {
@@ -168,20 +161,17 @@ public abstract class BufferedOutput implements Output {
 
             return future;
         }
-        
+
         return flush0(null, completionHandler);
     }
 
     @Override
-    public GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler)
-            throws IOException {
+    public GrizzlyFuture<Integer> flush(CompletionHandler<Integer> completionHandler) throws IOException {
         return overflow(completionHandler);
     }
 
     @Override
-    public GrizzlyFuture<Integer> close(
-            final CompletionHandler<Integer> completionHandler)
-            throws IOException {
+    public GrizzlyFuture<Integer> close(final CompletionHandler<Integer> completionHandler) throws IOException {
 
         if (!isClosed.getAndSet(true) && buffer != null && buffer.position() > 0) {
             final FutureImpl<Integer> future = SafeFutureImpl.create();
@@ -236,7 +226,7 @@ public abstract class BufferedOutput implements Output {
 
     protected int getBufferedSize() {
         int size = 0;
-        
+
         if (multiBufferWindow != null) {
             size = multiBufferWindow.remaining();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -32,7 +32,7 @@ import org.glassfish.grizzly.strategies.LeaderFollowerNIOStrategy;
  * @see org.glassfish.grizzly.strategies.SameThreadIOStrategy
  * @see org.glassfish.grizzly.strategies.WorkerThreadIOStrategy
  * @see org.glassfish.grizzly.strategies.SimpleDynamicNIOStrategy
- * 
+ *
  * @author Alexey Stashok
  */
 public class CustomStrategy {
@@ -47,15 +47,13 @@ public class CustomStrategy {
         filterChainBuilder.add(new TransportFilter());
         filterChainBuilder.add(new EchoFilter());
 
-
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
-        
+
         // Set the LeaderFollowerIOStrategy (any strategy could be applied this way)
         transport.setIOStrategy(LeaderFollowerNIOStrategy.getInstance());
-        
+
         try {
             // binding transport to start listen on certain host and port
             transport.bind(HOST, PORT);

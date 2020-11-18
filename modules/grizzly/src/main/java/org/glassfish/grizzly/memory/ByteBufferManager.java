@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,41 +16,38 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.glassfish.grizzly.Cacheable;
-import org.glassfish.grizzly.ThreadCache;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+
+import org.glassfish.grizzly.Cacheable;
+import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.monitoring.MonitoringConfig;
 import org.glassfish.grizzly.monitoring.MonitoringUtils;
 
 /**
- * The simple Buffer manager implementation, which works as wrapper above
- * {@link ByteBuffer}s. It's possible to work either with direct or heap
- * {@link ByteBuffer}s.
+ * The simple Buffer manager implementation, which works as wrapper above {@link ByteBuffer}s. It's possible to work
+ * either with direct or heap {@link ByteBuffer}s.
  *
  * @see MemoryManager
  * @see ByteBuffer
- * 
+ *
  * @author Jean-Francois Arcand
  * @author Alexey Stashok
  */
-public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> implements
-        WrapperAware, ByteBufferAware {
+public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> implements WrapperAware, ByteBufferAware {
 
     /**
      * TODO: Document
      */
     public static final int DEFAULT_SMALL_BUFFER_SIZE = 32;
 
-    private static final ThreadCache.CachedTypeIndex<TrimAwareWrapper> CACHE_IDX =
-            ThreadCache.obtainIndex(TrimAwareWrapper.class,
-                    Integer.getInteger(ByteBufferManager.class.getName() + ".taw-cache-size", 2));
-                    
-    private final ThreadCache.CachedTypeIndex<SmallByteBufferWrapper> SMALL_BUFFER_CACHE_IDX =
-            ThreadCache.obtainIndex(SmallByteBufferWrapper.class.getName() + '.' +
-            System.identityHashCode(this), SmallByteBufferWrapper.class,
+    private static final ThreadCache.CachedTypeIndex<TrimAwareWrapper> CACHE_IDX = ThreadCache.obtainIndex(TrimAwareWrapper.class,
+            Integer.getInteger(ByteBufferManager.class.getName() + ".taw-cache-size", 2));
+
+    private final ThreadCache.CachedTypeIndex<SmallByteBufferWrapper> SMALL_BUFFER_CACHE_IDX = ThreadCache.obtainIndex(
+            SmallByteBufferWrapper.class.getName() + '.' + System.identityHashCode(this), SmallByteBufferWrapper.class,
             Integer.getInteger(ByteBufferManager.class.getName() + ".sbbw-cache-size", 16));
 
     /**
@@ -61,20 +58,14 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
     protected final int maxSmallBufferSize;
 
     public ByteBufferManager() {
-        this(false,
-             DEFAULT_MAX_BUFFER_SIZE,
-             DEFAULT_SMALL_BUFFER_SIZE);
+        this(false, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_SMALL_BUFFER_SIZE);
     }
 
     public ByteBufferManager(final boolean isDirect) {
-        this(isDirect,
-             DEFAULT_MAX_BUFFER_SIZE,
-             DEFAULT_SMALL_BUFFER_SIZE);
+        this(isDirect, DEFAULT_MAX_BUFFER_SIZE, DEFAULT_SMALL_BUFFER_SIZE);
     }
 
-    public ByteBufferManager(final boolean isDirect,
-                             final int maxBufferSize,
-                             final int maxSmallBufferSize) {
+    public ByteBufferManager(final boolean isDirect, final int maxBufferSize, final int maxSmallBufferSize) {
         super(maxBufferSize);
         this.maxSmallBufferSize = maxSmallBufferSize;
         this.isDirect = isDirect;
@@ -114,11 +105,10 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
      * {@inheritDoc}
      */
     @Override
-    public ByteBufferWrapper reallocate(ByteBufferWrapper oldBuffer,
-            int newSize) {
+    public ByteBufferWrapper reallocate(ByteBufferWrapper oldBuffer, int newSize) {
         return wrap(reallocateByteBuffer(oldBuffer.underlying(), newSize));
     }
-    
+
     /**
      * Lets JVM Garbage collector to release buffer.
      */
@@ -128,22 +118,21 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
     }
 
     /**
-     * Returns <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct
-     * {@link ByteBuffer}s, or <tt>false</tt> otherwise.
-     * 
-     * @return <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct
-     * {@link ByteBuffer}s, or <tt>false</tt> otherwise.
+     * Returns <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct {@link ByteBuffer}s, or <tt>false</tt>
+     * otherwise.
+     *
+     * @return <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct {@link ByteBuffer}s, or <tt>false</tt>
+     * otherwise.
      */
     public boolean isDirect() {
         return isDirect;
     }
 
     /**
-     * Set <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct
-     * {@link ByteBuffer}s, or <tt>false</tt> otherwise.
+     * Set <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct {@link ByteBuffer}s, or <tt>false</tt> otherwise.
      *
-     * @param isDirect <tt>true</tt>, if <tt>ByteBufferManager</tt> works with
-     * direct {@link ByteBuffer}s, or <tt>false</tt> otherwise.
+     * @param isDirect <tt>true</tt>, if <tt>ByteBufferManager</tt> works with direct {@link ByteBuffer}s, or <tt>false</tt>
+     * otherwise.
      */
     public void setDirect(boolean isDirect) {
         this.isDirect = isDirect;
@@ -216,13 +205,12 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
     @Override
     @SuppressWarnings("unchecked")
     public ByteBuffer allocateByteBuffer(final int size) {
-          if (size > maxBufferSize) {
+        if (size > maxBufferSize) {
             // Don't use pool
             return allocateByteBuffer0(size);
         }
 
-        final ThreadLocalPool<ByteBuffer> threadLocalCache =
-                getByteBufferThreadLocalPool();
+        final ThreadLocalPool<ByteBuffer> threadLocalCache = getByteBufferThreadLocalPool();
         if (threadLocalCache != null) {
             final int remaining = threadLocalCache.remaining();
 
@@ -246,13 +234,12 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
     @Override
     @SuppressWarnings("unchecked")
     public ByteBuffer allocateByteBufferAtLeast(final int size) {
-          if (size > maxBufferSize) {
+        if (size > maxBufferSize) {
             // Don't use pool
             return allocateByteBuffer0(size);
         }
 
-        final ThreadLocalPool<ByteBuffer> threadLocalCache =
-                getByteBufferThreadLocalPool();
+        final ThreadLocalPool<ByteBuffer> threadLocalCache = getByteBufferThreadLocalPool();
         if (threadLocalCache != null) {
             int remaining = threadLocalCache.remaining();
 
@@ -266,21 +253,20 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
             return allocateByteBuffer0(size);
         }
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public ByteBuffer reallocateByteBuffer(ByteBuffer oldByteBuffer, int newSize) {
-        if (oldByteBuffer.capacity() >= newSize) return oldByteBuffer;
+        if (oldByteBuffer.capacity() >= newSize) {
+            return oldByteBuffer;
+        }
 
-        final ThreadLocalPool<ByteBuffer> memoryPool =
-                getByteBufferThreadLocalPool();
+        final ThreadLocalPool<ByteBuffer> memoryPool = getByteBufferThreadLocalPool();
         if (memoryPool != null) {
-            final ByteBuffer newBuffer =
-                    memoryPool.reallocate(oldByteBuffer, newSize);
+            final ByteBuffer newBuffer = memoryPool.reallocate(oldByteBuffer, newSize);
 
             if (newBuffer != null) {
-                ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig,
-                        newSize - oldByteBuffer.capacity());
+                ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig, newSize - oldByteBuffer.capacity());
 
                 return newBuffer;
             }
@@ -297,19 +283,16 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
         if (memoryPool != null) {
 
             if (memoryPool.release((ByteBuffer) byteBuffer.clear())) {
-                ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig,
-                        byteBuffer.capacity());
+                ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig, byteBuffer.capacity());
             }
         }
 
     }
 
-
     protected SmallByteBufferWrapper createSmallBuffer() {
         final SmallByteBufferWrapper buffer = ThreadCache.takeFromCache(SMALL_BUFFER_CACHE_IDX);
         if (buffer != null) {
-            ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig,
-                    maxSmallBufferSize);
+            ProbeNotifier.notifyBufferAllocatedFromPool(monitoringConfig, maxSmallBufferSize);
             return buffer;
         }
 
@@ -330,13 +313,11 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
      */
     @Override
     protected Object createJmxManagementObject() {
-        return MonitoringUtils.loadJmxObject(
-                "org.glassfish.grizzly.memory.jmx.ByteBufferManager", this,
-                ByteBufferManager.class);
+        return MonitoringUtils.loadJmxObject("org.glassfish.grizzly.memory.jmx.ByteBufferManager", this, ByteBufferManager.class);
     }
 
     protected final ByteBuffer allocateByteBuffer0(final int size) {
-        
+
         ProbeNotifier.notifyBufferAllocated(monitoringConfig, size);
         if (isDirect) {
             return ByteBuffer.allocateDirect(size);
@@ -345,9 +326,7 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
         }
     }
 
-
-    private TrimAwareWrapper createTrimAwareBuffer(
-            final ByteBuffer underlyingByteBuffer) {
+    private TrimAwareWrapper createTrimAwareBuffer(final ByteBuffer underlyingByteBuffer) {
 
         final TrimAwareWrapper buffer = ThreadCache.takeFromCache(CACHE_IDX);
         if (buffer != null) {
@@ -358,10 +337,9 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
         return new TrimAwareWrapper(underlyingByteBuffer);
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     private void reallocatePoolBuffer() {
-        final ByteBuffer byteBuffer =
-                allocateByteBuffer0(maxBufferSize);
+        final ByteBuffer byteBuffer = allocateByteBuffer0(maxBufferSize);
 
         final ThreadLocalPool<ByteBuffer> threadLocalCache = getByteBufferThreadLocalPool();
         if (threadLocalCache != null) {
@@ -372,13 +350,10 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
     @SuppressWarnings("unchecked")
     private static ByteBufferThreadLocalPool getByteBufferThreadLocalPool() {
         final ThreadLocalPool pool = getThreadLocalPool();
-        return ((pool instanceof ByteBufferThreadLocalPool)
-                ? (ByteBufferThreadLocalPool) pool
-                : null);
+        return pool instanceof ByteBufferThreadLocalPool ? (ByteBufferThreadLocalPool) pool : null;
     }
 
     // ---------------------------------------------------------- Nested Classes
-
 
     /**
      * Information about thread associated memory pool.
@@ -414,8 +389,7 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
 
         @Override
         public ByteBuffer reallocate(ByteBuffer oldByteBuffer, int newSize) {
-            if (isLastAllocated(oldByteBuffer)
-                    && remaining() + oldByteBuffer.capacity() >= newSize) {
+            if (isLastAllocated(oldByteBuffer) && remaining() + oldByteBuffer.capacity() >= newSize) {
 
                 lastAllocatedIndex--;
 
@@ -446,23 +420,19 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
 
         @Override
         public boolean wantReset(int size) {
-            return !hasRemaining() ||
-                    (lastAllocatedIndex == 0 && pool.remaining() < size);
+            return !hasRemaining() || lastAllocatedIndex == 0 && pool.remaining() < size;
         }
 
         @Override
         public boolean isLastAllocated(ByteBuffer oldByteBuffer) {
-            return lastAllocatedIndex > 0 &&
-                    allocationHistory[lastAllocatedIndex - 1] == oldByteBuffer;
+            return lastAllocatedIndex > 0 && allocationHistory[lastAllocatedIndex - 1] == oldByteBuffer;
         }
 
         @Override
         public ByteBuffer reduceLastAllocated(ByteBuffer byteBuffer) {
-            final ByteBuffer oldLastAllocated =
-                    (ByteBuffer) allocationHistory[lastAllocatedIndex - 1];
+            final ByteBuffer oldLastAllocated = (ByteBuffer) allocationHistory[lastAllocatedIndex - 1];
 
-            pool.position(pool.position() - (oldLastAllocated.capacity() -
-                    byteBuffer.capacity()));
+            pool.position(pool.position() - (oldLastAllocated.capacity() - byteBuffer.capacity()));
             allocationHistory[lastAllocatedIndex - 1] = byteBuffer;
 
             return oldLastAllocated;
@@ -480,9 +450,7 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
 
         private ByteBuffer addHistory(ByteBuffer allocated) {
             if (lastAllocatedIndex >= allocationHistory.length) {
-                allocationHistory =
-                        Arrays.copyOf(allocationHistory,
-                        (allocationHistory.length * 3) / 2 + 1);
+                allocationHistory = Arrays.copyOf(allocationHistory, allocationHistory.length * 3 / 2 + 1);
             }
 
             allocationHistory[lastAllocatedIndex++] = allocated;
@@ -491,22 +459,16 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
 
         @Override
         public String toString() {
-            return "(pool=" + pool +
-                    " last-allocated-index=" + (lastAllocatedIndex - 1) +
-                    " allocation-history=" + Arrays.toString(allocationHistory)
-                    + ')';
+            return "(pool=" + pool + " last-allocated-index=" + (lastAllocatedIndex - 1) + " allocation-history=" + Arrays.toString(allocationHistory) + ')';
         }
 
     } // END ByteBufferThreadLocalPool
 
-
     /**
-     * {@link ByteBufferWrapper} implementation, which supports trimming. In
-     * other words it's possible to return unused {@link org.glassfish.grizzly.Buffer} space to
-     * pool.
+     * {@link ByteBufferWrapper} implementation, which supports trimming. In other words it's possible to return unused
+     * {@link org.glassfish.grizzly.Buffer} space to pool.
      */
-    private final class TrimAwareWrapper extends ByteBufferWrapper
-            implements TrimAware {
+    private final class TrimAwareWrapper extends ByteBufferWrapper implements TrimAware {
 
         private TrimAwareWrapper(ByteBuffer underlyingByteBuffer) {
             super(underlyingByteBuffer);
@@ -517,10 +479,8 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
         public void trim() {
             final int sizeToReturn = visible.capacity() - visible.position();
 
-
             if (sizeToReturn > 0) {
-                final ThreadLocalPool<ByteBuffer> threadLocalCache =
-                        getByteBufferThreadLocalPool();
+                final ThreadLocalPool<ByteBuffer> threadLocalCache = getByteBufferThreadLocalPool();
                 if (threadLocalCache != null) {
 
                     if (threadLocalCache.isLastAllocated(visible)) {
@@ -567,15 +527,11 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
             return ByteBufferManager.this.wrap(byteBuffer);
         }
 
-
-
     } // END TrimAwareWrapper
 
-
     /**
-     * {@link ByteBufferWrapper} implementation, which supports trimming. In
-     * other words it's possible to return unused {@link org.glassfish.grizzly.Buffer} space to
-     * pool.
+     * {@link ByteBufferWrapper} implementation, which supports trimming. In other words it's possible to return unused
+     * {@link org.glassfish.grizzly.Buffer} space to pool.
      */
     protected final class SmallByteBufferWrapper extends ByteBufferWrapper implements Cacheable {
 
@@ -597,8 +553,7 @@ public class ByteBufferManager extends AbstractMemoryManager<ByteBufferWrapper> 
                 disposeStackTrace = null;
 
                 if (ThreadCache.putToCache(SMALL_BUFFER_CACHE_IDX, this)) {
-                    ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig,
-                            maxSmallBufferSize);
+                    ProbeNotifier.notifyBufferReleasedToPool(monitoringConfig, maxSmallBufferSize);
                 }
             }
         }

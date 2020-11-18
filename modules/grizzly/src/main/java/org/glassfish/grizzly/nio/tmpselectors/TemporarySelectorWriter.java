@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,7 +22,13 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.TimeUnit;
-import org.glassfish.grizzly.*;
+
+import org.glassfish.grizzly.AbstractWriter;
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.WriteHandler;
+import org.glassfish.grizzly.WriteResult;
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
 import org.glassfish.grizzly.asyncqueue.WritableMessage;
 import org.glassfish.grizzly.nio.NIOConnection;
@@ -32,13 +38,11 @@ import org.glassfish.grizzly.nio.NIOConnection;
  * @author oleksiys
  */
 @SuppressWarnings("deprecation")
-public abstract class TemporarySelectorWriter
-        extends AbstractWriter<SocketAddress> {
+public abstract class TemporarySelectorWriter extends AbstractWriter<SocketAddress> {
 
     protected final TemporarySelectorsEnabledTransport transport;
 
-    public TemporarySelectorWriter(
-            TemporarySelectorsEnabledTransport transport) {
+    public TemporarySelectorWriter(TemporarySelectorsEnabledTransport transport) {
         this.transport = transport;
     }
 
@@ -46,95 +50,73 @@ public abstract class TemporarySelectorWriter
      * {@inheritDoc}
      */
     @Override
-    public void write(final Connection<SocketAddress> connection,
-            final SocketAddress dstAddress, final WritableMessage message,
-            final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler,
-            final MessageCloner<WritableMessage> messageCloner) {
-        
-        write(connection, dstAddress, message, completionHandler,
-                null,
-                connection.getWriteTimeout(TimeUnit.MILLISECONDS),
-                TimeUnit.MILLISECONDS);
+    public void write(final Connection<SocketAddress> connection, final SocketAddress dstAddress, final WritableMessage message,
+            final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler, final MessageCloner<WritableMessage> messageCloner) {
+
+        write(connection, dstAddress, message, completionHandler, null, connection.getWriteTimeout(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Deprecated
     @Override
-    public void write(
-            Connection<SocketAddress> connection, SocketAddress dstAddress,
-            WritableMessage message,
+    public void write(Connection<SocketAddress> connection, SocketAddress dstAddress, WritableMessage message,
             CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler,
             final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
-        write(connection, dstAddress, message, completionHandler,
-                pushBackHandler,
-                connection.getWriteTimeout(TimeUnit.MILLISECONDS),
-                TimeUnit.MILLISECONDS);
+        write(connection, dstAddress, message, completionHandler, pushBackHandler, connection.getWriteTimeout(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
 
     /**
      * Method writes the {@link WritableMessage} to the specific address.
      *
      * @param connection the {@link org.glassfish.grizzly.Connection} to write to
-     * @param dstAddress the destination address the <tt>message</tt> will be
-     *        sent to
+     * @param dstAddress the destination address the <tt>message</tt> will be sent to
      * @param message the {@link WritableMessage}, from which the data will be written
-     * @param completionHandler {@link org.glassfish.grizzly.CompletionHandler},
-     *        which will get notified, when write will be completed
+     * @param completionHandler {@link org.glassfish.grizzly.CompletionHandler}, which will get notified, when write will be
+     * completed
      */
-    public void write(
-            Connection<SocketAddress> connection, SocketAddress dstAddress, WritableMessage message,
-            CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler,
-            long timeout, TimeUnit timeunit) {
+    public void write(Connection<SocketAddress> connection, SocketAddress dstAddress, WritableMessage message,
+            CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler, long timeout, TimeUnit timeunit) {
         write(connection, dstAddress, message, completionHandler, null, timeout, timeunit);
     }
-    
+
     /**
      * Method writes the {@link WritableMessage} to the specific address.
      *
      * @param connection the {@link org.glassfish.grizzly.Connection} to write to
-     * @param dstAddress the destination address the <tt>message</tt> will be
-     *        sent to
+     * @param dstAddress the destination address the <tt>message</tt> will be sent to
      * @param message the {@link WritableMessage}, from which the data will be written
-     * @param completionHandler {@link org.glassfish.grizzly.CompletionHandler},
-     *        which will get notified, when write will be completed
+     * @param completionHandler {@link org.glassfish.grizzly.CompletionHandler}, which will get notified, when write will be
+     * completed
      */
-    public void write(
-            Connection<SocketAddress> connection, SocketAddress dstAddress, WritableMessage message,
+    public void write(Connection<SocketAddress> connection, SocketAddress dstAddress, WritableMessage message,
             CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler,
-            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler,
-            long timeout, TimeUnit timeunit) {
+            final org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler, long timeout, TimeUnit timeunit) {
 
         if (message == null) {
-            failure(new IllegalStateException("Message cannot be null"),
-                    completionHandler);
+            failure(new IllegalStateException("Message cannot be null"), completionHandler);
             return;
         }
 
         if (connection == null || !(connection instanceof NIOConnection)) {
-            failure(new IllegalStateException("Connection should be NIOConnection and cannot be null"),
-                    completionHandler);
+            failure(new IllegalStateException("Connection should be NIOConnection and cannot be null"), completionHandler);
             return;
         }
 
         final NIOConnection nioConnection = (NIOConnection) connection;
-        
-        final WriteResult<WritableMessage, SocketAddress> writeResult =
-                WriteResult.create(connection,
-                        message, dstAddress, 0);
+
+        final WriteResult<WritableMessage, SocketAddress> writeResult = WriteResult.create(connection, message, dstAddress, 0);
 
         try {
-            write0(nioConnection, dstAddress, message, writeResult,
-                    timeout, timeunit);
+            write0(nioConnection, dstAddress, message, writeResult, timeout, timeunit);
 
             // Call PushBackHandler after data is written.
-            // IMO It has more sense for blocking case 
+            // IMO It has more sense for blocking case
             if (pushBackHandler != null) {
                 pushBackHandler.onAccept(connection, message);
             }
-            
+
             if (completionHandler != null) {
                 completionHandler.completed(writeResult);
             }
@@ -144,7 +126,7 @@ public abstract class TemporarySelectorWriter
             failure(e, completionHandler);
         }
     }
-    
+
     /**
      * Flush the buffer by looping until the {@link Buffer} is empty
      *
@@ -152,17 +134,15 @@ public abstract class TemporarySelectorWriter
      * @param connection the {@link org.glassfish.grizzly.Connection}.
      * @param dstAddress the destination address.
      * @param message
-     *@param currentResult the result of the write operation
+     * @param currentResult the result of the write operation
      * @param timeout operation timeout value value
      * @param timeunit the timeout unit
-*    @return The number of bytes written.
-     * 
+     * @return The number of bytes written.
+     *
      * @throws java.io.IOException
      */
-    protected long write0(final NIOConnection connection,
-            final SocketAddress dstAddress, final WritableMessage message,
-            final WriteResult<WritableMessage, SocketAddress> currentResult,
-            final long timeout, final TimeUnit timeunit) throws IOException {
+    protected long write0(final NIOConnection connection, final SocketAddress dstAddress, final WritableMessage message,
+            final WriteResult<WritableMessage, SocketAddress> currentResult, final long timeout, final TimeUnit timeunit) throws IOException {
 
         final SelectableChannel channel = connection.getChannel();
         final long writeTimeout = TimeUnit.MILLISECONDS.convert(timeout, timeunit);
@@ -173,11 +153,10 @@ public abstract class TemporarySelectorWriter
         int bytesWritten = 0;
 
         try {
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            // noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (connection) {
                 while (message.hasRemaining()) {
-                    long len = writeNow0(connection, dstAddress, message,
-                            currentResult);
+                    long len = writeNow0(connection, dstAddress, message, currentResult);
 
                     if (len > 0) {
                         attempts = 0;
@@ -185,15 +164,13 @@ public abstract class TemporarySelectorWriter
                     } else {
                         attempts++;
                         if (writeSelector == null) {
-                            writeSelector = transport.getTemporarySelectorIO().
-                                    getSelectorPool().poll();
+                            writeSelector = transport.getTemporarySelectorIO().getSelectorPool().poll();
 
                             if (writeSelector == null) {
                                 // Continue using the main one.
                                 continue;
                             }
-                            key = channel.register(writeSelector,
-                                    SelectionKey.OP_WRITE);
+                            key = channel.register(writeSelector, SelectionKey.OP_WRITE);
                         } else {
                             writeSelector.selectedKeys().clear();
                         }
@@ -207,10 +184,9 @@ public abstract class TemporarySelectorWriter
                 }
             }
         } finally {
-            transport.getTemporarySelectorIO().recycleTemporaryArtifacts(
-                    writeSelector, key);
+            transport.getTemporarySelectorIO().recycleTemporaryArtifacts(writeSelector, key);
         }
-        
+
         return bytesWritten;
     }
 
@@ -218,14 +194,10 @@ public abstract class TemporarySelectorWriter
         return transport;
     }
 
-    protected abstract long writeNow0(NIOConnection connection,
-            SocketAddress dstAddress, WritableMessage message,
-            WriteResult<WritableMessage, SocketAddress> currentResult)
-            throws IOException;
-    
-    private static void failure(
-            final Throwable failure,
-            final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler) {
+    protected abstract long writeNow0(NIOConnection connection, SocketAddress dstAddress, WritableMessage message,
+            WriteResult<WritableMessage, SocketAddress> currentResult) throws IOException;
+
+    private static void failure(final Throwable failure, final CompletionHandler<WriteResult<WritableMessage, SocketAddress>> completionHandler) {
         if (completionHandler != null) {
             completionHandler.failed(failure);
         }
@@ -243,8 +215,7 @@ public abstract class TemporarySelectorWriter
      * {@inheritDoc}
      */
     @Override
-    public void notifyWritePossible(final Connection connection,
-                                    final WriteHandler writeHandler) {
+    public void notifyWritePossible(final Connection connection, final WriteHandler writeHandler) {
         try {
             writeHandler.onWritePossible();
         } catch (Throwable t) {

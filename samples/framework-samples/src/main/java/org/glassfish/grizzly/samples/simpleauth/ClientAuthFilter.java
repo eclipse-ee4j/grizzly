@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,43 +10,39 @@
 
 package org.glassfish.grizzly.samples.simpleauth;
 
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+
 /**
- * Client authentication filter, which intercepts client<->server communication,
- * and checks whether client connection has been authenticated. If not - filter
- * suspends current message write and initialize authentication. Once authentication
- * is done - filter resumes all the suspended writes. If connection is authenticated -
- * filter adds "auth-id: <connection-id>" header to the outgoing message.
+ * Client authentication filter, which intercepts client<->server communication, and checks whether client connection
+ * has been authenticated. If not - filter suspends current message write and initialize authentication. Once
+ * authentication is done - filter resumes all the suspended writes. If connection is authenticated - filter adds
+ * "auth-id: <connection-id>" header to the outgoing message.
  *
  * @author Alexey Stashok
  */
 public class ClientAuthFilter extends BaseFilter {
 
     // Authentication packet (authentication request). The packet is the same for all connections.
-    private static final MultiLinePacket authPacket =
-            MultiLinePacket.create("authentication-request");
+    private static final MultiLinePacket authPacket = MultiLinePacket.create("authentication-request");
 
     // Map of authenticated connections
-    private final ConcurrentMap<Connection, ConnectionAuthInfo> authenticatedConnections =
-            new ConcurrentHashMap<>();
+    private final ConcurrentMap<Connection, ConnectionAuthInfo> authenticatedConnections = new ConcurrentHashMap<>();
 
     /**
-     * The method is called once we have received {@link MultiLinePacket}.
-     * Filter check if incoming message is the server authentication response.
-     * If yes - we suppose client authentication is completed, store client id
-     * (assigned by the server), and resume all the pending writes. If client
-     * was authenticated before - we check the "auth-id: <connection-id>"
-     * header to be equal to the client id, stored on client. If it's ok - we
-     * pass control to a next filter, if not - throw an Exception.
+     * The method is called once we have received {@link MultiLinePacket}. Filter check if incoming message is the server
+     * authentication response. If yes - we suppose client authentication is completed, store client id (assigned by the
+     * server), and resume all the pending writes. If client was authenticated before - we check the "auth-id:
+     * <connection-id>" header to be equal to the client id, stored on client. If it's ok - we pass control to a next
+     * filter, if not - throw an Exception.
      *
      * @param ctx Request processing context
      *
@@ -67,8 +63,8 @@ public class ClientAuthFilter extends BaseFilter {
             // if yes - retrieve the id, assigned by server
             final String id = getId(packet.getLines().get(1));
 
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized(connection) {
+            // noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (connection) {
                 // store id in the map
                 ConnectionAuthInfo info = authenticatedConnections.get(connection);
                 info.id = id;
@@ -104,22 +100,19 @@ public class ClientAuthFilter extends BaseFilter {
     }
 
     /**
-     * The method is called each time, when client sends a message to a server.
-     * First of all filter check if this connection has been authenticated.
-     * If yes - add "auth-id: <connection-id>" header to a message and pass it
-     * to a next filter in a chain. If appears, that client wasn't authenticated yet -
-     * filter initialize authentication (only once for the very first message),
-     * suspends current write and adds suspended context to a queue to resume it,
-     * once authentication will be completed.
-     * 
+     * The method is called each time, when client sends a message to a server. First of all filter check if this connection
+     * has been authenticated. If yes - add "auth-id: <connection-id>" header to a message and pass it to a next filter in a
+     * chain. If appears, that client wasn't authenticated yet - filter initialize authentication (only once for the very
+     * first message), suspends current write and adds suspended context to a queue to resume it, once authentication will
+     * be completed.
+     *
      * @param ctx Response processing context
      *
      * @return {@link NextAction}
      * @throws IOException
      */
     @Override
-    public NextAction handleWrite(final FilterChainContext ctx)
-            throws IOException {
+    public NextAction handleWrite(final FilterChainContext ctx) throws IOException {
 
         // Get the connection
         final Connection connection = ctx.getConnection();
@@ -127,14 +120,12 @@ public class ClientAuthFilter extends BaseFilter {
         final MultiLinePacket packet = ctx.getMessage();
 
         // Get the connection authentication information
-        ConnectionAuthInfo authInfo =
-                authenticatedConnections.get(connection);
-        
+        ConnectionAuthInfo authInfo = authenticatedConnections.get(connection);
+
         if (authInfo == null) {
             // connection is not authenticated
             authInfo = new ConnectionAuthInfo();
-            final ConnectionAuthInfo existingInfo =
-                    authenticatedConnections.putIfAbsent(connection, authInfo);
+            final ConnectionAuthInfo existingInfo = authenticatedConnections.putIfAbsent(connection, authInfo);
             if (existingInfo == null) {
                 // it's the first message for this client - we need to start authentication process
                 // sending authentication packet
@@ -148,7 +139,7 @@ public class ClientAuthFilter extends BaseFilter {
         if (authInfo.pendingMessages != null) {
             // it might be a sign, that authentication has been completed on another thread
             // synchronize and check one more time
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            // noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (connection) {
                 if (authInfo.pendingMessages != null) {
                     if (authInfo.id == null) {
@@ -170,9 +161,8 @@ public class ClientAuthFilter extends BaseFilter {
     }
 
     /**
-     * The method is called, when a connection gets closed.
-     * We remove connection entry in authenticated connections map.
-     * 
+     * The method is called, when a connection gets closed. We remove connection entry in authenticated connections map.
+     *
      * @param ctx Request processing context
      *
      * @return {@link NextAction}
@@ -181,25 +171,26 @@ public class ClientAuthFilter extends BaseFilter {
     @Override
     public NextAction handleClose(FilterChainContext ctx) throws IOException {
         authenticatedConnections.remove(ctx.getConnection());
-        
+
         return ctx.getInvokeAction();
     }
 
     /**
-     * Method checks, whether authentication header, sent in the message corresponds
-     * to a value, stored in the client authentication map.
-     * 
+     * Method checks, whether authentication header, sent in the message corresponds to a value, stored in the client
+     * authentication map.
+     *
      * @param connection {@link Connection}
      * @param idLine authentication header string.
-     * 
+     *
      * @return <tt>true</tt>, if authentication passed, or <tt>false</tt> otherwise.
      */
     private boolean checkAuth(Connection connection, String idLine) {
         // Get the connection id, from the client map
-        final ConnectionAuthInfo registeredId =
-                authenticatedConnections.get(connection);
-        if (registeredId == null || registeredId.id == null) return false;
-        
+        final ConnectionAuthInfo registeredId = authenticatedConnections.get(connection);
+        if (registeredId == null || registeredId.id == null) {
+            return false;
+        }
+
         if (idLine.startsWith("auth-id:")) {
             // extract client id from the authentication header
             String id = getId(idLine);
@@ -209,7 +200,7 @@ public class ClientAuthFilter extends BaseFilter {
             return false;
         }
     }
-    
+
     /**
      * Retrieve connection id from a packet header
      *
@@ -231,7 +222,7 @@ public class ClientAuthFilter extends BaseFilter {
         public volatile Queue<FilterChainContext> pendingMessages;
 
         public ConnectionAuthInfo() {
-            pendingMessages = new LinkedList<FilterChainContext>();
+            pendingMessages = new LinkedList<>();
         }
     }
 }

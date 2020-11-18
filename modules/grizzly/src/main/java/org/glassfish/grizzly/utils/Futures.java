@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.utils;
 
 import java.util.concurrent.Future;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Copyable;
 import org.glassfish.grizzly.EmptyCompletionHandler;
@@ -53,17 +54,17 @@ public class Futures {
 
     /**
      * Create a {@link Future}, which has a preset result.
-     * 
+     *
      * @param result the result
      * @return a {@link Future}, which has a preset result.
      */
     public static <R> GrizzlyFuture<R> createReadyFuture(final R result) {
         return ReadyFutureImpl.create(result);
     }
-    
+
     /**
      * Create a {@link Future}, which has a preset failure.
-     * 
+     *
      * @param error the failure
      * @return a {@link Future}, which has a preset failure.
      */
@@ -71,17 +72,14 @@ public class Futures {
         return ReadyFutureImpl.create(error);
     }
 
-    
     /**
-     * Complete passed {@link FutureImpl} and {@link CompletionHandler} using
-     * the passed result object.
-     * 
+     * Complete passed {@link FutureImpl} and {@link CompletionHandler} using the passed result object.
+     *
      * @param future {@link FutureImpl} to be notified
      * @param completionHandler {@link CompletionHandler} to be notified
      * @param result the result
      */
-    public static <R> void notifyResult(final FutureImpl<R> future,
-            final CompletionHandler<R> completionHandler, final R result) {
+    public static <R> void notifyResult(final FutureImpl<R> future, final CompletionHandler<R> completionHandler, final R result) {
         if (completionHandler != null) {
             completionHandler.completed(result);
         }
@@ -90,117 +88,92 @@ public class Futures {
             future.result(result);
         }
     }
-    
+
     /**
-     * Complete passed {@link FutureImpl} and {@link CompletionHandler} using
-     * the passed error
-     * 
+     * Complete passed {@link FutureImpl} and {@link CompletionHandler} using the passed error
+     *
      * @param future {@link FutureImpl} to be notified
      * @param completionHandler {@link CompletionHandler} to be notified
      * @param error the error.
      */
-    public static <R> void notifyFailure(final FutureImpl<R> future,
-            final CompletionHandler completionHandler, final Throwable error) {
+    public static <R> void notifyFailure(final FutureImpl<R> future, final CompletionHandler completionHandler, final Throwable error) {
         if (completionHandler != null) {
             completionHandler.failed(error);
         }
-        
+
         if (future != null) {
             future.failure(error);
         }
     }
 
     /**
-     * Complete passed {@link FutureImpl} and {@link CompletionHandler} via
-     * the cancellation notification.
-     * 
+     * Complete passed {@link FutureImpl} and {@link CompletionHandler} via the cancellation notification.
+     *
      * @param future {@link FutureImpl} to be notified
      * @param completionHandler {@link CompletionHandler} to be notified
      */
-    public static <R> void notifyCancel(final FutureImpl<R> future,
-            final CompletionHandler completionHandler) {
+    public static <R> void notifyCancel(final FutureImpl<R> future, final CompletionHandler completionHandler) {
         if (completionHandler != null) {
             completionHandler.cancelled();
         }
 
         if (future != null) {
             future.cancel(false);
-        }        
+        }
     }
 
     /**
-     * Creates {@link CompletionHandler}, which may serve as a bridge for passed
-     * {@link FutureImpl}. All the notifications coming to the returned
-     * {@link CompletionHandler} will be passed to the passed {@link FutureImpl}.
+     * Creates {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl}. All the notifications
+     * coming to the returned {@link CompletionHandler} will be passed to the passed {@link FutureImpl}.
      *
-     * @return {@link CompletionHandler}, which may serve as a bridge for passed
-     * {@link FutureImpl}. All the notifications coming to the returned
-     * {@link CompletionHandler} will be passed to the passed {@link FutureImpl}.
+     * @return {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl}. All the notifications
+     * coming to the returned {@link CompletionHandler} will be passed to the passed {@link FutureImpl}.
      */
-    public static <R> CompletionHandler<R> toCompletionHandler(
-            final FutureImpl<R> future) {
-        return new FutureToCompletionHandler<R>(future);
+    public static <R> CompletionHandler<R> toCompletionHandler(final FutureImpl<R> future) {
+        return new FutureToCompletionHandler<>(future);
     }
 
     /**
-     * Creates {@link CompletionHandler}, which may serve as a bridge for passed
-     * {@link FutureImpl} and {@link CompletionHandler} objects.
-     * All the notifications coming to the returned {@link CompletionHandler}
-     * will be passed to the {@link FutureImpl} and {@link CompletionHandler}
-     * passed as parameters.
+     * Creates {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl} and
+     * {@link CompletionHandler} objects. All the notifications coming to the returned {@link CompletionHandler} will be
+     * passed to the {@link FutureImpl} and {@link CompletionHandler} passed as parameters.
      *
-     * @return {@link CompletionHandler}, which may serve as a bridge for passed
-     * {@link FutureImpl} and {@link CompletionHandler} objects.
-     * All the notifications coming to the returned {@link CompletionHandler}
-     * will be passed to the {@link FutureImpl} and {@link CompletionHandler}
-     * passed as parameters.
+     * @return {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl} and
+     * {@link CompletionHandler} objects. All the notifications coming to the returned {@link CompletionHandler} will be
+     * passed to the {@link FutureImpl} and {@link CompletionHandler} passed as parameters.
      */
-    public static <R> CompletionHandler<R> toCompletionHandler(
-            final FutureImpl<R> future,
-            final CompletionHandler<R> completionHandler) {
-        return new CompletionHandlerAdapter<R, R>(future, completionHandler);
+    public static <R> CompletionHandler<R> toCompletionHandler(final FutureImpl<R> future, final CompletionHandler<R> completionHandler) {
+        return new CompletionHandlerAdapter<>(future, completionHandler);
     }
 
     /**
-     * Creates {@link CompletionHandler}, which may serve as a bridge
-     * for passed {@link FutureImpl}. All the notifications coming to the returned
-     * {@link CompletionHandler} will be <tt>adapted</tt> using
-     * {@link GenericAdapter} and passed to the {@link FutureImpl}.
-     * 
-     * @return {@link CompletionHandler}, which may serve as a bridge
-     * for passed {@link FutureImpl}. All the notifications coming to the returned
-     * {@link CompletionHandler} will be <tt>adapted</tt> using
-     * {@link GenericAdapter} and passed to the {@link FutureImpl}.
+     * Creates {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl}. All the notifications
+     * coming to the returned {@link CompletionHandler} will be <tt>adapted</tt> using {@link GenericAdapter} and passed to
+     * the {@link FutureImpl}.
+     *
+     * @return {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl}. All the notifications
+     * coming to the returned {@link CompletionHandler} will be <tt>adapted</tt> using {@link GenericAdapter} and passed to
+     * the {@link FutureImpl}.
      */
-    public static <A, B> CompletionHandler<B> toAdaptedCompletionHandler(
-            final FutureImpl<A> future,
-            final GenericAdapter<B, A> adapter) {
+    public static <A, B> CompletionHandler<B> toAdaptedCompletionHandler(final FutureImpl<A> future, final GenericAdapter<B, A> adapter) {
         return toAdaptedCompletionHandler(future, null, adapter);
     }
 
     /**
-     * Creates {@link CompletionHandler}, which may serve as a bridge
-     * for passed {@link FutureImpl} and {@link CompletionHandler}.
-     * All the notifications coming to the returned {@link CompletionHandler}
-     * will be <tt>adapted</tt> using {@link GenericAdapter} and passed to the
-     * {@link FutureImpl} and {@link CompletionHandler}.
-     * 
-     * @return {@link CompletionHandler}, which may serve as a bridge
-     * for passed {@link FutureImpl} and {@link CompletionHandler}.
-     * All the notifications coming to the returned {@link CompletionHandler}
-     * will be <tt>adapted</tt> using {@link GenericAdapter} and passed to the
-     * {@link FutureImpl} and {@link CompletionHandler}.
+     * Creates {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl} and
+     * {@link CompletionHandler}. All the notifications coming to the returned {@link CompletionHandler} will be
+     * <tt>adapted</tt> using {@link GenericAdapter} and passed to the {@link FutureImpl} and {@link CompletionHandler}.
+     *
+     * @return {@link CompletionHandler}, which may serve as a bridge for passed {@link FutureImpl} and
+     * {@link CompletionHandler}. All the notifications coming to the returned {@link CompletionHandler} will be
+     * <tt>adapted</tt> using {@link GenericAdapter} and passed to the {@link FutureImpl} and {@link CompletionHandler}.
      */
-    public static <A, B> CompletionHandler<B> toAdaptedCompletionHandler(
-            final FutureImpl<A> future,
-            final CompletionHandler<A> completionHandler,
+    public static <A, B> CompletionHandler<B> toAdaptedCompletionHandler(final FutureImpl<A> future, final CompletionHandler<A> completionHandler,
             final GenericAdapter<B, A> adapter) {
-        return new CompletionHandlerAdapter<A, B>(
-                future, completionHandler, adapter);
+        return new CompletionHandlerAdapter<>(future, completionHandler, adapter);
     }
 
-    private static final class FutureToCompletionHandler<E>
-            extends EmptyCompletionHandler<E> {
+    private static final class FutureToCompletionHandler<E> extends EmptyCompletionHandler<E> {
 
         private final FutureImpl<E> future;
 

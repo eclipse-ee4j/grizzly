@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,15 +20,14 @@ import org.glassfish.grizzly.utils.Holder;
 
 /**
  * Result of read operation, returned by {@link Readable}.
- * 
+ *
  * @param <K> type of the message
  * @param <L> type of the address
- * 
+ *
  * @author Alexey Stashok
  */
 public class ReadResult<K, L> implements Result, Cacheable {
-    private static final ThreadCache.CachedTypeIndex<ReadResult> CACHE_IDX =
-            ThreadCache.obtainIndex(ReadResult.class, 4);
+    private static final ThreadCache.CachedTypeIndex<ReadResult> CACHE_IDX = ThreadCache.obtainIndex(ReadResult.class, 4);
 
     private boolean isRecycled = false;
 
@@ -40,11 +39,10 @@ public class ReadResult<K, L> implements Result, Cacheable {
             return readResult;
         }
 
-        return new ReadResult<K, L>(connection);
+        return new ReadResult<>(connection);
     }
 
-    public static <K, L> ReadResult<K, L> create(Connection<L> connection,
-            K message, L srcAddress, int readSize) {
+    public static <K, L> ReadResult<K, L> create(Connection<L> connection, K message, L srcAddress, int readSize) {
         final ReadResult<K, L> readResult = takeFromCache();
         if (readResult != null) {
             readResult.connection = connection;
@@ -52,11 +50,11 @@ public class ReadResult<K, L> implements Result, Cacheable {
             readResult.srcAddressHolder = Holder.staticHolder(srcAddress);
             readResult.readSize = readSize;
             readResult.isRecycled = false;
-            
+
             return readResult;
         }
 
-        return new ReadResult<K, L>(connection, message, srcAddress, readSize);
+        return new ReadResult<>(connection, message, srcAddress, readSize);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,7 +73,7 @@ public class ReadResult<K, L> implements Result, Cacheable {
     private K message;
 
     /**
-     *  Source address.
+     * Source address.
      */
 
     private Holder<L> srcAddressHolder;
@@ -87,13 +85,12 @@ public class ReadResult<K, L> implements Result, Cacheable {
 
     protected ReadResult() {
     }
-    
+
     protected ReadResult(final Connection<L> connection) {
         this(connection, null, null, 0);
     }
 
-    protected ReadResult(final Connection<L> connection, final K message,
-            final L srcAddress, final int readSize) {
+    protected ReadResult(final Connection<L> connection, final K message, final L srcAddress, final int readSize) {
         this.connection = connection;
         this.message = message;
         this.srcAddressHolder = Holder.staticHolder(srcAddress);
@@ -102,7 +99,7 @@ public class ReadResult<K, L> implements Result, Cacheable {
 
     /**
      * Get the {@link Connection} data were read from.
-     * 
+     *
      * @return the {@link Connection} data were read from.
      */
     @Override
@@ -113,7 +110,7 @@ public class ReadResult<K, L> implements Result, Cacheable {
 
     /**
      * Get the message, which was read.
-     * 
+     *
      * @return the message, which was read.
      */
     public final K getMessage() {
@@ -193,20 +190,19 @@ public class ReadResult<K, L> implements Result, Cacheable {
 
     /**
      * One method to set all the WriteResult properties.
-     * 
+     *
      * @param connection the connection the data was read from
      * @param message the message which was read
      * @param srcAddress the source address the message was read from
      * @param readSize number of bytes which were read
      */
-    protected void set(final Connection<L> connection, final K message,
-            final L srcAddress, final int readSize) {
+    protected void set(final Connection<L> connection, final K message, final L srcAddress, final int readSize) {
         this.connection = connection;
         this.message = message;
         this.srcAddressHolder = Holder.staticHolder(srcAddress);
         this.readSize = readSize;
     }
-    
+
     protected void reset() {
         connection = null;
         message = null;
@@ -215,10 +211,11 @@ public class ReadResult<K, L> implements Result, Cacheable {
     }
 
     private void checkRecycled() {
-        if (Grizzly.isTrackingThreadCache() && isRecycled)
+        if (Grizzly.isTrackingThreadCache() && isRecycled) {
             throw new IllegalStateException("ReadResult has been recycled!");
+        }
     }
-    
+
     @Override
     public void recycle() {
         reset();
@@ -228,7 +225,6 @@ public class ReadResult<K, L> implements Result, Cacheable {
 
     @Override
     public Object copy() {
-        return ReadResult.create(getConnection(), getMessage(),
-                getSrcAddress(), getReadSize());
+        return ReadResult.create(getConnection(), getMessage(), getSrcAddress(), getReadSize());
     }
 }

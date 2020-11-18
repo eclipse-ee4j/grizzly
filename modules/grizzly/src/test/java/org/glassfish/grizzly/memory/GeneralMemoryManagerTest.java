@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,29 +16,23 @@
 
 package org.glassfish.grizzly.memory;
 
+import static org.junit.Assert.assertEquals;
+
+import java.nio.ByteBuffer;
+
+import org.glassfish.grizzly.Buffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.nio.ByteBuffer;
-import java.nio.InvalidMarkException;
-
-import org.glassfish.grizzly.Buffer;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 @RunWith(Parameterized.class)
 public class GeneralMemoryManagerTest extends AbstractMemoryManagerTest {
 
-
     // ------------------------------------------------------------ Constructors
-
 
     public GeneralMemoryManagerTest(int mmType) {
         super(mmType);
     }
-
 
     // ------------------------------------------------------------ Test Methods
 
@@ -82,7 +76,6 @@ public class GeneralMemoryManagerTest extends AbstractMemoryManagerTest {
         b.flip();
 
         b.put(b, 10, 127 - 10).flip();
-
 
         assertEquals(127 - 10, b.remaining());
 

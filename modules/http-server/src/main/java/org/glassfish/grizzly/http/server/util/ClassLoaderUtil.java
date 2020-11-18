@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,6 +25,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -36,31 +37,30 @@ public class ClassLoaderUtil {
     private static final Logger LOGGER = Grizzly.logger(ClassLoaderUtil.class);
 
     /**
-     * Create a class loader that can load classes from the specified
-     * file directory. The file directory must contains .jar or .zip
+     * Create a class loader that can load classes from the specified file directory. The file directory must contains .jar
+     * or .zip
      *
      * @param libDir Directory with jars.
      * @param cl the parent {@link ClassLoader}, or null if none.
-     * @return A {@link URLClassLoader} that can load classes from a directory that
-     *         contains jar and zip files.
+     * @return A {@link URLClassLoader} that can load classes from a directory that contains jar and zip files.
      * @throws java.io.IOException I/O fail
      * @deprecated removal candidate, never used
      */
-    public static ClassLoader createClassloader(File libDir, ClassLoader cl)
-            throws IOException {
+    @Deprecated
+    public static ClassLoader createClassloader(File libDir, ClassLoader cl) throws IOException {
         URLClassLoader urlClassloader = null;
         if (libDir.exists()) {
             if (libDir.isDirectory()) {
                 String[] jars = libDir.list(new FilenameFilter() {
 
+                    @Override
                     public boolean accept(File dir, String name) {
                         return name.endsWith(".jar") || name.endsWith(".zip");
                     }
                 });
                 URL[] urls = new URL[jars.length];
                 for (int i = 0; i < jars.length; i++) {
-                    String path = new File(libDir.getName()
-                            + File.separator + jars[i]).getCanonicalFile().toURI().toURL().toString();
+                    String path = new File(libDir.getName() + File.separator + jars[i]).getCanonicalFile().toURI().toURL().toString();
                     urls[i] = new URL(path);
                 }
                 urlClassloader = createClassLoaderWithSecCheck(urls, cl);
@@ -71,6 +71,7 @@ public class ClassLoaderUtil {
 
     /**
      * Construct a {@link URLClassLoader} based on a canonical file location.
+     * 
      * @param dirPath a canonical path location
      * @return a {@link URLClassLoader}
      * @throws java.io.IOException I/O
@@ -83,28 +84,23 @@ public class ClassLoaderUtil {
         URL appRoot;
         URL classesURL;
 
-        if (!dirPath.endsWith(File.separator)
-                && !dirPath.endsWith(".war")
-                && !dirPath.endsWith(".jar")) {
+        if (!dirPath.endsWith(File.separator) && !dirPath.endsWith(".war") && !dirPath.endsWith(".jar")) {
             dirPath += File.separator;
         }
 
-        //Must be a better way because that sucks!
-        String separator = (System.getProperty("os.name").toLowerCase().startsWith("win") ? "/" : "//");
+        // Must be a better way because that sucks!
+        String separator = System.getProperty("os.name").toLowerCase().startsWith("win") ? "/" : "//";
 
-        if (dirPath != null
-                && (dirPath.endsWith(".war") || dirPath.endsWith(".jar"))) {
+        if (dirPath != null && (dirPath.endsWith(".war") || dirPath.endsWith(".jar"))) {
             file = new File(dirPath);
-            appRoot = new URL("jar:file:" + separator
-                    + file.getCanonicalPath().replace('\\', '/') + "!/");
-            classesURL = new URL("jar:file:" + separator
-                    + file.getCanonicalPath().replace('\\', '/') + "!/WEB-INF/classes/");
+            appRoot = new URL("jar:file:" + separator + file.getCanonicalPath().replace('\\', '/') + "!/");
+            classesURL = new URL("jar:file:" + separator + file.getCanonicalPath().replace('\\', '/') + "!/WEB-INF/classes/");
 
             path = ExpandJar.expand(appRoot);
 
-            //DEBUG
-            //classesURL = new URL("file:/" + path + "WEB-INF/classes/");
-            //appRoot = new URL("file:/" + path);
+            // DEBUG
+            // classesURL = new URL("file:/" + path + "WEB-INF/classes/");
+            // appRoot = new URL("file:/" + path);
 
         } else {
             path = dirPath;
@@ -155,6 +151,7 @@ public class ClassLoaderUtil {
 
     /**
      * Load a class using the current {link Thread#getContextClassLoader}
+     * 
      * @param clazzName The name of the class you want to load.
      * @return an instance of clazzname
      */
@@ -164,6 +161,7 @@ public class ClassLoaderUtil {
 
     /**
      * Load a class using the provided {@link ClassLoader}
+     * 
      * @param clazzName The name of the class you want to load.
      * @param classLoader A classloader to use for loading a class.
      * @return an instance of clazzname
@@ -174,19 +172,18 @@ public class ClassLoaderUtil {
             className = Class.forName(clazzName, true, classLoader);
             return className.newInstance();
         } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE, "Unable to load class "
-                    + clazzName, t);
+            LOGGER.log(Level.SEVERE, "Unable to load class " + clazzName, t);
         }
 
         return null;
     }
 
-    private static URLClassLoader createClassLoaderWithSecCheck(final URL[] urls,
-                                                                final ClassLoader parent) {
+    private static URLClassLoader createClassLoaderWithSecCheck(final URL[] urls, final ClassLoader parent) {
         if (System.getSecurityManager() == null) {
             return new URLClassLoader(urls, parent);
         } else {
             return AccessController.doPrivileged(new PrivilegedAction<URLClassLoader>() {
+                @Override
                 public URLClassLoader run() {
                     return new URLClassLoader(urls, parent);
                 }

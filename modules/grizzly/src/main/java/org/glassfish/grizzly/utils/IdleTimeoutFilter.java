@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
@@ -31,81 +32,60 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
 
 /**
- * The Filter is responsible for tracking {@link Connection} activity and closing
- * {@link Connection} once it becomes idle for certain amount of time.
- * Unlike {@link ActivityCheckFilter}, this Filter assumes {@link Connection}
- * is idle, when no event is being executed on it. But if some event processing
- * was suspended - this Filter still assumes {@link Connection} is active.
- * 
+ * The Filter is responsible for tracking {@link Connection} activity and closing {@link Connection} once it becomes
+ * idle for certain amount of time. Unlike {@link ActivityCheckFilter}, this Filter assumes {@link Connection} is idle,
+ * when no event is being executed on it. But if some event processing was suspended - this Filter still assumes
+ * {@link Connection} is active.
+ *
  * @see ActivityCheckFilter
- * 
+ *
  * @author Alexey Stashok
  */
 public class IdleTimeoutFilter extends BaseFilter {
 
     public static final Long FOREVER = Long.MAX_VALUE;
     public static final Long FOREVER_SPECIAL = FOREVER - 1;
-    
-    public static final String IDLE_ATTRIBUTE_NAME = "connection-idle-attribute";
-    private static final Attribute<IdleRecord> IDLE_ATTR =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(
-            IDLE_ATTRIBUTE_NAME, new NullaryFunction<IdleRecord>() {
 
-        @Override
-        public IdleRecord evaluate() {
-            return new IdleRecord();
-        }
-    });
-    
+    public static final String IDLE_ATTRIBUTE_NAME = "connection-idle-attribute";
+    private static final Attribute<IdleRecord> IDLE_ATTR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(IDLE_ATTRIBUTE_NAME,
+            new NullaryFunction<IdleRecord>() {
+
+                @Override
+                public IdleRecord evaluate() {
+                    return new IdleRecord();
+                }
+            });
+
     private final TimeoutResolver timeoutResolver;
     private final DelayedExecutor.DelayQueue<Connection> queue;
     private final DelayedExecutor.Resolver<Connection> resolver;
 
-    private final FilterChainContext.CompletionListener contextCompletionListener =
-            new ContextCompletionListener();
-
+    private final FilterChainContext.CompletionListener contextCompletionListener = new ContextCompletionListener();
 
     // ------------------------------------------------------------ Constructors
 
-
-    public IdleTimeoutFilter(final DelayedExecutor executor,
-                             final long timeout,
-                             final TimeUnit timeoutUnit) {
+    public IdleTimeoutFilter(final DelayedExecutor executor, final long timeout, final TimeUnit timeoutUnit) {
 
         this(executor, timeout, timeoutUnit, null);
 
     }
 
-
     @SuppressWarnings("UnusedDeclaration")
-    public IdleTimeoutFilter(final DelayedExecutor executor,
-                             final TimeoutResolver timeoutResolver) {
+    public IdleTimeoutFilter(final DelayedExecutor executor, final TimeoutResolver timeoutResolver) {
         this(executor, timeoutResolver, null);
     }
 
+    public IdleTimeoutFilter(final DelayedExecutor executor, final long timeout, final TimeUnit timeUnit, final TimeoutHandler handler) {
 
-    public IdleTimeoutFilter(final DelayedExecutor executor,
-                             final long timeout,
-                             final TimeUnit timeUnit,
-                             final TimeoutHandler handler) {
-
-        this(executor,
-                new DefaultWorker(handler),
-                new IdleTimeoutResolver(convertToMillis(timeout, timeUnit)));
+        this(executor, new DefaultWorker(handler), new IdleTimeoutResolver(convertToMillis(timeout, timeUnit)));
     }
 
-
-    public IdleTimeoutFilter(final DelayedExecutor executor,
-                             final TimeoutResolver timeoutResolver,
-                             final TimeoutHandler handler) {
+    public IdleTimeoutFilter(final DelayedExecutor executor, final TimeoutResolver timeoutResolver, final TimeoutHandler handler) {
 
         this(executor, new DefaultWorker(handler), timeoutResolver);
     }
 
-
-    protected IdleTimeoutFilter(final DelayedExecutor executor,
-                                final DelayedExecutor.Worker<Connection> worker,
-                                final TimeoutResolver timeoutResolver) {
+    protected IdleTimeoutFilter(final DelayedExecutor executor, final DelayedExecutor.Worker<Connection> worker, final TimeoutResolver timeoutResolver) {
 
         if (executor == null) {
             throw new IllegalArgumentException("executor cannot be null");
@@ -117,10 +97,7 @@ public class IdleTimeoutFilter extends BaseFilter {
 
     }
 
-
     // ----------------------------------------------------- Methods from Filter
-
-
 
     @Override
     public NextAction handleAccept(final FilterChainContext ctx) throws IOException {
@@ -137,7 +114,7 @@ public class IdleTimeoutFilter extends BaseFilter {
         queueAction(ctx);
         return ctx.getInvokeAction();
     }
-    
+
     @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
         queueAction(ctx);
@@ -156,25 +133,22 @@ public class IdleTimeoutFilter extends BaseFilter {
         return ctx.getInvokeAction();
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     @SuppressWarnings("UnusedDeclaration")
     public DelayedExecutor.Resolver<Connection> getResolver() {
         return resolver;
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings({ "UnusedDeclaration" })
     public static DelayedExecutor createDefaultIdleDelayedExecutor() {
 
         return createDefaultIdleDelayedExecutor(1000, TimeUnit.MILLISECONDS);
 
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    public static DelayedExecutor createDefaultIdleDelayedExecutor(final long checkInterval,
-                                                                   final TimeUnit checkIntervalUnit) {
+    @SuppressWarnings({ "UnusedDeclaration" })
+    public static DelayedExecutor createDefaultIdleDelayedExecutor(final long checkInterval, final TimeUnit checkIntervalUnit) {
 
         final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
@@ -186,34 +160,22 @@ public class IdleTimeoutFilter extends BaseFilter {
                 return newThread;
             }
         });
-        return new DelayedExecutor(executor,
-                                   ((checkInterval > 0)
-                                       ? checkInterval
-                                       : 1000L),
-                                   ((checkIntervalUnit != null)
-                                       ? checkIntervalUnit
-                                       : TimeUnit.MILLISECONDS));
+        return new DelayedExecutor(executor, checkInterval > 0 ? checkInterval : 1000L, checkIntervalUnit != null ? checkIntervalUnit : TimeUnit.MILLISECONDS);
 
     }
 
-
     /**
-     * Provides an override mechanism for the default timeout.  
-     * 
-     * @param connection The {@link Connection} which is having the idle detection
-     *          adjusted.
+     * Provides an override mechanism for the default timeout.
+     *
+     * @param connection The {@link Connection} which is having the idle detection adjusted.
      * @param timeout the new idle timeout.
      * @param timeunit {@link TimeUnit}.
      */
-    public static void setCustomTimeout(final Connection connection,
-                                        final long timeout,
-                                        final TimeUnit timeunit) {
-        IDLE_ATTR.get(connection).setInitialTimeoutMillis(
-                convertToMillis(timeout, timeunit));
+    public static void setCustomTimeout(final Connection connection, final long timeout, final TimeUnit timeunit) {
+        IDLE_ATTR.get(connection).setInitialTimeoutMillis(convertToMillis(timeout, timeunit));
     }
 
     // ------------------------------------------------------- Protected Methods
-
 
     protected void queueAction(final FilterChainContext ctx) {
         final Connection connection = ctx.getConnection();
@@ -226,13 +188,12 @@ public class IdleTimeoutFilter extends BaseFilter {
     }
 
     // ------------------------------------------------------- Private Methods
-    
+
     private static long convertToMillis(final long time, final TimeUnit timeUnit) {
         return time >= 0 ? TimeUnit.MILLISECONDS.convert(time, timeUnit) : FOREVER;
     }
 
     // ----------------------------------------------------------- Inner Classes
-
 
     public interface TimeoutHandler {
 
@@ -246,9 +207,7 @@ public class IdleTimeoutFilter extends BaseFilter {
 
     }
 
-
-    private final class ContextCompletionListener
-            implements FilterChainContext.CompletionListener {
+    private final class ContextCompletionListener implements FilterChainContext.CompletionListener {
 
         @Override
         public void onComplete(final FilterChainContext ctx) {
@@ -258,7 +217,7 @@ public class IdleTimeoutFilter extends BaseFilter {
             idleRecord.timeoutMillis = FOREVER_SPECIAL;
             if (idleRecord.isClosed || IdleRecord.counterUpdater.decrementAndGet(idleRecord) == 0) {
                 final long timeoutToSet;
-                
+
                 // non-volatile isClosed should work ok,
                 // because if we race with idleRecord.close(), the logic within close()
                 // should guarantee that we either:
@@ -269,17 +228,13 @@ public class IdleTimeoutFilter extends BaseFilter {
                     IdleRecord.counterUpdater.set(idleRecord, 0);
                 } else {
                     final long timeout = timeoutResolver.getTimeout(ctx);
-                    timeoutToSet = timeout == FOREVER ?
-                            FOREVER :
-                            System.currentTimeMillis() + timeout;
+                    timeoutToSet = timeout == FOREVER ? FOREVER : System.currentTimeMillis() + timeout;
                 }
 
-                IdleRecord.timeoutMillisUpdater.compareAndSet(
-                        idleRecord, FOREVER_SPECIAL, timeoutToSet);
+                IdleRecord.timeoutMillisUpdater.compareAndSet(idleRecord, FOREVER_SPECIAL, timeoutToSet);
             }
         }
     } // END ContextCompletionListener
-
 
     // ---------------------------------------------------------- Nested Classes
 
@@ -288,20 +243,17 @@ public class IdleTimeoutFilter extends BaseFilter {
         private final long defaultTimeoutMillis;
         // -------------------------------------------------------- Constructors
 
-
         IdleTimeoutResolver(final long defaultTimeoutMillis) {
             this.defaultTimeoutMillis = defaultTimeoutMillis;
         }
 
         // ---------------------------------------- Methods from TimeoutResolver
 
-
         @Override
         public long getTimeout(final FilterChainContext ctx) {
             return IDLE_ATTR.get(ctx.getConnection()).getInitialTimeoutMillis(defaultTimeoutMillis);
         }
     }
-
 
     private static final class Resolver implements DelayedExecutor.Resolver<Connection> {
 
@@ -317,8 +269,7 @@ public class IdleTimeoutFilter extends BaseFilter {
         }
 
         @Override
-        public void setTimeoutMillis(final Connection connection,
-                final long timeoutMillis) {
+        public void setTimeoutMillis(final Connection connection, final long timeoutMillis) {
             IDLE_ATTR.get(connection).timeoutMillis = timeoutMillis;
         }
 
@@ -328,20 +279,17 @@ public class IdleTimeoutFilter extends BaseFilter {
         private boolean isClosed;
         private volatile boolean isInitialSet;
         private long initialTimeoutMillis;
-        
-        private static final AtomicLongFieldUpdater<IdleRecord> timeoutMillisUpdater =
-                AtomicLongFieldUpdater.newUpdater(IdleRecord.class, "timeoutMillis");
+
+        private static final AtomicLongFieldUpdater<IdleRecord> timeoutMillisUpdater = AtomicLongFieldUpdater.newUpdater(IdleRecord.class, "timeoutMillis");
         private volatile long timeoutMillis;
-        
-        
-        private static final AtomicIntegerFieldUpdater<IdleRecord> counterUpdater =
-                AtomicIntegerFieldUpdater.newUpdater(IdleRecord.class, "counter");
+
+        private static final AtomicIntegerFieldUpdater<IdleRecord> counterUpdater = AtomicIntegerFieldUpdater.newUpdater(IdleRecord.class, "counter");
         private volatile int counter;
 
         private long getInitialTimeoutMillis(final long defaultTimeoutMillis) {
             return isInitialSet ? initialTimeoutMillis : defaultTimeoutMillis;
         }
-        
+
         private void setInitialTimeoutMillis(final long initialTimeoutMillis) {
             this.initialTimeoutMillis = initialTimeoutMillis;
             isInitialSet = true;
@@ -358,16 +306,13 @@ public class IdleTimeoutFilter extends BaseFilter {
 
         private final TimeoutHandler handler;
 
-
         // -------------------------------------------------------- Constructors
-
 
         DefaultWorker(final TimeoutHandler handler) {
 
             this.handler = handler;
 
         }
-
 
         // --------------------------------- Methods from DelayedExecutor.Worker
 
@@ -384,6 +329,5 @@ public class IdleTimeoutFilter extends BaseFilter {
         }
 
     } // END DefaultWorker
-
 
 }

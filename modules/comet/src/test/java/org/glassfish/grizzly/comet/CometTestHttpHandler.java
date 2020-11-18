@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,10 +19,10 @@ package org.glassfish.grizzly.comet;
 import java.io.IOException;
 
 import org.glassfish.grizzly.comet.concurrent.DefaultConcurrentCometHandler;
+import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.io.NIOOutputStream;
 
 /**
  * @author Gustav Trede
@@ -41,9 +41,7 @@ public class CometTestHttpHandler extends HttpHandler {
 
     @Override
     public void service(Request req, Response res) {
-        cometContext.addCometHandler(useConcurrentCometHandler
-                               ? new MyConcurrentCometHandler(cometContext, res)
-                               : new CometRequestHandler());
+        cometContext.addCometHandler(useConcurrentCometHandler ? new MyConcurrentCometHandler(cometContext, res) : new CometRequestHandler());
     }
 
     private void doEvent(CometEvent event, CometHandler handler) throws IOException {
@@ -63,20 +61,24 @@ public class CometTestHttpHandler extends HttpHandler {
             super(context, response);
         }
 
+        @Override
         public void onEvent(CometEvent event) throws IOException {
             doEvent(event, this);
         }
 
+        @Override
         public void onInitialize(CometEvent arg0) throws IOException {
         }
 
+        @Override
         public void onInterrupt(CometEvent event) throws IOException {
             // new Exception().printStackTrace();
             super.onInterrupt(event);
         }
 
+        @Override
         public void onTerminate(CometEvent event) throws IOException {
-            //new Exception().printStackTrace();
+            // new Exception().printStackTrace();
             super.onTerminate(event);
         }
     }
@@ -86,6 +88,7 @@ public class CometTestHttpHandler extends HttpHandler {
         private CometContext<Byte> context;
         private Response response;
 
+        @Override
         public void onEvent(CometEvent event) throws IOException {
             doEvent(event, this);
         }
@@ -94,13 +97,16 @@ public class CometTestHttpHandler extends HttpHandler {
             this.attachment = attachment;
         }
 
+        @Override
         public void onInitialize(CometEvent event) throws IOException {
         }
 
+        @Override
         public void onInterrupt(CometEvent event) throws IOException {
             doClose();
         }
 
+        @Override
         public void onTerminate(CometEvent event) throws IOException {
             doClose();
         }

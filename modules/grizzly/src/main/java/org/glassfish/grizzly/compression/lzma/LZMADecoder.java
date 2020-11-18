@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.compression.lzma;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Cacheable;
@@ -23,21 +25,16 @@ import org.glassfish.grizzly.ThreadCache;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
 import org.glassfish.grizzly.attributes.AttributeStorage;
+import org.glassfish.grizzly.compression.lzma.impl.Base;
 import org.glassfish.grizzly.compression.lzma.impl.Decoder;
+import org.glassfish.grizzly.compression.lzma.impl.Decoder.LiteralDecoder;
 import org.glassfish.grizzly.memory.MemoryManager;
 
-import java.io.IOException;
-import org.glassfish.grizzly.compression.lzma.impl.Base;
-import org.glassfish.grizzly.compression.lzma.impl.Decoder.LiteralDecoder;
+public class LZMADecoder extends AbstractTransformer<Buffer, Buffer> {
 
-public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
-
-    private static final ThreadCache.CachedTypeIndex<LZMAInputState> CACHE_IDX =
-            ThreadCache.obtainIndex(LZMAInputState.class, 2);
-
+    private static final ThreadCache.CachedTypeIndex<LZMAInputState> CACHE_IDX = ThreadCache.obtainIndex(LZMAInputState.class, 2);
 
     // ---------------------------------------- Methods from AbstractTransformer
-
 
     @Override
     public String getName() {
@@ -65,13 +62,11 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
 
         final boolean hasRemainder = input.hasRemaining();
 
-        if (decState == Decoder.State.NEED_MORE_DATA
-                || decodedBuffer == null) {
+        if (decState == Decoder.State.NEED_MORE_DATA || decodedBuffer == null) {
             return TransformationResult.createIncompletedResult(hasRemainder ? input : null);
         }
 
-        return TransformationResult.createCompletedResult(decodedBuffer.flip(),
-                hasRemainder ? input : null);
+        return TransformationResult.createCompletedResult(decodedBuffer.flip(), hasRemainder ? input : null);
     }
 
     @Override
@@ -81,10 +76,8 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
 
     // ---------------------------------------------------------- Public Methods
 
-
     public static LZMAInputState create() {
-        final LZMAInputState state =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final LZMAInputState state = ThreadCache.takeFromCache(CACHE_IDX);
         if (state != null) {
             return state;
         }
@@ -92,18 +85,14 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         return new LZMAInputState();
     }
 
-
     public void finish(AttributeStorage storage) {
         final LZMAInputState state = (LZMAInputState) obtainStateObject(storage);
         state.recycle();
     }
 
-
     // --------------------------------------------------------- Private Methods
 
-
-    private Decoder.State decodeBuffer(final Buffer buffer,
-                                       final LZMAInputState state) {
+    private Decoder.State decodeBuffer(final Buffer buffer, final LZMAInputState state) {
 
         state.setSrc(buffer);
 
@@ -131,11 +120,9 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         }
     }
 
-
     // ---------------------------------------------------------- Nested Classes
 
-
-    public static class LZMAInputState extends LastResultAwareState<Buffer,Buffer> implements Cacheable {
+    public static class LZMAInputState extends LastResultAwareState<Buffer, Buffer> implements Cacheable {
 
         private final Decoder decoder = new Decoder();
         private boolean initialized;
@@ -152,7 +139,7 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         public long nowPos64;
         public byte prevByte;
         public boolean decInitialized;
-        
+
         public int posState;
         public int lastMethodResult;
 
@@ -169,7 +156,7 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
 
         // Decoder.processState3 method state
         public int state3Len;
-        
+
         // Decoder.processState31 method state
         public int state31;
 
@@ -186,7 +173,6 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         public int state321NumDirectBits;
 
         // ------------------------------------------------------ Public Methods
-
 
         public boolean initialize(final Buffer buffer) {
             buffer.get(decoderConfigBits);
@@ -228,7 +214,6 @@ public class LZMADecoder extends AbstractTransformer<Buffer,Buffer> {
         }
 
         // ---------------------------------------------- Methods from Cacheable
-
 
         @Override
         public void recycle() {

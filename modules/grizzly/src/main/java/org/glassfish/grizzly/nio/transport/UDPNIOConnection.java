@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.ConnectionProbe;
 import org.glassfish.grizzly.Grizzly;
@@ -45,8 +46,7 @@ import org.glassfish.grizzly.utils.JdkVersion;
 import org.glassfish.grizzly.utils.NullaryFunction;
 
 /**
- * {@link org.glassfish.grizzly.Connection} implementation
- * for the {@link UDPNIOTransport}
+ * {@link org.glassfish.grizzly.Connection} implementation for the {@link UDPNIOTransport}
  *
  * @author Alexey Stashok
  */
@@ -63,29 +63,24 @@ public class UDPNIOConnection extends NIOConnection {
     private static final Method MK_DROP_METHOD;
     private static final Method MK_BLOCK_METHOD;
     private static final Method MK_UNBLOCK_METHOD;
-    
+
     static {
         JdkVersion jdkVersion = JdkVersion.getJdkVersion();
         JdkVersion minimumVersion = JdkVersion.parseVersion("1.7.0");
-        
-            
+
         boolean isInitialized = false;
-        Method join = null, joinWithSource = null,
-                mkGetNetworkInterface = null, mkGetSourceAddress = null,
-                mkDrop = null, mkBlock = null, mkUnblock = null;
+        Method join = null, joinWithSource = null, mkGetNetworkInterface = null, mkGetSourceAddress = null, mkDrop = null, mkBlock = null, mkUnblock = null;
         if (minimumVersion.compareTo(jdkVersion) <= 0) { // If JDK version is >= 1.7
             try {
-                join = DatagramChannel.class.getMethod("join",
-                        InetAddress.class, NetworkInterface.class);
-                joinWithSource = DatagramChannel.class.getMethod("join",
-                        InetAddress.class, NetworkInterface.class, InetAddress.class);
-                
+                join = DatagramChannel.class.getMethod("join", InetAddress.class, NetworkInterface.class);
+                joinWithSource = DatagramChannel.class.getMethod("join", InetAddress.class, NetworkInterface.class, InetAddress.class);
+
                 final Class membershipKeyClass = loadClass("java.nio.channels.MembershipKey");
-                
+
                 mkGetNetworkInterface = membershipKeyClass.getDeclaredMethod("networkInterface");
                 mkGetSourceAddress = membershipKeyClass.getDeclaredMethod("sourceAddress");
                 mkDrop = membershipKeyClass.getDeclaredMethod("drop");
-                
+
                 mkBlock = membershipKeyClass.getDeclaredMethod("block", InetAddress.class);
                 mkUnblock = membershipKeyClass.getDeclaredMethod("unblock", InetAddress.class);
                 isInitialized = true;
@@ -93,7 +88,7 @@ public class UDPNIOConnection extends NIOConnection {
                 LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_CONNECTION_UDPMULTICASTING_EXCEPTIONE(), t);
             }
         }
-        
+
         if (isInitialized) {
             IS_MULTICAST_SUPPORTED = true;
             JOIN_METHOD = join;
@@ -105,30 +100,26 @@ public class UDPNIOConnection extends NIOConnection {
             MK_UNBLOCK_METHOD = mkUnblock;
         } else {
             IS_MULTICAST_SUPPORTED = false;
-            JOIN_METHOD = JOIN_WITH_SOURCE_METHOD =
-                    MK_GET_NETWORK_INTERFACE_METHOD =
-                    MK_GET_SOURCE_ADDRESS_METHOD = MK_DROP_METHOD =
-                    MK_BLOCK_METHOD = MK_UNBLOCK_METHOD = null;
+            JOIN_METHOD = JOIN_WITH_SOURCE_METHOD = MK_GET_NETWORK_INTERFACE_METHOD = MK_GET_SOURCE_ADDRESS_METHOD = MK_DROP_METHOD = MK_BLOCK_METHOD = MK_UNBLOCK_METHOD = null;
         }
     }
-    
+
     private final Object multicastSync;
     private Map<InetAddress, Set<Object>> membershipKeysMap;
-    
+
     Holder<SocketAddress> localSocketAddressHolder;
     Holder<SocketAddress> peerSocketAddressHolder;
 
     private int readBufferSize = -1;
     private int writeBufferSize = -1;
 
-    public UDPNIOConnection(UDPNIOTransport transport,
-            DatagramChannel channel) {
+    public UDPNIOConnection(UDPNIOTransport transport, DatagramChannel channel) {
         super(transport);
 
         this.channel = channel;
 
         resetProperties();
-        
+
         multicastSync = IS_MULTICAST_SUPPORTED ? new Object() : null;
     }
 
@@ -137,53 +128,43 @@ public class UDPNIOConnection extends NIOConnection {
     }
 
     /**
-     * Joins a multicast group to begin receiving all datagrams sent to the
-     * group. If this connection is currently a member of the group on the given
-     * interface to receive all datagrams then this method call has no effect.
-     * Otherwise this connection joins the requested group and channel's
-     * membership in not source-specific.
+     * Joins a multicast group to begin receiving all datagrams sent to the group. If this connection is currently a member
+     * of the group on the given interface to receive all datagrams then this method call has no effect. Otherwise this
+     * connection joins the requested group and channel's membership in not source-specific.
      *
-     * A multicast connection may join several multicast groups, including the
-     * same group on more than one interface. An implementation may impose a
-     * limit on the number of groups that may be joined at the same time.
+     * A multicast connection may join several multicast groups, including the same group on more than one interface. An
+     * implementation may impose a limit on the number of groups that may be joined at the same time.
      *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
      *
      * @throws IOException
      */
-    public void join(final InetAddress group,
-            final NetworkInterface networkInterface) throws IOException {
+    public void join(final InetAddress group, final NetworkInterface networkInterface) throws IOException {
         join(group, networkInterface, null);
     }
 
     /**
-     * Joins a multicast group to begin receiving datagrams sent to the group
-     * from a given source address. If this connection is currently a member of
-     * the group on the given interface to receive datagrams from the given
-     * source address then this method call has no effect. Otherwise
-     * this connection joins the group and depending on the source parameter
-     * value (whether it's not null or null value) the connection's membership
-     * is or is not source-specific.
+     * Joins a multicast group to begin receiving datagrams sent to the group from a given source address. If this
+     * connection is currently a member of the group on the given interface to receive datagrams from the given source
+     * address then this method call has no effect. Otherwise this connection joins the group and depending on the source
+     * parameter value (whether it's not null or null value) the connection's membership is or is not source-specific.
      *
-     * Membership is cumulative and this method may be invoked again with the
-     * same group and interface to allow receiving datagrams sent by other
-     * source addresses to the group.
+     * Membership is cumulative and this method may be invoked again with the same group and interface to allow receiving
+     * datagrams sent by other source addresses to the group.
      *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
      * @param source The source address
-     * 
+     *
      * @throws java.io.IOException
      */
-    public void join(final InetAddress group,
-            final NetworkInterface networkInterface, final InetAddress source)
-            throws IOException {
-        
+    public void join(final InetAddress group, final NetworkInterface networkInterface, final InetAddress source) throws IOException {
+
         if (!IS_MULTICAST_SUPPORTED) {
             throw new UnsupportedOperationException("JDK 1.7+ required");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group parameter can't be null");
         }
@@ -193,63 +174,56 @@ public class UDPNIOConnection extends NIOConnection {
         }
 
         synchronized (multicastSync) {
-            Object membershipKey = join0((DatagramChannel) channel,
-                    group, networkInterface, source);
+            Object membershipKey = join0((DatagramChannel) channel, group, networkInterface, source);
 
             if (membershipKeysMap == null) {
-                membershipKeysMap = new HashMap<InetAddress, Set<Object>>();
+                membershipKeysMap = new HashMap<>();
             }
-            
+
             Set<Object> keySet = membershipKeysMap.get(group);
             if (keySet == null) {
-                keySet = new HashSet<Object>();
+                keySet = new HashSet<>();
                 membershipKeysMap.put(group, keySet);
             }
-            
+
             keySet.add(membershipKey);
         }
     }
 
     /**
-     * Drops non-source specific membership in a multicast group.
-     * If this connection doesn't have non-source specific membership in the group
-     * on the given interface to receive datagrams then this method call
-     * has no effect. Otherwise this connection drops the group membership.
-     * 
+     * Drops non-source specific membership in a multicast group. If this connection doesn't have non-source specific
+     * membership in the group on the given interface to receive datagrams then this method call has no effect. Otherwise
+     * this connection drops the group membership.
+     *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void drop(final InetAddress group,
-            final NetworkInterface networkInterface) throws IOException {
+    public void drop(final InetAddress group, final NetworkInterface networkInterface) throws IOException {
         drop(group, networkInterface, null);
     }
-    
+
     /**
-     * Drops membership in a multicast group.
-     * If the source parameter is null - this method call is equivalent to
+     * Drops membership in a multicast group. If the source parameter is null - this method call is equivalent to
      * {@link #drop(java.net.InetAddress, java.net.NetworkInterface)}.
-     * 
-     * If the source parameter is not null and this connection doesn't have 
-     * source specific membership in the group on the given interface to
-     * receive datagrams then this method call has no effect.
-     * Otherwise this connection drops the source specific group membership.
-     * 
+     *
+     * If the source parameter is not null and this connection doesn't have source specific membership in the group on the
+     * given interface to receive datagrams then this method call has no effect. Otherwise this connection drops the source
+     * specific group membership.
+     *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
      * @param source The source address
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void drop(final InetAddress group,
-            final NetworkInterface networkInterface, final InetAddress source)
-            throws IOException {
-        
+    public void drop(final InetAddress group, final NetworkInterface networkInterface, final InetAddress source) throws IOException {
+
         if (!IS_MULTICAST_SUPPORTED) {
             throw new UnsupportedOperationException("JDK 1.7+ required");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group parameter can't be null");
         }
@@ -260,19 +234,17 @@ public class UDPNIOConnection extends NIOConnection {
 
         synchronized (multicastSync) {
             final Set<Object> keys;
-            if (membershipKeysMap != null &&
-                    (keys = membershipKeysMap.get(group)) != null) {
-                for (final Iterator<Object> it = keys.iterator(); it.hasNext(); ) {
+            if (membershipKeysMap != null && (keys = membershipKeysMap.get(group)) != null) {
+                for (final Iterator<Object> it = keys.iterator(); it.hasNext();) {
                     final Object key = it.next();
-                    
+
                     if (networkInterface.equals(networkInterface0(key))) {
-                        if ((source == null && sourceAddress0(key) == null) ||
-                                (source != null && source.equals(sourceAddress0(key)))) {
+                        if (source == null && sourceAddress0(key) == null || source != null && source.equals(sourceAddress0(key))) {
                             drop0(key);
                             it.remove();
                         }
                     }
-                    
+
                     if (keys.isEmpty()) {
                         membershipKeysMap.remove(group);
                     }
@@ -280,26 +252,23 @@ public class UDPNIOConnection extends NIOConnection {
             }
         }
     }
-    
+
     /**
-     * Drops all active membership in a multicast group.
-     * If this connection doesn't have any type of membership in the group
-     * on the given interface to receive datagrams then this method call
-     * has no effect. Otherwise this connection drops all types of the group membership.
-     * 
+     * Drops all active membership in a multicast group. If this connection doesn't have any type of membership in the group
+     * on the given interface to receive datagrams then this method call has no effect. Otherwise this connection drops all
+     * types of the group membership.
+     *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void dropAll(final InetAddress group,
-            final NetworkInterface networkInterface)
-            throws IOException {
-        
+    public void dropAll(final InetAddress group, final NetworkInterface networkInterface) throws IOException {
+
         if (!IS_MULTICAST_SUPPORTED) {
             throw new UnsupportedOperationException("JDK 1.7+ required");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group parameter can't be null");
         }
@@ -310,46 +279,42 @@ public class UDPNIOConnection extends NIOConnection {
 
         synchronized (multicastSync) {
             final Set<Object> keys;
-            if (membershipKeysMap != null &&
-                    (keys = membershipKeysMap.get(group)) != null) {
-                for (final Iterator<Object> it = keys.iterator(); it.hasNext(); ) {
+            if (membershipKeysMap != null && (keys = membershipKeysMap.get(group)) != null) {
+                for (final Iterator<Object> it = keys.iterator(); it.hasNext();) {
                     final Object key = it.next();
-                    
+
                     if (networkInterface.equals(networkInterface0(key))) {
                         drop0(key);
                         it.remove();
                     }
                 }
-                
+
                 if (keys.isEmpty()) {
                     membershipKeysMap.remove(group);
                 }
             }
         }
     }
-    
+
     /**
-     * Blocks multicast datagrams from the given source address. 
-     * 
-     * If this connection has non-source specific membership in the group
-     * on the given interface then this method blocks multicast datagrams from
-     * the given source address.  If the given source address is already blocked
-     * then this method has no effect.
-     * 
+     * Blocks multicast datagrams from the given source address.
+     *
+     * If this connection has non-source specific membership in the group on the given interface then this method blocks
+     * multicast datagrams from the given source address. If the given source address is already blocked then this method
+     * has no effect.
+     *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
      * @param source The source address to block
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void block(final InetAddress group,
-            final NetworkInterface networkInterface, final InetAddress source)
-            throws IOException {
-        
+    public void block(final InetAddress group, final NetworkInterface networkInterface, final InetAddress source) throws IOException {
+
         if (!IS_MULTICAST_SUPPORTED) {
             throw new UnsupportedOperationException("JDK 1.7+ required");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group parameter can't be null");
         }
@@ -360,43 +325,39 @@ public class UDPNIOConnection extends NIOConnection {
 
         synchronized (multicastSync) {
             final Set<Object> keys;
-            if (membershipKeysMap != null &&
-                    (keys = membershipKeysMap.get(group)) != null) {
-                for (final Iterator<Object> it = keys.iterator(); it.hasNext(); ) {
+            if (membershipKeysMap != null && (keys = membershipKeysMap.get(group)) != null) {
+                for (final Iterator<Object> it = keys.iterator(); it.hasNext();) {
                     final Object key = it.next();
-                    
-                    if (networkInterface.equals(networkInterface0(key))
-                            && sourceAddress0(key) == null) {
+
+                    if (networkInterface.equals(networkInterface0(key)) && sourceAddress0(key) == null) {
                         block0(key, source);
                     }
                 }
             }
         }
     }
-    
+
     /**
-     * Unblocks multicast datagrams from the given source address. 
-     * 
-     * If this connection has non-source specific membership in the group
-     * on the given interface and specified source address was previously blocked
-     * using {@link #block(java.net.InetAddress, java.net.NetworkInterface, java.net.InetAddress)} method
-     * then this method unblocks multicast datagrams from the given source address.
-     * If the given source address wasn't blocked then this method has no effect.
-     * 
+     * Unblocks multicast datagrams from the given source address.
+     *
+     * If this connection has non-source specific membership in the group on the given interface and specified source
+     * address was previously blocked using
+     * {@link #block(java.net.InetAddress, java.net.NetworkInterface, java.net.InetAddress)} method then this method
+     * unblocks multicast datagrams from the given source address. If the given source address wasn't blocked then this
+     * method has no effect.
+     *
      * @param group The multicast address to join
      * @param networkInterface The network interface on which to join the group
      * @param source The source address to block
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void unblock(final InetAddress group,
-            final NetworkInterface networkInterface, final InetAddress source)
-            throws IOException {
-        
+    public void unblock(final InetAddress group, final NetworkInterface networkInterface, final InetAddress source) throws IOException {
+
         if (!IS_MULTICAST_SUPPORTED) {
             throw new UnsupportedOperationException("JDK 1.7+ required");
         }
-        
+
         if (group == null) {
             throw new IllegalArgumentException("group parameter can't be null");
         }
@@ -407,20 +368,18 @@ public class UDPNIOConnection extends NIOConnection {
 
         synchronized (multicastSync) {
             final Set<Object> keys;
-            if (membershipKeysMap != null &&
-                    (keys = membershipKeysMap.get(group)) != null) {
-                for (final Iterator<Object> it = keys.iterator(); it.hasNext(); ) {
+            if (membershipKeysMap != null && (keys = membershipKeysMap.get(group)) != null) {
+                for (final Iterator<Object> it = keys.iterator(); it.hasNext();) {
                     final Object key = it.next();
-                    
-                    if (networkInterface.equals(networkInterface0(key))
-                            && sourceAddress0(key) == null) {
+
+                    if (networkInterface.equals(networkInterface0(key)) && sourceAddress0(key) == null) {
                         unblock0(key, source);
                     }
                 }
             }
         }
     }
-    
+
     @Override
     protected void setSelectionKey(SelectionKey selectionKey) {
         super.setSelectionKey(selectionKey);
@@ -432,15 +391,13 @@ public class UDPNIOConnection extends NIOConnection {
     }
 
     protected boolean notifyReady() {
-        return connectCloseSemaphoreUpdater.compareAndSet(this,
-                null, NOTIFICATION_INITIALIZED);
+        return connectCloseSemaphoreUpdater.compareAndSet(this, null, NOTIFICATION_INITIALIZED);
     }
 
     /**
-     * Returns the address of the endpoint this <tt>Connection</tt> is
-     * connected to, or <tt>null</tt> if it is unconnected.
-     * @return the address of the endpoint this <tt>Connection</tt> is
-     *         connected to, or <tt>null</tt> if it is unconnected.
+     * Returns the address of the endpoint this <tt>Connection</tt> is connected to, or <tt>null</tt> if it is unconnected.
+     * 
+     * @return the address of the endpoint this <tt>Connection</tt> is connected to, or <tt>null</tt> if it is unconnected.
      */
     @Override
     public SocketAddress getPeerAddress() {
@@ -448,10 +405,9 @@ public class UDPNIOConnection extends NIOConnection {
     }
 
     /**
-     * Returns the local address of this <tt>Connection</tt>,
-     * or <tt>null</tt> if it is unconnected.
-     * @return the local address of this <tt>Connection</tt>,
-     *      or <tt>null</tt> if it is unconnected.
+     * Returns the local address of this <tt>Connection</tt>, or <tt>null</tt> if it is unconnected.
+     * 
+     * @return the local address of this <tt>Connection</tt>, or <tt>null</tt> if it is unconnected.
      */
     @Override
     public SocketAddress getLocalAddress() {
@@ -463,30 +419,24 @@ public class UDPNIOConnection extends NIOConnection {
             setReadBufferSize(transport.getReadBufferSize());
             setWriteBufferSize(transport.getWriteBufferSize());
 
-            final int transportMaxAsyncWriteQueueSize =
-                    transport.getAsyncQueueIO()
-                    .getWriter().getMaxPendingBytesPerConnection();
-            
-            setMaxAsyncWriteQueueSize(
-                    transportMaxAsyncWriteQueueSize == AsyncQueueWriter.AUTO_SIZE ?
-                    getWriteBufferSize() * 4 :
-                    transportMaxAsyncWriteQueueSize);
-            
-            localSocketAddressHolder = Holder.lazyHolder(
-                    new NullaryFunction<SocketAddress>() {
-                        @Override
-                        public SocketAddress evaluate() {
-                            return ((DatagramChannel) channel).socket().getLocalSocketAddress();
-                        }
-                    });
+            final int transportMaxAsyncWriteQueueSize = transport.getAsyncQueueIO().getWriter().getMaxPendingBytesPerConnection();
 
-            peerSocketAddressHolder = Holder.lazyHolder(
-                    new NullaryFunction<SocketAddress>() {
-                        @Override
-                        public SocketAddress evaluate() {
-                            return ((DatagramChannel) channel).socket().getRemoteSocketAddress();
-                        }
-                    });
+            setMaxAsyncWriteQueueSize(
+                    transportMaxAsyncWriteQueueSize == AsyncQueueWriter.AUTO_SIZE ? getWriteBufferSize() * 4 : transportMaxAsyncWriteQueueSize);
+
+            localSocketAddressHolder = Holder.lazyHolder(new NullaryFunction<SocketAddress>() {
+                @Override
+                public SocketAddress evaluate() {
+                    return ((DatagramChannel) channel).socket().getLocalSocketAddress();
+                }
+            });
+
+            peerSocketAddressHolder = Holder.lazyHolder(new NullaryFunction<SocketAddress>() {
+                @Override
+                public SocketAddress evaluate() {
+                    return ((DatagramChannel) channel).socket().getRemoteSocketAddress();
+                }
+            });
         }
     }
 
@@ -502,9 +452,7 @@ public class UDPNIOConnection extends NIOConnection {
         try {
             readBufferSize = ((DatagramChannel) channel).socket().getReceiveBufferSize();
         } catch (IOException e) {
-            LOGGER.log(Level.FINE,
-                    LogMessages.WARNING_GRIZZLY_CONNECTION_GET_READBUFFER_SIZE_EXCEPTION(),
-                    e);
+            LOGGER.log(Level.FINE, LogMessages.WARNING_GRIZZLY_CONNECTION_GET_READBUFFER_SIZE_EXCEPTION(), e);
             readBufferSize = 0;
         }
 
@@ -522,12 +470,10 @@ public class UDPNIOConnection extends NIOConnection {
                 if (readBufferSize > currentReadBufferSize) {
                     ((DatagramChannel) channel).socket().setReceiveBufferSize(readBufferSize);
                 }
-                
+
                 this.readBufferSize = readBufferSize;
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_CONNECTION_SET_READBUFFER_SIZE_EXCEPTION(),
-                        e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_CONNECTION_SET_READBUFFER_SIZE_EXCEPTION(), e);
             }
         }
     }
@@ -544,9 +490,7 @@ public class UDPNIOConnection extends NIOConnection {
         try {
             writeBufferSize = ((DatagramChannel) channel).socket().getSendBufferSize();
         } catch (IOException e) {
-            LOGGER.log(Level.FINE,
-                    LogMessages.WARNING_GRIZZLY_CONNECTION_GET_WRITEBUFFER_SIZE_EXCEPTION(),
-                    e);
+            LOGGER.log(Level.FINE, LogMessages.WARNING_GRIZZLY_CONNECTION_GET_WRITEBUFFER_SIZE_EXCEPTION(), e);
             writeBufferSize = 0;
         }
 
@@ -566,9 +510,7 @@ public class UDPNIOConnection extends NIOConnection {
                 }
                 this.writeBufferSize = writeBufferSize;
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_CONNECTION_SET_WRITEBUFFER_SIZE_EXCEPTION(),
-                        e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_CONNECTION_SET_WRITEBUFFER_SIZE_EXCEPTION(), e);
             }
         }
     }
@@ -577,9 +519,10 @@ public class UDPNIOConnection extends NIOConnection {
     protected void enableInitialOpRead() throws IOException {
         super.enableInitialOpRead();
     }
-    
+
     /**
      * Method will be called, when the connection gets connected.
+     * 
      * @throws IOException
      */
     protected final void onConnect() throws IOException {
@@ -639,6 +582,7 @@ public class UDPNIOConnection extends NIOConnection {
 
     /**
      * Set the monitoringProbes array directly.
+     * 
      * @param monitoringProbes
      */
     void setMonitoringProbes(final ConnectionProbe[] monitoringProbes) {
@@ -655,47 +599,39 @@ public class UDPNIOConnection extends NIOConnection {
         return sb.toString();
     }
 
-    private static Object join0(final DatagramChannel channel,
-            final InetAddress group, final NetworkInterface networkInterface,
-            final InetAddress source) throws IOException {
-        
-        return source == null
-                ? invoke(channel, JOIN_METHOD, group, networkInterface)
+    private static Object join0(final DatagramChannel channel, final InetAddress group, final NetworkInterface networkInterface, final InetAddress source)
+            throws IOException {
+
+        return source == null ? invoke(channel, JOIN_METHOD, group, networkInterface)
                 : invoke(channel, JOIN_WITH_SOURCE_METHOD, group, networkInterface, source);
     }
 
-    private static NetworkInterface networkInterface0(final Object membershipKey)
-            throws IOException {
-        
-        return  (NetworkInterface) invoke(membershipKey, MK_GET_NETWORK_INTERFACE_METHOD);
-    }
-    
-    private static InetAddress sourceAddress0(final Object membershipKey)
-            throws IOException {
-        
-        return  (InetAddress) invoke(membershipKey, MK_GET_SOURCE_ADDRESS_METHOD);
+    private static NetworkInterface networkInterface0(final Object membershipKey) throws IOException {
+
+        return (NetworkInterface) invoke(membershipKey, MK_GET_NETWORK_INTERFACE_METHOD);
     }
 
-    private static void drop0(final Object membershipKey)
-            throws IOException {
-        
+    private static InetAddress sourceAddress0(final Object membershipKey) throws IOException {
+
+        return (InetAddress) invoke(membershipKey, MK_GET_SOURCE_ADDRESS_METHOD);
+    }
+
+    private static void drop0(final Object membershipKey) throws IOException {
+
         invoke(membershipKey, MK_DROP_METHOD);
     }
 
-    private static void block0(final Object membershipKey,
-            final InetAddress sourceAddress) throws IOException {
-        
+    private static void block0(final Object membershipKey, final InetAddress sourceAddress) throws IOException {
+
         invoke(membershipKey, MK_BLOCK_METHOD, sourceAddress);
     }
-    
-    private static void unblock0(final Object membershipKey,
-            final InetAddress sourceAddress) throws IOException {
-        
+
+    private static void unblock0(final Object membershipKey, final InetAddress sourceAddress) throws IOException {
+
         invoke(membershipKey, MK_UNBLOCK_METHOD, sourceAddress);
     }
 
-    private static Object invoke(final Object object, final Method method,
-            final Object... params) throws IOException {
+    private static Object invoke(final Object object, final Method method, final Object... params) throws IOException {
         try {
             return method.invoke(object, params);
         } catch (InvocationTargetException e) {
@@ -709,7 +645,7 @@ public class UDPNIOConnection extends NIOConnection {
             throw Exceptions.makeIOException(t);
         }
     }
-    
+
     private static Class<?> loadClass(final String cname) throws Throwable {
         return ClassLoader.getSystemClassLoader().loadClass(cname);
     }

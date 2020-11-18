@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,18 +17,19 @@
 package org.glassfish.grizzly.filterchain;
 
 import java.util.EnumSet;
+
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Context;
 import org.glassfish.grizzly.IOEvent;
 
 /**
- * Abstract {@link FilterChain} implementation,
- * which redirects {@link org.glassfish.grizzly.Processor#process(org.glassfish.grizzly.Context)}
- * call to the {@link AbstractFilterChain#execute(org.glassfish.grizzly.filterchain.FilterChainContext)}
+ * Abstract {@link FilterChain} implementation, which redirects
+ * {@link org.glassfish.grizzly.Processor#process(org.glassfish.grizzly.Context)} call to the
+ * {@link AbstractFilterChain#execute(org.glassfish.grizzly.filterchain.FilterChainContext)}
  *
  * @see FilterChain
- * 
+ *
  * @author Alexey Stashok
  */
 public abstract class AbstractFilterChain implements FilterChain {
@@ -72,8 +73,7 @@ public abstract class AbstractFilterChain implements FilterChain {
     }
 
     @Override
-    public final FilterChainContext obtainFilterChainContext(
-            final Connection connection) {
+    public final FilterChainContext obtainFilterChainContext(final Connection connection) {
 
         final FilterChainContext context = FilterChainContext.create(connection);
         context.internalContext.setProcessor(this);
@@ -81,19 +81,14 @@ public abstract class AbstractFilterChain implements FilterChain {
     }
 
     @Override
-    public FilterChainContext obtainFilterChainContext(
-            final Connection connection,
-            final Closeable closeable) {
-        final FilterChainContext context = FilterChainContext.create(
-                connection, closeable);
+    public FilterChainContext obtainFilterChainContext(final Connection connection, final Closeable closeable) {
+        final FilterChainContext context = FilterChainContext.create(connection, closeable);
         context.internalContext.setProcessor(this);
         return context;
     }
 
     @Override
-    public FilterChainContext obtainFilterChainContext(
-            final Connection connection, final int startIdx, final int endIdx,
-            final int currentIdx) {
+    public FilterChainContext obtainFilterChainContext(final Connection connection, final int startIdx, final int endIdx, final int currentIdx) {
         final FilterChainContext ctx = obtainFilterChainContext(connection);
 
         ctx.setStartIdx(startIdx);
@@ -104,13 +99,10 @@ public abstract class AbstractFilterChain implements FilterChain {
     }
 
     @Override
-    public FilterChainContext obtainFilterChainContext(
-            final Connection connection,
-            final Closeable closeable,
-            final int startIdx, final int endIdx, final int currentIdx) {
-        
-        final FilterChainContext ctx =
-                obtainFilterChainContext(connection, closeable);
+    public FilterChainContext obtainFilterChainContext(final Connection connection, final Closeable closeable, final int startIdx, final int endIdx,
+            final int currentIdx) {
+
+        final FilterChainContext ctx = obtainFilterChainContext(connection, closeable);
 
         ctx.setStartIdx(startIdx);
         ctx.setEndIdx(endIdx);
@@ -122,13 +114,10 @@ public abstract class AbstractFilterChain implements FilterChain {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(256);
-        sb.append(getClass().getSimpleName())
-                .append('@')
-                .append(Integer.toHexString(hashCode()))
-                .append(" {");
-        
+        sb.append(getClass().getSimpleName()).append('@').append(Integer.toHexString(hashCode())).append(" {");
+
         final int size = size();
-        
+
         if (size > 0) {
             sb.append(get(0).toString());
             for (int i = 1; i < size; i++) {
@@ -136,7 +125,7 @@ public abstract class AbstractFilterChain implements FilterChain {
                 sb.append(get(i).toString());
             }
         }
-        
+
         sb.append('}');
         return sb.toString();
     }

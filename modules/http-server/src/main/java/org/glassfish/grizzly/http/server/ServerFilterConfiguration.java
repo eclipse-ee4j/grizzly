@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.http.server;
 
 import java.nio.charset.Charset;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.utils.JdkVersion;
 
@@ -33,30 +34,30 @@ public class ServerFilterConfiguration {
     private String httpServerName;
     private String httpServerVersion;
     private boolean sendFileEnabled;
-    
+
     private boolean traceEnabled;
     private boolean passTraceRequest;
     private int maxRequestParameters = MAX_REQUEST_PARAMETERS;
-    
+
     private long maxPostSize = -1L;
     private int maxFormPostSize = 2 * 1024 * 1024;
     private int maxBufferedPostSize = 2 * 1024 * 1024;
-    
+
     private int sessionTimeoutSeconds = -1;
-        
+
     /**
      * Default query string encoding (query part of request URI).
      */
     private Charset defaultQueryEncoding;
-    
+
     /**
      * The default error page generator
      */
     private ErrorPageGenerator defaultErrorPageGenerator;
 
     /**
-     * The auxiliary configuration, which might be used, when Grizzly HttpServer
-     * is running behind some HTTP gateway like reverse proxy or load balancer.
+     * The auxiliary configuration, which might be used, when Grizzly HttpServer is running behind some HTTP gateway like
+     * reverse proxy or load balancer.
      */
     private BackendConfiguration backendConfiguration;
 
@@ -64,13 +65,12 @@ public class ServerFilterConfiguration {
      * The HTTP server {@link SessionManager}.
      */
     private SessionManager sessionManager;
-    
+
     /**
-     * <tt>true</tt>, if {@link HttpServerFilter} has to support
-     * graceful shutdown, or <tt>false</tt> otherwise
+     * <tt>true</tt>, if {@link HttpServerFilter} has to support graceful shutdown, or <tt>false</tt> otherwise
      */
     private boolean isGracefulShutdownSupported = true;
-    
+
     public ServerFilterConfiguration() {
         this("Grizzly", Grizzly.getDotedVersion());
     }
@@ -79,7 +79,7 @@ public class ServerFilterConfiguration {
         this.httpServerName = serverName;
         this.httpServerVersion = serverVersion;
         configureSendFileSupport();
-        
+
         defaultErrorPageGenerator = new DefaultErrorPageGenerator();
     }
 
@@ -100,7 +100,7 @@ public class ServerFilterConfiguration {
         this.sessionTimeoutSeconds = configuration.sessionTimeoutSeconds;
         this.sessionManager = configuration.sessionManager;
     }
-    
+
     /**
      * @return the server name used for headers and default error pages.
      */
@@ -110,8 +110,8 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the server name used for HTTP response headers and default generated error pages.  If not value is
-     * explicitly set, this value defaults to <code>Grizzly</code>.
+     * Sets the server name used for HTTP response headers and default generated error pages. If not value is explicitly
+     * set, this value defaults to <code>Grizzly</code>.
      *
      * @param httpServerName server name
      */
@@ -127,8 +127,8 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the version of the server info sent in HTTP response headers and the default generated error pages.  If not
-     * value is explicitly set, this value defaults to the current version of the Grizzly runtime.
+     * Sets the version of the server info sent in HTTP response headers and the default generated error pages. If not value
+     * is explicitly set, this value defaults to the current version of the Grizzly runtime.
      *
      * @param httpServerVersion server version
      */
@@ -152,18 +152,17 @@ public class ServerFilterConfiguration {
      * </ul>
      * <p/>
      * <p>
-     * This logic can be overridden by explicitly setting the property via
-     * {@link #setSendFileEnabled(boolean)} or by specifying the system property
-     * {@value #USE_SEND_FILE} with a value of <code>true</code>
+     * This logic can be overridden by explicitly setting the property via {@link #setSendFileEnabled(boolean)} or by
+     * specifying the system property {@value #USE_SEND_FILE} with a value of <code>true</code>
      * </p>
      * <p/>
      * <p>
-     * Finally, if the connection between endpoints is secure, send file functionality
-     * will be disabled regardless of configuration.
+     * Finally, if the connection between endpoints is secure, send file functionality will be disabled regardless of
+     * configuration.
      * </p>
      *
      * @return <code>true</code> if resources will be sent using
-     *         {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
      * @since 2.2
      */
     public boolean isSendFileEnabled() {
@@ -171,12 +170,12 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Configure whether or sendfile support will enabled which allows sending
-     * {@link java.io.File} resources via {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}.
-     * If disabled, the more traditional byte[] copy will be used to send content.
+     * Configure whether or sendfile support will enabled which allows sending {@link java.io.File} resources via
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}. If disabled, the
+     * more traditional byte[] copy will be used to send content.
      *
-     * @param sendFileEnabled <code>true</code> to enable {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)}
-     *                        support.
+     * @param sendFileEnabled <code>true</code> to enable
+     * {@link java.nio.channels.FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)} support.
      * @since 2.2
      */
     public void setSendFileEnabled(boolean sendFileEnabled) {
@@ -184,24 +183,22 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Get the HTTP request scheme, which if non-null overrides default one
-     * picked up by framework during runtime.
+     * Get the HTTP request scheme, which if non-null overrides default one picked up by framework during runtime.
      *
      * @return the HTTP request scheme
-     * 
+     *
      * @since 2.2.4
      */
     public String getScheme() {
         final BackendConfiguration config = backendConfiguration;
         return config != null ? config.getScheme() : null;
     }
-    
+
     /**
-     * Set the HTTP request scheme, which if non-null overrides default one
-     * picked up by framework during runtime.
+     * Set the HTTP request scheme, which if non-null overrides default one picked up by framework during runtime.
      *
      * @param scheme the HTTP request scheme
-     * 
+     *
      * @since 2.2.4
      */
     public void setScheme(final String scheme) {
@@ -209,15 +206,14 @@ public class ServerFilterConfiguration {
         if (config == null) {
             config = new BackendConfiguration();
         }
-        
+
         config.setScheme(scheme);
         this.backendConfiguration = config;
     }
 
     /**
-     * @return the auxiliary configuration, which might be used, when Grizzly
-     * HttpServer is running behind HTTP gateway like reverse proxy or load
-     * balancer.
+     * @return the auxiliary configuration, which might be used, when Grizzly HttpServer is running behind HTTP gateway like
+     * reverse proxy or load balancer.
      *
      * @since 2.3.18
      */
@@ -226,23 +222,20 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the auxiliary configuration, which might be used, when Grizzly
-     * HttpServer is running behind HTTP gateway like reverse proxy or load
-     * balancer.
+     * Sets the auxiliary configuration, which might be used, when Grizzly HttpServer is running behind HTTP gateway like
+     * reverse proxy or load balancer.
      *
      * @param backendConfiguration {@link BackendConfiguration}
-     * 
+     *
      * @since 2.3.18
      */
-    public void setBackendConfiguration(
-            final BackendConfiguration backendConfiguration) {
+    public void setBackendConfiguration(final BackendConfiguration backendConfiguration) {
         this.backendConfiguration = backendConfiguration;
     }
 
     /**
-     * @return <tt>true</tt> if the <tt>TRACE</tt> request will be passed
-     *  to the registered {@link HttpHandler}s, otherwise <tt>false</tt> if the
-     *  <tt>TRACE</tt> request will be handled by Grizzly.
+     * @return <tt>true</tt> if the <tt>TRACE</tt> request will be passed to the registered {@link HttpHandler}s, otherwise
+     * <tt>false</tt> if the <tt>TRACE</tt> request will be handled by Grizzly.
      *
      * @since 2.2.7
      */
@@ -251,15 +244,13 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * If <tt>passTraceRequest</tt> is <tt>true</tt>, the <tt>TRACE</tt> request
-     * will be passed to the registered {@link HttpHandler}s. Otherwise,
-     * <tt>TRACE</tt> will be handled by Grizzly.
+     * If <tt>passTraceRequest</tt> is <tt>true</tt>, the <tt>TRACE</tt> request will be passed to the registered
+     * {@link HttpHandler}s. Otherwise, <tt>TRACE</tt> will be handled by Grizzly.
      *
      * By default, <tt>TRACE</tt> requests will be handled by Grizzly.
      *
-     * @param passTraceRequest boolean to configure if trace requests will
-     *                         be handled by Grizzly or by a configured
-     *                         {@link HttpHandler}.
+     * @param passTraceRequest boolean to configure if trace requests will be handled by Grizzly or by a configured
+     * {@link HttpHandler}.
      *
      * @since 2.2.7
      */
@@ -269,8 +260,8 @@ public class ServerFilterConfiguration {
 
     /**
      *
-     * @return <tt>true</tt> if a proper response to HTTP <tt>TRACE</tt> is to
-     *  be generated, or <tt>false</tt> if a 405 is to be returned instead.
+     * @return <tt>true</tt> if a proper response to HTTP <tt>TRACE</tt> is to be generated, or <tt>false</tt> if a 405 is
+     * to be returned instead.
      *
      * @since 2.2.7
      */
@@ -279,12 +270,10 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * If <tt>enabled</tt> is <tt>true</tt> the <tt>TRACE</tt> method will be
-     * respected and a proper response will be generated.  Otherwise, the
-     * method will be considered as not allowed and an HTTP 405 will be returned.
+     * If <tt>enabled</tt> is <tt>true</tt> the <tt>TRACE</tt> method will be respected and a proper response will be
+     * generated. Otherwise, the method will be considered as not allowed and an HTTP 405 will be returned.
      *
-     * This method only comes into effect when <code>setPassTraceRequest(false)</code>
-     * has been called.
+     * This method only comes into effect when <code>setPassTraceRequest(false)</code> has been called.
      *
      * @param enabled boolean to configure how grizzly handles TRACE requests
      *
@@ -295,12 +284,10 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Returns the maximum number of parameters allowed per request.  If the
-     * value is less than zero, then there will be no limit on parameters.  By
-     * default, the limit imposed is {@value #MAX_REQUEST_PARAMETERS}.
+     * Returns the maximum number of parameters allowed per request. If the value is less than zero, then there will be no
+     * limit on parameters. By default, the limit imposed is {@value #MAX_REQUEST_PARAMETERS}.
      *
-     * @return the maximum number of parameters, or <tt>-1</tt> if there is no
-     *  imposed limit.
+     * @return the maximum number of parameters, or <tt>-1</tt> if there is no imposed limit.
      *
      * @since 2.2.8
      */
@@ -325,27 +312,28 @@ public class ServerFilterConfiguration {
 
     /**
      * Returns the "reuse session IDs when creating sessions"
-     * 
+     *
      * @since 2.2.19
      * @deprecated since 2.3.17
      */
+    @Deprecated
     public boolean isReuseSessionID() {
         return false;
     }
 
     /**
      * Sets the "reuse session IDs when creating sessions"
-     * 
+     *
      * @since 2.2.19
      * @deprecated since 2.3.17
      */
+    @Deprecated
     public void setReuseSessionID(boolean isReuseSessionID) {
     }
 
     /**
-     * Gets the maximum size of the POST body.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Gets the maximum size of the POST body. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3.13
      */
     public long getMaxPostSize() {
@@ -353,19 +341,17 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the maximum size of the POST body.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Sets the maximum size of the POST body. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3.13
      */
     public void setMaxPostSize(final long maxPostSize) {
         this.maxPostSize = maxPostSize < 0 ? -1 : maxPostSize;
     }
-    
+
     /**
-     * Gets the maximum size of the POST body generated by an HTML form.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Gets the maximum size of the POST body generated by an HTML form. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3
      */
     public int getMaxFormPostSize() {
@@ -373,9 +359,8 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the maximum size of the POST body generated by an HTML form.
-     * <code>-1</code> value means no size limits applied.
-     * 
+     * Sets the maximum size of the POST body generated by an HTML form. <code>-1</code> value means no size limits applied.
+     *
      * @since 2.3
      */
     public void setMaxFormPostSize(final int maxFormPostSize) {
@@ -383,8 +368,7 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Gets the maximum POST body size, which can buffered in memory.
-     * <code>-1</code> value means no size limits applied.
+     * Gets the maximum POST body size, which can buffered in memory. <code>-1</code> value means no size limits applied.
      *
      * @since 2.3
      */
@@ -393,8 +377,7 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Sets the maximum POST body size, which can buffered in memory.
-     * <code>-1</code> value means no size limits applied.
+     * Sets the maximum POST body size, which can buffered in memory. <code>-1</code> value means no size limits applied.
      *
      * @since 2.3
      */
@@ -403,16 +386,16 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * @return the default character encoding used to decode request URI's query part.
-     * <code>null</code> value means specific request's character encoding will be used
+     * @return the default character encoding used to decode request URI's query part. <code>null</code> value means
+     * specific request's character encoding will be used
      */
     public Charset getDefaultQueryEncoding() {
         return defaultQueryEncoding;
     }
 
     /**
-     * Sets the default character encoding used to decode request URI's query part.
-     * <code>null</code> value means specific request's character encoding will be used.
+     * Sets the default character encoding used to decode request URI's query part. <code>null</code> value means specific
+     * request's character encoding will be used.
      */
     public void setDefaultQueryEncoding(final Charset defaultQueryEncoding) {
         this.defaultQueryEncoding = defaultQueryEncoding;
@@ -427,17 +410,15 @@ public class ServerFilterConfiguration {
 
     /**
      * Sets the default {@link ErrorPageGenerator}.
-     * 
-     * @param defaultErrorPageGenerator 
+     *
+     * @param defaultErrorPageGenerator
      */
-    public void setDefaultErrorPageGenerator(
-            final ErrorPageGenerator defaultErrorPageGenerator) {
+    public void setDefaultErrorPageGenerator(final ErrorPageGenerator defaultErrorPageGenerator) {
         this.defaultErrorPageGenerator = defaultErrorPageGenerator;
     }
 
     /**
-     * @return <tt>true</tt>, if {@link HttpServerFilter} has to support
-     * graceful shutdown, or <tt>false</tt> otherwise
+     * @return <tt>true</tt>, if {@link HttpServerFilter} has to support graceful shutdown, or <tt>false</tt> otherwise
      */
     public boolean isGracefulShutdownSupported() {
         return isGracefulShutdownSupported;
@@ -445,7 +426,7 @@ public class ServerFilterConfiguration {
 
     /**
      * Enables or disables graceful shutdown support.
-     * 
+     *
      * @param isGracefulShutdownSupported
      */
     public void setGracefulShutdownSupported(final boolean isGracefulShutdownSupported) {
@@ -453,34 +434,28 @@ public class ServerFilterConfiguration {
     }
 
     /**
-     * Returns the maximum time interval, in seconds, that 
-     * the HTTP server will keep this session open between 
-     * client accesses. After this interval, the HTTP server
-     * will invalidate the session.
+     * Returns the maximum time interval, in seconds, that the HTTP server will keep this session open between client
+     * accesses. After this interval, the HTTP server will invalidate the session.
      *
-     * <p>A return value of zero or less indicates that the
-     * session will never timeout.
+     * <p>
+     * A return value of zero or less indicates that the session will never timeout.
      *
-     * @return		an integer specifying the number of
-     *			seconds this session remains open
-     *			between client requests
+     * @return an integer specifying the number of seconds this session remains open between client requests
      *
-     * @see		#setSessionTimeoutSeconds
+     * @see #setSessionTimeoutSeconds
      */
     public int getSessionTimeoutSeconds() {
         return sessionTimeoutSeconds;
     }
 
     /**
-     * Specifies the time, in seconds, between client requests before the 
-     * HTTP server will invalidate this session. 
+     * Specifies the time, in seconds, between client requests before the HTTP server will invalidate this session.
      *
-     * <p>An <tt>interval</tt> value of zero or less indicates that the
-     * session should never timeout.
+     * <p>
+     * An <tt>interval</tt> value of zero or less indicates that the session should never timeout.
      *
-     * @param sessionTimeoutSeconds	An integer specifying the number
-     * 				        of seconds 
-     */    
+     * @param sessionTimeoutSeconds An integer specifying the number of seconds
+     */
     public void setSessionTimeoutSeconds(int sessionTimeoutSeconds) {
         this.sessionTimeoutSeconds = sessionTimeoutSeconds;
     }
@@ -488,7 +463,7 @@ public class ServerFilterConfiguration {
     /**
      * @return the HTTP server {@link SessionManager}
      *
-     * @see		#setSessionManager
+     * @see #setSessionManager
      */
     public SessionManager getSessionManager() {
         return sessionManager;
@@ -497,20 +472,17 @@ public class ServerFilterConfiguration {
     /**
      * Sets the HTTP server {@link SessionManager}.
      *
-     * @param sessionManager	{@link SessionManager}
-     */    
+     * @param sessionManager {@link SessionManager}
+     */
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
-    
-    // --------------------------------------------------------- Private Methods
 
+    // --------------------------------------------------------- Private Methods
 
     private void configureSendFileSupport() {
 
-        if ((System.getProperty("os.name").equalsIgnoreCase("linux")
-                && !linuxSendFileSupported())
-                || System.getProperty("os.name").equalsIgnoreCase("HP-UX")) {
+        if (System.getProperty("os.name").equalsIgnoreCase("linux") && !linuxSendFileSupported() || System.getProperty("os.name").equalsIgnoreCase("HP-UX")) {
             sendFileEnabled = false;
         }
 
@@ -520,7 +492,6 @@ public class ServerFilterConfiguration {
         }
 
     }
-
 
     private static boolean linuxSendFileSupported() {
         JdkVersion jdkVersion = JdkVersion.getJdkVersion();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,15 +16,16 @@
 
 package org.glassfish.grizzly.servlet;
 
-import junit.framework.TestCase;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+
+import junit.framework.TestCase;
 
 /**
  * Contains utility methods for testing {@link HttpServer}.
@@ -32,11 +33,21 @@ import org.glassfish.grizzly.http.server.HttpServer;
  * @author Hubert Iwaniuk
  */
 public abstract class HttpServerAbstractTest extends TestCase {
+    
+    protected static int PORT() {
+        try {
+            int port = 18890 + SecureRandom.getInstanceStrong().nextInt(1000);
+            System.out.println("Using port: " + port);
+            return port;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
     protected HttpServer httpServer;
 
     protected String readResponse(HttpURLConnection conn) throws IOException {
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         return reader.readLine();
     }
 
@@ -44,7 +55,7 @@ public abstract class HttpServerAbstractTest extends TestCase {
         BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         StringBuilder sb = new StringBuilder();
         String line;
-        while((line = reader.readLine())!=null){
+        while ((line = reader.readLine()) != null) {
             sb.append(line).append("\n");
         }
         return sb;
@@ -63,13 +74,13 @@ public abstract class HttpServerAbstractTest extends TestCase {
         return urlConn;
     }
 
-    protected int getResponseCodeFromAlias(HttpURLConnection urlConn)
-            throws IOException {
+    protected int getResponseCodeFromAlias(HttpURLConnection urlConn) throws IOException {
         return urlConn.getResponseCode();
     }
 
-    protected void startHttpServer(int port) throws IOException {
+    protected void startHttpServer(int port) throws Exception {
         newHttpServer(port);
+        Thread.sleep(10);
         httpServer.start();
     }
 

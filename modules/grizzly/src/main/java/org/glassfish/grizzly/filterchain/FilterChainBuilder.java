@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,28 +21,26 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * {@link FilterChainBuilder} implementation, which is responsible for
- * constructing {@link FilterChain}s.
- * 
+ * {@link FilterChainBuilder} implementation, which is responsible for constructing {@link FilterChain}s.
+ *
  * @author Alexey Stashok
  */
 public abstract class FilterChainBuilder {
     protected final List<Filter> patternFilterChain;
-    
+
     private FilterChainBuilder() {
-        patternFilterChain = new ArrayList<Filter>();
+        patternFilterChain = new ArrayList<>();
     }
 
     public static FilterChainBuilder stateless() {
         return new StatelessFilterChainBuilder();
     }
-    
+
     public static FilterChainBuilder stateful() {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     public abstract FilterChain build();
-
 
     public FilterChainBuilder add(Filter filter) {
         return addLast(filter);
@@ -52,7 +50,7 @@ public abstract class FilterChainBuilder {
         patternFilterChain.add(0, filter);
         return this;
     }
-    
+
     public FilterChainBuilder addLast(Filter filter) {
         patternFilterChain.add(filter);
         return this;
@@ -68,7 +66,7 @@ public abstract class FilterChainBuilder {
         return this;
     }
 
-    public Filter get(int index)  {
+    public Filter get(int index) {
         return patternFilterChain.get(index);
     }
 

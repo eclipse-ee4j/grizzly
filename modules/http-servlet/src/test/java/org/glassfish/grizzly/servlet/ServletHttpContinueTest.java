@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,63 +16,59 @@
 
 package org.glassfish.grizzly.servlet;
 
-import java.io.IOException;
-import org.junit.Test;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
+import static org.junit.Assert.assertEquals;
 
-import javax.net.SocketFactory;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import javax.net.SocketFactory;
+
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
-import org.glassfish.grizzly.servlet.ExpectationHandler.AckAction;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import static org.junit.Assert.*;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RunWith(Parameterized.class)
 public class ServletHttpContinueTest {
 
     public static final int PORT = 18890 + 14;
 
-
     private final int numberOfExtraHttpHandlers;
-    
+
     public ServletHttpContinueTest(final int numberOfExtraHttpHandlers) {
         this.numberOfExtraHttpHandlers = numberOfExtraHttpHandlers;
     }
 
     @Parameters
     public static Collection<Object[]> getNumberOfExtraHttpHandlers() {
-        return Arrays.asList(new Object[][]{
-                    {0},
-                    {5}
-                });
+        return Arrays.asList(new Object[][] { { 0 }, { 5 } });
     }
-    
+
     // ------------------------------------------------------------ Test Methods
 
     @Test
     public void test100Continue() throws Exception {
 
-        final SafeFutureImpl<String> future = new SafeFutureImpl<String>();
+        final SafeFutureImpl<String> future = new SafeFutureImpl<>();
         HttpServer server = createServer(new HttpServlet() {
             private static final long serialVersionUID = 1L;
 
             @Override
-            protected void doPost(HttpServletRequest request,
-                    HttpServletResponse response)
-                    throws ServletException, IOException {
+            protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                 future.result(request.getParameter("a"));
             }
         }, null, "/path");
@@ -82,7 +78,7 @@ public class ServletHttpContinueTest {
             server.start();
             s = SocketFactory.getDefault().createSocket("localhost", PORT);
             s.setSoTimeout(10 * 1000);
-            
+
             OutputStream out = s.getOutputStream();
             InputStream in = s.getInputStream();
 
@@ -140,9 +136,7 @@ public class ServletHttpContinueTest {
             private static final long serialVersionUID = 1L;
 
             @Override
-            protected void doPost(HttpServletRequest request,
-                    HttpServletResponse response)
-                    throws ServletException, IOException {
+            protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
                 response.setStatus(404);
             }
         }, null, "/path");
@@ -185,7 +179,6 @@ public class ServletHttpContinueTest {
 
     }
 
-
     @Test
     public void testFailedExpectation() throws Exception {
 
@@ -193,9 +186,7 @@ public class ServletHttpContinueTest {
             private static final long serialVersionUID = 1L;
 
             @Override
-            protected void doPost(HttpServletRequest request,
-                    HttpServletResponse response)
-                    throws ServletException, IOException {
+            protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
             }
         }, null, "/path");
 
@@ -241,16 +232,12 @@ public class ServletHttpContinueTest {
             private static final long serialVersionUID = 1L;
 
             @Override
-            protected void doPost(HttpServletRequest request,
-                    HttpServletResponse response)
-                    throws ServletException, IOException {
+            protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
             }
         }, new ExpectationHandler() {
 
             @Override
-            public void onExpectAcknowledgement(HttpServletRequest request,
-                    HttpServletResponse response, AckAction action)
-                    throws Exception {
+            public void onExpectAcknowledgement(HttpServletRequest request, HttpServletResponse response, AckAction action) throws Exception {
                 action.fail();
             }
         }, "/path");
@@ -291,31 +278,24 @@ public class ServletHttpContinueTest {
     }
     // --------------------------------------------------------- Private Methods
 
-
-    private HttpServer createServer(final HttpServlet httpServlet,
-            final ExpectationHandler expectationHandler,
-            final String mapping) {
+    private HttpServer createServer(final HttpServlet httpServlet, final ExpectationHandler expectationHandler, final String mapping) {
 
         HttpServer server = new HttpServer();
-        NetworkListener listener =
-                new NetworkListener("grizzly",
-                                    NetworkListener.DEFAULT_NETWORK_HOST,
-                                    PORT);
+        NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         server.addListener(listener);
-        
+
         for (int i = 0; i < numberOfExtraHttpHandlers; i++) {
-            server.getServerConfiguration().addHttpHandler(
-                    new StaticHttpHandler(), String.valueOf("/" + i));
+            server.getServerConfiguration().addHttpHandler(new StaticHttpHandler(), String.valueOf("/" + i));
         }
 
         WebappContext ctx = new WebappContext("Test");
 
         final ServletRegistration reg = ctx.addServlet("TestSerlvet", httpServlet);
         reg.setExpectationHandler(expectationHandler);
-        reg.addMapping(mapping);        
-        
+        reg.addMapping(mapping);
+
         ctx.deploy(server);
-        
+
         return server;
 
     }

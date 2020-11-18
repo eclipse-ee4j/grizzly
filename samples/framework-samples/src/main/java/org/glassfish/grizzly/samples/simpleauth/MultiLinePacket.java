@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Packet, which contains multiple String lines.
- * 
+ *
  * @author Alexey Stashok
  */
 public class MultiLinePacket {
@@ -26,11 +26,11 @@ public class MultiLinePacket {
     public static MultiLinePacket create() {
         return new MultiLinePacket();
     }
-    
+
     public static MultiLinePacket create(String... lines) {
         final MultiLinePacket packet = new MultiLinePacket();
         packet.getLines().addAll(Arrays.asList(lines));
-        
+
         return packet;
     }
 
@@ -39,7 +39,7 @@ public class MultiLinePacket {
     }
 
     private MultiLinePacket() {
-        lines = new ArrayList<String>();
+        lines = new ArrayList<>();
     }
 
     private MultiLinePacket(List<String> lines) {
@@ -48,6 +48,7 @@ public class MultiLinePacket {
 
     /**
      * Gets the packet string lines.
+     * 
      * @return the packet string lines.
      */
     public List<String> getLines() {

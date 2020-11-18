@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.nio.transport.TCPNIOServerConnection;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
@@ -29,19 +30,18 @@ import org.glassfish.grizzly.streams.StreamWriter;
 
 /**
  * Test standalone Grizzly implementation.
- * 
+ *
  * @author Alexey Stashok
  */
 public class StandaloneTest extends GrizzlyTestCase {
     private static final Logger logger = Grizzly.logger(StandaloneTest.class);
-    
+
     public static final int PORT = 7780;
-    
+
     public void testStandalone() throws Exception {
-        TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.getAsyncQueueIO().getWriter().setMaxPendingBytesPerConnection(-1);
-        
+
         int messageSize = 166434;
 
         Connection connection = null;
@@ -58,17 +58,16 @@ public class StandaloneTest extends GrizzlyTestCase {
             transport.start();
 
             // Start echo server thread
-            final Thread serverThread =
-                    startEchoServerThread(transport, serverConnection, messageSize);
+            final Thread serverThread = startEchoServerThread(transport, serverConnection, messageSize);
 
             // Connect to the server
             Future<Connection> connectFuture = transport.connect("localhost", PORT);
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connectFuture.isDone());
-            
+
             // fill out buffer
             byte[] buffer = new byte[messageSize];
-            for(int i=0; i<messageSize; i++) {
+            for (int i = 0; i < messageSize; i++) {
                 buffer[i] = (byte) (i % 128);
             }
             // write buffer
@@ -77,10 +76,9 @@ public class StandaloneTest extends GrizzlyTestCase {
             writer.flush();
 
             reader = StandaloneProcessor.INSTANCE.getStreamReader(connection);
-            
+
             // prepare receiving buffer
             byte[] receiveBuffer = new byte[messageSize];
-
 
             Future readFuture = reader.notifyAvailable(messageSize);
             readFuture.get(20, TimeUnit.SECONDS);
@@ -89,7 +87,7 @@ public class StandaloneTest extends GrizzlyTestCase {
             reader.readByteArray(receiveBuffer);
 
             assertTrue(readFuture.isDone());
-            
+
             // Check the echo result
             assertTrue(Arrays.equals(buffer, receiveBuffer));
 
@@ -104,9 +102,7 @@ public class StandaloneTest extends GrizzlyTestCase {
 
     }
 
-    private Thread startEchoServerThread(final TCPNIOTransport transport,
-            final TCPNIOServerConnection serverConnection,
-            final int messageSize) {
+    private Thread startEchoServerThread(final TCPNIOTransport transport, final TCPNIOServerConnection serverConnection, final int messageSize) {
         final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -115,10 +111,8 @@ public class StandaloneTest extends GrizzlyTestCase {
                     Connection connection = acceptFuture.get(10, TimeUnit.SECONDS);
                     assertTrue(acceptFuture.isDone());
 
-                    StreamReader reader =
-                            StandaloneProcessor.INSTANCE.getStreamReader(connection);
-                    StreamWriter writer =
-                            StandaloneProcessor.INSTANCE.getStreamWriter(connection);
+                    StreamReader reader = StandaloneProcessor.INSTANCE.getStreamReader(connection);
+                    StreamWriter writer = StandaloneProcessor.INSTANCE.getStreamWriter(connection);
                     try {
 
                         Future readFuture = reader.notifyAvailable(messageSize);
@@ -137,8 +131,7 @@ public class StandaloneTest extends GrizzlyTestCase {
 
                         assertTrue(writeFuture.isDone());
                     } catch (Throwable e) {
-                        logger.log(Level.WARNING,
-                                "Error working with accepted connection", e);
+                        logger.log(Level.WARNING, "Error working with accepted connection", e);
                         assertTrue("Error working with accepted connection", false);
                     } finally {
                         connection.closeSilently();
@@ -146,15 +139,14 @@ public class StandaloneTest extends GrizzlyTestCase {
 
                 } catch (Exception e) {
                     if (!transport.isStopped()) {
-                        logger.log(Level.WARNING,
-                                "Error accepting connection", e);
+                        logger.log(Level.WARNING, "Error accepting connection", e);
                         assertTrue("Error accepting connection", false);
                     }
                 }
             }
         });
         thread.start();
-        
+
         return thread;
     }
 }

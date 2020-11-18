@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@
 
 package org.glassfish.grizzly.http.util;
 
-import org.glassfish.grizzly.Grizzly;
-
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -26,21 +24,20 @@ import java.util.BitSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.glassfish.grizzly.Grizzly;
+
 /**
- * Efficient implementation for encoders.
- * This class is not thread safe - you need one encoder per thread.
- * The encoder will save and recycle the internal objects, avoiding
- * garbage.
+ * Efficient implementation for encoders. This class is not thread safe - you need one encoder per thread. The encoder
+ * will save and recycle the internal objects, avoiding garbage.
  * <p/>
- * You can add extra characters that you want preserved, for example
- * while encoding a URL you can add "/".
+ * You can add extra characters that you want preserved, for example while encoding a URL you can add "/".
  *
  * @author Costin Manolache
  */
 public final class UEncoder {
 
     private final static Logger logger = Grizzly.logger(UEncoder.class);
-    
+
     private static final BitSet initialSafeChars = new BitSet(128);
     static {
         initSafeChars();
@@ -71,29 +68,27 @@ public final class UEncoder {
      * URL Encode string, using a specified encoding.
      *
      * @param buf the {@link Writer} to write the encoded result to.
-     * @param s   the String to encode.
+     * @param s the String to encode.
      */
-    public void urlEncode(Writer buf, String s)
-            throws IOException {
+    public void urlEncode(Writer buf, String s) throws IOException {
         urlEncode(buf, s, false);
     }
 
     /**
      * URL Encode string, using a specified encoding.
      *
-     * @param buf            the {@link Writer} to write the encoded result to.
-     * @param s              the String to encode.
+     * @param buf the {@link Writer} to write the encoded result to.
+     * @param s the String to encode.
      * @param toHexUpperCase the hex string will be in upper case
      */
-    public void urlEncode(Writer buf, String s, boolean toHexUpperCase)
-            throws IOException {
+    public void urlEncode(Writer buf, String s, boolean toHexUpperCase) throws IOException {
         if (c2b == null) {
             bb = new ByteChunk(16); // small enough.
             c2b = C2BConverter.getInstance(bb, encoding);
         }
 
         for (int i = 0; i < s.length(); i++) {
-            int c = (int) s.charAt(i);
+            int c = s.charAt(i);
             if (safeChars.get(c)) {
                 if (debug > 0) {
                     log("Safe: " + (char) c);
@@ -108,8 +103,8 @@ public final class UEncoder {
                 // "surrogate" - UTF is _not_ 16 bit, but 21 !!!!
                 // ( while UCS is 31 ). Amazing...
                 if (c >= 0xD800 && c <= 0xDBFF) {
-                    if ((i + 1) < s.length()) {
-                        int d = (int) s.charAt(i + 1);
+                    if (i + 1 < s.length()) {
+                        int d = s.charAt(i + 1);
                         if (d >= 0xDC00 && d <= 0xDFFF) {
                             if (debug > 0) {
                                 log("Unsafe:  " + c);
@@ -120,8 +115,7 @@ public final class UEncoder {
                     }
                 }
 
-                urlEncode(buf, bb.getBuffer(), bb.getStart(),
-                          bb.getLength(), toHexUpperCase);
+                urlEncode(buf, bb.getBuffer(), bb.getStart(), bb.getLength(), toHexUpperCase);
                 bb.recycle();
             }
         }
@@ -129,18 +123,16 @@ public final class UEncoder {
 
     /**
      */
-    public void urlEncode(Writer buf, byte bytes[], int off, int len)
-            throws IOException {
+    public void urlEncode(Writer buf, byte bytes[], int off, int len) throws IOException {
         urlEncode(buf, bytes, off, len, false);
     }
 
     /**
      */
-    public void urlEncode(Writer buf, byte bytes[], int off, int len, boolean toHexUpperCase)
-            throws IOException {
+    public void urlEncode(Writer buf, byte bytes[], int off, int len, boolean toHexUpperCase) throws IOException {
         for (int j = off; j < len; j++) {
             buf.write('%');
-            char ch = Character.forDigit((bytes[j] >> 4) & 0xF, 16);
+            char ch = Character.forDigit(bytes[j] >> 4 & 0xF, 16);
             if (toHexUpperCase) {
                 ch = Character.toUpperCase(ch);
             }
@@ -160,9 +152,7 @@ public final class UEncoder {
     }
 
     /**
-     * Utility funtion to re-encode the URL.
-     * Still has problems with charset, since UEncoder mostly
-     * ignores it.
+     * Utility funtion to re-encode the URL. Still has problems with charset, since UEncoder mostly ignores it.
      *
      * @param url
      */
@@ -171,11 +161,9 @@ public final class UEncoder {
     }
 
     /**
-     * Utility function to re-encode the URL.
-     * Still has problems with charset, since UEncoder mostly
-     * ignores it.
+     * Utility function to re-encode the URL. Still has problems with charset, since UEncoder mostly ignores it.
      *
-     * @param uri            the URI to encode.
+     * @param uri the URI to encode.
      * @param toHexUpperCase the hex string will be in upper case
      */
     public String encodeURL(String uri, boolean toHexUpperCase) {
@@ -190,7 +178,6 @@ public final class UEncoder {
         return outUri;
     }
 
-
     // -------------------- Internal implementation --------------------
 
     private static void initSafeChars() {
@@ -204,7 +191,7 @@ public final class UEncoder {
         for (i = '0'; i <= '9'; i++) {
             initialSafeChars.set(i);
         }
-        //safe
+        // safe
         initialSafeChars.set('$');
         initialSafeChars.set('-');
         initialSafeChars.set('_');
@@ -212,8 +199,8 @@ public final class UEncoder {
 
         // Dangerous: someone may treat this as " "
         // RFC1738 does allow it, it's not reserved
-        //    initialSafeChars.set('+');
-        //extra
+        // initialSafeChars.set('+');
+        // extra
         initialSafeChars.set('!');
         initialSafeChars.set('*');
         initialSafeChars.set('\'');

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,8 +28,7 @@ public final class RegisterChannelResult {
     private final SelectionKey selectionKey;
     private final SelectableChannel channel;
 
-    public RegisterChannelResult(SelectorRunner selectorRunner,
-            SelectionKey selectionKey, SelectableChannel channel) {
+    public RegisterChannelResult(SelectorRunner selectorRunner, SelectionKey selectionKey, SelectableChannel channel) {
         this.selectorRunner = selectorRunner;
         this.selectionKey = selectionKey;
         this.channel = channel;

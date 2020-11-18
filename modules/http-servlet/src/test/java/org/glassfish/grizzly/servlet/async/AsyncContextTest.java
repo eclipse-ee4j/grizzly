@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -25,34 +25,36 @@ import java.util.EnumSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
+
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.HttpServerAbstractTest;
 import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
 
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Basic {@link AsyncContext} tests.
  */
 public class AsyncContextTest extends HttpServerAbstractTest {
     private static final Logger LOGGER = Grizzly.logger(AsyncContextTest.class);
-    
-    public static final int PORT = 18890 + 15;
+
+    public static final int PORT = PORT();
 
     public void testAsyncContextComplete() throws IOException {
         System.out.println("testAsyncContextComplete");
@@ -70,22 +72,20 @@ public class AsyncContextTest extends HttpServerAbstractTest {
                     final AsyncContext ac = req.startAsync();
 
                     Timer asyncTimer = new Timer("AsyncTimer", true);
-                    asyncTimer.schedule(
-                            new TimerTask() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        final ServletResponse response = ac.getResponse();
-                                        response.setContentType("text/plain");
-                                        final PrintWriter writer = response.getWriter();
-                                        writer.println("Hello world");
-                                        ac.complete();
-                                    } catch (IOException ioe) {
-                                        ioe.printStackTrace();
-                                    }
-                                }
-                            },
-                            1000);
+                    asyncTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            try {
+                                final ServletResponse response = ac.getResponse();
+                                response.setContentType("text/plain");
+                                final PrintWriter writer = response.getWriter();
+                                writer.println("Hello world");
+                                ac.complete();
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+                        }
+                    }, 1000);
                 }
             });
             ctx.deploy(httpServer);
@@ -98,7 +98,7 @@ public class AsyncContextTest extends HttpServerAbstractTest {
             stopHttpServer();
         }
     }
-    
+
     public void testAsyncListenerOnComplete() throws IOException {
         System.out.println("testAsyncListenerOnComplete");
         try {
@@ -179,7 +179,7 @@ public class AsyncContextTest extends HttpServerAbstractTest {
                     }
                 }
             });
-            
+
             addFilter(ctx, "MyFilter", "/test", new Filter() {
 
                 @Override
@@ -187,38 +187,25 @@ public class AsyncContextTest extends HttpServerAbstractTest {
                 }
 
                 @Override
-                public void doFilter(ServletRequest request,
-                        ServletResponse response, FilterChain chain)
-                        throws IOException, ServletException {
+                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
                     String mode = request.getParameter("mode");
-                    if (!"noarg".equals(mode) && !"original".equals(mode)
-                            && !"wrap".equals(mode)) {
+                    if (!"noarg".equals(mode) && !"original".equals(mode) && !"wrap".equals(mode)) {
                         throw new ServletException("Invalid mode");
                     }
 
                     if ("wrap".equals(mode)) {
-                        chain.doFilter(
-                                new HttpServletRequestWrapper((HttpServletRequest) request),
-                                response);
+                        chain.doFilter(new HttpServletRequestWrapper((HttpServletRequest) request), response);
                     } else {
                         chain.doFilter(request, response);
                     }
 
                     AsyncContext ac = request.getAsyncContext();
                     if ("noarg".equals(mode) && !ac.hasOriginalRequestAndResponse()) {
-                        throw new ServletException(
-                                "AsycContext#hasOriginalRequestAndResponse returned false, "
-                                + "should have returned true");
-                    } else if ("original".equals(mode)
-                            && !ac.hasOriginalRequestAndResponse()) {
-                        throw new ServletException(
-                                "AsycContext#hasOriginalRequestAndResponse returned false, "
-                                + "should have returned true");
-                    } else if ("wrap".equals(mode)
-                            && ac.hasOriginalRequestAndResponse()) {
-                        throw new ServletException(
-                                "AsycContext#hasOriginalRequestAndResponse returned true, "
-                                + "should have returned false");
+                        throw new ServletException("AsycContext#hasOriginalRequestAndResponse returned false, " + "should have returned true");
+                    } else if ("original".equals(mode) && !ac.hasOriginalRequestAndResponse()) {
+                        throw new ServletException("AsycContext#hasOriginalRequestAndResponse returned false, " + "should have returned true");
+                    } else if ("wrap".equals(mode) && ac.hasOriginalRequestAndResponse()) {
+                        throw new ServletException("AsycContext#hasOriginalRequestAndResponse returned true, " + "should have returned false");
                     }
 
                     ac.complete();
@@ -227,11 +214,11 @@ public class AsyncContextTest extends HttpServerAbstractTest {
                 @Override
                 public void destroy() {
                 }
-                
+
             });
             ctx.deploy(httpServer);
             httpServer.start();
-            
+
             HttpURLConnection conn1 = getConnection("/contextPath/test?mode=noarg", PORT);
             assertEquals(200, conn1.getResponseCode());
 
@@ -244,32 +231,23 @@ public class AsyncContextTest extends HttpServerAbstractTest {
             stopHttpServer();
         }
     }
-    
-    private ServletRegistration addServlet(final WebappContext ctx,
-            final String name,
-            final String alias,
-            Servlet servlet
-            ) {
-        
+
+    private ServletRegistration addServlet(final WebappContext ctx, final String name, final String alias, Servlet servlet) {
+
         final ServletRegistration reg = ctx.addServlet(name, servlet);
         reg.addMapping(alias);
 
         return reg;
     }
-    
-    private FilterRegistration addFilter(final WebappContext ctx,
-            final String name,
-            final String alias,
-            final Filter filter
-            ) {
-        
+
+    private FilterRegistration addFilter(final WebappContext ctx, final String name, final String alias, final Filter filter) {
+
         final FilterRegistration reg = ctx.addFilter(name, filter);
-        reg.addMappingForUrlPatterns(
-                EnumSet.of(DispatcherType.REQUEST),
-                alias);
+        reg.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), alias);
 
         return reg;
-    }    
+    }
+
     public static class MyAsyncListener implements AsyncListener {
 
         @Override
@@ -292,5 +270,5 @@ public class AsyncContextTest extends HttpServerAbstractTest {
             event.getAsyncContext().getResponse().getWriter().println("onStartAsync");
         }
     }
-    
+
 }

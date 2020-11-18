@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,25 +16,26 @@
 
 package org.glassfish.grizzly.ssl;
 
+import java.io.IOException;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.streams.StreamReader;
-import org.glassfish.grizzly.streams.TransformerStreamWriter;
 import org.glassfish.grizzly.streams.StreamWriter;
+import org.glassfish.grizzly.streams.TransformerStreamWriter;
 import org.glassfish.grizzly.utils.CompletionHandlerAdapter;
 import org.glassfish.grizzly.utils.conditions.Condition;
-import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 
 /**
- * SSL aware {@link StreamWriter} implementation, which work like a wrapper over
- * existing {@link StreamWriter}.
+ * SSL aware {@link StreamWriter} implementation, which work like a wrapper over existing {@link StreamWriter}.
  *
  * @see SSLStreamReader
  *
@@ -46,16 +47,12 @@ public class SSLStreamWriter extends TransformerStreamWriter {
         super(underlyingWriter, new SSLEncoderTransformer());
     }
 
-    public Future<SSLEngine> handshake(final SSLStreamReader sslStreamReader,
-            final SSLEngineConfigurator configurator)
-            throws IOException {
+    public Future<SSLEngine> handshake(final SSLStreamReader sslStreamReader, final SSLEngineConfigurator configurator) throws IOException {
         return handshake(sslStreamReader, configurator, null);
     }
 
-    public Future<SSLEngine> handshake(final SSLStreamReader sslStreamReader,
-            final SSLEngineConfigurator configurator,
-            final CompletionHandler<SSLEngine> completionHandler)
-            throws IOException {
+    public Future<SSLEngine> handshake(final SSLStreamReader sslStreamReader, final SSLEngineConfigurator configurator,
+            final CompletionHandler<SSLEngine> completionHandler) throws IOException {
 
         final Connection connection = getConnection();
 
@@ -70,8 +67,7 @@ public class SSLStreamWriter extends TransformerStreamWriter {
         final boolean isLoggingFinest = logger.isLoggable(Level.FINEST);
 
         if (isLoggingFinest) {
-            logger.log(Level.FINEST, "connection={0} engine={1} handshakeStatus={2}",
-                    new Object[]{connection, sslEngine, sslEngine.getHandshakeStatus()});
+            logger.log(Level.FINEST, "connection={0} engine={1} handshakeStatus={2}", new Object[] { connection, sslEngine, sslEngine.getHandshakeStatus() });
         }
 
         HandshakeStatus handshakeStatus = sslEngine.getHandshakeStatus();
@@ -82,12 +78,9 @@ public class SSLStreamWriter extends TransformerStreamWriter {
 
         final FutureImpl<SSLEngine> future = SafeFutureImpl.create();
 
-        final HandshakeCompletionHandler hsCompletionHandler =
-                new HandshakeCompletionHandler(future, completionHandler, sslEngine);
+        final HandshakeCompletionHandler hsCompletionHandler = new HandshakeCompletionHandler(future, completionHandler, sslEngine);
 
-        sslStreamReader.notifyCondition(new SSLHandshakeCondition(sslStreamReader,
-                this, configurator, sslEngine, hsCompletionHandler),
-                hsCompletionHandler);
+        sslStreamReader.notifyCondition(new SSLHandshakeCondition(sslStreamReader, this, configurator, sslEngine, hsCompletionHandler), hsCompletionHandler);
 
         return future;
     }
@@ -112,9 +105,7 @@ public class SSLStreamWriter extends TransformerStreamWriter {
         private final StreamWriter streamWriter;
         private final HandshakeCompletionHandler completionHandler;
 
-        public SSLHandshakeCondition(StreamReader streamReader,
-                StreamWriter streamWriter,
-                SSLEngineConfigurator configurator, SSLEngine sslEngine,
+        public SSLHandshakeCondition(StreamReader streamReader, StreamWriter streamWriter, SSLEngineConfigurator configurator, SSLEngine sslEngine,
                 HandshakeCompletionHandler completionHandler) {
 
             this.connection = streamReader.getConnection();
@@ -142,59 +133,53 @@ public class SSLStreamWriter extends TransformerStreamWriter {
 
             HandshakeStatus handshakeStatus = sslEngine.getHandshakeStatus();
 
-            if (handshakeStatus == HandshakeStatus.FINISHED
-                    || handshakeStatus == HandshakeStatus.NOT_HANDSHAKING) {
+            if (handshakeStatus == HandshakeStatus.FINISHED || handshakeStatus == HandshakeStatus.NOT_HANDSHAKING) {
                 return true;
             }
 
             while (true) {
 
                 if (isLoggingFinest) {
-                    logger.log(Level.FINEST, "Loop Engine: {0} handshakeStatus={1}",
-                            new Object[]{sslEngine, sslEngine.getHandshakeStatus()});
+                    logger.log(Level.FINEST, "Loop Engine: {0} handshakeStatus={1}", new Object[] { sslEngine, sslEngine.getHandshakeStatus() });
                 }
 
                 switch (handshakeStatus) {
-                    case NEED_UNWRAP: {
+                case NEED_UNWRAP: {
 
-                        if (isLoggingFinest) {
-                            logger.log(Level.FINEST, "NEED_UNWRAP Engine: {0}",
-                                    sslEngine);
-                        }
-
-                        return false;
+                    if (isLoggingFinest) {
+                        logger.log(Level.FINEST, "NEED_UNWRAP Engine: {0}", sslEngine);
                     }
 
-                    case NEED_WRAP: {
-                        if (isLoggingFinest) {
-                            logger.log(Level.FINEST, "NEED_WRAP Engine: {0}",
-                                    sslEngine);
-                        }
+                    return false;
+                }
 
-                        streamWriter.writeBuffer(Buffers.EMPTY_BUFFER);
-                        streamWriter.flush();
-                        handshakeStatus = sslEngine.getHandshakeStatus();
-
-                        break;
+                case NEED_WRAP: {
+                    if (isLoggingFinest) {
+                        logger.log(Level.FINEST, "NEED_WRAP Engine: {0}", sslEngine);
                     }
 
-                    case NEED_TASK: {
-                        if (isLoggingFinest) {
-                            logger.log(Level.FINEST, "NEED_TASK Engine: {0}",
-                                    sslEngine);
-                        }
-                        SSLUtils.executeDelegatedTask(sslEngine);
-                        handshakeStatus = sslEngine.getHandshakeStatus();
-                        break;
+                    streamWriter.writeBuffer(Buffers.EMPTY_BUFFER);
+                    streamWriter.flush();
+                    handshakeStatus = sslEngine.getHandshakeStatus();
+
+                    break;
+                }
+
+                case NEED_TASK: {
+                    if (isLoggingFinest) {
+                        logger.log(Level.FINEST, "NEED_TASK Engine: {0}", sslEngine);
                     }
-                    case NOT_HANDSHAKING:
-                    case FINISHED: {
-                        return true;
-                    }
-                    default: {
-                        throw new RuntimeException("Invalid Handshaking State"
-                                + handshakeStatus);
-                    }
+                    SSLUtils.executeDelegatedTask(sslEngine);
+                    handshakeStatus = sslEngine.getHandshakeStatus();
+                    break;
+                }
+                case NOT_HANDSHAKING:
+                case FINISHED: {
+                    return true;
+                }
+                default: {
+                    throw new RuntimeException("Invalid Handshaking State" + handshakeStatus);
+                }
                 }
 
                 if (handshakeStatus == HandshakeStatus.FINISHED) {
@@ -204,13 +189,11 @@ public class SSLStreamWriter extends TransformerStreamWriter {
         }
     }
 
-    protected static final class HandshakeCompletionHandler extends
-            CompletionHandlerAdapter<SSLEngine, Integer> {
+    protected static final class HandshakeCompletionHandler extends CompletionHandlerAdapter<SSLEngine, Integer> {
 
         final SSLEngine sslEngine;
 
-        public HandshakeCompletionHandler(FutureImpl<SSLEngine> future,
-                CompletionHandler<SSLEngine> completionHandler, SSLEngine sslEngine) {
+        public HandshakeCompletionHandler(FutureImpl<SSLEngine> future, CompletionHandler<SSLEngine> completionHandler, SSLEngine sslEngine) {
             super(future, completionHandler);
             this.sslEngine = sslEngine;
         }

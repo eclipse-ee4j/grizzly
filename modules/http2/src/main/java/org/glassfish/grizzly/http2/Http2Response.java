@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -27,19 +27,17 @@ import org.glassfish.grizzly.http.util.Header;
  * @author oleksiys
  */
 class Http2Response extends HttpResponsePacket implements Http2Header {
-    private static final ThreadCache.CachedTypeIndex<Http2ResponseRecyclable> CACHE_IDX =
-            ThreadCache.obtainIndex(Http2ResponseRecyclable.class, 2);
+    private static final ThreadCache.CachedTypeIndex<Http2ResponseRecyclable> CACHE_IDX = ThreadCache.obtainIndex(Http2ResponseRecyclable.class, 2);
 
     public static Http2Response create() {
-        Http2Response http2Response =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        Http2Response http2Response = ThreadCache.takeFromCache(CACHE_IDX);
         if (http2Response == null) {
             http2Response = new Http2Response();
         }
-        
+
         return http2Response;
     }
-    
+
     /**
      * Char encoding parsed flag.
      */
@@ -49,12 +47,12 @@ class Http2Response extends HttpResponsePacket implements Http2Header {
     public ProcessingState getProcessingState() {
         return getRequest().getProcessingState();
     }
-    
+
     @Override
     public Http2Stream getHttp2Stream() {
         return Http2Stream.getStreamFor(this);
     }
-    
+
     @Override
     public String getCharacterEncoding() {
         if (!contentTypeParsed) {
@@ -93,16 +91,16 @@ class Http2Response extends HttpResponsePacket implements Http2Header {
             }
         }
     }
-    
+
     @Override
     public void setExpectContent(final boolean isExpectContent) {
         super.setExpectContent(isExpectContent);
     }
-    
+
     @Override
     protected void reset() {
         contentTypeParsed = false;
-        
+
         super.reset();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,8 @@ import java.io.Serializable;
 import java.security.Principal;
 
 /**
- * Generic implementation of <strong>java.security.Principal</strong> that
- * is used to represent principals authenticated at the protocol handler level.
+ * Generic implementation of <strong>java.security.Principal</strong> that is used to represent principals authenticated
+ * at the protocol handler level.
  *
  * @author Remy Maucherat
  * @version $Revision: 1.2 $ $Date: 2005/12/08 01:28:34 $
@@ -30,7 +30,7 @@ import java.security.Principal;
 public class GrizzlyPrincipal implements Principal, Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     /**
      * The username of the user represented by this Principal.
      */
@@ -51,8 +51,7 @@ public class GrizzlyPrincipal implements Principal, Serializable {
     }
 
     /**
-     * Return a String representation of this object, which exposes only
-     * information that should be public.
+     * Return a String representation of this object, which exposes only information that should be public.
      */
     @Override
     public String toString() {
@@ -60,7 +59,7 @@ public class GrizzlyPrincipal implements Principal, Serializable {
         StringBuilder sb = new StringBuilder("GrizzlyPrincipal[");
         sb.append(this.name);
         sb.append("]");
-        return (sb.toString());
+        return sb.toString();
 
     }
 }

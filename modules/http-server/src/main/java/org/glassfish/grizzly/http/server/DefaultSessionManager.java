@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.util.Globals;
 
@@ -31,25 +32,23 @@ import org.glassfish.grizzly.http.server.util.Globals;
  * Default {@link SessionManager} implementation.
  */
 public class DefaultSessionManager implements SessionManager {
-    
+
     /**
      * @return <tt>DefaultSessionManager</tt> singleton
      */
     public static SessionManager instance() {
         return LazyHolder.INSTANCE;
     }
-    
+
     // Lazy initialization of DefaultSessionManager
     private static class LazyHolder {
         private static final DefaultSessionManager INSTANCE = new DefaultSessionManager();
     }
-    
+
     /**
-     * Not Good. We need a better mechanism. TODO: Move Session Management out
-     * of here
+     * Not Good. We need a better mechanism. TODO: Move Session Management out of here
      */
-    private final ConcurrentMap<String, Session> sessions
-            = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Session> sessions = new ConcurrentHashMap<>();
 
     private final Random rnd = new Random();
 
@@ -58,15 +57,14 @@ public class DefaultSessionManager implements SessionManager {
     /**
      * Scheduled Thread that clean the cache every XX seconds.
      */
-    private final ScheduledThreadPoolExecutor sessionExpirer
-            = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    final Thread t = new Thread(r, "Grizzly-HttpSession-Expirer");
-                    t.setDaemon(true);
-                    return t;
-                }
-            });
+    private final ScheduledThreadPoolExecutor sessionExpirer = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            final Thread t = new Thread(r, "Grizzly-HttpSession-Expirer");
+            t.setDaemon(true);
+            return t;
+        }
+    });
 
     {
         sessionExpirer.scheduleAtFixedRate(new Runnable() {
@@ -80,9 +78,7 @@ public class DefaultSessionManager implements SessionManager {
                     entry = iterator.next();
                     final Session session = entry.getValue();
 
-                    if (!session.isValid()
-                            || (session.getSessionTimeout() > 0
-                            && currentTime - session.getTimestamp() > session.getSessionTimeout())) {
+                    if (!session.isValid() || session.getSessionTimeout() > 0 && currentTime - session.getTimestamp() > session.getSessionTimeout()) {
                         session.setValid(false);
                         iterator.remove();
                     }
@@ -93,10 +89,9 @@ public class DefaultSessionManager implements SessionManager {
 
     private DefaultSessionManager() {
     }
-    
+
     @Override
-    public Session getSession(final Request request,
-            String requestedSessionId) {
+    public Session getSession(final Request request, String requestedSessionId) {
 
         if (requestedSessionId != null) {
             final Session session = sessions.get(requestedSessionId);
@@ -104,15 +99,15 @@ public class DefaultSessionManager implements SessionManager {
                 return session;
             }
         }
-        
+
         return null;
 
     }
-    
+
     @Override
     public Session createSession(final Request request) {
         final Session session = new Session();
-        
+
         String requestedSessionId;
         do {
             requestedSessionId = String.valueOf(generateRandomLong());
@@ -135,8 +130,7 @@ public class DefaultSessionManager implements SessionManager {
     }
 
     @Override
-    public void configureSessionCookie(final Request request,
-            final Cookie cookie) {
+    public void configureSessionCookie(final Request request, final Cookie cookie) {
     }
 
     @Override
@@ -155,6 +149,6 @@ public class DefaultSessionManager implements SessionManager {
      * Returns pseudorandom positive long value.
      */
     private long generateRandomLong() {
-        return (rnd.nextLong() & 0x7FFFFFFFFFFFFFFFL);
+        return rnd.nextLong() & 0x7FFFFFFFFFFFFFFFL;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,25 +16,25 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.io.IOException;
+
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.StaticHttpHandlerBase;
 
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * This servlet will be invoked when no other servlet matches the request URI.
  *
- * TODO:  This needs more work.  Review the DefaultServlet implementations
- *   included with popular servlet containers to get an understanding of
- *   what may be added
+ * TODO: This needs more work. Review the DefaultServlet implementations included with popular servlet containers to get
+ * an understanding of what may be added
  *
- *   @since 2.2
+ * @since 2.2
  */
 public class DefaultServlet extends HttpServlet {
 
@@ -42,16 +42,13 @@ public class DefaultServlet extends HttpServlet {
 
     // ------------------------------------------------------------ Constructors
 
-
     protected DefaultServlet(final StaticHttpHandlerBase staticHttpHandlerBase) {
 
         this.staticHttpHandlerBase = staticHttpHandlerBase;
 
     }
 
-
     // ------------------------------------------------ Methods from HttpServlet
-
 
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
@@ -66,9 +63,7 @@ public class DefaultServlet extends HttpServlet {
     }
 
     private static HttpServletRequestImpl unwrap(final ServletRequest request) {
-        return ((request instanceof  HttpServletRequestImpl)
-                    ? (HttpServletRequestImpl) request
-                    : unwrap(((ServletRequestWrapper) request).getRequest()));
+        return request instanceof HttpServletRequestImpl ? (HttpServletRequestImpl) request : unwrap(((ServletRequestWrapper) request).getRequest());
     }
 
 }

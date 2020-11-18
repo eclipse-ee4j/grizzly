@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,24 +16,6 @@
 
 package org.glassfish.grizzly.http;
 
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChain;
-import org.glassfish.grizzly.filterchain.FilterChainBuilder;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.utils.Charsets;
-import org.glassfish.grizzly.http.util.DataChunk;
-import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
-import org.glassfish.grizzly.memory.MemoryManager;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-import org.glassfish.grizzly.utils.ChunkingFilter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -45,8 +27,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
-import junit.framework.TestCase;
+
+import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChain;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.util.DataChunk;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.memory.MemoryManager;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.utils.Charsets;
+import org.glassfish.grizzly.utils.ChunkingFilter;
+
+import junit.framework.TestCase;
 
 /**
  *
@@ -60,8 +62,7 @@ public class GZipEncodingTest extends TestCase {
     private final FutureImpl<Throwable> exception = SafeFutureImpl.create();
 
     public void testGZipResponse() throws Throwable {
-        GZipContentEncoding gzipServerContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipServerContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -78,8 +79,7 @@ public class GZipEncodingTest extends TestCase {
             }
         });
 
-        GZipContentEncoding gzipClientContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipClientContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -91,13 +91,8 @@ public class GZipEncodingTest extends TestCase {
             }
         });
 
-        HttpRequestPacket request = HttpRequestPacket.builder()
-            .method("GET")
-            .header("Host", "localhost:" + PORT)
-            .uri("/path")
-            .header("accept-encoding", "gzip")
-            .protocol(Protocol.HTTP_1_1)
-            .build();
+        HttpRequestPacket request = HttpRequestPacket.builder().method("GET").header("Host", "localhost:" + PORT).uri("/path").header("accept-encoding", "gzip")
+                .protocol(Protocol.HTTP_1_1).build();
 
         ExpectedResult result = new ExpectedResult();
         result.setProtocol("HTTP/1.1");
@@ -109,10 +104,8 @@ public class GZipEncodingTest extends TestCase {
         doTest(request, result, gzipServerContentEncoding, gzipClientContentEncoding);
     }
 
-
     public void testGZipRequest() throws Throwable {
-        GZipContentEncoding gzipServerContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipServerContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -124,8 +117,7 @@ public class GZipEncodingTest extends TestCase {
             }
         });
 
-        GZipContentEncoding gzipClientContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipClientContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -148,19 +140,10 @@ public class GZipEncodingTest extends TestCase {
 
         byte[] gzippedContent = baos.toByteArray();
 
-        HttpRequestPacket request = HttpRequestPacket.builder()
-            .method("POST")
-            .header("Host", "localhost:" + PORT)
-            .uri("/path")
-            .protocol(Protocol.HTTP_1_1)
-            .header("content-encoding", "gzip")
-            .contentLength(gzippedContent.length)
-            .build();
-        
-        HttpContent reqHttpContent = HttpContent.builder(request)
-                .last(true)
-                .content(Buffers.wrap(mm, gzippedContent))
-                .build();
+        HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                .header("content-encoding", "gzip").contentLength(gzippedContent.length).build();
+
+        HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(Buffers.wrap(mm, gzippedContent)).build();
 
         ExpectedResult result = new ExpectedResult();
         result.setProtocol("HTTP/1.1");
@@ -171,10 +154,8 @@ public class GZipEncodingTest extends TestCase {
         doTest(reqHttpContent, result, gzipServerContentEncoding, gzipClientContentEncoding);
     }
 
-
     public void testGZipRequestResponse() throws Throwable {
-        GZipContentEncoding gzipServerContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipServerContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -191,8 +172,7 @@ public class GZipEncodingTest extends TestCase {
             }
         });
 
-        GZipContentEncoding gzipClientContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipClientContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -215,20 +195,10 @@ public class GZipEncodingTest extends TestCase {
 
         byte[] gzippedContent = baos.toByteArray();
 
-        HttpRequestPacket request = HttpRequestPacket.builder()
-            .method("POST")
-            .header("Host", "localhost:" + PORT)
-            .uri("/path")
-            .protocol(Protocol.HTTP_1_1)
-            .header("accept-encoding", "gzip")
-            .header("content-encoding", "gzip")
-            .contentLength(gzippedContent.length)
-            .build();
+        HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                .header("accept-encoding", "gzip").header("content-encoding", "gzip").contentLength(gzippedContent.length).build();
 
-        HttpContent reqHttpContent = HttpContent.builder(request)
-                .last(true)
-                .content(Buffers.wrap(mm, gzippedContent))
-                .build();
+        HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(Buffers.wrap(mm, gzippedContent)).build();
 
         ExpectedResult result = new ExpectedResult();
         result.setProtocol("HTTP/1.1");
@@ -240,8 +210,7 @@ public class GZipEncodingTest extends TestCase {
     }
 
     public void testGZipRequestResponseChunkedXferEncoding() throws Throwable {
-        GZipContentEncoding gzipServerContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipServerContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 final HttpResponsePacket httpResponse = (HttpResponsePacket) httpPacket;
@@ -258,8 +227,7 @@ public class GZipEncodingTest extends TestCase {
             }
         });
 
-        GZipContentEncoding gzipClientContentEncoding =
-                new GZipContentEncoding(512, 512, new EncodingFilter() {
+        GZipContentEncoding gzipClientContentEncoding = new GZipContentEncoding(512, 512, new EncodingFilter() {
             @Override
             public boolean applyEncoding(HttpHeader httpPacket) {
                 return false;
@@ -282,20 +250,10 @@ public class GZipEncodingTest extends TestCase {
 
         byte[] gzippedContent = baos.toByteArray();
 
-        HttpRequestPacket request = HttpRequestPacket.builder()
-                .method("POST")
-                .header("Host", "localhost:" + PORT)
-                .uri("/path")
-                .protocol(Protocol.HTTP_1_1)
-                .header("accept-encoding", "gzip")
-                .header("content-encoding", "gzip")
-                .chunked(true)
-                .build();
+        HttpRequestPacket request = HttpRequestPacket.builder().method("POST").header("Host", "localhost:" + PORT).uri("/path").protocol(Protocol.HTTP_1_1)
+                .header("accept-encoding", "gzip").header("content-encoding", "gzip").chunked(true).build();
 
-        HttpContent reqHttpContent = HttpContent.builder(request)
-                .last(true)
-                .content(Buffers.wrap(mm, gzippedContent))
-                .build();
+        HttpContent reqHttpContent = HttpContent.builder(request).last(true).content(Buffers.wrap(mm, gzippedContent)).build();
 
         ExpectedResult result = new ExpectedResult();
         result.setProtocol("HTTP/1.1");
@@ -305,9 +263,8 @@ public class GZipEncodingTest extends TestCase {
 
         doTest(reqHttpContent, result, gzipServerContentEncoding, gzipClientContentEncoding);
     }
-    
-    // --------------------------------------------------------- Private Methods
 
+    // --------------------------------------------------------- Private Methods
 
     private void reportThreadErrors() throws Throwable {
         Throwable t = exception.getResult();
@@ -316,9 +273,8 @@ public class GZipEncodingTest extends TestCase {
         }
     }
 
-    private void doTest(HttpPacket request, ExpectedResult expectedResults,
-            ContentEncoding serverContentEncoding, ContentEncoding clientContentEncoding)
-    throws Throwable {
+    private void doTest(HttpPacket request, ExpectedResult expectedResults, ContentEncoding serverContentEncoding, ContentEncoding clientContentEncoding)
+            throws Throwable {
 
         final FutureImpl<Boolean> testResult = SafeFutureImpl.create();
         FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
@@ -352,9 +308,7 @@ public class GZipEncodingTest extends TestCase {
             }
             clientFilterChainBuilder.add(httpClientFilter);
 
-            clientFilterChainBuilder.add(new ClientFilter(request,
-                                                          testResult,
-                                                          expectedResults));
+            clientFilterChainBuilder.add(new ClientFilter(request, testResult, expectedResults));
             ctransport.setProcessor(clientFilterChainBuilder.build());
 
             ctransport.start();
@@ -377,7 +331,6 @@ public class GZipEncodingTest extends TestCase {
         }
     }
 
-
     private class ClientFilter extends BaseFilter {
         private final Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -387,10 +340,7 @@ public class GZipEncodingTest extends TestCase {
 
         // -------------------------------------------------------- Constructors
 
-
-        public ClientFilter(HttpPacket request,
-                            FutureImpl<Boolean> testResult,
-                            ExpectedResult expectedResults) {
+        public ClientFilter(HttpPacket request, FutureImpl<Boolean> testResult, ExpectedResult expectedResults) {
 
             this.request = request;
             this.testResult = testResult;
@@ -398,16 +348,12 @@ public class GZipEncodingTest extends TestCase {
 
         }
 
-
         // ------------------------------------------------ Methods from Filters
 
-
         @Override
-        public NextAction handleConnect(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleConnect(FilterChainContext ctx) throws IOException {
             if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "Connected... Sending the request: {0}",
-                        request);
+                logger.log(Level.FINE, "Connected... Sending the request: {0}", request);
             }
 
             ctx.write(request);
@@ -415,52 +361,42 @@ public class GZipEncodingTest extends TestCase {
             return ctx.getStopAction();
         }
 
-
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             final HttpContent httpContent = ctx.getMessage();
 
             logger.log(Level.FINE, "Got HTTP response chunk; last: {0}", httpContent.isLast());
 
-
             if (httpContent.isLast()) {
                 try {
-                    HttpResponsePacket response =
-                            (HttpResponsePacket) httpContent.getHttpHeader();
+                    HttpResponsePacket response = (HttpResponsePacket) httpContent.getHttpHeader();
                     if (expectedResult.getStatusCode() != -1) {
-                        assertEquals(expectedResult.getStatusCode(),
-                                     response.getStatus());
+                        assertEquals(expectedResult.getStatusCode(), response.getStatus());
                     }
                     if (expectedResult.getProtocol() != null) {
-                        assertEquals(expectedResult.getProtocol(),
-                                     response.getProtocol().getProtocolString());
+                        assertEquals(expectedResult.getProtocol(), response.getProtocol().getProtocolString());
                     }
                     if (expectedResult.getStatusMessage() != null) {
-                        assertEquals(expectedResult.getStatusMessage().toLowerCase(),
-                                     response.getReasonPhrase().toLowerCase());
+                        assertEquals(expectedResult.getStatusMessage().toLowerCase(), response.getReasonPhrase().toLowerCase());
                     }
                     if (!expectedResult.getExpectedHeaders().isEmpty()) {
-                        for (Map.Entry<String,String> entry : expectedResult.getExpectedHeaders().entrySet()) {
+                        for (Map.Entry<String, String> entry : expectedResult.getExpectedHeaders().entrySet()) {
                             if (entry.getKey().charAt(0) != '!') {
-                                assertTrue("Missing header: " + entry.getKey(),
-                                           response.containsHeader(entry.getKey()));
-                                assertEquals(entry.getValue().toLowerCase(),
-                                             response.getHeader(entry.getKey()).toLowerCase());
+                                assertTrue("Missing header: " + entry.getKey(), response.containsHeader(entry.getKey()));
+                                assertEquals(entry.getValue().toLowerCase(), response.getHeader(entry.getKey()).toLowerCase());
                             } else {
                                 assertFalse("Header should not be present: " + entry.getKey().substring(1),
-                                           response.containsHeader(entry.getKey().substring(1)));
+                                        response.containsHeader(entry.getKey().substring(1)));
                             }
                         }
                     }
 
                     if (expectedResult.getContent() != null) {
-                        assertEquals("Unexpected content",
-                                     expectedResult.getContent().toStringContent(Charsets.UTF8_CHARSET),
-                                     httpContent.getContent().toStringContent(Charsets.UTF8_CHARSET));
+                        assertEquals("Unexpected content", expectedResult.getContent().toStringContent(Charsets.UTF8_CHARSET),
+                                httpContent.getContent().toStringContent(Charsets.UTF8_CHARSET));
                     }
-                    
+
                     testResult.result(Boolean.TRUE);
                 } catch (Throwable t) {
                     testResult.result(Boolean.FALSE);
@@ -472,13 +408,11 @@ public class GZipEncodingTest extends TestCase {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-              throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             return ctx.getStopAction();
         }
 
     }
-
 
     private static final class SimpleResponseFilter extends BaseFilter {
         @Override
@@ -494,14 +428,9 @@ public class GZipEncodingTest extends TestCase {
 
                 final Buffer requestContent = httpContent.getContent();
 
-                final StringBuilder sb = new StringBuilder("Echo: ")
-                        .append(requestContent.hasRemaining() ?
-                            requestContent.toStringContent() :
-                            "<nothing>");
+                final StringBuilder sb = new StringBuilder("Echo: ").append(requestContent.hasRemaining() ? requestContent.toStringContent() : "<nothing>");
 
-                final HttpContent responseContent = HttpContent.builder(response)
-                        .last(true)
-                        .content(Buffers.wrap(ctx.getMemoryManager(), sb.toString()))
+                final HttpContent responseContent = HttpContent.builder(response).last(true).content(Buffers.wrap(ctx.getMemoryManager(), sb.toString()))
                         .build();
 
                 ctx.write(responseContent);
@@ -514,7 +443,7 @@ public class GZipEncodingTest extends TestCase {
 
     private String generateBigString(int size) {
         final Random r = new Random();
-        
+
         StringBuilder sb = new StringBuilder(size);
         for (int i = 0; i < size; i++) {
             sb.append((char) ('A' + r.nextInt('Z' - 'A')));
@@ -526,8 +455,7 @@ public class GZipEncodingTest extends TestCase {
     private static final class ExpectedResult {
 
         private int statusCode = -1;
-        private final Map<String,String> expectedHeaders =
-                new HashMap<String,String>();
+        private final Map<String, String> expectedHeaders = new HashMap<>();
         private String protocol;
         private String statusMessage;
         private Buffer content;

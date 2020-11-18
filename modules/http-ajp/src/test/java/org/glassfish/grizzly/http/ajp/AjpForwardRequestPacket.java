@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,17 +16,17 @@
 
 package org.glassfish.grizzly.http.ajp;
 
-
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import org.glassfish.grizzly.http.util.MimeHeaders;
 
 public class AjpForwardRequestPacket extends AjpPacket {
     private final String method;
     private final String resource;
     private final MimeHeaders headers = new MimeHeaders();
-    private final Map<String, String> attributes = new LinkedHashMap<String, String>();
+    private final Map<String, String> attributes = new LinkedHashMap<>();
     private final int port;
 
     public AjpForwardRequestPacket(String method, String resource, int port, int remotePort) {
@@ -62,21 +62,19 @@ public class AjpForwardRequestPacket extends AjpPacket {
     private ByteBuffer putAttributes(ByteBuffer header) {
         ByteBuffer buffer = header;
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
-            buffer = ensureCapacity(buffer, 1)
-                    .put(AjpConstants.SC_A_REQ_ATTRIBUTE);
+            buffer = ensureCapacity(buffer, 1).put(AjpConstants.SC_A_REQ_ATTRIBUTE);
             buffer = putString(buffer, entry.getKey());
             buffer = putString(buffer, entry.getValue());
 
         }
-        buffer = ensureCapacity(buffer, 1)
-                .put(AjpConstants.SC_A_ARE_DONE);
+        buffer = ensureCapacity(buffer, 1).put(AjpConstants.SC_A_ARE_DONE);
 
         return buffer;
     }
 
     private ByteBuffer putHeaders(ByteBuffer header) {
         ByteBuffer buffer = header;
-        if(headers.getValue("host") == null) {
+        if (headers.getValue("host") == null) {
             headers.addValue("host").setString("localhost:" + port);
         }
         buffer = putShort(buffer, (short) headers.size());

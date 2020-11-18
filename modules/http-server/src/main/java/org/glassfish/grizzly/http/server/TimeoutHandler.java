@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,21 +17,18 @@
 package org.glassfish.grizzly.http.server;
 
 /**
- * Handler, which processes suspended {@link Response} timeout and is able
- * to either confirm it or reset.
- * 
+ * Handler, which processes suspended {@link Response} timeout and is able to either confirm it or reset.
+ *
  * @author Alexey Stashok
  */
 public interface TimeoutHandler {
     /**
-     * Method is called, when suspended {@link Response} timeout expired. The custom
-     * implementation may decide to confirm timeout and return <tt>true</tt>, so
-     * the {@link Response} will be canceled immediately after that, or return
+     * Method is called, when suspended {@link Response} timeout expired. The custom implementation may decide to confirm
+     * timeout and return <tt>true</tt>, so the {@link Response} will be canceled immediately after that, or return
      * <tt>false</tt> to reset the timeout and give more time for processing.
      *
      * @param response {@link Response}.
-     * @return <tt>true</tt> to cancel the {@link Response} processing, or
-     * <tt>false</tt> to reset the timeout.
+     * @return <tt>true</tt> to cancel the {@link Response} processing, or <tt>false</tt> to reset the timeout.
      */
     boolean onTimeout(final Response response);
 }

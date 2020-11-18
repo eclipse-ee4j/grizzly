@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,17 +20,15 @@ package org.glassfish.grizzly.http;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.http.util.DataChunk;
 
-
 /**
- * Lazy cookie implementation, which is based on preparsed Grizzly {@link Buffer}s.
- * The {@link String} representation will be created on demand.
- * 
- *  Allows recycling and uses Buffer as low-level
- *  representation ( and thus the byte-> char conversion can be delayed
- *  until we know the charset ).
+ * Lazy cookie implementation, which is based on preparsed Grizzly {@link Buffer}s. The {@link String} representation
+ * will be created on demand.
  *
- *  Tomcat.core uses this recyclable object to represent cookies,
- *  and the facade will convert it to the external representation.
+ * Allows recycling and uses Buffer as low-level representation ( and thus the byte-> char conversion can be delayed
+ * until we know the charset ).
+ *
+ * Tomcat.core uses this recyclable object to represent cookies, and the facade will convert it to the external
+ * representation.
  */
 public class LazyCookieState {
     // Version 0 (Netscape) attributes
@@ -42,7 +40,6 @@ public class LazyCookieState {
     private boolean secure;
     // Version 1 (RFC2109) attributes
     private final DataChunk comment = DataChunk.newInstance();
-
 
     // Note: Servlet Spec =< 2.5 only refers to Netscape and RFC2109,
     // not RFC2965
@@ -94,7 +91,6 @@ public class LazyCookieState {
     // -------------------- utils --------------------
     @Override
     public String toString() {
-        return "LazyCookieState " + getName() + '=' + getValue() + " ; "
-                + ' ' + getPath() + ' ' + getDomain();
+        return "LazyCookieState " + getName() + '=' + getValue() + " ; " + ' ' + getPath() + ' ' + getDomain();
     }
 }

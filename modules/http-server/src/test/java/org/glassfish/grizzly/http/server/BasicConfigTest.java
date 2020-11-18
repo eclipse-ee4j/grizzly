@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,9 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -25,11 +28,21 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.filterchain.*;
-import org.glassfish.grizzly.http.*;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.HttpClientFilter;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.HttpPacket;
+import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
@@ -38,16 +51,15 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Other config related tests.
- * 
+ *
  * @author Alexey Stashok
  */
 public class BasicConfigTest {
     private static final int PORT = 18901;
-    
+
     @Test
     public void testDefaultQueryParametersEncoding() throws Exception {
         final String paramName = "\u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442";
@@ -56,13 +68,13 @@ public class BasicConfigTest {
         UEncoder encoder = new UEncoder();
         encoder.setEncoding(Charsets.UTF8_CHARSET.name());
         String encodedQueryString = encoder.encodeURL(paramName) + "=" + encoder.encodeURL(paramValue);
-        
+
         final HttpServer server = createWebServer(new HttpHandler() {
 
             @Override
             public void service(Request request, Response response) throws Exception {
                 final String parameterValue = request.getParameter(paramName);
-                
+
                 response.setCharacterEncoding(Charsets.UTF8_CHARSET.name());
                 response.getWriter().write("value=" + parameterValue + "\n");
             }
@@ -70,15 +82,15 @@ public class BasicConfigTest {
 
         // Set the default query encoding.
         server.getServerConfiguration().setDefaultQueryEncoding(Charsets.UTF8_CHARSET);
-        
+
         try {
             server.start();
-            
+
             final HttpPacket request = createRequest("/test?" + encodedQueryString, null);
             final HttpContent response = doTest(request, 1000);
 
             final String responseContent = response.getContent().toStringContent(Charsets.UTF8_CHARSET);
-            Map<String, String> props = new HashMap<String, String>();
+            Map<String, String> props = new HashMap<>();
 
             BufferedReader reader = new BufferedReader(new StringReader(responseContent));
             String line;
@@ -95,15 +107,11 @@ public class BasicConfigTest {
             server.shutdownNow();
         }
     }
-    
-    @SuppressWarnings("unchecked")
-    private HttpContent doTest(
-            final HttpPacket request,
-            final int timeout)
-            throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+    @SuppressWarnings("unchecked")
+    private HttpContent doTest(final HttpPacket request, final int timeout) throws Exception {
+
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
 
@@ -145,14 +153,11 @@ public class BasicConfigTest {
 
         return b.build();
     }
-    
+
     private HttpServer createWebServer(final HttpHandler... httpHandlers) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandlers[0], "/");
@@ -165,7 +170,6 @@ public class BasicConfigTest {
 
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -173,19 +177,16 @@ public class BasicConfigTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -209,8 +210,7 @@ public class BasicConfigTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -218,13 +218,12 @@ public class BasicConfigTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
         }
 
     } // END ClientFilter
-    
-    
+
 }

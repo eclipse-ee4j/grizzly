@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.asyncqueue.MessageCloner;
 import org.glassfish.grizzly.attributes.AttributeHolder;
 import org.glassfish.grizzly.attributes.AttributeStorage;
@@ -34,8 +35,7 @@ public class Context implements AttributeStorage, Cacheable {
 
     private static final Logger LOGGER = Grizzly.logger(Context.class);
     private static final Processor NULL_PROCESSOR = new NullProcessor();
-    private static final ThreadCache.CachedTypeIndex<Context> CACHE_IDX =
-            ThreadCache.obtainIndex(Context.class, 4);
+    private static final ThreadCache.CachedTypeIndex<Context> CACHE_IDX = ThreadCache.obtainIndex(Context.class, 4);
 
     public static Context create(final Connection connection) {
         Context context = ThreadCache.takeFromCache(CACHE_IDX);
@@ -47,8 +47,7 @@ public class Context implements AttributeStorage, Cacheable {
         return context;
     }
 
-    public static Context create(final Connection connection,
-            final Processor processor, final IOEvent ioEvent,
+    public static Context create(final Connection connection, final Processor processor, final IOEvent ioEvent,
             final IOEventLifeCycleListener lifeCycleListener) {
         final Context context;
 
@@ -65,6 +64,7 @@ public class Context implements AttributeStorage, Cacheable {
 
         return context;
     }
+
     /**
      * Processing Connection
      */
@@ -82,20 +82,19 @@ public class Context implements AttributeStorage, Cacheable {
      */
     private final AttributeHolder attributes;
     /**
-     * IOEventProcessingHandler is called to notify about IOEvent processing
-     * life-cycle events like suspend, resume, complete.
+     * IOEventProcessingHandler is called to notify about IOEvent processing life-cycle events like suspend, resume,
+     * complete.
      */
-    protected final MinimalisticArrayList<IOEventLifeCycleListener> lifeCycleListeners =
-            new MinimalisticArrayList<IOEventLifeCycleListener>(IOEventLifeCycleListener.class, 2);
+    protected final MinimalisticArrayList<IOEventLifeCycleListener> lifeCycleListeners = new MinimalisticArrayList<>(
+            IOEventLifeCycleListener.class, 2);
     /**
-     * <tt>true</tt> if this IOEvent processing was suspended during its processing,
-     * or <tt>false</tt> otherwise.
+     * <tt>true</tt> if this IOEvent processing was suspended during its processing, or <tt>false</tt> otherwise.
      */
     protected boolean wasSuspended;
 
     protected boolean isManualIOEventControl;
-    
-   public Context() {
+
+    public Context() {
         attributes = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createUnsafeAttributeHolder();
     }
 
@@ -112,10 +111,10 @@ public class Context implements AttributeStorage, Cacheable {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        
+
         wasSuspended = true;
     }
-    
+
     /**
      * Notify Context its processing will be resumed in the current thread.
      */
@@ -134,20 +133,17 @@ public class Context implements AttributeStorage, Cacheable {
     public void complete(final ProcessorResult result) {
         ProcessorExecutor.complete(this, result);
     }
-    
+
     /**
-     * @return  <tt>true</tt> if this IOEvent processing was suspended during
-     * its processing, or <tt>false</tt> otherwise.
+     * @return <tt>true</tt> if this IOEvent processing was suspended during its processing, or <tt>false</tt> otherwise.
      */
     public boolean wasSuspended() {
         return wasSuspended;
     }
 
     /**
-     * Switches processing to the manual IOEvent control.
-     * {@link Connection#enableIOEvent(org.glassfish.grizzly.IOEvent)} or
-     * {@link Connection#disableIOEvent(org.glassfish.grizzly.IOEvent)} might be
-     * explicitly called.
+     * Switches processing to the manual IOEvent control. {@link Connection#enableIOEvent(org.glassfish.grizzly.IOEvent)} or
+     * {@link Connection#disableIOEvent(org.glassfish.grizzly.IOEvent)} might be explicitly called.
      */
     public void setManualIOEventControl() {
         try {
@@ -159,17 +155,17 @@ public class Context implements AttributeStorage, Cacheable {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        
+
         isManualIOEventControl = true;
     }
 
     /**
-     * @return <tt>true</tt>, if processing was switched to the manual IOEvent
-     * control, or <tt>false</tt> otherwise.
+     * @return <tt>true</tt>, if processing was switched to the manual IOEvent control, or <tt>false</tt> otherwise.
      */
     public boolean isManualIOEventControl() {
         return isManualIOEventControl;
     }
+
     /**
      * Get the processing {@link IOEvent}.
      *
@@ -207,22 +203,18 @@ public class Context implements AttributeStorage, Cacheable {
     }
 
     /**
-     * Get the {@link Processor}, which is responsible to process
-     * the {@link IOEvent}.
-     * 
-     * @return the {@link Processor}, which is responsible to process
-     * the {@link IOEvent}.
+     * Get the {@link Processor}, which is responsible to process the {@link IOEvent}.
+     *
+     * @return the {@link Processor}, which is responsible to process the {@link IOEvent}.
      */
     public Processor getProcessor() {
         return processor;
     }
 
     /**
-     * Set the {@link Processor}, which is responsible to process
-     * the {@link IOEvent}.
+     * Set the {@link Processor}, which is responsible to process the {@link IOEvent}.
      *
-     * @param processor the {@link Processor}, which is responsible to process
-     * the {@link IOEvent}.
+     * @param processor the {@link Processor}, which is responsible to process the {@link IOEvent}.
      */
     public void setProcessor(final Processor processor) {
         this.processor = processor;
@@ -231,27 +223,24 @@ public class Context implements AttributeStorage, Cacheable {
     public boolean hasLifeCycleListener(final IOEventLifeCycleListener listener) {
         return lifeCycleListeners.contains(listener);
     }
-    
+
     public void addLifeCycleListener(final IOEventLifeCycleListener listener) {
         lifeCycleListeners.add(listener);
     }
-    
+
     public boolean removeLifeCycleListener(final IOEventLifeCycleListener listener) {
         return lifeCycleListeners.remove(listener);
     }
-    
+
     public void removeAllLifeCycleListeners() {
         lifeCycleListeners.clear();
     }
 
     /**
-     * Get attributes ({@link AttributeHolder}), associated with the processing
-     * {@link Context}. {@link AttributeHolder} is cleared after each I/O event
-     * processing.
-     * Method may return <tt>null</tt>, if there were no attributes added before.
+     * Get attributes ({@link AttributeHolder}), associated with the processing {@link Context}. {@link AttributeHolder} is
+     * cleared after each I/O event processing. Method may return <tt>null</tt>, if there were no attributes added before.
      *
-     * @return attributes ({@link AttributeHolder}), associated with the processing
-     * {@link Context}. 
+     * @return attributes ({@link AttributeHolder}), associated with the processing {@link Context}.
      */
     @Override
     public AttributeHolder getAttributes() {
@@ -259,9 +248,8 @@ public class Context implements AttributeStorage, Cacheable {
     }
 
     /**
-     * If implementation uses {@link org.glassfish.grizzly.utils.ObjectPool}
-     * to store and reuse {@link Context} instances - this method will be
-     * called before {@link Context} will be offered to pool.
+     * If implementation uses {@link org.glassfish.grizzly.utils.ObjectPool} to store and reuse {@link Context} instances -
+     * this method will be called before {@link Context} will be offered to pool.
      */
     public void reset() {
         attributes.recycle();
@@ -283,10 +271,9 @@ public class Context implements AttributeStorage, Cacheable {
         ThreadCache.putToCache(CACHE_IDX, this);
     }
 
-
     /**
-     * Alternative to {@link #recycle()} that allows cleanup actions to be
-     * performed without returning this instance to the cache.
+     * Alternative to {@link #recycle()} that allows cleanup actions to be performed without returning this instance to the
+     * cache.
      *
      * By default, this is a no-op.
      *
@@ -312,28 +299,23 @@ public class Context implements AttributeStorage, Cacheable {
         }
 
         @Override
-        public void read(Connection connection,
-                CompletionHandler completionHandler) {
+        public void read(Connection connection, CompletionHandler completionHandler) {
             throw new UnsupportedOperationException("Not supported.");
         }
 
         @Override
-        public void write(Connection connection, Object dstAddress,
-                Object message, CompletionHandler completionHandler) {
+        public void write(Connection connection, Object dstAddress, Object message, CompletionHandler completionHandler) {
             throw new UnsupportedOperationException("Not supported.");
         }
-        
+
         @Override
-        public void write(Connection connection, Object dstAddress,
-                Object message, CompletionHandler completionHandler,
-                MessageCloner messageCloner) {
+        public void write(Connection connection, Object dstAddress, Object message, CompletionHandler completionHandler, MessageCloner messageCloner) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
         @Deprecated
-        public void write(Connection connection, Object dstAddress,
-                Object message, CompletionHandler completionHandler,
+        public void write(Connection connection, Object dstAddress, Object message, CompletionHandler completionHandler,
                 org.glassfish.grizzly.asyncqueue.PushBackHandler pushBackHandler) {
             throw new UnsupportedOperationException("Not supported.");
         }
@@ -354,8 +336,7 @@ public class Context implements AttributeStorage, Cacheable {
         private int size;
 
         @SuppressWarnings("unchecked")
-        private MinimalisticArrayList(final Class<E> clazz,
-                final int initialCapacity) {
+        private MinimalisticArrayList(final Class<E> clazz, final int initialCapacity) {
             array = (E[]) Array.newInstance(clazz, initialCapacity);
         }
 
@@ -373,15 +354,14 @@ public class Context implements AttributeStorage, Cacheable {
             if (idx == -1) {
                 return false;
             }
-            
+
             if (idx < size - 1) {
                 System.arraycopy(array, idx + 1, array, idx, size - idx - 1);
             }
-            
+
             array[--size] = null;
             return true;
         }
-        
 
         public void copyFrom(final MinimalisticArrayList<E> list) {
             if (list.size > array.length) {
@@ -392,24 +372,24 @@ public class Context implements AttributeStorage, Cacheable {
                 for (int i = list.size; i < size; i++) {
                     array[i] = null;
                 }
-                
+
                 size = list.size;
             }
         }
-        
+
         public int size() {
             return size;
         }
-        
+
         public E[] array() {
             return array;
         }
-        
+
         public void clear() {
             for (int i = 0; i < size; i++) {
                 array[i] = null;
             }
-            
+
             size = 0;
         }
 

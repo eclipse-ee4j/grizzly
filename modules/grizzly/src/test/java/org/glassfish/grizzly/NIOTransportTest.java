@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -15,6 +15,24 @@
  */
 
 package org.glassfish.grizzly;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
@@ -37,41 +55,25 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static org.junit.Assert.*;
-
 @RunWith(Parameterized.class)
 public class NIOTransportTest {
 
     private static final Logger LOGGER = Grizzly.logger(NIOTransportTest.class);
-    private static final int PORT = 7777;
+    private static final int PORT = 7788;
 
     @Parameterized.Parameters
     public static Collection<Object[]> getTransport() {
-        return Arrays.asList(new Object[][]{
-            {new Holder<NIOTransport>() {
-                    @Override
-                    public NIOTransport get() {
-                        return TCPNIOTransportBuilder.newInstance().build();
-                    }
-                }},
-            {new Holder<NIOTransport>() {
-                    @Override
-                    public NIOTransport get() {
-                        return UDPNIOTransportBuilder.newInstance().build();
-                    }
-                }}});
+        return Arrays.asList(new Object[][] { { new Holder<NIOTransport>() {
+            @Override
+            public NIOTransport get() {
+                return TCPNIOTransportBuilder.newInstance().build();
+            }
+        } }, { new Holder<NIOTransport>() {
+            @Override
+            public NIOTransport get() {
+                return UDPNIOTransportBuilder.newInstance().build();
+            }
+        } } });
     }
 
     private final NIOTransport transport;
@@ -80,13 +82,12 @@ public class NIOTransportTest {
         this.transport = transportHolder.get();
     }
 
-
     // ------------------------------------------------------------ Test Methods
 
     @Test
     public void testStartStop() throws IOException {
         LOGGER.log(Level.INFO, "Running: testStartStop ({0})", transport.getName());
-        
+
         try {
             transport.bind(PORT);
             transport.start();
@@ -130,8 +131,7 @@ public class NIOTransportTest {
         assertEquals(30, transport.getWriteTimeout(TimeUnit.SECONDS));
         assertEquals(30, transport.getReadTimeout(TimeUnit.SECONDS));
         transport.setReadTimeout(45, TimeUnit.MINUTES);
-        assertEquals(TimeUnit.MILLISECONDS.convert(45, TimeUnit.MINUTES),
-                     transport.getReadTimeout(TimeUnit.MILLISECONDS));
+        assertEquals(TimeUnit.MILLISECONDS.convert(45, TimeUnit.MINUTES), transport.getReadTimeout(TimeUnit.MILLISECONDS));
         assertEquals(30, transport.getWriteTimeout(TimeUnit.SECONDS));
         transport.setReadTimeout(-5, TimeUnit.SECONDS);
         assertEquals(-1, transport.getReadTimeout(TimeUnit.MILLISECONDS));
@@ -167,8 +167,7 @@ public class NIOTransportTest {
 
         final int portsTest = 10;
         final int startPort = PORT + 1234;
-        final PortRange portRange =
-                new PortRange(startPort, startPort + portsTest - 1);
+        final PortRange portRange = new PortRange(startPort, startPort + portsTest - 1);
 
         Connection connection;
         transport.setReuseAddress(false);
@@ -188,8 +187,7 @@ public class NIOTransportTest {
             transport.start();
 
             for (int i = 0; i < portsTest; i++) {
-                Future<Connection> future =
-                        transport.connect("localhost", startPort + i);
+                Future<Connection> future = transport.connect("localhost", startPort + i);
                 connection = future.get(10, TimeUnit.SECONDS);
                 assertTrue(connection != null);
                 connection.closeSilently();
@@ -210,19 +208,14 @@ public class NIOTransportTest {
             transport.bind(PORT);
             transport.start();
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                            connectFuture,
-                            new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
 
-                                @Override
-                                public void completed(final Connection connection) {
-                                    connection.configureStandalone(true);
-                                }
-                            }));
+                @Override
+                public void completed(final Connection connection) {
+                    connection.configureStandalone(true);
+                }
+            }));
 
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -266,19 +259,14 @@ public class NIOTransportTest {
             transport.bind(PORT);
             transport.start();
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                            connectFuture,
-                            new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
 
-                                @Override
-                                public void completed(final Connection connection) {
-                                    connection.configureStandalone(true);
-                                }
-                            }));
+                @Override
+                public void completed(final Connection connection) {
+                    connection.configureStandalone(true);
+                }
+            }));
 
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -293,11 +281,9 @@ public class NIOTransportTest {
             assertTrue("Write timeout", writeFuture.isDone());
             assertEquals(originalMessage.length, (int) writeFuture.get());
 
-
             reader = StandaloneProcessor.INSTANCE.getStreamReader(connection);
             Future readFuture = reader.notifyAvailable(originalMessage.length);
-            assertTrue("Read timeout",
-                       readFuture.get(10, TimeUnit.SECONDS) != null);
+            assertTrue("Read timeout", readFuture.get(10, TimeUnit.SECONDS) != null);
 
             byte[] echoMessage = new byte[originalMessage.length];
             reader.readByteArray(echoMessage);
@@ -329,19 +315,14 @@ public class NIOTransportTest {
             transport.start();
             transport.configureBlocking(true);
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                            connectFuture,
-                            new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
 
-                                @Override
-                                public void completed(final Connection connection) {
-                                    connection.configureStandalone(true);
-                                }
-                            }));
+                @Override
+                public void completed(final Connection connection) {
+                    connection.configureStandalone(true);
+                }
+            }));
 
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -357,10 +338,8 @@ public class NIOTransportTest {
                 assertTrue("Write timeout", writeFuture.isDone());
                 assertEquals(originalMessage.length, (int) writeFuture.get());
 
-                Future readFuture =
-                        reader.notifyAvailable(originalMessage.length);
-                assertTrue("Read timeout",
-                           readFuture.get(10, TimeUnit.SECONDS) != null);
+                Future readFuture = reader.notifyAvailable(originalMessage.length);
+                assertTrue("Read timeout", readFuture.get(10, TimeUnit.SECONDS) != null);
 
                 byte[] echoMessage = new byte[originalMessage.length];
                 reader.readByteArray(echoMessage);
@@ -393,19 +372,14 @@ public class NIOTransportTest {
             transport.bind(PORT);
             transport.start();
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                            connectFuture,
-                            new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
 
-                                @Override
-                                public void completed(final Connection connection) {
-                                    connection.configureStandalone(true);
-                                }
-                            }));
+                @Override
+                public void completed(final Connection connection) {
+                    connection.configureStandalone(true);
+                }
+            }));
 
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
@@ -418,11 +392,9 @@ public class NIOTransportTest {
             Integer writtenBytes = writeFuture.get(10, TimeUnit.SECONDS);
             assertEquals(originalMessage.length, (int) writtenBytes);
 
-
             reader = StandaloneProcessor.INSTANCE.getStreamReader(connection);
             Future readFuture = reader.notifyAvailable(originalMessage.length);
-            assertTrue("Read timeout",
-                       readFuture.get(10, TimeUnit.SECONDS) != null);
+            assertTrue("Read timeout", readFuture.get(10, TimeUnit.SECONDS) != null);
 
             byte[] echoMessage = new byte[originalMessage.length];
             reader.readByteArray(echoMessage);
@@ -461,12 +433,8 @@ public class NIOTransportTest {
 
             transport.start();
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                    connectFuture, new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
                 @Override
                 public void completed(final Connection connection) {
                     connection.configureStandalone(true);
@@ -491,8 +459,7 @@ public class NIOTransportTest {
                 assertTrue(future.isDone());
                 reader.readByteArray(rcvMessage);
 
-                assertTrue("Message is corrupted!",
-                        Arrays.equals(rcvMessage, message));
+                assertTrue("Message is corrupted!", Arrays.equals(rcvMessage, message));
 
             }
         } finally {
@@ -518,11 +485,9 @@ public class NIOTransportTest {
             }
 
             @Override
-            public NextAction handleRead(FilterChainContext ctx)
-            throws IOException {
+            public NextAction handleRead(FilterChainContext ctx) throws IOException {
                 final Buffer buffer = ctx.getMessage();
-                LOGGER.log(Level.INFO, "Feeder. Check size filter: {0}",
-                           buffer);
+                LOGGER.log(Level.INFO, "Feeder. Check size filter: {0}", buffer);
                 if (buffer.remaining() >= size) {
                     latch.countDown();
                     return ctx.getInvokeAction();
@@ -552,19 +517,14 @@ public class NIOTransportTest {
             transport.bind(PORT);
             transport.start();
 
-            final FutureImpl<Connection> connectFuture =
-                    Futures.createSafeFuture();
-            transport.connect(
-                    new InetSocketAddress("localhost", PORT),
-                    Futures.toCompletionHandler(
-                            connectFuture,
-                            new EmptyCompletionHandler<Connection>() {
+            final FutureImpl<Connection> connectFuture = Futures.createSafeFuture();
+            transport.connect(new InetSocketAddress("localhost", PORT), Futures.toCompletionHandler(connectFuture, new EmptyCompletionHandler<Connection>() {
 
-                                @Override
-                                public void completed(final Connection connection) {
-                                    connection.configureStandalone(true);
-                                }
-                            }));
+                @Override
+                public void completed(final Connection connection) {
+                    connection.configureStandalone(true);
+                }
+            }));
             connection = connectFuture.get(10, TimeUnit.SECONDS);
             assertTrue(connection != null);
 
@@ -573,8 +533,7 @@ public class NIOTransportTest {
             writer = StandaloneProcessor.INSTANCE.getStreamWriter(connection);
             writer.writeByteArray(firstChunk);
             Future<Integer> writeFuture = writer.flush();
-            assertTrue("First chunk write timeout",
-                       writeFuture.get(10, TimeUnit.SECONDS) > 0);
+            assertTrue("First chunk write timeout", writeFuture.get(10, TimeUnit.SECONDS) > 0);
 
             Thread.sleep(1000);
 
@@ -582,18 +541,14 @@ public class NIOTransportTest {
             Arrays.fill(secondChunk, (byte) 2);
             writer.writeByteArray(secondChunk);
             writeFuture = writer.flush();
-            assertTrue("Second chunk write timeout",
-                       writeFuture.get(10, TimeUnit.SECONDS) > 0);
+            assertTrue("Second chunk write timeout", writeFuture.get(10, TimeUnit.SECONDS) > 0);
 
             reader = StandaloneProcessor.INSTANCE.getStreamReader(connection);
             Future readFuture = reader.notifyAvailable(fullMessageSize);
             try {
-                assertTrue("Read timeout. CheckSizeFilter latch: " +
-                                   checkSizeFilter.latch,
-                           readFuture.get(10, TimeUnit.SECONDS) != null);
+                assertTrue("Read timeout. CheckSizeFilter latch: " + checkSizeFilter.latch, readFuture.get(10, TimeUnit.SECONDS) != null);
             } catch (TimeoutException e) {
-                assertTrue("Read timeout. CheckSizeFilter latch: " +
-                                   checkSizeFilter.latch, false);
+                assertTrue("Read timeout. CheckSizeFilter latch: " + checkSizeFilter.latch, false);
             }
 
             byte[] pattern = new byte[fullMessageSize];
@@ -699,7 +654,7 @@ public class NIOTransportTest {
         GrizzlyFuture<Transport> future = transport.shutdown();
         Transport tt = future.get(10, TimeUnit.SECONDS);
         long stop = System.currentTimeMillis();
-        assertTrue((stop - start) >= 7000);
+        assertTrue(stop - start >= 7000);
         assertEquals(transport, tt);
         assertTrue(transport.isStopped());
         assertFalse(forcedNotCalled1.get());
@@ -757,8 +712,7 @@ public class NIOTransportTest {
             }
         });
         transport.start();
-        GrizzlyFuture<Transport> future =
-                transport.shutdown(5, TimeUnit.SECONDS);
+        GrizzlyFuture<Transport> future = transport.shutdown(5, TimeUnit.SECONDS);
         Transport tt = future.get(5100, TimeUnit.MILLISECONDS);
         assertTrue(transport.isStopped());
         assertEquals(transport, tt);

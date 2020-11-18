@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -28,15 +28,25 @@ import org.glassfish.grizzly.http.server.Response;
 
 /**
  * We queue events in each CometHandler to lower the probability that slow or massive IO for one CometHandler severely
- * delays events to others.<br> <br> only streaming mode can benefit from buffering messages like this.  <br> only 1
- * thread at a time is allowed to do IO, other threads put events in the queue and return to the thread pool.<br> <br> a
- * thread initially calls enqueueEvent and stay there until there are no more events in the queue, calling the onEVent
- * method in synchronized context for each Event.<br> <br> on IOE in onEvent we terminate.<br> we have a limit, to keep
- * memory usage under control.<br> <br> if queue limit is reached onQueueFull is called, and then we terminate.<br> <br>
- * <br> whats not optimal is that a worker thread is sticky to the client depending upon available events in the
- * handlers local queue, that can in theory allow a few clients to block all threads for extended time.<br> that effect
- * can make this implementation unusable depending on the scenario, its not a perfect design be any means. <br> The
- * potential improvement is that only 1 worker thread is tied up to a client instead of several being blocked by
+ * delays events to others.<br>
+ * <br>
+ * only streaming mode can benefit from buffering messages like this. <br>
+ * only 1 thread at a time is allowed to do IO, other threads put events in the queue and return to the thread pool.<br>
+ * <br>
+ * a thread initially calls enqueueEvent and stay there until there are no more events in the queue, calling the onEVent
+ * method in synchronized context for each Event.<br>
+ * <br>
+ * on IOE in onEvent we terminate.<br>
+ * we have a limit, to keep memory usage under control.<br>
+ * <br>
+ * if queue limit is reached onQueueFull is called, and then we terminate.<br>
+ * <br>
+ * <br>
+ * whats not optimal is that a worker thread is sticky to the client depending upon available events in the handlers
+ * local queue, that can in theory allow a few clients to block all threads for extended time.<br>
+ * that effect can make this implementation unusable depending on the scenario, its not a perfect design be any means.
+ * <br>
+ * The potential improvement is that only 1 worker thread is tied up to a client instead of several being blocked by
  * synchronized io wait for one CometHandler .<br>
  *
  * @author Gustav Trede
@@ -44,13 +54,13 @@ import org.glassfish.grizzly.http.server.Response;
 public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E> {
     protected final static Logger logger = Logger.getLogger(DefaultConcurrentCometHandler.class.getName());
     /**
-     * used for preventing the worker threads from the executor event queue from adding events to the comet handlers
-     * local queue or starting IO logic after shut down.<br>
+     * used for preventing the worker threads from the executor event queue from adding events to the comet handlers local
+     * queue or starting IO logic after shut down.<br>
      */
     private boolean shuttingDown;
     /**
-     * max number of events to locally queue for this CometHandler.<br> (a global event queue normally exists in form of
-     * a thread pool too)
+     * max number of events to locally queue for this CometHandler.<br>
+     * (a global event queue normally exists in form of a thread pool too)
      */
     private final int messageQueueLimit;
     /**
@@ -62,10 +72,10 @@ public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E
      */
     private boolean readyForWork = true;
     /**
-     * todo replace with non array copying list for non resizing add situations, using internal index to keep track of
-     * state , not a linked list, it has  too much overhead and eats memory.
+     * todo replace with non array copying list for non resizing add situations, using internal index to keep track of state
+     * , not a linked list, it has too much overhead and eats memory.
      */
-    protected final Queue<CometEvent> messageQueue = new LinkedList<CometEvent>();
+    protected final Queue<CometEvent> messageQueue = new LinkedList<>();
     private CometContext<E> context;
     private Response response;
 
@@ -103,7 +113,7 @@ public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E
     }
 
     /**
-     * Queues event if another thread is currently working on this handler.  The first thread to start working will keep
+     * Queues event if another thread is currently working on this handler. The first thread to start working will keep
      * doing so until there are no further events in the internal queue.
      */
     public void enqueueEvent(CometEvent event) throws IOException {
@@ -124,7 +134,7 @@ public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E
                 return;
             }
             try {
-                //move synchronized outside the while loop ?
+                // move synchronized outside the while loop ?
                 synchronized (this) {
                     onEvent(event);
                 }
@@ -156,8 +166,8 @@ public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E
     }
 
     /**
-     * Called in synchronized context when the comet handler's local event queue is full.<br> default impl resumes the
-     * comet handler
+     * Called in synchronized context when the comet handler's local event queue is full.<br>
+     * default impl resumes the comet handler
      *
      * @param event {@link CometEvent}
      */
@@ -166,15 +176,19 @@ public abstract class DefaultConcurrentCometHandler<E> implements CometHandler<E
     }
 
     /**
-     * {@inheritDoc} <br> default impl calls terminate()
+     * {@inheritDoc} <br>
+     * default impl calls terminate()
      */
+    @Override
     public void onInterrupt(CometEvent event) throws IOException {
         terminate();
     }
 
     /**
-     * {@inheritDoc} <br> default impl calls terminate()
+     * {@inheritDoc} <br>
+     * default impl calls terminate()
      */
+    @Override
     public void onTerminate(CometEvent event) throws IOException {
         terminate();
     }

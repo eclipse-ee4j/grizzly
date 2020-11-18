@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,38 +17,34 @@
 package org.glassfish.grizzly.websockets;
 
 /**
- * Interface to allow notification of events occurring on specific
- * {@link WebSocket} instances.
+ * Interface to allow notification of events occurring on specific {@link WebSocket} instances.
  */
 public interface WebSocketListener {
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onClose(DataFrame)} has been called on a
-     * particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onClose(DataFrame)} has been called on a particular {@link WebSocket} instance.
      * <p>
-     *     
+     * 
      * @param socket the {@link WebSocket} being closed.
-     * @param frame the closing {@link DataFrame} sent by the remote end-point. 
+     * @param frame the closing {@link DataFrame} sent by the remote end-point.
      */
     void onClose(WebSocket socket, DataFrame frame);
 
     /**
      * <p>
-     * Invoked when the opening handshake has been completed for a specific
-     * {@link WebSocket} instance.
+     * Invoked when the opening handshake has been completed for a specific {@link WebSocket} instance.
      * </p>
-     * 
+     *
      * @param socket the newly connected {@link WebSocket}
      */
     void onConnect(WebSocket socket);
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onMessage(String)} has been called on a 
-     * particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onMessage(String)} has been called on a particular {@link WebSocket} instance.
      * </p>
-     * 
+     *
      * @param socket the {@link WebSocket} that received a message.
      * @param text the message received.
      */
@@ -56,8 +52,7 @@ public interface WebSocketListener {
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onMessage(String)} has been called on a
-     * particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onMessage(String)} has been called on a particular {@link WebSocket} instance.
      * </p>
      *
      * @param socket the {@link WebSocket} that received a message.
@@ -67,10 +62,9 @@ public interface WebSocketListener {
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onPing(DataFrame)} has been called on a 
-     * particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onPing(DataFrame)} has been called on a particular {@link WebSocket} instance.
      * </p>
-     * 
+     *
      * @param socket the {@link WebSocket} that received the ping.
      * @param bytes the payload of the ping frame, if any.
      */
@@ -78,21 +72,20 @@ public interface WebSocketListener {
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onPong(DataFrame)} has been called on a
-     * particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onPong(DataFrame)} has been called on a particular {@link WebSocket} instance.
      * </p>
      *
      * @param socket the {@link WebSocket} that received the pong.
-     * @param bytes  the payload of the pong frame, if any.
+     * @param bytes the payload of the pong frame, if any.
      */
     void onPong(WebSocket socket, byte[] bytes);
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onFragment(boolean, String)} has been called
-     * on a particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onFragment(boolean, String)} has been called on a particular {@link WebSocket}
+     * instance.
      * </p>
-     * 
+     *
      * @param socket the {@link WebSocket} received the message fragment.
      * @param fragment the message fragment.
      * @param last flag indicating if this was the last fragment.
@@ -101,13 +94,13 @@ public interface WebSocketListener {
 
     /**
      * <p>
-     * Invoked when {@link WebSocket#onFragment(boolean, byte[])} has been called
-     * on a particular {@link WebSocket} instance.
+     * Invoked when {@link WebSocket#onFragment(boolean, byte[])} has been called on a particular {@link WebSocket}
+     * instance.
      * </p>
      *
-     * @param socket   the {@link WebSocket} received the message fragment.
+     * @param socket the {@link WebSocket} received the message fragment.
      * @param fragment the message fragment.
-     * @param last     flag indicating if this was the last fragment.
+     * @param last flag indicating if this was the last fragment.
      */
     void onFragment(WebSocket socket, byte[] fragment, boolean last);
 

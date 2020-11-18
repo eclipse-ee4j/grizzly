@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,7 @@
 package org.glassfish.grizzly.memory;
 
 import java.nio.ByteBuffer;
+
 import org.glassfish.grizzly.Buffer;
 
 /**
@@ -24,12 +25,11 @@ import org.glassfish.grizzly.Buffer;
  *
  * @see MemoryManager
  * @see WrapperAware
- * 
+ *
  * @author Alexey Stashok
  */
 public class MemoryUtils {
-    public static ByteBuffer allocateByteBuffer(MemoryManager memoryManager,
-            int size) {
+    public static ByteBuffer allocateByteBuffer(MemoryManager memoryManager, int size) {
         if (memoryManager instanceof ByteBufferAware) {
             return ((ByteBufferAware) memoryManager).allocateByteBuffer(size);
         }
@@ -37,18 +37,15 @@ public class MemoryUtils {
         return ByteBuffer.allocate(size);
     }
 
-    public static ByteBuffer reallocateByteBuffer(MemoryManager memoryManager,
-            ByteBuffer oldByteBuffer, int size) {
+    public static ByteBuffer reallocateByteBuffer(MemoryManager memoryManager, ByteBuffer oldByteBuffer, int size) {
         if (memoryManager instanceof ByteBufferAware) {
-            return ((ByteBufferAware) memoryManager).reallocateByteBuffer(
-                    oldByteBuffer, size);
+            return ((ByteBufferAware) memoryManager).reallocateByteBuffer(oldByteBuffer, size);
         }
 
         return ByteBuffer.allocate(size);
     }
 
-    public static void releaseByteBuffer(MemoryManager memoryManager,
-            ByteBuffer byteBuffer) {
+    public static void releaseByteBuffer(MemoryManager memoryManager, ByteBuffer byteBuffer) {
         if (memoryManager instanceof ByteBufferAware) {
             ((ByteBufferAware) memoryManager).releaseByteBuffer(byteBuffer);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,55 +16,50 @@
 
 package org.glassfish.grizzly.servlet;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Grizzly Servlet utilities.
- * 
+ *
  * @author Alexey Stashok
  */
 public class ServletUtils {
     /**
-     * Returns internal Grizzly {@link Request} associated with the passed
-     * {@link HttpServletRequest}.
-     * 
+     * Returns internal Grizzly {@link Request} associated with the passed {@link HttpServletRequest}.
+     *
      * @param servletRequest {@link HttpServletRequest}
-     * 
-     * @throws IllegalArgumentException if passed {@link HttpServletRequest}
-     *      is not based on Grizzly {@link Request}.
-     * 
-     * @return internal Grizzly {@link Request} associated with the passed
-     * {@link HttpServletRequest}.
+     *
+     * @throws IllegalArgumentException if passed {@link HttpServletRequest} is not based on Grizzly {@link Request}.
+     *
+     * @return internal Grizzly {@link Request} associated with the passed {@link HttpServletRequest}.
      */
     public static Request getInternalRequest(HttpServletRequest servletRequest) {
         if (servletRequest instanceof Holders.RequestHolder) {
             return ((Holders.RequestHolder) servletRequest).getInternalRequest();
         }
-        
+
         throw new IllegalArgumentException("Passed HttpServletRequest is not based on Grizzly");
     }
-    
+
     /**
-     * Returns internal Grizzly {@link Response} associated with the passed
-     * {@link HttpServletResponse}.
-     * 
+     * Returns internal Grizzly {@link Response} associated with the passed {@link HttpServletResponse}.
+     *
      * @param servletResponse {@link HttpServletResponse}
-     * 
-     * @throws IllegalArgumentException if passed {@link HttpServletResponse}
-     *      is not based on Grizzly {@link Response}.
-     * 
-     * @return internal Grizzly {@link Response} associated with the passed
-     * {@link HttpServletResponse}.
+     *
+     * @throws IllegalArgumentException if passed {@link HttpServletResponse} is not based on Grizzly {@link Response}.
+     *
+     * @return internal Grizzly {@link Response} associated with the passed {@link HttpServletResponse}.
      */
     public static Response getInternalResponse(HttpServletResponse servletResponse) {
         if (servletResponse instanceof Holders.ResponseHolder) {
             return ((Holders.ResponseHolder) servletResponse).getInternalResponse();
         }
-        
+
         throw new IllegalArgumentException("Passed HttpServletResponse is not based on Grizzly");
     }
-    
+
 }

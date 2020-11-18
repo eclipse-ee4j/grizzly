@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,23 +17,28 @@
 package org.glassfish.grizzly.threadpool;
 
 import java.util.concurrent.TimeUnit;
+
 import org.glassfish.grizzly.attributes.AttributeStorage;
 
 /**
  * Interface, which Grizzly thread pool threads should implement.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface WorkerThread extends Runnable, AttributeStorage {
     long UNLIMITED_TRANSACTION_TIMEOUT = -1;
-    
+
     void start();
+
     void stop();
+
     void destroy();
-    
+
     String getName();
+
     Thread getThread();
 
     long getTransactionTimeout(TimeUnit timeunit);
+
     void setTransactionTimeout(long timeout, TimeUnit timeunit);
 }

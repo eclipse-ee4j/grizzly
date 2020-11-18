@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,25 +16,25 @@
 
 package org.glassfish.grizzly.impl;
 
-import org.glassfish.grizzly.Cacheable;
-import org.glassfish.grizzly.ThreadCache;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.ThreadCache;
 
 /**
  * {@link Future} implementation with the specific unmodifiable result.
  *
  * @see Future
- * 
+ *
  * @author Alexey Stashok
  */
 public final class ReadyFutureImpl<R> implements FutureImpl<R> {
-    private static final ThreadCache.CachedTypeIndex<ReadyFutureImpl> CACHE_IDX =
-            ThreadCache.obtainIndex(ReadyFutureImpl.class, 4);
+    private static final ThreadCache.CachedTypeIndex<ReadyFutureImpl> CACHE_IDX = ThreadCache.obtainIndex(ReadyFutureImpl.class, 4);
 
     /**
      * Construct cancelled {@link Future}.
@@ -46,7 +46,7 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
             return future;
         }
 
-        return new ReadyFutureImpl<R>();
+        return new ReadyFutureImpl<>();
     }
 
     /**
@@ -59,7 +59,7 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
             return future;
         }
 
-        return new ReadyFutureImpl<R>(result);
+        return new ReadyFutureImpl<>(result);
     }
 
     /**
@@ -72,14 +72,13 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
             return future;
         }
 
-        return new ReadyFutureImpl<R>(failure);
+        return new ReadyFutureImpl<>(failure);
     }
 
     @SuppressWarnings("unchecked")
     private static <R> ReadyFutureImpl<R> takeFromCache() {
         return ThreadCache.takeFromCache(CACHE_IDX);
     }
-
 
     protected R result;
     private Throwable failure;
@@ -145,7 +144,7 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
 
     /**
      * Do nothing.
-     * 
+     *
      * @return cancel state, which was set during construction.
      */
     @Override
@@ -187,8 +186,7 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
      * {@inheritDoc}
      */
     @Override
-    public R get(long timeout, TimeUnit unit) throws
-            InterruptedException, ExecutionException, TimeoutException {
+    public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (isCancelled) {
             throw new CancellationException();
         } else if (failure != null) {
@@ -212,7 +210,7 @@ public final class ReadyFutureImpl<R> implements FutureImpl<R> {
     public void result(R result) {
         throw new IllegalStateException("Can not be reset on ReadyFutureImpl");
     }
-    
+
     private void reset() {
         result = null;
         failure = null;

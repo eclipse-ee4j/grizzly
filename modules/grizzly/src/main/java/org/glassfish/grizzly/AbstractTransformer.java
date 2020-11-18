@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,16 +18,15 @@ package org.glassfish.grizzly;
 
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.attributes.AttributeBuilder;
-import org.glassfish.grizzly.memory.MemoryManager;
 import org.glassfish.grizzly.attributes.AttributeStorage;
+import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
  *
  * @author Alexey Stashok
  */
 public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
-    protected final AttributeBuilder attributeBuilder =
-            Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
+    protected final AttributeBuilder attributeBuilder = Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
 
     protected final Attribute<LastResultAwareState<K, L>> stateAttr;
 
@@ -44,18 +43,14 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
     }
 
     @Override
-    public final TransformationResult<K, L> transform(AttributeStorage storage,
-            K input) throws TransformationException {
+    public final TransformationResult<K, L> transform(AttributeStorage storage, K input) throws TransformationException {
         return saveLastResult(storage, transformImpl(storage, input));
     }
 
-    protected abstract TransformationResult<K, L> transformImpl(
-            AttributeStorage storage,
-            K input) throws TransformationException;
+    protected abstract TransformationResult<K, L> transformImpl(AttributeStorage storage, K input) throws TransformationException;
 
     @Override
-    public final TransformationResult<K, L> getLastResult(
-            final AttributeStorage storage) {
+    public final TransformationResult<K, L> getLastResult(final AttributeStorage storage) {
         final LastResultAwareState<K, L> state = stateAttr.get(storage);
         if (state != null) {
             return state.getLastResult();
@@ -64,9 +59,7 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
         return null;
     }
 
-    protected final TransformationResult<K, L> saveLastResult(
-            final AttributeStorage storage,
-            final TransformationResult<K, L> result) {
+    protected final TransformationResult<K, L> saveLastResult(final AttributeStorage storage, final TransformationResult<K, L> result) {
         obtainStateObject(storage).setLastResult(result);
         return result;
     }
@@ -88,7 +81,7 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
 
         return MemoryManager.DEFAULT_MEMORY_MANAGER;
     }
-    
+
     public MemoryManager getMemoryManager() {
         return memoryManager;
     }
@@ -97,9 +90,7 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
         this.memoryManager = memoryManager;
     }
 
-    public static <T> T getValue(final AttributeStorage storage,
-            final Attribute<T> attribute,
-            final T defaultValue) {
+    public static <T> T getValue(final AttributeStorage storage, final Attribute<T> attribute, final T defaultValue) {
         final T value = attribute.get(storage);
         if (value != null) {
             return value;
@@ -108,9 +99,8 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
         return defaultValue;
     }
 
-    protected final LastResultAwareState<K, L> obtainStateObject(
-            final AttributeStorage storage) {
-        
+    protected final LastResultAwareState<K, L> obtainStateObject(final AttributeStorage storage) {
+
         LastResultAwareState<K, L> value = stateAttr.get(storage);
         if (value == null) {
             value = createStateObject();
@@ -119,9 +109,9 @@ public abstract class AbstractTransformer<K, L> implements Transformer<K, L> {
 
         return value;
     }
-    
+
     protected LastResultAwareState<K, L> createStateObject() {
-        return new LastResultAwareState<K, L>();
+        return new LastResultAwareState<>();
     }
 
     public static class LastResultAwareState<K, L> {

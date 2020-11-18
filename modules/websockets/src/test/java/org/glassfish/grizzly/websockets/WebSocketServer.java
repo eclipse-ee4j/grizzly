@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -37,54 +37,53 @@ public class WebSocketServer {
      * Empty constructor, which doesn't do any network initialization.
      */
     protected WebSocketServer() {
-        
+
     }
-    
+
     /**
      * @param port the network port to which this listener will bind.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests on {@link
-     *         NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
-     * 
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * {@link NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
+     *
      * @deprecated please use {@link #createServer(int)}.
      */
+    @Deprecated
     public WebSocketServer(final int port) {
         this(NetworkListener.DEFAULT_NETWORK_HOST, new PortRange(port));
     }
-    
+
     /**
      * @param host the network port to which this listener will bind.
      * @param portRange port range to attempt to bind to.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests
-     * on <code>host</code>:<code>[port-range]</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * <code>host</code>:<code>[port-range]</code>.
      */
     protected WebSocketServer(final String host, final PortRange portRange) {
-        final NetworkListener networkListener =
-                new NetworkListener("WebSocket NetworkListener",
-                                    host,
-                                    portRange);
+        final NetworkListener networkListener = new NetworkListener("WebSocket NetworkListener", host, portRange);
         networkListener.setMaxPendingBytes(-1);
         networkListener.registerAddOn(new WebSocketAddOn());
 
         httpServer = new HttpServer();
         final ServerConfiguration config = httpServer.getServerConfiguration();
         config.addHttpHandler(new StaticHttpHandler("."), "/");
-        
+
         config.setHttpServerName("WebSocket Server");
         config.setName("WebSocket Server");
-        
+
         httpServer.addListener(networkListener);
     }
 
     /**
      * @param port the network port to which this listener will bind.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests on {@link
-     *         NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
-     * 
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * {@link NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
+     *
      * @deprecated please use {@link #createServer(int)}.
      */
+    @Deprecated
     public static WebSocketServer createSimpleServer(final int port) {
         return createServer(port);
     }
@@ -92,19 +91,18 @@ public class WebSocketServer {
     /**
      * @param port the network port to which this listener will bind.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests on {@link
-     *         NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * {@link NetworkListener#DEFAULT_NETWORK_HOST}:<code>port</code>.
      */
     public static WebSocketServer createServer(final int port) {
-        return createServer(NetworkListener.DEFAULT_NETWORK_HOST,
-                new PortRange(port));
+        return createServer(NetworkListener.DEFAULT_NETWORK_HOST, new PortRange(port));
     }
 
     /**
      * @param range port range to attempt to bind to.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests
-     * on {@link NetworkListener#DEFAULT_NETWORK_HOST}:<code>[port-range]</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * {@link NetworkListener#DEFAULT_NETWORK_HOST}:<code>[port-range]</code>.
      */
     public static WebSocketServer createServer(final PortRange range) {
 
@@ -115,8 +113,7 @@ public class WebSocketServer {
     /**
      * @param socketAddress the endpoint address to which this listener will bind.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests
-     * on <code>socketAddress</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on <code>socketAddress</code>.
      */
     public static WebSocketServer createServer(final SocketAddress socketAddress) {
 
@@ -128,25 +125,22 @@ public class WebSocketServer {
      * @param host the network port to which this listener will bind.
      * @param port the network port to which this listener will bind.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests
-     * on <code>host</code>:<code>port</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on <code>host</code>:<code>port</code>.
      */
-    public static WebSocketServer createServer(final String host,
-                                                final int port) {
-        
+    public static WebSocketServer createServer(final String host, final int port) {
+
         return createServer(host, new PortRange(port));
 
     }
-    
+
     /**
      * @param host the network port to which this listener will bind.
      * @param range port range to attempt to bind to.
      *
-     * @return a <code>WebSocketServer</code> configured to listen to requests
-     * on <code>host</code>:<code>[port-range]</code>.
+     * @return a <code>WebSocketServer</code> configured to listen to requests on
+     * <code>host</code>:<code>[port-range]</code>.
      */
-    public static WebSocketServer createServer(final String host,
-                                                final PortRange range) {
+    public static WebSocketServer createServer(final String host, final PortRange range) {
 
         return new WebSocketServer(host, range);
     }

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates and others.
+ * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -12,9 +13,26 @@
  * https://www.gnu.org/software/classpath/license.html.
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ * 
+ * Contributors:
+ *   Payara Services - Propagate stop action on a closed SSL connection
  */
 
 package org.glassfish.grizzly.ssl;
+
+import static org.glassfish.grizzly.ssl.SSLUtils.SSL_CTX_ATTR;
+import static org.glassfish.grizzly.ssl.SSLUtils.allocateInputBuffer;
+import static org.glassfish.grizzly.ssl.SSLUtils.allocateOutputBuffer;
+import static org.glassfish.grizzly.ssl.SSLUtils.allowDispose;
+import static org.glassfish.grizzly.ssl.SSLUtils.copy;
+import static org.glassfish.grizzly.ssl.SSLUtils.executeDelegatedTask;
+import static org.glassfish.grizzly.ssl.SSLUtils.getSSLPacketSize;
+import static org.glassfish.grizzly.ssl.SSLUtils.getSslConnectionContext;
+import static org.glassfish.grizzly.ssl.SSLUtils.handshakeUnwrap;
+import static org.glassfish.grizzly.ssl.SSLUtils.handshakeWrap;
+import static org.glassfish.grizzly.ssl.SSLUtils.isHandshaking;
+import static org.glassfish.grizzly.ssl.SSLUtils.makeInputRemainder;
+import static org.glassfish.grizzly.ssl.SSLUtils.move;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,12 +47,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Filter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
@@ -64,8 +84,6 @@ import org.glassfish.grizzly.ssl.SSLConnectionContext.Allocator;
 import org.glassfish.grizzly.ssl.SSLConnectionContext.SslResult;
 import org.glassfish.grizzly.utils.Futures;
 
-import static org.glassfish.grizzly.ssl.SSLUtils.*;
-
 /**
  * SSL {@link Filter} to operate with SSL encrypted data.
  *
@@ -78,39 +96,32 @@ public class SSLBaseFilter extends BaseFilter {
     private static final Allocator MM_ALLOCATOR = new Allocator() {
         @Override
         @SuppressWarnings("unchecked")
-        public Buffer grow(final SSLConnectionContext sslCtx,
-            final Buffer oldBuffer, final int newSize) {
+        public Buffer grow(final SSLConnectionContext sslCtx, final Buffer oldBuffer, final int newSize) {
             final MemoryManager mm = sslCtx.getConnection().getMemoryManager();
-            
-            return oldBuffer == null ?
-                    mm.allocate(newSize) :
-                    mm.reallocate(oldBuffer, newSize);
+
+            return oldBuffer == null ? mm.allocate(newSize) : mm.reallocate(oldBuffer, newSize);
         }
     };
-    
-    private static final Allocator OUTPUT_BUFFER_ALLOCATOR =
-            new Allocator() {
+
+    private static final Allocator OUTPUT_BUFFER_ALLOCATOR = new Allocator() {
         @Override
-        public Buffer grow(final SSLConnectionContext sslCtx,
-            final Buffer oldBuffer, final int newSize) {
-            
+        public Buffer grow(final SSLConnectionContext sslCtx, final Buffer oldBuffer, final int newSize) {
+
             return allocateOutputBuffer(newSize);
         }
     };
-    
+
     private final SSLEngineConfigurator serverSSLEngineConfigurator;
     private final boolean renegotiateOnClientAuthWant;
     private volatile boolean renegotiationDisabled;
 
-    protected final Set<HandshakeListener> handshakeListeners =
-            Collections.newSetFromMap(new ConcurrentHashMap<>(2));
-    
-    private long handshakeTimeoutMillis = -1;
-        
-    private SSLTransportFilterWrapper optimizedTransportFilter;
-    
-    // ------------------------------------------------------------ Constructors
+    protected final Set<HandshakeListener> handshakeListeners = Collections.newSetFromMap(new ConcurrentHashMap<>(2));
 
+    private long handshakeTimeoutMillis = -1;
+
+    private SSLTransportFilterWrapper optimizedTransportFilter;
+
+    // ------------------------------------------------------------ Constructors
 
     public SSLBaseFilter() {
         this(null);
@@ -125,54 +136,42 @@ public class SSLBaseFilter extends BaseFilter {
         this(serverSSLEngineConfigurator, true);
     }
 
-
     /**
      * Build <tt>SSLFilter</tt> with the given {@link SSLEngineConfigurator}.
      *
      * @param serverSSLEngineConfigurator SSLEngine configurator for server side connections
-     * @param renegotiateOnClientAuthWant <tt>true</tt>, if SSLBaseFilter has to force client authentication
-     *              during re-handshake, in case the client didn't send its credentials
-     *              during the initial handshake in response to "wantClientAuth" flag.
-     *              In this case "needClientAuth" flag will be raised and re-handshake
-     *              will be initiated
+     * @param renegotiateOnClientAuthWant <tt>true</tt>, if SSLBaseFilter has to force client authentication during
+     * re-handshake, in case the client didn't send its credentials during the initial handshake in response to
+     * "wantClientAuth" flag. In this case "needClientAuth" flag will be raised and re-handshake will be initiated
      */
-    public SSLBaseFilter(SSLEngineConfigurator serverSSLEngineConfigurator,
-                     boolean renegotiateOnClientAuthWant) {
-        
+    public SSLBaseFilter(SSLEngineConfigurator serverSSLEngineConfigurator, boolean renegotiateOnClientAuthWant) {
+
         this.renegotiateOnClientAuthWant = renegotiateOnClientAuthWant;
-        this.serverSSLEngineConfigurator =
-                ((serverSSLEngineConfigurator != null)
-                        ? serverSSLEngineConfigurator
-                        : new SSLEngineConfigurator(
-                                  SSLContextConfigurator.DEFAULT_CONFIG.createSSLContext(true),
-                                  false,
-                                  false,
-                                  false));
+        this.serverSSLEngineConfigurator = serverSSLEngineConfigurator != null ? serverSSLEngineConfigurator
+                : new SSLEngineConfigurator(SSLContextConfigurator.DEFAULT_CONFIG.createSSLContext(true), false, false, false);
     }
 
     /**
-     * @return <tt>true</tt>, if SSLBaseFilter has to force client authentication
-     * during re-handshake, in case the client didn't send its credentials
-     * during the initial handshake in response to "wantClientAuth" flag.
-     * In this case "needClientAuth" flag will be raised and re-handshake
-     * will be initiated
+     * @return <tt>true</tt>, if SSLBaseFilter has to force client authentication during re-handshake, in case the client
+     * didn't send its credentials during the initial handshake in response to "wantClientAuth" flag. In this case
+     * "needClientAuth" flag will be raised and re-handshake will be initiated
      */
     public boolean isRenegotiateOnClientAuthWant() {
         return renegotiateOnClientAuthWant;
     }
-    
+
     /**
-     * @return {@link SSLEngineConfigurator} used by the filter to create new
-     *      {@link SSLEngine} for server-side {@link Connection}s
+     * @return {@link SSLEngineConfigurator} used by the filter to create new {@link SSLEngine} for server-side
+     * {@link Connection}s
      */
     public SSLEngineConfigurator getServerSSLEngineConfigurator() {
         return serverSSLEngineConfigurator;
     }
-    
+
     public void addHandshakeListener(final HandshakeListener listener) {
         handshakeListeners.add(listener);
     }
-    
+
     @SuppressWarnings("unused")
     public void removeHandshakeListener(final HandshakeListener listener) {
         handshakeListeners.remove(listener);
@@ -180,32 +179,29 @@ public class SSLBaseFilter extends BaseFilter {
 
     /**
      * @param timeUnit {@link TimeUnit}
-     * @return the handshake timeout, <code>-1</code> if blocking handshake mode
-     * is disabled (default).
+     * @return the handshake timeout, <code>-1</code> if blocking handshake mode is disabled (default).
      */
     @SuppressWarnings("unused")
     public long getHandshakeTimeout(final TimeUnit timeUnit) {
         if (handshakeTimeoutMillis < 0) {
             return -1;
         }
-        
+
         return timeUnit.convert(handshakeTimeoutMillis, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Sets the handshake timeout.
-     * @param handshakeTimeout timeout value, or <code>-1</code> means for
-     * non-blocking handshake mode.
+     * 
+     * @param handshakeTimeout timeout value, or <code>-1</code> means for non-blocking handshake mode.
      * @param timeUnit {@link TimeUnit}
      */
     @SuppressWarnings("unused")
-    public void setHandshakeTimeout(final long handshakeTimeout,
-                                    final TimeUnit timeUnit) {
+    public void setHandshakeTimeout(final long handshakeTimeout, final TimeUnit timeUnit) {
         if (handshakeTimeout < 0) {
             handshakeTimeoutMillis = -1;
         } else {
-            this.handshakeTimeoutMillis =
-                    TimeUnit.MILLISECONDS.convert(handshakeTimeout, timeUnit);
+            this.handshakeTimeoutMillis = TimeUnit.MILLISECONDS.convert(handshakeTimeout, timeUnit);
         }
     }
 
@@ -218,18 +214,15 @@ public class SSLBaseFilter extends BaseFilter {
         this.renegotiationDisabled = renegotiationDisabled;
     }
 
-    protected SSLTransportFilterWrapper getOptimizedTransportFilter(
-            final TransportFilter childFilter) {
-        if (optimizedTransportFilter == null ||
-                optimizedTransportFilter.wrappedFilter != childFilter) {
+    protected SSLTransportFilterWrapper getOptimizedTransportFilter(final TransportFilter childFilter) {
+        if (optimizedTransportFilter == null || optimizedTransportFilter.wrappedFilter != childFilter) {
             optimizedTransportFilter = createOptimizedTransportFilter(childFilter);
         }
-        
+
         return optimizedTransportFilter;
     }
-    
-    protected SSLTransportFilterWrapper createOptimizedTransportFilter(
-            final TransportFilter childFilter) {
+
+    protected SSLTransportFilterWrapper createOptimizedTransportFilter(final TransportFilter childFilter) {
         return new SSLTransportFilterWrapper(childFilter, this);
     }
 
@@ -238,8 +231,7 @@ public class SSLBaseFilter extends BaseFilter {
         if (optimizedTransportFilter != null) {
             final int sslTransportFilterIdx = filterChain.indexOf(optimizedTransportFilter);
             if (sslTransportFilterIdx >= 0) {
-                SSLTransportFilterWrapper wrapper =
-                        (SSLTransportFilterWrapper) filterChain.get(sslTransportFilterIdx);
+                SSLTransportFilterWrapper wrapper = (SSLTransportFilterWrapper) filterChain.get(sslTransportFilterIdx);
                 filterChain.set(sslTransportFilterIdx, wrapper.wrappedFilter);
             }
         }
@@ -247,48 +239,37 @@ public class SSLBaseFilter extends BaseFilter {
 
     @Override
     public void onAdded(FilterChain filterChain) {
-        final int sslTransportFilterIdx =
-                filterChain.indexOfType(SSLTransportFilterWrapper.class);
-        
+        final int sslTransportFilterIdx = filterChain.indexOfType(SSLTransportFilterWrapper.class);
+
         if (sslTransportFilterIdx == -1) {
-            final int transportFilterIdx =
-                    filterChain.indexOfType(TransportFilter.class);
+            final int transportFilterIdx = filterChain.indexOfType(TransportFilter.class);
             if (transportFilterIdx >= 0) {
-                filterChain.set(transportFilterIdx,
-                        getOptimizedTransportFilter(
-                        (TransportFilter) filterChain.get(transportFilterIdx)));
+                filterChain.set(transportFilterIdx, getOptimizedTransportFilter((TransportFilter) filterChain.get(transportFilterIdx)));
             }
         }
     }
 
     // ----------------------------------------------------- Methods from Filter
 
-
     @Override
-    public NextAction handleEvent(final FilterChainContext ctx,
-                                  final FilterChainEvent event)
-    throws IOException {
+    public NextAction handleEvent(final FilterChainContext ctx, final FilterChainEvent event) throws IOException {
         if (event.type() == CertificateEvent.TYPE) {
             final CertificateEvent ce = (CertificateEvent) event;
             try {
                 return ctx.getSuspendAction();
             } finally {
-                getPeerCertificateChain(obtainSslConnectionContext(ctx.getConnection()),
-                                        ctx,
-                                        ce.needClientAuth,
-                                        ce.certsFuture);
+                getPeerCertificateChain(obtainSslConnectionContext(ctx.getConnection()), ctx, ce.needClientAuth, ce.certsFuture);
             }
         }
         return ctx.getInvokeAction();
     }
 
     @Override
-    public NextAction handleRead(final FilterChainContext ctx)
-    throws IOException {
+    public NextAction handleRead(final FilterChainContext ctx) throws IOException {
         final Connection connection = ctx.getConnection();
         final SSLConnectionContext sslCtx = obtainSslConnectionContext(connection);
         SSLEngine sslEngine = sslCtx.getSslEngine();
-        
+
         if (sslEngine != null && !isHandshaking(sslEngine)) {
             return unwrapAll(ctx, sslCtx);
         } else {
@@ -300,19 +281,11 @@ public class SSLBaseFilter extends BaseFilter {
             }
 
             final Buffer buffer;
-            buffer = ((handshakeTimeoutMillis >= 0)
-                         ? doHandshakeSync(sslCtx,
-                                           ctx,
-                                           (Buffer) ctx.getMessage(),
-                                           handshakeTimeoutMillis)
-                         : makeInputRemainder(sslCtx,
-                                              ctx,
-                                              doHandshakeStep(sslCtx,
-                                                              ctx,
-                                                              (Buffer) ctx.getMessage())));
-        
+            buffer = handshakeTimeoutMillis >= 0 ? doHandshakeSync(sslCtx, ctx, (Buffer) ctx.getMessage(), handshakeTimeoutMillis)
+                    : makeInputRemainder(sslCtx, ctx, doHandshakeStep(sslCtx, ctx, (Buffer) ctx.getMessage()));
+
             final boolean hasRemaining = buffer != null && buffer.hasRemaining();
-            
+
             final boolean isHandshaking = isHandshaking(sslEngine);
             if (!isHandshaking) {
                 notifyHandshakeComplete(connection, sslEngine);
@@ -320,19 +293,17 @@ public class SSLBaseFilter extends BaseFilter {
                 sslCtx.setNewConnectionFilterChain(null);
                 if (connectionFilterChain != null) {
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE, "Applying new FilterChain after"
-                                + "SSLHandshake. Connection={0} filterchain={1}",
-                                new Object[]{connection, connectionFilterChain});
+                        LOGGER.log(Level.FINE, "Applying new FilterChain after" + "SSLHandshake. Connection={0} filterchain={1}",
+                                new Object[] { connection, connectionFilterChain });
                     }
-                    
+
                     connection.setProcessor(connectionFilterChain);
 
                     if (hasRemaining) {
                         NextAction suspendAction = ctx.getSuspendAction();
                         ctx.setMessage(buffer);
                         ctx.suspend();
-                        final FilterChainContext newContext =
-                                obtainProtocolChainContext(ctx, connectionFilterChain);
+                        final FilterChainContext newContext = obtainProtocolChainContext(ctx, connectionFilterChain);
                         ProcessorExecutor.execute(newContext.getInternalContext());
                         return suspendAction;
                     } else {
@@ -359,19 +330,13 @@ public class SSLBaseFilter extends BaseFilter {
 
         final Connection connection = ctx.getConnection();
 
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized(connection) {
-            final Buffer output =
-                    wrapAll(ctx, obtainSslConnectionContext(connection));
+        // noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (connection) {
+            final Buffer output = wrapAll(ctx, obtainSslConnectionContext(connection));
 
-            final TransportContext transportContext =
-                    ctx.getTransportContext();
+            final TransportContext transportContext = ctx.getTransportContext();
 
-            ctx.write(null, output,
-                    transportContext.getCompletionHandler(),
-                    transportContext.getPushBackHandler(),
-                    COPY_CLONER,
-                    transportContext.isBlocking());
+            ctx.write(null, output, transportContext.getCompletionHandler(), transportContext.getPushBackHandler(), COPY_CLONER, transportContext.isBlocking());
 
             return ctx.getStopAction();
         }
@@ -379,24 +344,21 @@ public class SSLBaseFilter extends BaseFilter {
 
     // ------------------------------------------------------- Protected Methods
 
-    protected NextAction unwrapAll(final FilterChainContext ctx,
-            final SSLConnectionContext sslCtx) throws SSLException {
+    protected NextAction unwrapAll(final FilterChainContext ctx, final SSLConnectionContext sslCtx) throws SSLException {
         Buffer input = ctx.getMessage();
-        
+
         Buffer output = null;
-        
+
         boolean isClosed = false;
-        
-        _outter:
-        do {
+
+        _outter: do {
             final int len = getSSLPacketSize(input);
-            
+
             if (len == -1 || input.remaining() < len) {
                 break;
             }
 
-            final SslResult result =
-                    sslCtx.unwrap(len, input, output, MM_ALLOCATOR);
+            final SslResult result = sslCtx.unwrap(len, input, output, MM_ALLOCATOR);
 
             output = result.getOutput();
 
@@ -413,35 +375,38 @@ public class SSLBaseFilter extends BaseFilter {
                     input = silentRehandshake(ctx, sslCtx); // silent SSL termination
                     isClosed = true;
                 }
-                
+
                 if (input == null) {
                     break;
                 }
             }
-            
-            switch (result.getSslEngineResult().getStatus()) {
-                case OK:
-                    if (input.hasRemaining()) {
-                        break;
-                    }
 
-                    break _outter;
-                case CLOSED:
-                    isClosed = true;
-                    break _outter;
-                default:
-                    // Should not reach this point
-                    throw new IllegalStateException("Unexpected status: " +
-                            result.getSslEngineResult().getStatus());
+            switch (result.getSslEngineResult().getStatus()) {
+            case OK:
+                if (input.hasRemaining()) {
+                    break;
+                }
+
+                break _outter;
+            case CLOSED:
+                isClosed = true;
+                break _outter;
+            default:
+                // Should not reach this point
+                throw new IllegalStateException("Unexpected status: " + result.getSslEngineResult().getStatus());
             }
         } while (true);
-        
+
         if (output != null) {
             output.trim();
 
             if (output.hasRemaining() || isClosed) {
                 ctx.setMessage(output);
-                return ctx.getInvokeAction(makeInputRemainder(sslCtx, ctx, input));
+                if (!isClosed) {
+                    return ctx.getInvokeAction(makeInputRemainder(sslCtx, ctx, input));
+                } else {
+                    LOGGER.finer("Closed SSL connection detected, terminating chain.");
+                }
             }
         }
 
@@ -449,11 +414,10 @@ public class SSLBaseFilter extends BaseFilter {
     }
 
     @SuppressWarnings("MethodMayBeStatic")
-    protected Buffer wrapAll(final FilterChainContext ctx,
-                             final SSLConnectionContext sslCtx) throws SSLException {
-        
+    protected Buffer wrapAll(final FilterChainContext ctx, final SSLConnectionContext sslCtx) throws SSLException {
+
         final Buffer input = ctx.getMessage();
-        
+
         final Buffer output = sslCtx.wrapAll(input, OUTPUT_BUFFER_ALLOCATOR);
 
         input.tryDispose();
@@ -461,62 +425,50 @@ public class SSLBaseFilter extends BaseFilter {
         return output;
     }
 
+    protected Buffer doHandshakeSync(final SSLConnectionContext sslCtx, final FilterChainContext ctx, Buffer inputBuffer, final long timeoutMillis)
+            throws IOException {
 
-
-    protected Buffer doHandshakeSync(final SSLConnectionContext sslCtx,
-            final FilterChainContext ctx,
-            Buffer inputBuffer,
-            final long timeoutMillis) throws IOException {
-        
         final Connection connection = ctx.getConnection();
         final SSLEngine sslEngine = sslCtx.getSslEngine();
-        
+
         final Buffer tmpAppBuffer = allocateOutputBuffer(sslCtx.getAppBufferSize());
-        
+
         final long oldReadTimeout = connection.getReadTimeout(TimeUnit.MILLISECONDS);
-        
+
         try {
             connection.setReadTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
-            
-            inputBuffer = makeInputRemainder(sslCtx, ctx,
-                    doHandshakeStep(sslCtx, ctx, inputBuffer, tmpAppBuffer));
+
+            inputBuffer = makeInputRemainder(sslCtx, ctx, doHandshakeStep(sslCtx, ctx, inputBuffer, tmpAppBuffer));
 
             while (isHandshaking(sslEngine)) {
                 final ReadResult rr = ctx.read();
                 final Buffer newBuf = (Buffer) rr.getMessage();
-                inputBuffer = Buffers.appendBuffers(ctx.getMemoryManager(),
-                        inputBuffer, newBuf);
-                inputBuffer = makeInputRemainder(sslCtx, ctx,
-                        doHandshakeStep(sslCtx, ctx, inputBuffer, tmpAppBuffer));
+                inputBuffer = Buffers.appendBuffers(ctx.getMemoryManager(), inputBuffer, newBuf);
+                inputBuffer = makeInputRemainder(sslCtx, ctx, doHandshakeStep(sslCtx, ctx, inputBuffer, tmpAppBuffer));
             }
         } finally {
             tmpAppBuffer.dispose();
             connection.setReadTimeout(oldReadTimeout, TimeUnit.MILLISECONDS);
         }
-        
+
         return inputBuffer;
     }
 
-    protected Buffer doHandshakeStep(final SSLConnectionContext sslCtx,
-                                     final FilterChainContext ctx,
-                                     Buffer inputBuffer) throws IOException {
+    protected Buffer doHandshakeStep(final SSLConnectionContext sslCtx, final FilterChainContext ctx, Buffer inputBuffer) throws IOException {
         return doHandshakeStep(sslCtx, ctx, inputBuffer, null);
     }
-            
-    protected Buffer doHandshakeStep(final SSLConnectionContext sslCtx,
-                                     final FilterChainContext ctx,
-                                     Buffer inputBuffer,
-                                     final Buffer tmpAppBuffer0)
+
+    protected Buffer doHandshakeStep(final SSLConnectionContext sslCtx, final FilterChainContext ctx, Buffer inputBuffer, final Buffer tmpAppBuffer0)
             throws IOException {
 
         final Connection connection = ctx.getConnection();
-        
+
         final boolean isLoggingFinest = LOGGER.isLoggable(Level.FINEST);
         Buffer tmpInputToDispose = null;
         Buffer tmpNetBuffer = null;
-        
+
         Buffer tmpAppBuffer = tmpAppBuffer0;
-        
+
         try {
             HandshakeStatus handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
 
@@ -530,70 +482,66 @@ public class SSLBaseFilter extends BaseFilter {
                 }
 
                 switch (handshakeStatus) {
-                    case NEED_UNWRAP: {
+                case NEED_UNWRAP: {
 
-                        if (isLoggingFinest) {
-                            LOGGER.log(Level.FINEST, "NEED_UNWRAP Engine: {0}", sslCtx.getSslEngine());
-                        }
-
-                        if (inputBuffer == null || !inputBuffer.hasRemaining()) {
-                            break _exitWhile;
-                        }
-
-                        final int expectedLength = getSSLPacketSize(inputBuffer);
-                        if (expectedLength == -1
-                                || inputBuffer.remaining() < expectedLength) {
-                            break _exitWhile;
-                        }
-                        
-                        if (tmpAppBuffer == null) {
-                            tmpAppBuffer = allocateOutputBuffer(sslCtx.getAppBufferSize());
-                        }
-                        
-                        final SSLEngineResult sslEngineResult =
-                                handshakeUnwrap(expectedLength, sslCtx, inputBuffer, tmpAppBuffer);
-
-                        if (!inputBuffer.hasRemaining()) {
-                            tmpInputToDispose = inputBuffer;
-                            inputBuffer = null;
-                        }
-
-                        final Status status = sslEngineResult.getStatus();
-
-                        if (status == Status.BUFFER_UNDERFLOW ||
-                                status == Status.BUFFER_OVERFLOW) {
-                            throw new SSLException("SSL unwrap error: " + status);
-                        }
-
-                        handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
-                        break;
+                    if (isLoggingFinest) {
+                        LOGGER.log(Level.FINEST, "NEED_UNWRAP Engine: {0}", sslCtx.getSslEngine());
                     }
 
-                    case NEED_WRAP: {
-                        if (isLoggingFinest) {
-                            LOGGER.log(Level.FINEST, "NEED_WRAP Engine: {0}", sslCtx.getSslEngine());
-                        }
-
-                        tmpNetBuffer = handshakeWrap(
-                                connection, sslCtx, tmpNetBuffer);
-                        handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
-
-                        break;
-                    }
-
-                    case NEED_TASK: {
-                        if (isLoggingFinest) {
-                            LOGGER.log(Level.FINEST, "NEED_TASK Engine: {0}", sslCtx.getSslEngine());
-                        }
-                        executeDelegatedTask(sslCtx.getSslEngine());
-                        handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
-                        break;
-                    }
-
-                    case FINISHED:
-                    case NOT_HANDSHAKING: {
+                    if (inputBuffer == null || !inputBuffer.hasRemaining()) {
                         break _exitWhile;
                     }
+
+                    final int expectedLength = getSSLPacketSize(inputBuffer);
+                    if (expectedLength == -1 || inputBuffer.remaining() < expectedLength) {
+                        break _exitWhile;
+                    }
+
+                    if (tmpAppBuffer == null) {
+                        tmpAppBuffer = allocateOutputBuffer(sslCtx.getAppBufferSize());
+                    }
+
+                    final SSLEngineResult sslEngineResult = handshakeUnwrap(expectedLength, sslCtx, inputBuffer, tmpAppBuffer);
+
+                    if (!inputBuffer.hasRemaining()) {
+                        tmpInputToDispose = inputBuffer;
+                        inputBuffer = null;
+                    }
+
+                    final Status status = sslEngineResult.getStatus();
+
+                    if (status == Status.BUFFER_UNDERFLOW || status == Status.BUFFER_OVERFLOW) {
+                        throw new SSLException("SSL unwrap error: " + status);
+                    }
+
+                    handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
+                    break;
+                }
+
+                case NEED_WRAP: {
+                    if (isLoggingFinest) {
+                        LOGGER.log(Level.FINEST, "NEED_WRAP Engine: {0}", sslCtx.getSslEngine());
+                    }
+
+                    tmpNetBuffer = handshakeWrap(connection, sslCtx, tmpNetBuffer);
+                    handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
+
+                    break;
+                }
+
+                case NEED_TASK: {
+                    if (isLoggingFinest) {
+                        LOGGER.log(Level.FINEST, "NEED_TASK Engine: {0}", sslCtx.getSslEngine());
+                    }
+                    executeDelegatedTask(sslCtx.getSslEngine());
+                    handshakeStatus = sslCtx.getSslEngine().getHandshakeStatus();
+                    break;
+                }
+
+                case FINISHED:
+                case NOT_HANDSHAKING: {
+                    break _exitWhile;
+                }
                 }
 
                 if (handshakeStatus == HandshakeStatus.FINISHED) {
@@ -607,39 +555,35 @@ public class SSLBaseFilter extends BaseFilter {
             if (tmpAppBuffer0 == null && tmpAppBuffer != null) {
                 tmpAppBuffer.dispose();
             }
-            
+
             if (tmpInputToDispose != null) {
                 tmpInputToDispose.tryDispose();
                 inputBuffer = null;
             } else if (inputBuffer != null) {
                 inputBuffer.shrink();
             }
-            
+
             if (tmpNetBuffer != null) {
                 if (inputBuffer != null) {
                     inputBuffer = makeInputRemainder(sslCtx, ctx, inputBuffer);
                 }
-                
+
                 ctx.write(tmpNetBuffer);
             }
         }
-        
+
         return inputBuffer;
     }
-    
+
     /**
      * Performs an SSL renegotiation.
      *
-     * @param sslCtx the {@link SSLConnectionContext} associated with this
-     *  this renegotiation request.
-     * @param context the {@link FilterChainContext} associated with this
-     *  this renegotiation request.
+     * @param sslCtx the {@link SSLConnectionContext} associated with this this renegotiation request.
+     * @param context the {@link FilterChainContext} associated with this this renegotiation request.
      *
      * @throws IOException if an error occurs during SSL renegotiation.
      */
-    protected void renegotiate(final SSLConnectionContext sslCtx,
-                               final FilterChainContext context)
-                               throws IOException {
+    protected void renegotiate(final SSLConnectionContext sslCtx, final FilterChainContext context) throws IOException {
 
         if (renegotiationDisabled) {
             return;
@@ -648,9 +592,7 @@ public class SSLBaseFilter extends BaseFilter {
         if (sslEngine.getWantClientAuth() && !renegotiateOnClientAuthWant) {
             return;
         }
-        final boolean authConfigured =
-                (sslEngine.getWantClientAuth()
-                        || sslEngine.getNeedClientAuth());
+        final boolean authConfigured = sslEngine.getWantClientAuth() || sslEngine.getNeedClientAuth();
         if (!authConfigured) {
             sslEngine.setNeedClientAuth(true);
         }
@@ -662,7 +604,7 @@ public class SSLBaseFilter extends BaseFilter {
         } catch (SSLHandshakeException e) {
             // If we catch SSLHandshakeException at this point it may be due
             // to an older SSL peer that hasn't made its SSL/TLS renegotiation
-            // secure.  This will be the case with Oracle's VM older than
+            // secure. This will be the case with Oracle's VM older than
             // 1.6.0_22 or native applications using OpenSSL libraries
             // older than 0.9.8m.
             //
@@ -672,10 +614,8 @@ public class SSLBaseFilter extends BaseFilter {
             // Note that this probably will only work on Oracle's VM.
             if (e.toString().toLowerCase().contains("insecure renegotiation")) {
                 if (LOGGER.isLoggable(Level.SEVERE)) {
-                    LOGGER.severe("Secure SSL/TLS renegotiation is not "
-                            + "supported by the peer.  This is most likely due"
-                            + " to the peer using an older SSL/TLS "
-                            + "implementation that does not implement RFC 5746.");
+                    LOGGER.severe("Secure SSL/TLS renegotiation is not " + "supported by the peer.  This is most likely due"
+                            + " to the peer using an older SSL/TLS " + "implementation that does not implement RFC 5746.");
                 }
                 // we could return null here and let the caller
                 // decided what to do, but since the SSLEngine will
@@ -684,7 +624,7 @@ public class SSLBaseFilter extends BaseFilter {
             }
             throw e;
         }
-        
+
         try {
             rehandshake(context, sslCtx);
         } finally {
@@ -694,72 +634,61 @@ public class SSLBaseFilter extends BaseFilter {
         }
     }
 
-    private Buffer silentRehandshake(final FilterChainContext context,
-            final SSLConnectionContext sslCtx) throws SSLException {
+    private Buffer silentRehandshake(final FilterChainContext context, final SSLConnectionContext sslCtx) throws SSLException {
         try {
-            return doHandshakeSync(
-                    sslCtx, context, null, handshakeTimeoutMillis);
+            return doHandshakeSync(sslCtx, context, null, handshakeTimeoutMillis);
         } catch (Throwable t) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, "Error during graceful ssl connection close", t);
             }
-            
+
             if (t instanceof SSLException) {
                 throw (SSLException) t;
             }
-            
+
             throw new SSLException("Error during re-handshaking", t);
         }
     }
-    
-    private Buffer rehandshake(final FilterChainContext context,
-            final SSLConnectionContext sslCtx) throws SSLException {
+
+    private Buffer rehandshake(final FilterChainContext context, final SSLConnectionContext sslCtx) throws SSLException {
         final Connection c = context.getConnection();
-        
+
         notifyHandshakeStart(c);
 
         try {
-            final Buffer buffer = doHandshakeSync(
-                    sslCtx, context, null, handshakeTimeoutMillis);
-            
+            final Buffer buffer = doHandshakeSync(sslCtx, context, null, handshakeTimeoutMillis);
+
             notifyHandshakeComplete(c, sslCtx.getSslEngine());
-            
+
             return buffer;
         } catch (Throwable t) {
             notifyHandshakeFailed(c, t);
-            
+
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, "Error during re-handshaking", t);
             }
-            
+
             if (t instanceof SSLException) {
                 throw (SSLException) t;
             }
-            
+
             throw new SSLException("Error during re-handshaking", t);
         }
     }
 
     /**
      * <p>
-     * Obtains the certificate chain for this SSL session.  If no certificates
-     * are available, and <code>needClientAuth</code> is true, an SSL renegotiation
-     * will be be triggered to request the certificates from the client.
+     * Obtains the certificate chain for this SSL session. If no certificates are available, and <code>needClientAuth</code>
+     * is true, an SSL renegotiation will be be triggered to request the certificates from the client.
      * </p>
      *
-     * @param sslCtx the {@link SSLConnectionContext} associated with this
-     *  certificate request.
-     * @param context the {@link FilterChainContext} associated with this
-     *  this certificate request.
-     * @param needClientAuth determines whether or not SSL renegotiation will
-     *  be attempted to obtain the certificate chain.
-     * @param certFuture the future that will be provided the result of the
-     *                   peer certificate processing.
+     * @param sslCtx the {@link SSLConnectionContext} associated with this certificate request.
+     * @param context the {@link FilterChainContext} associated with this this certificate request.
+     * @param needClientAuth determines whether or not SSL renegotiation will be attempted to obtain the certificate chain.
+     * @param certFuture the future that will be provided the result of the peer certificate processing.
      */
-    protected void getPeerCertificateChain(final SSLConnectionContext sslCtx,
-                                           final FilterChainContext context,
-                                           final boolean needClientAuth,
-                                           final FutureImpl<Object[]> certFuture) {
+    protected void getPeerCertificateChain(final SSLConnectionContext sslCtx, final FilterChainContext context, final boolean needClientAuth,
+            final FutureImpl<Object[]> certFuture) {
 
         Certificate[] certs = getPeerCertificates(sslCtx);
         if (certs != null) {
@@ -806,69 +735,55 @@ public class SSLBaseFilter extends BaseFilter {
         }
     }
 
-    protected SSLConnectionContext obtainSslConnectionContext(
-            final Connection connection) {
+    protected SSLConnectionContext obtainSslConnectionContext(final Connection connection) {
         SSLConnectionContext sslCtx = SSL_CTX_ATTR.get(connection);
         if (sslCtx == null) {
             sslCtx = createSslConnectionContext(connection);
             SSL_CTX_ATTR.set(connection, sslCtx);
         }
-        
+
         return sslCtx;
     }
-    
+
     @SuppressWarnings("MethodMayBeStatic")
-    protected SSLConnectionContext createSslConnectionContext(
-            final Connection connection) {
+    protected SSLConnectionContext createSslConnectionContext(final Connection connection) {
         return new SSLConnectionContext(connection);
     }
 
-    private static FilterChainContext obtainProtocolChainContext(
-            final FilterChainContext ctx,
-            final FilterChain completeProtocolFilterChain) {
+    private static FilterChainContext obtainProtocolChainContext(final FilterChainContext ctx, final FilterChain completeProtocolFilterChain) {
 
-        final FilterChainContext newFilterChainContext =
-                completeProtocolFilterChain.obtainFilterChainContext(
-                        ctx.getConnection(),
-                        ctx.getStartIdx(),
-                        completeProtocolFilterChain.size(),
-                        ctx.getFilterIdx());
+        final FilterChainContext newFilterChainContext = completeProtocolFilterChain.obtainFilterChainContext(ctx.getConnection(), ctx.getStartIdx(),
+                completeProtocolFilterChain.size(), ctx.getFilterIdx());
 
         newFilterChainContext.setAddressHolder(ctx.getAddressHolder());
         newFilterChainContext.setMessage(ctx.getMessage());
         newFilterChainContext.getInternalContext().setIoEvent(IOEvent.READ);
-        newFilterChainContext.getInternalContext().addLifeCycleListener(
-                new InternalProcessingHandler(ctx));
+        newFilterChainContext.getInternalContext().addLifeCycleListener(new InternalProcessingHandler(ctx));
 
         return newFilterChainContext;
     }
-
 
     // --------------------------------------------------------- Private Methods
 
     private static X509Certificate[] extractX509Certs(final Certificate[] certs) {
         final X509Certificate[] x509Certs = new X509Certificate[certs.length];
-        for(int i = 0, len = certs.length; i < len; i++) {
-            if( certs[i] instanceof X509Certificate ) {
-                x509Certs[i] = (X509Certificate)certs[i];
+        for (int i = 0, len = certs.length; i < len; i++) {
+            if (certs[i] instanceof X509Certificate) {
+                x509Certs[i] = (X509Certificate) certs[i];
             } else {
                 try {
-                    final byte [] buffer = certs[i].getEncoded();
-                    final CertificateFactory cf =
-                            CertificateFactory.getInstance("X.509");
+                    final byte[] buffer = certs[i].getEncoded();
+                    final CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     ByteArrayInputStream stream = new ByteArrayInputStream(buffer);
-                    x509Certs[i] = (X509Certificate)
-                    cf.generateCertificate(stream);
-                } catch(Exception ex) {
-                    LOGGER.log(Level.INFO,
-                               "Error translating cert " + certs[i],
-                               ex);
+                    x509Certs[i] = (X509Certificate) cf.generateCertificate(stream);
+                } catch (Exception ex) {
+                    LOGGER.log(Level.INFO, "Error translating cert " + certs[i], ex);
                     return null;
                 }
             }
 
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Cert #{0} = {1}", new Object[] {i, x509Certs[i]});
+                LOGGER.log(Level.FINE, "Cert #{0} = {1}", new Object[] { i, x509Certs[i] });
             }
         }
         return x509Certs;
@@ -877,9 +792,9 @@ public class SSLBaseFilter extends BaseFilter {
     private static Certificate[] getPeerCertificates(final SSLConnectionContext sslCtx) {
         try {
             return sslCtx.getSslEngine().getSession().getPeerCertificates();
-        } catch( Throwable t ) {
+        } catch (Throwable t) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE,"Error getting client certs", t);
+                LOGGER.log(Level.FINE, "Error getting client certs", t);
             }
             return null;
         }
@@ -892,9 +807,8 @@ public class SSLBaseFilter extends BaseFilter {
             }
         }
     }
-    
-    protected void notifyHandshakeComplete(final Connection<?> connection,
-                                          final SSLEngine sslEngine) {
+
+    protected void notifyHandshakeComplete(final Connection<?> connection, final SSLEngine sslEngine) {
 
         if (!handshakeListeners.isEmpty()) {
             for (final HandshakeListener listener : handshakeListeners) {
@@ -903,15 +817,14 @@ public class SSLBaseFilter extends BaseFilter {
         }
     }
 
-    protected void notifyHandshakeFailed(final Connection connection,
-            final Throwable t) {
+    protected void notifyHandshakeFailed(final Connection connection, final Throwable t) {
         if (!handshakeListeners.isEmpty()) {
             for (final HandshakeListener listener : handshakeListeners) {
                 listener.onFailure(connection, t);
             }
         }
     }
-    
+
     // ----------------------------------------------------------- Inner Classes
 
     public static class CertificateEvent implements FilterChainEvent {
@@ -922,45 +835,35 @@ public class SSLBaseFilter extends BaseFilter {
 
         final boolean needClientAuth;
 
-
         // -------------------------------------------------------- Constructors
-
 
         public CertificateEvent(final boolean needClientAuth) {
             this.needClientAuth = needClientAuth;
             certsFuture = Futures.createSafeFuture();
         }
 
-
         // --------------------------------------- Methods from FilterChainEvent
-
 
         @Override
         public final Object type() {
             return TYPE;
         }
 
-
         // ------------------------------------------------------ Public Methods
 
-
         /**
-         * Invoke this method to trigger processing to abtain certificates from
-         * the remote peer.  Do not fire this event down stream manually.
+         * Invoke this method to trigger processing to abtain certificates from the remote peer. Do not fire this event down
+         * stream manually.
          *
-         * Register a {@link CompletionHandler} with the returned
-         * {@link GrizzlyFuture} to be notified when the result is available
-         * to prevent blocking.
+         * Register a {@link CompletionHandler} with the returned {@link GrizzlyFuture} to be notified when the result is
+         * available to prevent blocking.
          *
          * @param ctx the current {@link FilterChainContext}
          *
-         * @return a {@link GrizzlyFuture} representing the processing of
-         *  the remote peer certificates.
+         * @return a {@link GrizzlyFuture} representing the processing of the remote peer certificates.
          */
         public GrizzlyFuture<Object[]> trigger(final FilterChainContext ctx) {
-            ctx.getFilterChain().fireEventDownstream(ctx.getConnection(),
-                                                     this,
-                                                     null);
+            ctx.getFilterChain().fireEventDownstream(ctx.getConnection(), this, null);
             return certsFuture;
         }
 
@@ -979,23 +882,24 @@ public class SSLBaseFilter extends BaseFilter {
         }
 
     } // END InternalProcessingHandler
-    
+
     public interface HandshakeListener {
         void onStart(Connection<?> connection);
+
         void onComplete(Connection<?> connection);
+
         void onFailure(Connection<?> connection, Throwable t);
     }
-    
+
     protected static class SSLTransportFilterWrapper extends TransportFilter {
         protected final TransportFilter wrappedFilter;
         protected final SSLBaseFilter sslBaseFilter;
 
-        public SSLTransportFilterWrapper(final TransportFilter transportFilter,
-                                         final SSLBaseFilter sslBaseFilter) {
+        public SSLTransportFilterWrapper(final TransportFilter transportFilter, final SSLBaseFilter sslBaseFilter) {
             this.wrappedFilter = transportFilter;
             this.sslBaseFilter = sslBaseFilter;
         }
-        
+
         @Override
         public NextAction handleAccept(FilterChainContext ctx) throws IOException {
             return wrappedFilter.handleAccept(ctx);
@@ -1009,18 +913,17 @@ public class SSLBaseFilter extends BaseFilter {
         @Override
         public NextAction handleRead(final FilterChainContext ctx) throws IOException {
             final Connection connection = ctx.getConnection();
-            final SSLConnectionContext sslCtx =
-                    sslBaseFilter.obtainSslConnectionContext(connection);
-            
+            final SSLConnectionContext sslCtx = sslBaseFilter.obtainSslConnectionContext(connection);
+
             if (sslCtx.getSslEngine() == null) {
                 final SSLEngine sslEngine = sslBaseFilter.serverSSLEngineConfigurator.createSSLEngine();
                 sslEngine.beginHandshake();
                 sslCtx.configure(sslEngine);
                 sslBaseFilter.notifyHandshakeStart(connection);
             }
-            
+
             ctx.setMessage(allowDispose(allocateInputBuffer(sslCtx)));
-            
+
             return wrappedFilter.handleRead(ctx);
         }
 
@@ -1064,11 +967,10 @@ public class SSLBaseFilter extends BaseFilter {
             return wrappedFilter.createContext(connection, operation);
         }
     }
-    
+
     private static final class OnWriteCopyCloner implements MessageCloner<Buffer> {
         @Override
-        public Buffer clone(final Connection connection,
-                final Buffer originalMessage) {
+        public Buffer clone(final Connection connection, final Buffer originalMessage) {
             final SSLConnectionContext sslCtx = getSslConnectionContext(connection);
 
             final int copyThreshold = sslCtx.getNetBufferSize() / 2;
@@ -1078,17 +980,13 @@ public class SSLBaseFilter extends BaseFilter {
             final int totalRemaining = originalMessage.remaining();
 
             if (totalRemaining < copyThreshold) {
-                return move(connection.getMemoryManager(),
-                        originalMessage);
+                return move(connection.getMemoryManager(), originalMessage);
             }
             if (lastOutputBuffer.remaining() < copyThreshold) {
-                final Buffer tmpBuf =
-                        copy(connection.getMemoryManager(),
-                        originalMessage);
+                final Buffer tmpBuf = copy(connection.getMemoryManager(), originalMessage);
 
                 if (originalMessage.isComposite()) {
-                    ((CompositeBuffer) originalMessage).replace(
-                            lastOutputBuffer, tmpBuf);
+                    ((CompositeBuffer) originalMessage).replace(lastOutputBuffer, tmpBuf);
                 } else {
                     assert originalMessage == lastOutputBuffer;
                 }
@@ -1097,7 +995,6 @@ public class SSLBaseFilter extends BaseFilter {
 
                 return tmpBuf;
             }
-
 
             return originalMessage;
         }

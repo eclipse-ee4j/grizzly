@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,19 +19,16 @@ package org.glassfish.grizzly.http2;
 import java.util.LinkedList;
 
 /**
- * The queue of element bundles.
- * Each bundle in the queue may be empty or have some elements.
+ * The queue of element bundles. Each bundle in the queue may be empty or have some elements.
  */
 final class BundleQueue<E> {
     private final LinkedList<Record<E>> internalQueue = new LinkedList<>();
     private int lastElementAbsoluteDistance;
 
     /**
-     * Add the element to the specified bundle.
-     * The bundle is represented by its order in the queue. It is not possible to
-     * add the element to a bundle, which already exists and is not the last
-     * bundle in the queue.
-     * 
+     * Add the element to the specified bundle. The bundle is represented by its order in the queue. It is not possible to
+     * add the element to a bundle, which already exists and is not the last bundle in the queue.
+     *
      * @param bundle the bundle to which the specified <code>element</code> will be added.
      * @param element the element to add.
      */
@@ -61,8 +58,8 @@ final class BundleQueue<E> {
     }
 
     /**
-     * Switches to the next bundle in the queue, all the unread elements from
-     * the previously active bundle will be removed.
+     * Switches to the next bundle in the queue, all the unread elements from the previously active bundle will be removed.
+     * 
      * @return <tt>true</tt> if next bundle exists and is not empty
      */
     public boolean nextBundle() {
@@ -90,5 +87,5 @@ final class BundleQueue<E> {
             this.distance = distance;
         }
     }
-    
+
 }

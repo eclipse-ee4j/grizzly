@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,22 +17,22 @@
 package org.glassfish.grizzly.websockets;
 
 public class Utf8DecodingError extends FramingException {
-    
+
     public Utf8DecodingError(String s) {
-            super(s);
-        }
-    
-        public Utf8DecodingError(String s, Throwable throwable) {
-            super(s, throwable);
-        }
-    
-        public Utf8DecodingError(Throwable throwable) {
-            super(throwable);
-        }
-    
-        @Override
-        public int getClosingCode() {
-            return 1007;
-        }
-    
+        super(s);
+    }
+
+    public Utf8DecodingError(String s, Throwable throwable) {
+        super(s, throwable);
+    }
+
+    public Utf8DecodingError(Throwable throwable) {
+        super(throwable);
+    }
+
+    @Override
+    public int getClosingCode() {
+        return 1007;
+    }
+
 }

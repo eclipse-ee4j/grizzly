@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
  */
 
 package org.glassfish.grizzly.http.server;
+
+import static org.glassfish.grizzly.http.util.Constants.FORM_POST_CONTENT_TYPE;
 
 import java.io.CharConversionException;
 import java.io.IOException;
@@ -34,7 +36,9 @@ import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.security.auth.Subject;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.ReadHandler;
@@ -67,7 +71,6 @@ import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.utils.JdkVersion;
 
-import static org.glassfish.grizzly.http.util.Constants.FORM_POST_CONTENT_TYPE;
 /**
  * Wrapper object for the Coyote request.
  *
@@ -79,28 +82,26 @@ import static org.glassfish.grizzly.http.util.Constants.FORM_POST_CONTENT_TYPE;
 public class Request {
     // @TODO remove this property support once we're sure nobody
     // relies on this functionality.
-    private static final Boolean FORCE_CLIENT_AUTH_ON_GET_USER_PRINCIPAL =
-            Boolean.getBoolean(Request.class.getName() + ".force-client-auth-on-get-user-principal");
-    
-    private static final Logger LOGGER = Grizzly.logger(Request.class);
-    
-    private static final ThreadCache.CachedTypeIndex<Request> CACHE_IDX =
-            ThreadCache.obtainIndex(Request.class, 16);
+    private static final Boolean FORCE_CLIENT_AUTH_ON_GET_USER_PRINCIPAL = Boolean
+            .getBoolean(Request.class.getName() + ".force-client-auth-on-get-user-principal");
 
-    // Duplicated in http2 Constants.  Keep values in sync.
+    private static final Logger LOGGER = Grizzly.logger(Request.class);
+
+    private static final ThreadCache.CachedTypeIndex<Request> CACHE_IDX = ThreadCache.obtainIndex(Request.class, 16);
+
+    // Duplicated in http2 Constants. Keep values in sync.
     private static final String HTTP2_PUSH_ENABLED = "http2-push-enabled";
 
     private static final LocaleParser localeParser;
     static {
         LocaleParser lp;
         final JdkVersion version = JdkVersion.getJdkVersion();
-        
+
         if (version.compareTo("1.7.0") >= 0) {
             try {
                 @SuppressWarnings("unchecked")
-                Class<? extends LocaleParser> localeParserClazz =
-                        (Class<? extends LocaleParser>)
-                                Class.forName("org.glassfish.grizzly.http.server.TagLocaleParser");
+                Class<? extends LocaleParser> localeParserClazz = (Class<? extends LocaleParser>) Class
+                        .forName("org.glassfish.grizzly.http.server.TagLocaleParser");
                 lp = localeParserClazz.newInstance();
             } catch (Throwable e) {
                 if (LOGGER.isLoggable(Level.FINE)) {
@@ -111,15 +112,14 @@ public class Request {
         } else {
             lp = new LegacyLocaleParser();
         }
-        
+
         localeParser = lp;
-        
+
         assert localeParser != null;
     }
 
     public static Request create() {
-        final Request request =
-                ThreadCache.takeFromCache(CACHE_IDX);
+        final Request request = ThreadCache.takeFromCache(CACHE_IDX);
         if (request != null) {
             return request;
         }
@@ -128,8 +128,8 @@ public class Request {
     }
 
     /**
-     * Request attribute will be associated with a boolean value indicating
-     * whether or not it's possible to transfer a {@link java.io.File} using sendfile.
+     * Request attribute will be associated with a boolean value indicating whether or not it's possible to transfer a
+     * {@link java.io.File} using sendfile.
      *
      * @since 2.2
      */
@@ -137,12 +137,10 @@ public class Request {
 
     /**
      * <p>
-     * The value of this request attribute, as set by the developer must be a {@link java.io.File}
-     * that exists, is not a directory, and is readable.  This {@link java.io.File} will be
-     * transferred using sendfile if {@link #SEND_FILE_ENABLED_ATTR} is true.  If sendfile
-     * support isn't enabled, an IllegalStateException will be raised at runtime.
-     * The {@link HttpHandler} using this functionality should refrain from writing content
-     * via the response.
+     * The value of this request attribute, as set by the developer must be a {@link java.io.File} that exists, is not a
+     * directory, and is readable. This {@link java.io.File} will be transferred using sendfile if
+     * {@link #SEND_FILE_ENABLED_ATTR} is true. If sendfile support isn't enabled, an IllegalStateException will be raised
+     * at runtime. The {@link HttpHandler} using this functionality should refrain from writing content via the response.
      * </p>
      *
      * <p>
@@ -155,14 +153,13 @@ public class Request {
 
     /**
      * <p>
-     * The value of this request attribute signifies the starting offset of the file
-     * transfer.  If not specified, an offset of zero will be assumed.   The type of
-     * the value must be {@link Long}.
+     * The value of this request attribute signifies the starting offset of the file transfer. If not specified, an offset
+     * of zero will be assumed. The type of the value must be {@link Long}.
      * </p>
      *
      * <p>
-     * NOTE:  In order for this attribute to take effect, it <em>must</em> be
-     * set <em>before</em> the {@link #SEND_FILE_ATTR} is set.
+     * NOTE: In order for this attribute to take effect, it <em>must</em> be set <em>before</em> the {@link #SEND_FILE_ATTR}
+     * is set.
      * </p>
      *
      * @since 2.2
@@ -171,14 +168,13 @@ public class Request {
 
     /**
      * <p>
-     * The value of this request attribute signifies the total number of bytes to
-     * transfer.  If not specified, the entire file will be transferred.
-     * The type of the value must be {@link Long}
+     * The value of this request attribute signifies the total number of bytes to transfer. If not specified, the entire
+     * file will be transferred. The type of the value must be {@link Long}
      * </p>
      *
      * <p>
-     * NOTE:  In order for this attribute to take effect, it <em>must</em> be
-     * set <em>before</em> the {@link #SEND_FILE_ATTR} is set.
+     * NOTE: In order for this attribute to take effect, it <em>must</em> be set <em>before</em> the {@link #SEND_FILE_ATTR}
+     * is set.
      * </p>
      *
      * @since 2.2
@@ -189,11 +185,9 @@ public class Request {
     /**
      * The match string for identifying a session ID parameter.
      */
-    private static final String match =
-        ';' + Globals.SESSION_PARAMETER_NAME + '=';
+    private static final String match = ';' + Globals.SESSION_PARAMETER_NAME + '=';
 
     // -------------------------------------------------------------------- //
-
 
     public final MappingData obtainMappingData() {
         if (cachedMappingData == null) {
@@ -202,7 +196,6 @@ public class Request {
 
         return cachedMappingData;
     }
-
 
     // --------------------------------------------------------------------- //
 
@@ -217,8 +210,7 @@ public class Request {
 
     protected HttpServerFilter httpServerFilter;
 
-    protected final List<AfterServiceListener> afterServicesList =
-            new ArrayList<>(4);
+    protected final List<AfterServiceListener> afterServicesList = new ArrayList<>(4);
 
     private Session session;
 
@@ -238,92 +230,78 @@ public class Request {
      */
     protected Cookie[] cookies = null;
 
-
     protected Cookies rawCookies;
-    
+
     // Session cookie name
     protected String sessionCookieName;
-    
+
     // Session manager
     protected SessionManager sessionManager;
-    
+
     /**
      * The default Locale if none are specified.
      */
     protected static final Locale defaultLocale = Locale.getDefault();
 
-
     /**
      * The preferred Locales associated with this Request.
      */
     protected final ArrayList<Locale> locales = new ArrayList<>();
-    
 
     /**
      * The current dispatcher type.
      */
     protected Object dispatcherType = null;
 
-
     /**
      * The associated input buffer.
      */
     protected final ServerInputBuffer inputBuffer = new ServerInputBuffer();
-
 
     /**
      * NIOInputStream.
      */
     private final NIOInputStreamImpl inputStream = new NIOInputStreamImpl();
 
-
     /**
      * Reader.
      */
     private final NIOReaderImpl reader = new NIOReaderImpl();
-
 
     /**
      * Using stream flag.
      */
     protected boolean usingInputStream = false;
 
-
     /**
      * Using writer flag.
      */
     protected boolean usingReader = false;
-
 
     /**
      * User principal.
      */
     protected Principal userPrincipal = null;
 
-
     /**
      * Session parsed flag.
      */
     protected boolean sessionParsed = false;
-
 
     /**
      * Request parameters parsed flag.
      */
     protected boolean requestParametersParsed = false;
 
-
-     /**
+    /**
      * Cookies parsed flag.
      */
     protected boolean cookiesParsed = false;
-
 
     /**
      * Secure flag.
      */
     protected boolean secure = false;
-
 
     /**
      * The Subject associated with the current AccessControllerContext
@@ -335,39 +313,32 @@ public class Request {
      */
     protected final ParameterMap parameterMap = new ParameterMap();
 
-
     protected final Parameters parameters = new Parameters();
-
 
     /**
      * The current request dispatcher path.
      */
     protected Object requestDispatcherPath = null;
 
-
     /**
      * Was the requested session ID received in a cookie?
      */
     protected boolean requestedSessionCookie = false;
-
 
     /**
      * The requested session ID (if any) for this request.
      */
     protected String requestedSessionId = null;
 
-
     /**
      * Was the requested session ID received in a URL?
      */
     protected boolean requestedSessionURL = false;
 
-
     /**
      * Parse locales.
      */
     protected boolean localesParsed = false;
-
 
     /**
      * The string parser we will use for parsing request lines.
@@ -386,18 +357,17 @@ public class Request {
     private static int maxDispatchDepth = Constants.DEFAULT_MAX_DISPATCH_DEPTH;
     // END S1AS 4703023
 
-
     // START SJSAS 6346226
     private String jrouteId;
     // END SJSAS 6346226
 
     /**
-     * The {@link RequestExecutorProvider} responsible for executing user's code
-     * in {@link HttpHandler#service(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
+     * The {@link RequestExecutorProvider} responsible for executing user's code in
+     * {@link HttpHandler#service(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
      * and notifying {@link ReadHandler}, {@link WriteHandler} registered by the user
      */
-     private RequestExecutorProvider requestExecutorProvider;
-    
+    private RequestExecutorProvider requestExecutorProvider;
+
     /**
      * The response with which this request is associated.
      */
@@ -406,17 +376,17 @@ public class Request {
     /**
      * Trailer headers, if any.
      */
-    protected Map<String,String> trailers;
+    protected Map<String, String> trailers;
 
     // ----------------------------------------------------------- Constructors
     /**
-     * Temporarily introduce public constructor to fix GRIZZLY-1782.
-     * Just to make request instances proxiable.
-     * This constructor is not intended for client code consumption
-     * and should not be used explicitly as it creates an invalid instance.
-     * 
+     * Temporarily introduce public constructor to fix GRIZZLY-1782. Just to make request instances proxiable. This
+     * constructor is not intended for client code consumption and should not be used explicitly as it creates an invalid
+     * instance.
+     *
      * @deprecated
      */
+    @Deprecated
     public Request() {
         this.response = null;
     }
@@ -427,27 +397,23 @@ public class Request {
 
     // --------------------------------------------------------- Public Methods
 
-    public void initialize(final HttpRequestPacket request,
-                           final FilterChainContext ctx,
-                           final HttpServerFilter httpServerFilter) {
+    public void initialize(final HttpRequestPacket request, final FilterChainContext ctx, final HttpServerFilter httpServerFilter) {
         this.request = request;
         this.ctx = ctx;
         this.httpServerFilter = httpServerFilter;
         inputBuffer.initialize(this, ctx);
-        
+
         parameters.setHeaders(request.getHeaders());
         parameters.setQuery(request.getQueryStringDC());
 
         final DataChunk remoteUser = request.remoteUser();
 
         if (httpServerFilter != null) {
-            final ServerFilterConfiguration configuration =
-                    httpServerFilter.getConfiguration();
+            final ServerFilterConfiguration configuration = httpServerFilter.getConfiguration();
             parameters.setQueryStringEncoding(configuration.getDefaultQueryEncoding());
 
-            final BackendConfiguration backendConfiguration =
-                    configuration.getBackendConfiguration();
-            
+            final BackendConfiguration backendConfiguration = configuration.getBackendConfiguration();
+
             if (backendConfiguration != null) {
                 // Set the protocol scheme based on backend config
                 if (backendConfiguration.getScheme() != null) {
@@ -461,15 +427,13 @@ public class Request {
                     // when using scheme-mapping
                     request.setSecure(true);
                 }
-                
-                if (remoteUser.isNull()
-                        && backendConfiguration.getRemoteUserMapping() != null) {
-                    remoteUser.setString(request.getHeader(
-                            backendConfiguration.getRemoteUserMapping()));
+
+                if (remoteUser.isNull() && backendConfiguration.getRemoteUserMapping() != null) {
+                    remoteUser.setString(request.getHeader(backendConfiguration.getRemoteUserMapping()));
                 }
             }
         }
-        
+
         if (scheme == null) {
             scheme = request.isSecure() ? "https" : "http";
         }
@@ -516,12 +480,12 @@ public class Request {
      */
     public boolean isPushEnabled() {
         final Boolean result = (Boolean) getContext().getConnection().getAttributes().getAttribute(HTTP2_PUSH_ENABLED);
-        return ((result != null) ? result : false);
+        return result != null ? result : false;
     }
-    
+
     /**
-     * @return {@link #sessionCookieName} if set, or the value returned by {@link SessionManager#getSessionCookieName()}
-     * if {@link #sessionCookieName} is not set.
+     * @return {@link #sessionCookieName} if set, or the value returned by {@link SessionManager#getSessionCookieName()} if
+     * {@link #sessionCookieName} is not set.
      */
     protected String obtainSessionCookieName() {
         return sessionCookieName != null ? sessionCookieName : getSessionManager().getSessionCookieName();
@@ -531,9 +495,7 @@ public class Request {
      * @return {@link SessionManager}
      */
     protected SessionManager getSessionManager() {
-        return sessionManager != null
-                ? sessionManager
-                : DefaultSessionManager.instance();
+        return sessionManager != null ? sessionManager : DefaultSessionManager.instance();
     }
 
     /**
@@ -542,29 +504,29 @@ public class Request {
     protected void setSessionManager(final SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
-        
+
     /**
-     * @return the {@link Executor} responsible for notifying {@link ReadHandler},
-     * {@link WriteHandler} associated with this <tt>Request</tt> processing.
-     */    
+     * @return the {@link Executor} responsible for notifying {@link ReadHandler}, {@link WriteHandler} associated with this
+     * <tt>Request</tt> processing.
+     */
     public Executor getRequestExecutor() {
         return requestExecutorProvider.getExecutor(this);
     }
 
     /**
-     * Sets @return the {@link RequestExecutorProvider} responsible for executing
-     * user's code in {@link HttpHandler#service(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
+     * Sets @return the {@link RequestExecutorProvider} responsible for executing user's code in
+     * {@link HttpHandler#service(org.glassfish.grizzly.http.server.Request, org.glassfish.grizzly.http.server.Response)}
      * and notifying {@link ReadHandler}, {@link WriteHandler} registered by the user.
-     * 
+     *
      * @param requestExecutorProvider {@link RequestExecutorProvider}
      */
-    protected void setRequestExecutorProvider(
-            final RequestExecutorProvider requestExecutorProvider) {
+    protected void setRequestExecutorProvider(final RequestExecutorProvider requestExecutorProvider) {
         this.requestExecutorProvider = requestExecutorProvider;
     }
 
     /**
      * Add the listener, which will be notified, once <tt>Request</tt> processing will be finished.
+     * 
      * @param listener the listener, which will be notified, once <tt>Request</tt> processing will be finished.
      */
     public void addAfterServiceListener(final AfterServiceListener listener) {
@@ -572,8 +534,11 @@ public class Request {
     }
 
     /**
-     * Remove the "after-service" listener, which was previously added by {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
-     * @param listener the "after-service" listener, which was previously added by {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
+     * Remove the "after-service" listener, which was previously added by
+     * {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
+     * 
+     * @param listener the "after-service" listener, which was previously added by
+     * {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
      */
     @SuppressWarnings("unused")
     public void removeAfterServiceListener(final AfterServiceListener listener) {
@@ -591,16 +556,14 @@ public class Request {
                 try {
                     anAfterServicesList.onAfterService(this);
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING,
-                            LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUEST_AFTERSERVICE_NOTIFICATION_ERROR(), e);
+                    LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUEST_AFTERSERVICE_NOTIFICATION_ERROR(), e);
                 }
             }
         }
     }
 
     /**
-     * Release all object references, and initialize instance variables, in
-     * preparation for reuse of this object.
+     * Release all object references, and initialize instance variables, in preparation for reuse of this object.
      */
     protected void recycle() {
         scheme = null;
@@ -609,7 +572,7 @@ public class Request {
         pathInfo.reset();
         dispatcherType = null;
         requestDispatcherPath = null;
-        
+
         inputBuffer.recycle();
         inputStream.recycle();
         reader.recycle();
@@ -648,11 +611,11 @@ public class Request {
         requestExecutorProvider = null;
 
         trailers = null;
-        
+
         afterServicesList.clear();
 
         // Notes holder shouldn't be recycled.
-        //        notesHolder.recycle();
+        // notesHolder.recycle();
 
         if (cachedMappingData != null) {
             cachedMappingData.recycle();
@@ -661,9 +624,7 @@ public class Request {
         ThreadCache.putToCache(CACHE_IDX, this);
     }
 
-
     // -------------------------------------------------------- Request Methods
-
 
     /**
      * Return the authorization credentials sent with this request.
@@ -674,32 +635,28 @@ public class Request {
 
     // ------------------------------------------------- Request Public Methods
 
-
     /**
-     * @return a new {@link PushBuilder} for issuing server push responses
-     * from the current request.  If the current connection does not
-     * support server push, or server push has been disabled by the
-     * client, it will return <code>null</code>.
+     * @return a new {@link PushBuilder} for issuing server push responses from the current request. If the current
+     * connection does not support server push, or server push has been disabled by the client, it will return
+     * <code>null</code>.
      */
     public PushBuilder newPushBuilder() {
-        return ((isPushEnabled()) ? new PushBuilder(this) : null);
+        return isPushEnabled() ? new PushBuilder(this) : null;
     }
 
-
     /**
-     * Replays request's payload by setting new payload {@link Buffer}.
-     * If request parameters have been parsed based on prev. request's POST
-     * payload - the parameters will be recycled and ready to be parsed again.
-     * 
+     * Replays request's payload by setting new payload {@link Buffer}. If request parameters have been parsed based on
+     * prev. request's POST payload - the parameters will be recycled and ready to be parsed again.
+     *
      * @param buffer payload
-     * 
+     *
      * @throws IllegalStateException, if previous request payload has not been read off.
      */
     public void replayPayload(final Buffer buffer) {
         inputBuffer.replayPayload(buffer);
         usingReader = false;
         usingInputStream = false;
-        
+
         if (Method.POST.equals(getMethod()) && requestParametersParsed) {
             requestParametersParsed = false;
             parameterMap.setLocked(false);
@@ -707,11 +664,10 @@ public class Request {
             parameters.recycle();
         }
     }
-    
+
     /**
-     * Create and return a NIOInputStream to read the content
-     * associated with this Request.
-     * 
+     * Create and return a NIOInputStream to read the content associated with this Request.
+     *
      * @return {@link NIOInputStream}
      */
     public NIOInputStream createInputStream() {
@@ -720,7 +676,6 @@ public class Request {
         return inputStream;
     }
 
-
     /**
      * Create a named {@link Note} associated with this Request.
      *
@@ -728,14 +683,13 @@ public class Request {
      * @param name the {@link Note} name.
      * @return the {@link Note}.
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public static <E> Note<E> createNote(final String name) {
         return HttpRequestPacket.createNote(name);
     }
 
     /**
-     * Return the {@link Note} value associated with this <tt>Request</tt>,
-     * or <code>null</code> if no such binding exists.
+     * Return the {@link Note} value associated with this <tt>Request</tt>, or <code>null</code> if no such binding exists.
      * Use {@link #createNote(java.lang.String)} to create a new {@link Note}.
      *
      * @param note {@link Note} value to be returned
@@ -744,24 +698,20 @@ public class Request {
         return request.getNote(note);
     }
 
-
     /**
-     * Return a {@link Set} containing the String names of all note bindings
-     * that exist for this request.
-     * Use {@link #createNote(java.lang.String)} to create a new {@link Note}.
+     * Return a {@link Set} containing the String names of all note bindings that exist for this request. Use
+     * {@link #createNote(java.lang.String)} to create a new {@link Note}.
      *
-     * @return a {@link Set} containing the String names of all note bindings
-     * that exist for this request.
+     * @return a {@link Set} containing the String names of all note bindings that exist for this request.
      */
     @SuppressWarnings("unused")
     public Set<String> getNoteNames() {
         return request.getNoteNames();
     }
 
-
     /**
-     * Remove the {@link Note} value associated with this request.
-     * Use {@link #createNote(java.lang.String)} to create a new {@link Note}.
+     * Remove the {@link Note} value associated with this request. Use {@link #createNote(java.lang.String)} to create a new
+     * {@link Note}.
      *
      * @param note {@link Note} value to be removed
      */
@@ -770,11 +720,9 @@ public class Request {
         return request.removeNote(note);
     }
 
-
     /**
-     * Bind the {@link Note} value to this Request,
-     * replacing any existing binding for this name.
-     * Use {@link #createNote(java.lang.String)} to create a new {@link Note}.
+     * Bind the {@link Note} value to this Request, replacing any existing binding for this name. Use
+     * {@link #createNote(java.lang.String)} to create a new {@link Note}.
      *
      * @param note {@link Note} to which the object should be bound
      * @param value the {@link Note} value be bound to the specified {@link Note}.
@@ -782,7 +730,6 @@ public class Request {
     public <E> void setNote(final Note<E> note, final E value) {
         request.setNote(note, value);
     }
-
 
     /**
      * Set the name of the server (virtual host) to process this request.
@@ -793,7 +740,6 @@ public class Request {
     public void setServerName(String name) {
         request.serverName().setString(name);
     }
-
 
     /**
      * Set the port number of the server to process this request.
@@ -811,13 +757,12 @@ public class Request {
     public HttpServerFilter getHttpFilter() {
         return httpServerFilter;
     }
-    
+
     /**
-     * Returns the portion of the request URI that indicates the context of the request.
-     * The context path always comes first in a request URI.
-     * The path starts with a "/" character but does not end with a "/" character.
-     * For {@link HttpHandler}s in the default (root) context, this method returns "".
-     * The container does not decode this string.
+     * Returns the portion of the request URI that indicates the context of the request. The context path always comes first
+     * in a request URI. The path starts with a "/" character but does not end with a "/" character. For
+     * {@link HttpHandler}s in the default (root) context, this method returns "". The container does not decode this
+     * string.
      *
      * @return a String specifying the portion of the request URI that indicates the context of the request
      */
@@ -828,21 +773,18 @@ public class Request {
     protected void setContextPath(final String contextPath) {
         this.contextPath.setPath(contextPath);
     }
-    
+
     protected void setContextPath(final PathResolver contextPath) {
         this.contextPath.setResolver(contextPath);
     }
 
     /**
-     * Returns the part of this request's URL that calls the HttpHandler.
-     * This includes either the HttpHandler name or a path to the HttpHandler,
-     * but does not include any extra path information or a query string.
-     * 
-     * @return a String containing the name or path of the HttpHandler being
-     * called, as specified in the request URL
-     * @throws IllegalStateException if HttpHandler path was not set explicitly
-     *          and attempt to URI-decode {@link org.glassfish.grizzly.http.util.RequestURIRef#getDecodedURI()}
-     *          failed.
+     * Returns the part of this request's URL that calls the HttpHandler. This includes either the HttpHandler name or a
+     * path to the HttpHandler, but does not include any extra path information or a query string.
+     *
+     * @return a String containing the name or path of the HttpHandler being called, as specified in the request URL
+     * @throws IllegalStateException if HttpHandler path was not set explicitly and attempt to URI-decode
+     * {@link org.glassfish.grizzly.http.util.RequestURIRef#getDecodedURI()} failed.
      */
     @SuppressWarnings("unused")
     public String getHttpHandlerPath() {
@@ -858,15 +800,12 @@ public class Request {
     }
 
     /**
-     * Returns any extra path information associated with the URL the client
-     * sent when it made this request.
-     * The extra path information follows the HttpHandler path but precedes
-     * the query string. This method returns null if there was no extra path
-     * information.
-     * 
-     * @return a String specifying extra path information that comes after the
-     * HttpHandler path but before the query string in the request URL;
-     * or null if the URL does not have any extra path information
+     * Returns any extra path information associated with the URL the client sent when it made this request. The extra path
+     * information follows the HttpHandler path but precedes the query string. This method returns null if there was no
+     * extra path information.
+     *
+     * @return a String specifying extra path information that comes after the HttpHandler path but before the query string
+     * in the request URL; or null if the URL does not have any extra path information
      */
     public String getPathInfo() {
         return pathInfo.get();
@@ -879,16 +818,14 @@ public class Request {
     protected void setPathInfo(final PathResolver pathInfo) {
         this.pathInfo.setResolver(pathInfo);
     }
-    
+
     // ------------------------------------------------- ServletRequest Methods
 
     /**
-     * Return the specified request attribute if it exists; otherwise, return
-     * <code>null</code>.
+     * Return the specified request attribute if it exists; otherwise, return <code>null</code>.
      *
      * @param name Name of the request attribute to return
-     * @return the specified request attribute if it exists; otherwise, return
-     * <code>null</code>.
+     * @return the specified request attribute if it exists; otherwise, return <code>null</code>.
      */
     public Object getAttribute(final String name) {
         if (SEND_FILE_ENABLED_ATTR.equals(name)) {
@@ -918,32 +855,26 @@ public class Request {
         return attribute;
     }
 
-
     /**
      * Test if a given name is one of the special Servlet-spec SSL attributes.
      */
     static boolean isSSLAttribute(final String name) {
-        return Globals.CERTIFICATES_ATTR.equals(name)
-                || Globals.CIPHER_SUITE_ATTR.equals(name)
-                || Globals.KEY_SIZE_ATTR.equals(name);
+        return Globals.CERTIFICATES_ATTR.equals(name) || Globals.CIPHER_SUITE_ATTR.equals(name) || Globals.KEY_SIZE_ATTR.equals(name);
     }
 
     /**
-     * Return the names of all request attributes for this Request, or an
-     * empty {@link Set} if there are none.
+     * Return the names of all request attributes for this Request, or an empty {@link Set} if there are none.
      */
     public Set<String> getAttributeNames() {
         return request.getAttributeNames();
     }
 
-
     /**
      * Return the character encoding for this Request.
      */
     public String getCharacterEncoding() {
-      return request.getCharacterEncoding();
+        return request.getCharacterEncoding();
     }
-
 
     /**
      * Return the content length for this Request.
@@ -951,7 +882,6 @@ public class Request {
     public int getContentLength() {
         return (int) request.getContentLength();
     }
-
 
     /**
      * Return the content length for this Request represented by Java long type.
@@ -971,16 +901,15 @@ public class Request {
      * <p>
      * Return the {@link InputStream} for this {@link Request}.
      * </p>
-     * 
-     * By default the returned {@link NIOInputStream} will work as blocking
-     * {@link InputStream}, but it will be possible to call {@link NIOInputStream#isReady()},
-     * {@link NIOInputStream#available()}, or {@link NIOInputStream#notifyAvailable(org.glassfish.grizzly.ReadHandler)}
-     * to avoid blocking.
+     *
+     * By default the returned {@link NIOInputStream} will work as blocking {@link InputStream}, but it will be possible to
+     * call {@link NIOInputStream#isReady()}, {@link NIOInputStream#available()}, or
+     * {@link NIOInputStream#notifyAvailable(org.glassfish.grizzly.ReadHandler)} to avoid blocking.
      *
      * @return the {@link NIOInputStream} for this {@link Request}.
      *
-     * @exception IllegalStateException if {@link #getReader()} or
-     *  {@link #getNIOReader()} has already been called for this request.
+     * @exception IllegalStateException if {@link #getReader()} or {@link #getNIOReader()} has already been called for this
+     * request.
      *
      * @since 2.2
      */
@@ -990,43 +919,40 @@ public class Request {
 
     /**
      * <p>
-     * Return the {@link NIOInputStream} for this {@link Request}.   This stream
-     * will not block when reading content.
+     * Return the {@link NIOInputStream} for this {@link Request}. This stream will not block when reading content.
      * </p>
      *
      * <p>
-     * NOTE: For now, in order to use non-blocking functionality, this
-     * method must be invoked before the {@link HttpHandler#service(Request, Response)}
-     * method returns.  We hope to have this addressed in the next release.
+     * NOTE: For now, in order to use non-blocking functionality, this method must be invoked before the
+     * {@link HttpHandler#service(Request, Response)} method returns. We hope to have this addressed in the next release.
      * </p>
      *
      * @return the {@link NIOInputStream} for this {@link Request}.
      *
-     * @exception IllegalStateException if {@link #getReader()} or
-     *  {@link #getNIOReader()} has already been called for this request.
+     * @exception IllegalStateException if {@link #getReader()} or {@link #getNIOReader()} has already been called for this
+     * request.
      */
     public NIOInputStream getNIOInputStream() {
-        if (usingReader)
+        if (usingReader) {
             throw new IllegalStateException("Illegal attempt to call getInputStream() after getReader() has already been called.");
+        }
 
         usingInputStream = true;
         inputStream.setInputBuffer(inputBuffer);
         return inputStream;
     }
 
-
     /**
-     * @return <code>true</code> if the current input source is operating in
-     * non-blocking mode. In other words {@link #getNIOInputStream()} or
-     *  {@link #getNIOReader()} were invoked.
+     * @return <code>true</code> if the current input source is operating in non-blocking mode. In other words
+     * {@link #getNIOInputStream()} or {@link #getNIOReader()} were invoked.
      * @deprecated will always return true
      */
+    @Deprecated
     public boolean asyncInput() {
 
         return true;
 
     }
-
 
     /**
      * @return <code>true</code> if this request requires acknowledgment.
@@ -1035,40 +961,39 @@ public class Request {
         return request.requiresAcknowledgement();
     }
 
-
     /**
-     * Return the preferred Locale that the client will accept content in,
-     * based on the value for the first <code>Accept-Language</code> header
-     * that was encountered.  If the request did not specify a preferred
-     * language, the server's default Locale is returned.
+     * Return the preferred Locale that the client will accept content in, based on the value for the first
+     * <code>Accept-Language</code> header that was encountered. If the request did not specify a preferred language, the
+     * server's default Locale is returned.
      */
     public Locale getLocale() {
 
-        if (!localesParsed)
+        if (!localesParsed) {
             parseLocales();
+        }
 
         if (!locales.isEmpty()) {
-            return (locales.get(0));
+            return locales.get(0);
         } else {
-            return (defaultLocale);
+            return defaultLocale;
         }
 
     }
 
-
     /**
-     * Return the set of preferred Locales that the client will accept
-     * content in, based on the values for any <code>Accept-Language</code>
-     * headers that were encountered.  If the request did not specify a
-     * preferred language, the server's default Locale is returned.
+     * Return the set of preferred Locales that the client will accept content in, based on the values for any
+     * <code>Accept-Language</code> headers that were encountered. If the request did not specify a preferred language, the
+     * server's default Locale is returned.
      */
     public List<Locale> getLocales() {
 
-        if (!localesParsed)
+        if (!localesParsed) {
             parseLocales();
+        }
 
-        if (!locales.isEmpty())
+        if (!locales.isEmpty()) {
             return locales;
+        }
 
         final ArrayList<Locale> results = new ArrayList<>();
         results.add(defaultLocale);
@@ -1078,17 +1003,16 @@ public class Request {
 
     /**
      * Returns the low-level parameters holder for finer control over parameters.
-     * 
+     *
      * @return {@link Parameters}.
      */
     public Parameters getParameters() {
         return parameters;
     }
-    
+
     /**
-     * Return the value of the specified request parameter, if any; otherwise,
-     * return <code>null</code>.  If there is more than one value defined,
-     * return only the first one.
+     * Return the value of the specified request parameter, if any; otherwise, return <code>null</code>. If there is more
+     * than one value defined, return only the first one.
      *
      * @param name Name of the desired request parameter
      */
@@ -1102,21 +1026,17 @@ public class Request {
 
     }
 
-
-
     /**
-     * Returns a {@link java.util.Map} of the parameters of this request.
-     * Request parameters are extra information sent with the request.
-     * For HTTP servlets, parameters are contained in the query string
-     * or posted form data.
+     * Returns a {@link java.util.Map} of the parameters of this request. Request parameters are extra information sent with
+     * the request. For HTTP servlets, parameters are contained in the query string or posted form data.
      *
-     * @return A {@link java.util.Map} containing parameter names as keys
-     *  and parameter values as map values.
+     * @return A {@link java.util.Map} containing parameter names as keys and parameter values as map values.
      */
-    public Map<String,String[]> getParameterMap() {
+    public Map<String, String[]> getParameterMap() {
 
-        if (parameterMap.isLocked())
+        if (parameterMap.isLocked()) {
             return parameterMap;
+        }
 
         for (final String name : getParameterNames()) {
             final String[] values = getParameterValues(name);
@@ -1129,35 +1049,33 @@ public class Request {
 
     }
 
-
     /**
      * Return the names of all defined request parameters for this request.
      */
     public Set<String> getParameterNames() {
 
-        if (!requestParametersParsed)
+        if (!requestParametersParsed) {
             parseRequestParameters();
+        }
 
         return parameters.getParameterNames();
 
     }
 
-
     /**
-     * Return the defined values for the specified request parameter, if any;
-     * otherwise, return <code>null</code>.
+     * Return the defined values for the specified request parameter, if any; otherwise, return <code>null</code>.
      *
      * @param name Name of the desired request parameter
      */
     public String[] getParameterValues(String name) {
 
-        if (!requestParametersParsed)
+        if (!requestParametersParsed) {
             parseRequestParameters();
+        }
 
         return parameters.getParameterValues(name);
 
     }
-
 
     /**
      * Return the protocol and version used to make this Request.
@@ -1166,21 +1084,19 @@ public class Request {
         return request.getProtocol();
     }
 
-
     /**
      * <p>
      * Returns the {@link Reader} associated with this {@link Request}.
      * </p>
-     * 
-     * By default the returned {@link NIOReader} will work as blocking
-     * {@link java.io.Reader}, but it will be possible to call {@link NIOReader#isReady()}
-     * or {@link NIOReader#notifyAvailable(org.glassfish.grizzly.ReadHandler)}
-     * to avoid blocking.
-     * 
+     *
+     * By default the returned {@link NIOReader} will work as blocking {@link java.io.Reader}, but it will be possible to
+     * call {@link NIOReader#isReady()} or {@link NIOReader#notifyAvailable(org.glassfish.grizzly.ReadHandler)} to avoid
+     * blocking.
+     *
      * @return the {@link NIOReader} associated with this {@link Request}.
      *
-     * @throws IllegalStateException if {@link #getInputStream()} or
-     *  {@link #getNIOInputStream()} has already been called for this request.
+     * @throws IllegalStateException if {@link #getInputStream()} or {@link #getNIOInputStream()} has already been called
+     * for this request.
      *
      * @since 2.2
      */
@@ -1190,17 +1106,18 @@ public class Request {
 
     /**
      * <p>
-     * Returns the {@link NIOReader} associated with this {@link Request}.
-     * This {@link NIOReader} will not block while reading content.
+     * Returns the {@link NIOReader} associated with this {@link Request}. This {@link NIOReader} will not block while
+     * reading content.
      * </p>
      *
      * @return {@link NIOReader}
-     * @throws IllegalStateException if {@link #getInputStream()} or
-     *  {@link #getNIOInputStream()} has already been called for this request.
+     * @throws IllegalStateException if {@link #getInputStream()} or {@link #getNIOInputStream()} has already been called
+     * for this request.
      */
     public NIOReader getNIOReader() {
-        if (usingInputStream)
+        if (usingInputStream) {
             throw new IllegalStateException("Illegal attempt to call getReader() after getInputStream() has alread been called.");
+        }
 
         usingReader = true;
         inputBuffer.processingChars();
@@ -1208,14 +1125,12 @@ public class Request {
         return reader;
     }
 
-
     /**
      * Return the remote IP address making this Request.
      */
     public String getRemoteAddr() {
         return request.getRemoteAddress();
     }
-
 
     /**
      * Return the remote host name making this Request.
@@ -1225,38 +1140,32 @@ public class Request {
     }
 
     /**
-     * Returns the Internet Protocol (IP) source port of the client
-     * or last proxy that sent the request.
+     * Returns the Internet Protocol (IP) source port of the client or last proxy that sent the request.
      */
-    public int getRemotePort(){
+    public int getRemotePort() {
         return request.getRemotePort();
     }
 
     /**
-     * Returns the host name of the Internet Protocol (IP) interface on
-     * which the request was received.
+     * Returns the host name of the Internet Protocol (IP) interface on which the request was received.
      */
-    public String getLocalName(){
-       return request.getLocalName();
+    public String getLocalName() {
+        return request.getLocalName();
     }
 
     /**
-     * Returns the Internet Protocol (IP) address of the interface on
-     * which the request  was received.
+     * Returns the Internet Protocol (IP) address of the interface on which the request was received.
      */
-    public String getLocalAddr(){
+    public String getLocalAddr() {
         return request.getLocalAddress();
     }
 
-
     /**
-     * Returns the Internet Protocol (IP) port number of the interface
-     * on which the request was received.
+     * Returns the Internet Protocol (IP) port number of the interface on which the request was received.
      */
-    public int getLocalPort(){
+    public int getLocalPort() {
         return request.getLocalPort();
     }
-
 
     /**
      * Return the scheme used to make this Request.
@@ -1265,14 +1174,12 @@ public class Request {
         return scheme;
     }
 
-
     /**
      * Return the server name responding to this Request.
      */
     public String getServerName() {
         return request.serverName().toString();
     }
-
 
     /**
      * Return the server port responding to this Request.
@@ -1281,14 +1188,12 @@ public class Request {
         return request.getServerPort();
     }
 
-
     /**
      * Was this request received on a secure connection?
      */
     public boolean isSecure() {
         return request.isSecure();
     }
-
 
     /**
      * Remove the specified request attribute if it exists.
@@ -1299,7 +1204,6 @@ public class Request {
         request.removeAttribute(name);
     }
 
-
     /**
      * Set the specified request attribute to the specified value.
      *
@@ -1309,8 +1213,9 @@ public class Request {
     public void setAttribute(final String name, final Object value) {
 
         // Name cannot be null
-        if (name == null)
+        if (name == null) {
             throw new IllegalArgumentException("Argument 'name' cannot be null");
+        }
 
         // Null value is the same as removeAttribute()
         if (value == null) {
@@ -1335,27 +1240,20 @@ public class Request {
 
     }
 
-
     /**
-     * Overrides the name of the character encoding used in the body of this
-     * request.
+     * Overrides the name of the character encoding used in the body of this request.
      *
-     * This method must be called prior to reading request parameters or
-     * reading input using <code>getReader()</code>. Otherwise, it has no
-     * effect.
+     * This method must be called prior to reading request parameters or reading input using <code>getReader()</code>.
+     * Otherwise, it has no effect.
      *
-     * @param encoding      <code>String</code> containing the name of
-     *                 the character encoding.
-     * @throws         java.io.UnsupportedEncodingException if this
-     *                 ServletRequest is still in a state where a
-     *                 character encoding may be set, but the specified
-     *                 encoding is invalid
+     * @param encoding <code>String</code> containing the name of the character encoding.
+     * @throws java.io.UnsupportedEncodingException if this ServletRequest is still in a state where a character encoding
+     * may be set, but the specified encoding is invalid
      *
      * @since Servlet 2.3
      */
-    @SuppressWarnings({"unchecked"})
-    public void setCharacterEncoding(final String encoding)
-        throws UnsupportedEncodingException {
+    @SuppressWarnings({ "unchecked" })
+    public void setCharacterEncoding(final String encoding) throws UnsupportedEncodingException {
 
         // START SJSAS 4936855
         if (requestParametersParsed || usingReader) {
@@ -1370,7 +1268,6 @@ public class Request {
 
     }
 
-
     // START S1AS 4703023
     /**
      * Static setter method for the maximum dispatch depth
@@ -1380,9 +1277,8 @@ public class Request {
         maxDispatchDepth = depth;
     }
 
-
     @SuppressWarnings("unused")
-    public static int getMaxDispatchDepth(){
+    public static int getMaxDispatchDepth() {
         return maxDispatchDepth;
     }
 
@@ -1394,7 +1290,6 @@ public class Request {
         return ++dispatchDepth;
     }
 
-
     /**
      * Decrement the depth of application dispatch
      */
@@ -1402,7 +1297,6 @@ public class Request {
     public int decrementDispatchDepth() {
         return --dispatchDepth;
     }
-
 
     /**
      * Check if the application dispatching has reached the maximum
@@ -1413,9 +1307,7 @@ public class Request {
     }
     // END S1AS 4703023
 
-
     // ---------------------------------------------------- HttpRequest Methods
-
 
     /**
      * Add a Cookie to the set of Cookies associated with this Request.
@@ -1426,8 +1318,9 @@ public class Request {
     public void addCookie(Cookie cookie) {
 
         // For compatibility only
-        if (!cookiesParsed)
+        if (!cookiesParsed) {
             parseCookies();
+        }
 
         int size = 0;
         if (cookie != null) {
@@ -1442,10 +1335,9 @@ public class Request {
 
     }
 
-
     /**
-     * Add a Locale to the set of preferred Locales for this Request.  The
-     * first added Locale will be the first one returned by getLocales().
+     * Add a Locale to the set of preferred Locales for this Request. The first added Locale will be the first one returned
+     * by getLocales().
      *
      * @param locale The new preferred Locale
      */
@@ -1453,11 +1345,9 @@ public class Request {
         locales.add(locale);
     }
 
-
     /**
-     * Add a parameter name and corresponding set of values to this Request.
-     * (This is used when restoring the original request on a form based
-     * login).
+     * Add a parameter name and corresponding set of values to this Request. (This is used when restoring the original
+     * request on a form based login).
      *
      * @param name Name of this request parameter
      * @param values Corresponding values for this request parameter
@@ -1466,7 +1356,6 @@ public class Request {
     public void addParameter(String name, String values[]) {
         parameters.addParameterValues(name, values);
     }
-
 
     /**
      * Clear the collection of Cookies associated with this Request.
@@ -1477,7 +1366,6 @@ public class Request {
         cookies = null;
     }
 
-
     /**
      * Clear the collection of Headers associated with this Request.
      */
@@ -1485,7 +1373,6 @@ public class Request {
     public void clearHeaders() {
         // Not used
     }
-
 
     /**
      * Clear the collection of Locales associated with this Request.
@@ -1495,7 +1382,6 @@ public class Request {
         locales.clear();
     }
 
-
     /**
      * Clear the collection of parameters associated with this Request.
      */
@@ -1503,7 +1389,6 @@ public class Request {
     public void clearParameters() {
         // Not used
     }
-
 
     /**
      * Get the decoded request URI.
@@ -1515,9 +1400,8 @@ public class Request {
     }
 
     /**
-     * Set the Principal who has been authenticated for this Request.  This
-     * value is also used to calculate the value to be returned by the
-     * <code>getRemoteUser()</code> method.
+     * Set the Principal who has been authenticated for this Request. This value is also used to calculate the value to be
+     * returned by the <code>getRemoteUser()</code> method.
      *
      * @param principal The user Principal
      */
@@ -1525,9 +1409,7 @@ public class Request {
         this.userPrincipal = principal;
     }
 
-
     // --------------------------------------------- HttpServletRequest Methods
-
 
     /**
      * Return the authentication type used for this Request.
@@ -1536,19 +1418,18 @@ public class Request {
         return request.authType().toString();
     }
 
-
     /**
      * Return the set of Cookies received with this Request.
      */
     public Cookie[] getCookies() {
 
-        if (!cookiesParsed)
+        if (!cookiesParsed) {
             parseCookies();
+        }
 
         return cookies;
 
     }
-
 
     /**
      * Set the set of cookies received with this Request.
@@ -1559,28 +1440,26 @@ public class Request {
 
     }
 
-
     /**
-     * Return the value of the specified date header, if any; otherwise
-     * return -1.
+     * Return the value of the specified date header, if any; otherwise return -1.
      *
      * @param name Name of the requested date header
      *
-     * @exception IllegalArgumentException if the specified header value
-     *  cannot be converted to a date
+     * @exception IllegalArgumentException if the specified header value cannot be converted to a date
      */
     public long getDateHeader(String name) {
 
         String value = getHeader(name);
-        if (value == null)
-            return (-1L);
+        if (value == null) {
+            return -1L;
+        }
 
         final SimpleDateFormats formats = SimpleDateFormats.create();
 
         try {
             // Attempt to convert the date header in a variety of formats
             long result = FastHttpDateFormat.parseDate(value, formats.getFormats());
-            if (result != (-1L)) {
+            if (result != -1L) {
                 return result;
             }
             throw new IllegalArgumentException(value);
@@ -1590,29 +1469,28 @@ public class Request {
     }
 
     /**
-     * Return the value of the specified date header, if any; otherwise
-     * return -1.
+     * Return the value of the specified date header, if any; otherwise return -1.
      *
      * @param header the requested date {@link Header}
      *
-     * @exception IllegalArgumentException if the specified header value
-     *  cannot be converted to a date
+     * @exception IllegalArgumentException if the specified header value cannot be converted to a date
      *
-     *  @since 2.1.2
+     * @since 2.1.2
      */
     @SuppressWarnings("unused")
     public long getDateHeader(Header header) {
 
         String value = getHeader(header);
-        if (value == null)
-            return (-1L);
+        if (value == null) {
+            return -1L;
+        }
 
         final SimpleDateFormats formats = SimpleDateFormats.create();
 
         try {
             // Attempt to convert the date header in a variety of formats
             long result = FastHttpDateFormat.parseDate(value, formats.getFormats());
-            if (result != (-1L)) {
+            if (result != -1L) {
                 return result;
             }
             throw new IllegalArgumentException(value);
@@ -1621,10 +1499,8 @@ public class Request {
         }
     }
 
-
     /**
-     * Return the first value of the specified header, if any; otherwise,
-     * return <code>null</code>
+     * Return the first value of the specified header, if any; otherwise, return <code>null</code>
      *
      * @param name Name of the requested header
      */
@@ -1632,22 +1508,19 @@ public class Request {
         return request.getHeader(name);
     }
 
-     /**
-     * Return the first value of the specified header, if any; otherwise,
-     * return <code>null</code>
+    /**
+     * Return the first value of the specified header, if any; otherwise, return <code>null</code>
      *
      * @param header the requested {@link Header}
-      *
-      * @since 2.1.2
+     *
+     * @since 2.1.2
      */
     public String getHeader(final Header header) {
         return request.getHeader(header);
     }
 
-
     /**
-     * Return all of the values of the specified header, if any; otherwise,
-     * return an empty enumeration.
+     * Return all of the values of the specified header, if any; otherwise, return an empty enumeration.
      *
      * @param name Name of the requested header
      */
@@ -1656,8 +1529,7 @@ public class Request {
     }
 
     /**
-     * Return all of the values of the specified header, if any; otherwise,
-     * return an empty enumeration.
+     * Return all of the values of the specified header, if any; otherwise, return an empty enumeration.
      *
      * @param header the requested {@link Header}
      *
@@ -1668,48 +1540,41 @@ public class Request {
     }
 
     /**
-     * Get the request trailer headers.
-     * Values may only be returned in the case of HTTP/1.1 when the request is
-     * using the <code>transfer-encoding</code> <code>chunked</code> or in HTTP/2
-     * sends a second <code>HEADERS</code> frame terminating the stream.  An empty
-     * <code>Map</code> will be returned in all other cases.
+     * Get the request trailer headers. Values may only be returned in the case of HTTP/1.1 when the request is using the
+     * <code>transfer-encoding</code> <code>chunked</code> or in HTTP/2 sends a second <code>HEADERS</code> frame
+     * terminating the stream. An empty <code>Map</code> will be returned in all other cases.
      *
-     * While headers are typical case insensitive, the headers stored in the
-     * returned <code>Map</code> will be done so in <b>lower-case</b>.
+     * While headers are typical case insensitive, the headers stored in the returned <code>Map</code> will be done so in
+     * <b>lower-case</b>.
      *
-     * This method should typically be called after the application has
-     * read the request body.  It is safe to invoke this method if
-     * there is no body content.
+     * This method should typically be called after the application has read the request body. It is safe to invoke this
+     * method if there is no body content.
      *
      * @return A {@link Map} of trailers headers, if any were present.
      *
-     * @throws IllegalStateException if neither
-     *  {@link ReadHandler#onAllDataRead} has been called or an EOF indication has
-     *  been returned from the {@link #getReader}, {@link #getNIOReader()},
-     *  {@link #getInputStream}, {@link #getNIOInputStream()}.
+     * @throws IllegalStateException if neither {@link ReadHandler#onAllDataRead} has been called or an EOF indication has
+     * been returned from the {@link #getReader}, {@link #getNIOReader()}, {@link #getInputStream},
+     * {@link #getNIOInputStream()}.
      *
      * @see #areTrailersAvailable()
      *
      * @since 2.4.0
      */
-    public Map<String,String> getTrailers() {
+    public Map<String, String> getTrailers() {
         if (inputBuffer.isFinished()) {
             return inputBuffer.getTrailers();
         }
         throw new IllegalStateException();
     }
 
-
     /**
-     * @return <code>true</code> if trailers are available to be accessed otherwise
-     *  returns <code>false</code>.
+     * @return <code>true</code> if trailers are available to be accessed otherwise returns <code>false</code>.
      *
      * @since 2.4.0
      */
     public boolean areTrailersAvailable() {
         return inputBuffer.areTrailersAvailable();
     }
-
 
     /**
      * Return the names of all headers received with this request.
@@ -1718,15 +1583,12 @@ public class Request {
         return request.getHeaders().names();
     }
 
-
     /**
-     * Return the value of the specified header as an integer, or -1 if there
-     * is no such header for this request.
+     * Return the value of the specified header as an integer, or -1 if there is no such header for this request.
      *
      * @param name Name of the requested header
      *
-     * @exception IllegalArgumentException if the specified header value
-     *  cannot be converted to an integer
+     * @exception IllegalArgumentException if the specified header value cannot be converted to an integer
      */
     public int getIntHeader(String name) {
 
@@ -1740,15 +1602,13 @@ public class Request {
     }
 
     /**
-     * Return the value of the specified header as an integer, or -1 if there
-     * is no such header for this request.
+     * Return the value of the specified header as an integer, or -1 if there is no such header for this request.
      *
      * @param header the requested {@link Header}
      *
-     * @exception IllegalArgumentException if the specified header value
-     *  cannot be converted to an integer
+     * @exception IllegalArgumentException if the specified header value cannot be converted to an integer
      *
-     *  @since 2.1.2
+     * @since 2.1.2
      */
     @SuppressWarnings("unused")
     public int getIntHeader(final Header header) {
@@ -1762,7 +1622,6 @@ public class Request {
 
     }
 
-
     /**
      * Return the HTTP request method used in this Request.
      */
@@ -1772,27 +1631,25 @@ public class Request {
 
     /**
      * Sets the HTTP request method used in this Request.
+     * 
      * @param method the HTTP request method used in this Request.
      */
     public void setMethod(String method) {
         request.setMethod(method);
     }
 
-
     /**
      * @return the query string associated with this request.
      */
     public String getQueryString() {
-        final String queryString = request.getQueryStringDC().toString(
-                parameters.getQueryStringEncoding());
-        
-        return queryString == null || queryString.isEmpty()
-                ? null
-                : queryString;
+        final String queryString = request.getQueryStringDC().toString(parameters.getQueryStringEncoding());
+
+        return queryString == null || queryString.isEmpty() ? null : queryString;
     }
 
     /**
      * Sets the query string associated with this request.
+     * 
      * @param queryString the query string associated with this request.
      */
     @SuppressWarnings("unused")
@@ -1801,8 +1658,7 @@ public class Request {
     }
 
     /**
-     * Return the name of the remote user that has been authenticated
-     * for this Request.
+     * Return the name of the remote user that has been authenticated for this Request.
      */
     public String getRemoteUser() {
 
@@ -1814,14 +1670,12 @@ public class Request {
 
     }
 
-
     /**
      * Return the session identifier included in this request, if any.
      */
     public String getRequestedSessionId() {
         return requestedSessionId;
     }
-
 
     /**
      * Return the request URI for this request.
@@ -1832,6 +1686,7 @@ public class Request {
 
     /**
      * Sets the request URI for this request.
+     * 
      * @param uri the request URI for this request.
      */
     public void setRequestURI(String uri) {
@@ -1839,20 +1694,15 @@ public class Request {
     }
 
     /**
-     * Reconstructs the URL the client used to make the request.
-     * The returned URL contains a protocol, server name, port
-     * number, and server path, but it does not include query
-     * string parameters.
+     * Reconstructs the URL the client used to make the request. The returned URL contains a protocol, server name, port
+     * number, and server path, but it does not include query string parameters.
      * <p>
-     * Because this method returns a <code>StringBuilder</code>,
-     * not a <code>String</code>, you can modify the URL easily,
+     * Because this method returns a <code>StringBuilder</code>, not a <code>String</code>, you can modify the URL easily,
      * for example, to append query parameters.
      * <p>
-     * This method is useful for creating redirect messages and
-     * for reporting errors.
+     * This method is useful for creating redirect messages and for reporting errors.
      *
-     * @return A <code>StringBuffer</code> object containing the
-     *  reconstructed URL
+     * @return A <code>StringBuffer</code> object containing the reconstructed URL
      */
     public StringBuilder getRequestURL() {
 
@@ -1862,34 +1712,28 @@ public class Request {
     }
 
     /**
-     * Appends the reconstructed URL the client used to make the request.
-     * The appended URL contains a protocol, server name, port
-     * number, and server path, but it does not include query
-     * string parameters.
+     * Appends the reconstructed URL the client used to make the request. The appended URL contains a protocol, server name,
+     * port number, and server path, but it does not include query string parameters.
      * <p>
-     * Because this method returns a <code>StringBuilder</code>,
-     * not a <code>String</code>, you can modify the URL easily,
+     * Because this method returns a <code>StringBuilder</code>, not a <code>String</code>, you can modify the URL easily,
      * for example, to append query parameters.
      * <p>
-     * This method is useful for creating redirect messages and
-     * for reporting errors.
+     * This method is useful for creating redirect messages and for reporting errors.
      *
-     * @return A <code>StringBuilder</code> object containing the appended
-     *  reconstructed URL
+     * @return A <code>StringBuilder</code> object containing the appended reconstructed URL
      */
-    public static StringBuilder appendRequestURL(final Request request,
-            final StringBuilder buffer) {
+    public static StringBuilder appendRequestURL(final Request request, final StringBuilder buffer) {
 
         final String scheme = request.getScheme();
         int port = request.getServerPort();
-        if (port < 0)
+        if (port < 0) {
             port = 80; // Work around java.net.URL bug
+        }
 
         buffer.append(scheme);
         buffer.append("://");
         buffer.append(request.getServerName());
-        if ((scheme.equals("http") && (port != 80))
-            || (scheme.equals("https") && (port != 443))) {
+        if (scheme.equals("http") && port != 80 || scheme.equals("https") && port != 443) {
             buffer.append(':');
             buffer.append(port);
         }
@@ -1899,34 +1743,28 @@ public class Request {
     }
 
     /**
-     * Appends the reconstructed URL the client used to make the request.
-     * The appended URL contains a protocol, server name, port
-     * number, and server path, but it does not include query
-     * string parameters.
+     * Appends the reconstructed URL the client used to make the request. The appended URL contains a protocol, server name,
+     * port number, and server path, but it does not include query string parameters.
      * <p>
-     * Because this method returns a <code>StringBuffer</code>,
-     * not a <code>String</code>, you can modify the URL easily,
+     * Because this method returns a <code>StringBuffer</code>, not a <code>String</code>, you can modify the URL easily,
      * for example, to append query parameters.
      * <p>
-     * This method is useful for creating redirect messages and
-     * for reporting errors.
+     * This method is useful for creating redirect messages and for reporting errors.
      *
-     * @return A <code>StringBuffer</code> object containing the appended
-     *  reconstructed URL
+     * @return A <code>StringBuffer</code> object containing the appended reconstructed URL
      */
-    public static StringBuffer appendRequestURL(final Request request,
-            final StringBuffer buffer) {
+    public static StringBuffer appendRequestURL(final Request request, final StringBuffer buffer) {
 
         final String scheme = request.getScheme();
         int port = request.getServerPort();
-        if (port < 0)
+        if (port < 0) {
             port = 80; // Work around java.net.URL bug
+        }
 
         buffer.append(scheme);
         buffer.append("://");
         buffer.append(request.getServerName());
-        if ((scheme.equals("http") && (port != 80))
-            || (scheme.equals("https") && (port != 443))) {
+        if (scheme.equals("http") && port != 80 || scheme.equals("https") && port != 443) {
             buffer.append(':');
             buffer.append(port);
         }
@@ -1941,15 +1779,12 @@ public class Request {
     public Principal getUserPrincipal() {
         if (userPrincipal == null) {
             if (getRequest().isSecure()) {
-                X509Certificate certs[] = (X509Certificate[]) getAttribute(
-                        Globals.CERTIFICATES_ATTR);
-                if (FORCE_CLIENT_AUTH_ON_GET_USER_PRINCIPAL &&
-                        ((certs == null) || (certs.length < 1))) {
+                X509Certificate certs[] = (X509Certificate[]) getAttribute(Globals.CERTIFICATES_ATTR);
+                if (FORCE_CLIENT_AUTH_ON_GET_USER_PRINCIPAL && (certs == null || certs.length < 1)) {
                     // Force SSL re-handshake and request client auth
-                    certs = (X509Certificate[]) getAttribute(
-                            Globals.SSL_CERTIFICATE_ATTR);
+                    certs = (X509Certificate[]) getAttribute(Globals.SSL_CERTIFICATE_ATTR);
                 }
-                
+
                 if (certs != null && certs.length > 0) {
                     userPrincipal = certs[0].getSubjectX500Principal();
                 }
@@ -1979,7 +1814,7 @@ public class Request {
                 buf.append(c);
             } else {
                 if (++i >= s.length()) {
-                    //invalid escape, hence invalid cookie
+                    // invalid escape, hence invalid cookie
                     throw new IllegalArgumentException();
                 }
                 c = s.charAt(i);
@@ -2000,11 +1835,9 @@ public class Request {
 
     }
 
-
     /**
-     * @return the {@link InputBuffer} associated with this request, which is the
-     * source for {@link #getInputStream()}, {@link #getReader()},
-     * {@link #getNIOInputStream()}, and {@link #getNIOReader()}
+     * @return the {@link InputBuffer} associated with this request, which is the source for {@link #getInputStream()},
+     * {@link #getReader()}, {@link #getNIOInputStream()}, and {@link #getNIOReader()}
      */
     public InputBuffer getInputBuffer() {
 
@@ -2012,11 +1845,9 @@ public class Request {
 
     }
 
-
     /**
-     * This method may be used if some other entity processed request parameters
-     * and wishes to expose them via the request.  When this method is called,
-     * it will mark the internal request parameter state as having been processed.
+     * This method may be used if some other entity processed request parameters and wishes to expose them via the request.
+     * When this method is called, it will mark the internal request parameter state as having been processed.
      *
      * @param parameters the parameters to expose via this request.
      *
@@ -2026,12 +1857,10 @@ public class Request {
 
         this.requestParametersParsed = true;
         for (final String name : parameters.getParameterNames()) {
-            this.parameters.addParameterValues(name,
-                                               parameters.getParameterValues(name));
+            this.parameters.addParameterValues(name, parameters.getParameterValues(name));
         }
 
     }
-
 
     /**
      * TODO DOCS
@@ -2046,7 +1875,6 @@ public class Request {
 
         return rawCookies;
     }
-
 
     /**
      * Parse request parameters.
@@ -2066,17 +1894,17 @@ public class Request {
             // getCharacterEncoding() may have been overridden to search for
             // hidden form field containing request encoding
             charset = lookupCharset(getCharacterEncoding());
-            
+
             parameters.setEncoding(charset);
         }
-        
+
         if (parameters.getQueryStringEncoding() == null) {
             if (charset == null) {
                 // getCharacterEncoding() may have been overridden to search for
                 // hidden form field containing request encoding
                 charset = lookupCharset(getCharacterEncoding());
             }
-            
+
             parameters.setQueryStringEncoding(charset);
         }
 
@@ -2090,10 +1918,11 @@ public class Request {
             return;
         }
 
-        if (!checkPostContentType(getContentType())) return;
+        if (!checkPostContentType(getContentType())) {
+            return;
+        }
 
-        final int maxFormPostSize =
-                httpServerFilter.getConfiguration().getMaxFormPostSize();
+        final int maxFormPostSize = httpServerFilter.getConfiguration().getMaxFormPostSize();
 
         int len = getContentLength();
         if (len < 0) {
@@ -2104,7 +1933,7 @@ public class Request {
             len = maxFormPostSize;
         }
 
-        if ((maxFormPostSize > 0) && (len > maxFormPostSize)) {
+        if (maxFormPostSize > 0 && len > maxFormPostSize) {
             if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.warning(LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUEST_POST_TOO_LARGE());
             }
@@ -2122,8 +1951,7 @@ public class Request {
             try {
                 skipPostBody(read);
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING,
-                        LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUEST_BODY_SKIP(), e);
+                LOGGER.log(Level.WARNING, LogMessages.WARNING_GRIZZLY_HTTP_SERVER_REQUEST_BODY_SKIP(), e);
             }
         }
 
@@ -2140,13 +1968,12 @@ public class Request {
         } else {
             charset = org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET;
         }
-        
+
         return charset;
     }
-    
+
     private boolean checkPostContentType(final String contentType) {
-        return ((contentType != null)
-                  && contentType.trim().startsWith(FORM_POST_CONTENT_TYPE));
+        return contentType != null && contentType.trim().startsWith(FORM_POST_CONTENT_TYPE);
 
     }
 
@@ -2184,7 +2011,6 @@ public class Request {
 
     }
 
-
     /**
      * Parse accept-language header value.
      */
@@ -2192,21 +2018,23 @@ public class Request {
 
         // Store the accumulated languages that have been requested in
         // a local collection, sorted by the quality value (so we can
-        // add Locales in descending order).  The values will be ArrayLists
+        // add Locales in descending order). The values will be ArrayLists
         // containing the corresponding Locales to be added
-        TreeMap<Double,List<Locale>> localLocalesMap = new TreeMap<>();
+        TreeMap<Double, List<Locale>> localLocalesMap = new TreeMap<>();
 
         // Preprocess the value to remove all whitespace
         int white = value.indexOf(' ');
-        if (white < 0)
+        if (white < 0) {
             white = value.indexOf('\t');
+        }
         if (white >= 0) {
             int len = value.length();
             StringBuilder sb = new StringBuilder(len - 1);
             for (int i = 0; i < len; i++) {
                 char ch = value.charAt(i);
-                if ((ch != ' ') && (ch != '\t'))
+                if (ch != ' ' && ch != '\t') {
                     sb.append(ch);
+                }
             }
             value = sb.toString();
         }
@@ -2214,19 +2042,20 @@ public class Request {
         if (parser == null) {
             parser = new StringParser();
         }
-        
+
         // Process each comma-delimited language specification
-        parser.setString(value);        // ASSERT: parser is available to us
+        parser.setString(value); // ASSERT: parser is available to us
         int length = parser.getLength();
         while (true) {
 
             // Extract the next comma-delimited entry
             int start = parser.getIndex();
-            if (start >= length)
+            if (start >= length) {
                 break;
+            }
             int end = parser.findChar(',');
             String entry = parser.extract(start, end).trim();
-            parser.advance();   // For the following entry
+            parser.advance(); // For the following entry
 
             // Extract the quality factor for this entry
             double quality = 1.0;
@@ -2248,10 +2077,12 @@ public class Request {
             }
 
             // Skip entries we are not going to keep track of
-            if (quality < 0.00005)
-                continue;       // Zero (or effectively zero) quality factors
-            if ("*".equals(entry))
-                continue;       // FIXME - "*" entries are not handled
+            if (quality < 0.00005) {
+                continue; // Zero (or effectively zero) quality factors
+            }
+            if ("*".equals(entry)) {
+                continue; // FIXME - "*" entries are not handled
+            }
 
             Locale locale = localeParser.parseLocale(entry);
             if (locale == null) {
@@ -2259,7 +2090,7 @@ public class Request {
             }
 
             // Add a new Locale to the list of Locales for this quality level
-            Double key = -quality;  // Reverse the order
+            Double key = -quality; // Reverse the order
             List<Locale> values = localLocalesMap.get(key);
             if (values == null) {
                 values = new ArrayList<>();
@@ -2271,7 +2102,7 @@ public class Request {
 
         // Process the quality values in highest->lowest order (due to
         // negating the Double value when creating the key)
-        for (List<Locale> localLocales: localLocalesMap.values()) {
+        for (List<Locale> localLocales : localLocalesMap.values()) {
             for (Locale locale : localLocales) {
                 addLocale(locale);
             }
@@ -2295,8 +2126,8 @@ public class Request {
     }
 
     /*
-     * @return <code>true</code> if the given string is composed of
-     *  upper- or lowercase letters only, <code>false</code> otherwise.
+     * @return <code>true</code> if the given string is composed of upper- or lowercase letters only, <code>false</code>
+     * otherwise.
      */
     @SuppressWarnings("unused")
     static boolean isAlpha(String value) {
@@ -2307,14 +2138,13 @@ public class Request {
 
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
+            if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z')) {
                 return false;
             }
         }
 
         return true;
     }
-
 
     /**
      * Sets the jroute id of this request.
@@ -2326,12 +2156,10 @@ public class Request {
     }
 
     /**
-     * Gets the jroute id of this request, which may have been
-     * sent as a separate <code>JROUTE</code> cookie or appended to the
-     * session identifier encoded in the URI (if cookies have been disabled).
+     * Gets the jroute id of this request, which may have been sent as a separate <code>JROUTE</code> cookie or appended to
+     * the session identifier encoded in the URI (if cookies have been disabled).
      *
-     * @return The jroute id of this request, or null if this request does not
-     * carry any jroute id
+     * @return The jroute id of this request, or null if this request does not carry any jroute id
      */
     public String getJrouteId() {
         return jrouteId;
@@ -2339,19 +2167,15 @@ public class Request {
 
     // ------------------------------------------------------ Session support --/
 
-
     /**
-     * Return the session associated with this Request, creating one
-     * if necessary.
+     * Return the session associated with this Request, creating one if necessary.
      */
     public Session getSession() {
         return doGetSession(true);
     }
 
-
     /**
-     * Return the session associated with this Request, creating one
-     * if necessary and requested.
+     * Return the session associated with this Request, creating one if necessary and requested.
      *
      * @param create Create a new session if one does not exist
      */
@@ -2360,13 +2184,11 @@ public class Request {
     }
 
     /**
-     * Change the session id of the current session associated with this
-     * request and return the new session id. 
+     * Change the session id of the current session associated with this request and return the new session id.
      *
      * @return the original session id
      *
-     * @throws IllegalStateException if there is no session associated
-     * with the request
+     * @throws IllegalStateException if there is no session associated with the request
      *
      * @since 2.3
      */
@@ -2380,12 +2202,12 @@ public class Request {
         final String newSessionId = sessionLocal.getIdInternal();
         requestedSessionId = newSessionId;
 
-        if (isRequestedSessionIdFromURL())
+        if (isRequestedSessionIdFromURL()) {
             return oldSessionId;
+        }
 
         if (response != null) {
-            final Cookie cookie = new Cookie(obtainSessionCookieName(),
-                                             newSessionId);
+            final Cookie cookie = new Cookie(obtainSessionCookieName(), newSessionId);
             configureSessionCookie(cookie);
             response.addSessionCookieInternal(cookie);
         }
@@ -2404,7 +2226,7 @@ public class Request {
         if (requestedSessionId == null) {
             final Cookie[] cookiesLocale = getCookies();
             assert cookiesLocale != null;
-            
+
             final String sessionCookieNameLocal = obtainSessionCookieName();
             for (int i = 0; i < cookiesLocale.length; i++) {
                 final Cookie c = cookiesLocale[i];
@@ -2420,35 +2242,32 @@ public class Request {
         if (session != null && !session.isValid()) {
             session = null;
         }
-        
+
         if (session != null) {
             session.access();
             return session;
         }
-        
+
         if (!create) {
             return null;
         }
-        
+
         session = getSessionManager().createSession(this);
-        session.setSessionTimeout(
-                httpServerFilter.getConfiguration().getSessionTimeoutSeconds() * 1000);
+        session.setSessionTimeout(httpServerFilter.getConfiguration().getSessionTimeoutSeconds() * 1000);
         requestedSessionId = session.getIdInternal();
 
         // Creating a new session cookie based on the newly created session
-        final Cookie cookie = new Cookie(obtainSessionCookieName(),
-                                         session.getIdInternal());
+        final Cookie cookie = new Cookie(obtainSessionCookieName(), session.getIdInternal());
         configureSessionCookie(cookie);
 
         assert response != null;
         response.addCookie(cookie);
-        
+
         return session;
     }
 
     /**
-     * @return <code>true</code> if the session identifier included in this
-     * request came from a cookie.
+     * @return <code>true</code> if the session identifier included in this request came from a cookie.
      */
     public boolean isRequestedSessionIdFromCookie() {
 
@@ -2457,8 +2276,7 @@ public class Request {
     }
 
     /**
-     * Return <code>true</code> if the session identifier included in this
-     * request came from the request URI.
+     * Return <code>true</code> if the session identifier included in this request came from the request URI.
      */
     public boolean isRequestedSessionIdFromURL() {
 
@@ -2467,21 +2285,18 @@ public class Request {
     }
 
     /**
-     * @return <tt>true</tt> if the session identifier included in this
-     * request identifies a valid session.
+     * @return <tt>true</tt> if the session identifier included in this request identifies a valid session.
      */
     public boolean isRequestedSessionIdValid() {
         if (requestedSessionId == null) {
             return false;
         }
 
-        if (session != null
-                && requestedSessionId.equals(session.getIdInternal())) {
+        if (session != null && requestedSessionId.equals(session.getIdInternal())) {
             return session.isValid();
         }
 
-        final Session localSession =
-                getSessionManager().getSession(this, requestedSessionId);
+        final Session localSession = getSessionManager().getSession(this, requestedSessionId);
         return localSession != null && localSession.isValid();
 
     }
@@ -2498,7 +2313,7 @@ public class Request {
         if (isSecure()) {
             cookie.setSecure(true);
         }
-        
+
         getSessionManager().configureSessionCookie(this, cookie);
     }
 
@@ -2506,41 +2321,40 @@ public class Request {
      * Parse session id in URL.
      */
     protected void parseSessionId() {
-        if (sessionParsed) return;
+        if (sessionParsed) {
+            return;
+        }
 
         sessionParsed = true;
         final DataChunk uriDC = request.getRequestURIRef().getRequestURIBC();
-        
+
         final boolean isUpdated;
-        
+
         switch (uriDC.getType()) {
-            case Bytes:
-                isUpdated = parseSessionId(uriDC.getByteChunk());
-                break;
-            case Buffer:
-                isUpdated = parseSessionId(uriDC.getBufferChunk());
-                break;
-            case Chars:
-                isUpdated = parseSessionId(uriDC.getCharChunk());
-                break;
-            case String:
-                isUpdated = parseSessionId(uriDC);
-                break;
-            default:
-                throw new IllegalStateException("Unexpected DataChunk type: " + uriDC.getType());
+        case Bytes:
+            isUpdated = parseSessionId(uriDC.getByteChunk());
+            break;
+        case Buffer:
+            isUpdated = parseSessionId(uriDC.getBufferChunk());
+            break;
+        case Chars:
+            isUpdated = parseSessionId(uriDC.getCharChunk());
+            break;
+        case String:
+            isUpdated = parseSessionId(uriDC);
+            break;
+        default:
+            throw new IllegalStateException("Unexpected DataChunk type: " + uriDC.getType());
         }
-        
+
         if (isUpdated) {
             uriDC.notifyDirectUpdate();
         }
     }
 
-
     private boolean parseSessionId(final Chunk uriChunk) {
-        final String sessionParamNameMatch = sessionCookieName != null
-                ? ';' + sessionCookieName + '='
-                : match;
-        
+        final String sessionParamNameMatch = sessionCookieName != null ? ';' + sessionCookieName + '=' : match;
+
         boolean isUpdated = false;
         final int semicolon = uriChunk.indexOf(sessionParamNameMatch, 0);
 
@@ -2550,7 +2364,7 @@ public class Request {
 
             final int sessionIdStart = semicolon + sessionParamNameMatch.length();
             final int semicolon2 = uriChunk.indexOf(';', sessionIdStart);
-            
+
             isUpdated = semicolon2 >= 0;
             final int end = isUpdated ? semicolon2 : uriChunk.getLength();
 
@@ -2559,7 +2373,7 @@ public class Request {
             final int jrouteIndex = sessionId.lastIndexOf(':');
             if (jrouteIndex > 0) {
                 setRequestedSessionId(sessionId.substring(0, jrouteIndex));
-                if (jrouteIndex < (sessionId.length() - 1)) {
+                if (jrouteIndex < sessionId.length() - 1) {
                     setJrouteId(sessionId.substring(jrouteIndex + 1));
                 }
             } else {
@@ -2573,18 +2387,16 @@ public class Request {
             setRequestedSessionId(null);
             setRequestedSessionURL(false);
         }
-        
+
         return isUpdated;
     }
 
     private boolean parseSessionId(DataChunk dataChunkStr) {
         assert dataChunkStr.getType() == DataChunk.Type.String;
-        
+
         final String uri = dataChunkStr.toString();
-        final String sessionParamNameMatch = sessionCookieName != null
-                ? ';' + sessionCookieName + '='
-                : match;
-        
+        final String sessionParamNameMatch = sessionCookieName != null ? ';' + sessionCookieName + '=' : match;
+
         boolean isUpdated = false;
         final int semicolon = uri.indexOf(sessionParamNameMatch);
 
@@ -2594,7 +2406,7 @@ public class Request {
 
             final int sessionIdStart = semicolon + sessionParamNameMatch.length();
             final int semicolon2 = uri.indexOf(';', sessionIdStart);
-            
+
             isUpdated = semicolon2 >= 0;
             final int end = isUpdated ? semicolon2 : uri.length();
 
@@ -2603,7 +2415,7 @@ public class Request {
             final int jrouteIndex = sessionId.lastIndexOf(':');
             if (jrouteIndex > 0) {
                 setRequestedSessionId(sessionId.substring(0, jrouteIndex));
-                if (jrouteIndex < (sessionId.length() - 1)) {
+                if (jrouteIndex < sessionId.length() - 1) {
                     setJrouteId(sessionId.substring(jrouteIndex + 1));
                 }
             } else {
@@ -2617,14 +2429,13 @@ public class Request {
             setRequestedSessionId(null);
             setRequestedSessionURL(false);
         }
-        
+
         return isUpdated;
     }
-    
+
     /**
-     * Set a flag indicating whether or not the requested session ID for this
-     * request came in through a cookie.  This is normally called by the
-     * HTTP Connector, when it parses the request headers.
+     * Set a flag indicating whether or not the requested session ID for this request came in through a cookie. This is
+     * normally called by the HTTP Connector, when it parses the request headers.
      *
      * @param flag The new flag
      */
@@ -2634,10 +2445,9 @@ public class Request {
 
     }
 
-
     /**
-     * Set the requested session ID for this request.  This is normally called
-     * by the HTTP Connector, when it parses the request headers.
+     * Set the requested session ID for this request. This is normally called by the HTTP Connector, when it parses the
+     * request headers.
      *
      * @param id The new session id
      */
@@ -2647,11 +2457,9 @@ public class Request {
 
     }
 
-
     /**
-     * Set a flag indicating whether or not the requested session ID for this
-     * request came in through a URL.  This is normally called by the
-     * HTTP Connector, when it parses the request headers.
+     * Set a flag indicating whether or not the requested session ID for this request came in through a URL. This is
+     * normally called by the HTTP Connector, when it parses the request headers.
      *
      * @param flag The new flag
      */
@@ -2660,7 +2468,7 @@ public class Request {
         this.requestedSessionURL = flag;
 
     }
-    
+
     private static class PathData {
         private final Request request;
         private String path;
@@ -2670,13 +2478,12 @@ public class Request {
             this.request = request;
         }
 
-        public PathData(final Request request, final String path,
-                final PathResolver resolver) {
+        public PathData(final Request request, final String path, final PathResolver resolver) {
             this.request = request;
             this.path = path;
             this.resolver = resolver;
         }
-        
+
         public void setPath(final String path) {
             this.path = path;
             resolver = null;
@@ -2688,16 +2495,15 @@ public class Request {
         }
 
         public String get() {
-            return path != null ? path :
-                    (resolver != null ? (path = resolver.resolve(request)) : null);
+            return path != null ? path : resolver != null ? (path = resolver.resolve(request)) : null;
         }
-        
+
         public void reset() {
             path = null;
             resolver = null;
         }
     }
-    
+
     protected interface PathResolver {
         String resolve(Request request);
     }

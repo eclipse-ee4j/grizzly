@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,37 +21,33 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.io.NIOReader;
+import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.util.ContentType;
 import org.glassfish.grizzly.http.util.Header;
 
 /**
- * Abstraction represents single multipart entry, its functionality is pretty
- * similar to {@link Request}.
- * In order to read multipart entry data it's possible to use either {@link #getNIOInputStream()}
- * or {@link #getNIOReader()} depends on whether we want to operate with binary or
- * {@link String} data.
- * 
+ * Abstraction represents single multipart entry, its functionality is pretty similar to {@link Request}. In order to
+ * read multipart entry data it's possible to use either {@link #getNIOInputStream()} or {@link #getNIOReader()} depends
+ * on whether we want to operate with binary or {@link String} data.
+ *
  * @since 2.0.1
  *
  * @author Alexey Stashok
  */
 public class MultipartEntry {
 
-    private static final String DEFAULT_CONTENT_TYPE =
-            "text/plain; charset=US-ASCII";
-    private static final String DEFAULT_CONTENT_ENCODING =
-            "US-ASCII";
+    private static final String DEFAULT_CONTENT_TYPE = "text/plain; charset=US-ASCII";
+    private static final String DEFAULT_CONTENT_ENCODING = "US-ASCII";
 
     private NIOInputStream requestInputStream;
-    
+
     private final MultipartContext multipartContext;
     private final MultipartEntryNIOInputStream inputStream;
     private final MultipartEntryNIOReader reader;
 
-    private final Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private String contentType = DEFAULT_CONTENT_TYPE;
     private ContentDisposition contentDisposition;
@@ -61,11 +57,11 @@ public class MultipartEntry {
     // Previous (processed) line terminator bytes, which we're not sure about,
     // whether they are part of section boundary or multipart entry content
     private int reservedBytes;
-    
+
     private boolean isFinished;
 
     private boolean isSkipping;
-    
+
     /**
      * Using stream flag.
      */
@@ -97,21 +93,23 @@ public class MultipartEntry {
     }
 
     public NIOInputStream getNIOInputStream() {
-        if (usingReader)
+        if (usingReader) {
             throw new IllegalStateException("MultipartEntry is in the character mode");
+        }
 
         if (!usingInputStream) {
             inputStream.initialize(requestInputStream);
         }
-        
+
         usingInputStream = true;
-        
+
         return inputStream;
     }
 
     public NIOReader getNIOReader() {
-        if (usingInputStream)
+        if (usingInputStream) {
             throw new IllegalStateException("MultipartEntry is in the binary mode");
+        }
 
         if (!usingReader) {
             reader.initialize(requestInputStream, getEncoding());
@@ -124,27 +122,23 @@ public class MultipartEntry {
 
     /**
      * Get multipart processing context.
-     * 
+     *
      * @return {@link MultipartContext}.
      */
     public MultipartContext getMultipartContext() {
         return multipartContext;
     }
-    
+
     /**
-     * Returns <tt>true</tt> if this is "multipart/*" multipart entry, or
-     * <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if this is "multipart/*" multipart entry, or <tt>false</tt> otherwise.
      *
-     * @return <tt>true</tt> if this is "multipart/*" multipart entry, or
-     * <tt>false</tt> otherwise.
+     * @return <tt>true</tt> if this is "multipart/*" multipart entry, or <tt>false</tt> otherwise.
      */
     public boolean isMultipart() {
         if (!isMultipartParsed) {
             isMultipartParsed = true;
 
-            isMultipart = contentType != null &&
-                    contentType.toLowerCase().startsWith(
-                    MultipartScanner.MULTIPART_CONTENT_TYPE);
+            isMultipart = contentType != null && contentType.toLowerCase().startsWith(MultipartScanner.MULTIPART_CONTENT_TYPE);
         }
 
         return isMultipart;
@@ -152,6 +146,7 @@ public class MultipartEntry {
 
     /**
      * Get the multipart entry content-type.
+     * 
      * @return the multipart entry content-type.
      */
     public String getContentType() {
@@ -164,6 +159,7 @@ public class MultipartEntry {
 
     /**
      * Get the multipart entry content-disposition.
+     * 
      * @return the multipart entry content-disposition.
      */
     public ContentDisposition getContentDisposition() {
@@ -176,6 +172,7 @@ public class MultipartEntry {
 
     /**
      * Get the multipart entry header names.
+     * 
      * @return the multipart entry header names.
      */
     public Set<String> getHeaderNames() {
@@ -184,7 +181,7 @@ public class MultipartEntry {
 
     /**
      * Get the multipart entry header value.
-     * 
+     *
      * @param name multipart entry header name.
      * @return the multipart entry header value.
      */
@@ -222,7 +219,7 @@ public class MultipartEntry {
     /**
      * Skip the multipart entry processing.
      */
-    @SuppressWarnings({"ResultOfMethodCallIgnored"})
+    @SuppressWarnings({ "ResultOfMethodCallIgnored" })
     public void skip() throws IOException {
         isSkipping = true;
         requestInputStream.skip(availableBytes);
@@ -254,7 +251,7 @@ public class MultipartEntry {
         onDataReceived();
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored"})
+    @SuppressWarnings({ "ResultOfMethodCallIgnored" })
     void onDataReceived() throws Exception {
         if (isSkipping) {
             try {
@@ -287,23 +284,22 @@ public class MultipartEntry {
     }
 
     /**
-     * Get the previous (processed) line terminator bytes, which we're not sure about,
-     * whether they are part of section boundary or multipart entry content
-     * 
-     * @return the previous (processed) line terminator bytes, which we're not sure about,
-     * whether they are part of section boundary or multipart entry content
+     * Get the previous (processed) line terminator bytes, which we're not sure about, whether they are part of section
+     * boundary or multipart entry content
+     *
+     * @return the previous (processed) line terminator bytes, which we're not sure about, whether they are part of section
+     * boundary or multipart entry content
      */
     int getReservedBytes() {
         return reservedBytes;
     }
 
     /**
-     * Set the previous (processed) line terminator bytes, which we're not sure about,
-     * whether they are part of section boundary or multipart entry content
+     * Set the previous (processed) line terminator bytes, which we're not sure about, whether they are part of section
+     * boundary or multipart entry content
      *
-     * @param reservedBytes the previous (processed) line terminator bytes,
-     * which we're not sure about, whether they are part of section boundary or
-     * multipart entry content
+     * @param reservedBytes the previous (processed) line terminator bytes, which we're not sure about, whether they are
+     * part of section boundary or multipart entry content
      */
     void setReservedBytes(int reservedBytes) {
         this.reservedBytes = reservedBytes;

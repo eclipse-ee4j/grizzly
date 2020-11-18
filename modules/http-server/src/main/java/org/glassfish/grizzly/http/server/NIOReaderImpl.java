@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.grizzly.http.server;
 
 import java.io.IOException;
 import java.nio.CharBuffer;
+
 import org.glassfish.grizzly.Cacheable;
 import org.glassfish.grizzly.ReadHandler;
 import org.glassfish.grizzly.http.io.InputBuffer;
@@ -33,42 +34,45 @@ final class NIOReaderImpl extends NIOReader implements Cacheable {
 
     private InputBuffer inputBuffer;
 
-
     // ----------------------------------------------------- Methods from Reader
-
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read(final CharBuffer target) throws IOException {
+    @Override
+    public int read(final CharBuffer target) throws IOException {
         return inputBuffer.read(target);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read() throws IOException {
+    @Override
+    public int read() throws IOException {
         return inputBuffer.readChar();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read(final char[] cbuf) throws IOException {
+    @Override
+    public int read(final char[] cbuf) throws IOException {
         return inputBuffer.read(cbuf, 0, cbuf.length);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public long skip(final long n) throws IOException {
+    @Override
+    public long skip(final long n) throws IOException {
         return inputBuffer.skip(n);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public boolean ready() throws IOException {
+    @Override
+    public boolean ready() throws IOException {
         return isReady();
     }
 
@@ -77,42 +81,44 @@ final class NIOReaderImpl extends NIOReader implements Cacheable {
      *
      * @return <code>true</code>
      */
-    @Override public boolean markSupported() {
+    @Override
+    public boolean markSupported() {
         return true;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void mark(int readAheadLimit) throws IOException {
+    @Override
+    public void mark(int readAheadLimit) throws IOException {
         inputBuffer.mark(readAheadLimit);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void reset() throws IOException {
+    @Override
+    public void reset() throws IOException {
         inputBuffer.reset();
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public int read(final char[] cbuf, final int off, final int len)
-    throws IOException {
+    @Override
+    public int read(final char[] cbuf, final int off, final int len) throws IOException {
         return inputBuffer.read(cbuf, off, len);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         inputBuffer.close();
     }
 
-
     // --------------------------------------------- Methods from InputSource
-
 
     /**
      * {@inheritDoc}
@@ -154,9 +160,7 @@ final class NIOReaderImpl extends NIOReader implements Cacheable {
         return readyData() > 0;
     }
 
-
     // -------------------------------------------------- Methods from Cacheable
-
 
     /**
      * {@inheritDoc}
@@ -168,9 +172,7 @@ final class NIOReaderImpl extends NIOReader implements Cacheable {
 
     }
 
-
     // ---------------------------------------------------------- Public Methods
-
 
     public void setInputBuffer(final InputBuffer inputBuffer) {
 

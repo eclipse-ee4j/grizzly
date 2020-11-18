@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,9 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
-
 import java.util.Arrays;
+
+import org.glassfish.grizzly.Buffer;
 
 //
 //          0   1   2   3   4   5   6   7
@@ -39,10 +39,10 @@ import java.util.Arrays;
 //
 final class StringWriter {
 
-    private static final byte NEW            = 0x0;
-    private static final byte CONFIGURED     = 0x1;
+    private static final byte NEW = 0x0;
+    private static final byte CONFIGURED = 0x1;
     private static final byte LENGTH_WRITTEN = 0x2;
-    private static final byte DONE           = 0x4;
+    private static final byte DONE = 0x4;
 
     private final IntegerWriter intWriter = new IntegerWriter();
     private final Huffman.Writer huffmanWriter = new Huffman.Writer();
@@ -55,20 +55,16 @@ final class StringWriter {
         return configure(input, 0, input.length(), huffman);
     }
 
-    StringWriter configure(CharSequence input, int start, int end,
-                           boolean huffman) {
+    StringWriter configure(CharSequence input, int start, int end, boolean huffman) {
         if (start < 0 || end < 0 || end > input.length() || start > end) {
-            throw new IndexOutOfBoundsException(
-                    String.format("input.length()=%s, start=%s, end=%s",
-                            input.length(), start, end));
+            throw new IndexOutOfBoundsException(String.format("input.length()=%s, start=%s, end=%s", input.length(), start, end));
         }
         if (!huffman) {
             plainWriter.configure(input, start, end);
             intWriter.configure(end - start, 7, 0b0000_0000);
         } else {
             huffmanWriter.from(input, start, end);
-            intWriter.configure(Huffman.INSTANCE.lengthOf(input, start, end),
-                    7, 0b1000_0000);
+            intWriter.configure(Huffman.INSTANCE.lengthOf(input, start, end), 7, 0b1000_0000);
         }
 
         this.huffman = huffman;
@@ -94,9 +90,7 @@ final class StringWriter {
             }
         }
         if (state == LENGTH_WRITTEN) {
-            boolean written = huffman
-                    ? huffmanWriter.write(output)
-                    : plainWriter.write(output);
+            boolean written = huffman ? huffmanWriter.write(output) : plainWriter.write(output);
             if (written) {
                 state = DONE;
                 return true;
@@ -104,7 +98,7 @@ final class StringWriter {
                 return false;
             }
         }
-        throw new InternalError(Arrays.toString(new Object[]{state, huffman}));
+        throw new InternalError(Arrays.toString(new Object[] { state, huffman }));
     }
 
     void reset() {

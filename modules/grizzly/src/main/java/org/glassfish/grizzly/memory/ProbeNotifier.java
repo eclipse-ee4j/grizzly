@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,8 +19,7 @@ package org.glassfish.grizzly.memory;
 import org.glassfish.grizzly.monitoring.DefaultMonitoringConfig;
 
 /**
- * Utility class, which has notification methods for different
- * {@link MemoryProbe} events.
+ * Utility class, which has notification methods for different {@link MemoryProbe} events.
  *
  * @author Alexey Stashok
  */
@@ -31,9 +30,7 @@ final class ProbeNotifier {
      *
      * @param size buffer size
      */
-    static void notifyBufferAllocated(
-            final DefaultMonitoringConfig<MemoryProbe> config,
-            final int size) {
+    static void notifyBufferAllocated(final DefaultMonitoringConfig<MemoryProbe> config, final int size) {
 
         final MemoryProbe[] probes = config.getProbesUnsafe();
         if (probes != null) {
@@ -48,9 +45,7 @@ final class ProbeNotifier {
      *
      * @param size buffer size
      */
-    static void notifyBufferAllocatedFromPool(
-            final DefaultMonitoringConfig<MemoryProbe> config,
-            final int size) {
+    static void notifyBufferAllocatedFromPool(final DefaultMonitoringConfig<MemoryProbe> config, final int size) {
 
         final MemoryProbe[] probes = config.getProbesUnsafe();
         if (probes != null) {
@@ -65,9 +60,7 @@ final class ProbeNotifier {
      *
      * @param size buffer size
      */
-    static void notifyBufferReleasedToPool(
-            final DefaultMonitoringConfig<MemoryProbe> config,
-            final int size) {
+    static void notifyBufferReleasedToPool(final DefaultMonitoringConfig<MemoryProbe> config, final int size) {
 
         final MemoryProbe[] probes = config.getProbesUnsafe();
         if (probes != null) {

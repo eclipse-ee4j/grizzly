@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,18 +16,18 @@
 
 package org.glassfish.grizzly.memory;
 
-import org.glassfish.grizzly.utils.Charsets;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.InvalidMarkException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.glassfish.grizzly.utils.Charsets;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class BuffersBufferTest extends AbstractMemoryManagerTest {
@@ -35,7 +35,6 @@ public class BuffersBufferTest extends AbstractMemoryManagerTest {
     public BuffersBufferTest(int mmType) {
         super(mmType);
     }
-
 
     // ------------------------------------------------------------ Test Methods
 
@@ -61,14 +60,14 @@ public class BuffersBufferTest extends AbstractMemoryManagerTest {
         assertTrue(buffer.order() == ByteOrder.BIG_ENDIAN);
         buffer.putShort((short) 1);
         buffer.flip();
-        assertEquals("big endian", ((short) 1), buffer.getShort());
+        assertEquals("big endian", (short) 1, buffer.getShort());
         buffer = createOneSevenBuffer(mm);
         assertTrue(buffer.order() == ByteOrder.BIG_ENDIAN);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         assertTrue(buffer.order() == ByteOrder.LITTLE_ENDIAN);
         buffer.putShort((short) 1);
         buffer.flip();
-        assertEquals("little endian", ((short) 1), buffer.getShort());
+        assertEquals("little endian", (short) 1, buffer.getShort());
     }
 
     @Test
@@ -139,10 +138,10 @@ public class BuffersBufferTest extends AbstractMemoryManagerTest {
     public void testMarkAndReset() {
         final BuffersBuffer buffer = createOneSevenBuffer(mm);
 
-        buffer.putShort((short)0);
+        buffer.putShort((short) 0);
         buffer.putShort((short) 1);
         buffer.mark();
-        buffer.putShort((short)2);
+        buffer.putShort((short) 2);
         buffer.putShort((short) 3);
         assertTrue(buffer.remaining() == 0);
         final int lastPosition = buffer.position();
@@ -198,7 +197,7 @@ public class BuffersBufferTest extends AbstractMemoryManagerTest {
         b.append(Buffers.wrap(mm, "Hello "));
         b.append(BuffersBuffer.create(mm));
         b.append(Buffers.wrap(mm, "world!"));
-        
+
         ByteBuffer buffer = ByteBuffer.allocate(12);
         b.get(buffer);
         buffer.flip();
@@ -217,13 +216,9 @@ public class BuffersBufferTest extends AbstractMemoryManagerTest {
         assertEquals("Hello world!", new String(bytes));
     }
 
-
     // ------------------------------------------------------- Protected Methods
 
-
-
     // --------------------------------------------------------- Private Methods
-
 
     private static BuffersBuffer createOneSevenBuffer(final MemoryManager mm) {
         final BuffersBuffer b = BuffersBuffer.create(mm);

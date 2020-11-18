@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,25 +23,12 @@ public class HttpRequestPacketTest extends TestCase {
     private HttpRequestPacket request;
 
     public void testToString() {
-        request = HttpRequestPacket.builder()
-                .uri("/")
-                .protocol(Protocol.HTTP_1_1)
-                .header("transfer-encoding", "chunked")
-                .header("some-header", "firstValue")
-                .header("some-header", "secondValue")
-                .build();
+        request = HttpRequestPacket.builder().uri("/").protocol(Protocol.HTTP_1_1).header("transfer-encoding", "chunked").header("some-header", "firstValue")
+                .header("some-header", "secondValue").build();
 
-        assertEquals(request.toString(), "HttpRequestPacket (\n"
-                + "   method=GET\n"
-                + "   url=/\n"
-                + "   query=null\n"
-                + "   protocol=HTTP/1.1\n"
-                + "   content-length=-1\n"
-                + "   headers=[\n"
-                + "      transfer-encoding=chunked\n"
-                + "      some-header=firstValue\n"
-                + "      some-header=secondValue]\n"
-                + ")");
+        assertEquals(request.toString(),
+                "HttpRequestPacket (\n" + "   method=GET\n" + "   url=/\n" + "   query=null\n" + "   protocol=HTTP/1.1\n" + "   content-length=-1\n"
+                        + "   headers=[\n" + "      transfer-encoding=chunked\n" + "      some-header=firstValue\n" + "      some-header=secondValue]\n" + ")");
     }
 
 }

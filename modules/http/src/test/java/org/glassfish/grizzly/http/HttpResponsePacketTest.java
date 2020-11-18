@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,9 +17,11 @@
 package org.glassfish.grizzly.http;
 
 import java.util.Iterator;
-import junit.framework.TestCase;
+
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.MimeHeaders;
+
+import junit.framework.TestCase;
 
 public class HttpResponsePacketTest extends TestCase {
 
@@ -28,9 +30,7 @@ public class HttpResponsePacketTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        response = HttpResponsePacket.builder(
-                HttpRequestPacket.builder().uri("/").protocol(Protocol.HTTP_1_1).build())
-                .build();
+        response = HttpResponsePacket.builder(HttpRequestPacket.builder().uri("/").protocol(Protocol.HTTP_1_1).build()).build();
     }
 
     public void testSpecialHeadersTest() throws Exception {
@@ -79,8 +79,8 @@ public class HttpResponsePacketTest extends TestCase {
     }
 
     /**
-     * http://java.net/jira/browse/GRIZZLY-1295
-     * "NullPointer while trying to get next value via ValuesIterator in MimeHeaders"
+     * http://java.net/jira/browse/GRIZZLY-1295 "NullPointer while trying to get next value via ValuesIterator in
+     * MimeHeaders"
      */
     public void testMimeHeaderIterators() {
         response.setHeader("Content-Length", "1");
@@ -119,28 +119,12 @@ public class HttpResponsePacketTest extends TestCase {
     }
 
     public void testToString() {
-        response = HttpResponsePacket.builder(
-                HttpRequestPacket.builder()
-                        .uri("/")
-                        .protocol(Protocol.HTTP_1_1)
-                        .build())
-                .header("content-length", "13")
-                .header("transfer-encoding", "chunked")
-                .header("some-header", "firstValue")
-                .header("some-header", "secondValue")
-                .build();
+        response = HttpResponsePacket.builder(HttpRequestPacket.builder().uri("/").protocol(Protocol.HTTP_1_1).build()).header("content-length", "13")
+                .header("transfer-encoding", "chunked").header("some-header", "firstValue").header("some-header", "secondValue").build();
 
-        assertEquals("HttpResponsePacket (\n"
-                + "  status=200\n"
-                + "  reason=OK\n"
-                + "  protocol=HTTP/0.9\n"
-                + "  content-length=13\n"
-                + "  committed=false\n"
-                + "  headers=[\n"
-                + "      transfer-encoding=chunked\n"
-                + "      some-header=firstValue\n"
-                + "      some-header=secondValue]\n"
-                + ")",
+        assertEquals(
+                "HttpResponsePacket (\n" + "  status=200\n" + "  reason=OK\n" + "  protocol=HTTP/0.9\n" + "  content-length=13\n" + "  committed=false\n"
+                        + "  headers=[\n" + "      transfer-encoding=chunked\n" + "      some-header=firstValue\n" + "      some-header=secondValue]\n" + ")",
                 response.toString());
     }
 

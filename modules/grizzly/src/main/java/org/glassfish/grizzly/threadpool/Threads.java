@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,17 +18,16 @@ package org.glassfish.grizzly.threadpool;
 
 /**
  * Set of {@link Thread} utilities.
- * 
+ *
  * @author Alexey Stashok
  */
 public class Threads {
-    private static final ThreadLocal<Boolean> SERVICE_THREAD =
-            new ThreadLocal<Boolean>();
-    
+    private static final ThreadLocal<Boolean> SERVICE_THREAD = new ThreadLocal<>();
+
     public static boolean isService() {
         return Boolean.TRUE.equals(SERVICE_THREAD.get());
     }
-    
+
     public static void setService(final boolean isService) {
         if (isService) {
             SERVICE_THREAD.set(isService);
@@ -36,5 +35,5 @@ public class Threads {
             SERVICE_THREAD.remove();
         }
     }
-    
+
 }

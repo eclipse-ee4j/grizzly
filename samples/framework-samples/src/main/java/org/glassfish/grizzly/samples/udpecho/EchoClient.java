@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
@@ -28,15 +29,14 @@ import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.StringFilter;
 
 /**
- * The simple client, which sends a message to the echo server
- * and waits for response
+ * The simple client, which sends a message to the echo server and waits for response
+ * 
  * @author Alexey Stashok
  */
 public class EchoClient {
     private static final Logger logger = Logger.getLogger(EchoClient.class.getName());
 
-    public static void main(String[] args) throws IOException,
-            ExecutionException, InterruptedException, TimeoutException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         final FutureImpl<Boolean> future = SafeFutureImpl.create();
 
@@ -51,8 +51,7 @@ public class EchoClient {
         filterChainBuilder.add(new ClientFilter("Echo test", future));
 
         // Create the UDP transport
-        final UDPNIOTransport transport =
-                UDPNIOTransportBuilder.newInstance().build();
+        final UDPNIOTransport transport = UDPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -60,8 +59,7 @@ public class EchoClient {
             transport.start();
 
             // perform async. connect to the server
-            transport.connect(EchoServer.HOST,
-                    EchoServer.PORT);
+            transport.connect(EchoServer.HOST, EchoServer.PORT);
             // wait for connect operation to complete
 
             // check the result
@@ -75,8 +73,8 @@ public class EchoClient {
     }
 
     /**
-     * ClientFilter, which sends a message, when UDP connection gets bound to the target address,
-     * and checks the server echo.
+     * ClientFilter, which sends a message, when UDP connection gets bound to the target address, and checks the server
+     * echo.
      */
     static class ClientFilter extends BaseFilter {
         // initial message to be sent to the server
@@ -91,7 +89,7 @@ public class EchoClient {
 
         /**
          * Method is called, when UDP connection is getting bound to the server address.
-         * 
+         *
          * @param ctx the {@link FilterChainContext}.
          * @return
          * @throws IOException

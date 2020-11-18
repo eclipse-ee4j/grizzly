@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,13 +18,13 @@ package org.glassfish.grizzly.memory;
 
 /**
  * {@link MemoryManager} monitoring probe.
- * 
+ *
  * @author Alexey Stashok
  */
 public interface MemoryProbe {
     /**
      * Called by {@link MemoryManager}, when new buffer gets allocated
-     * 
+     *
      * @param size buffer size
      */
     void onBufferAllocateEvent(int size);
@@ -43,18 +43,16 @@ public interface MemoryProbe {
      */
     void onBufferReleaseToPoolEvent(int size);
 
-
     // ---------------------------------------------------------- Nested Classes
 
     /**
-     * {@link MemoryProbe} adapter that provides no-op implementations for
-     * all interface methods allowing easy extension by the developer.
+     * {@link MemoryProbe} adapter that provides no-op implementations for all interface methods allowing easy extension by
+     * the developer.
      *
      * @since 2.1.9
      */
     @SuppressWarnings("UnusedDeclaration")
     class Adapter implements MemoryProbe {
-
 
         // -------------------------------------------- Methods from MemoryProbe
 
@@ -62,19 +60,22 @@ public interface MemoryProbe {
          * {@inheritDoc}
          */
         @Override
-        public void onBufferAllocateEvent(int size) {}
+        public void onBufferAllocateEvent(int size) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBufferAllocateFromPoolEvent(int size) {}
+        public void onBufferAllocateFromPoolEvent(int size) {
+        }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void onBufferReleaseToPoolEvent(int size) {}
+        public void onBufferReleaseToPoolEvent(int size) {
+        }
 
     } // END Adapter
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -19,50 +19,45 @@ import org.glassfish.grizzly.ssl.SSLBaseFilter;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 
 /**
- * SNI {@link AddOn}, that replaces standard {@link SSLBaseFilter} with
- * an {@link SNIFilter} in order to use different {@link SSLEngineConfigurator}
- * depending on the SNI host information.
+ * SNI {@link AddOn}, that replaces standard {@link SSLBaseFilter} with an {@link SNIFilter} in order to use different
+ * {@link SSLEngineConfigurator} depending on the SNI host information.
  */
 public class SNIAddOn implements AddOn {
     private final SNIFilter sniFilter;
     private final SNIServerConfigResolver serverConfigResolver;
-    
+
     public SNIAddOn(final SNIServerConfigResolver serverConfigResolver) {
         if (serverConfigResolver == null) {
             throw new IllegalArgumentException("serverConfigResolver can't be null");
         }
-        
+
         this.serverConfigResolver = serverConfigResolver;
         sniFilter = null;
     }
-    
+
     public SNIAddOn(final SNIFilter sniFilter) {
         if (sniFilter == null) {
             throw new IllegalArgumentException("sniFilter can't be null");
         }
-        
+
         this.sniFilter = sniFilter;
         serverConfigResolver = null;
     }
-    
+
     @Override
-    public void setup(final NetworkListener networkListener,
-            final FilterChainBuilder builder) {
+    public void setup(final NetworkListener networkListener, final FilterChainBuilder builder) {
         final int sslFilterIdx = builder.indexOfType(SSLBaseFilter.class);
         if (sslFilterIdx != -1) {
             // replace SSLBaseFilter with SNIFilter
-            final SSLBaseFilter sslFilter =
-                    (SSLBaseFilter) builder.get(sslFilterIdx);
-            
+            final SSLBaseFilter sslFilter = (SSLBaseFilter) builder.get(sslFilterIdx);
+
             SNIFilter sniFilterLocal = sniFilter;
             if (sniFilterLocal == null) {
-                sniFilterLocal = new SNIFilter(
-                        sslFilter.getServerSSLEngineConfigurator(), // default SSLEngineConfigurator
-                        null,
-                        sslFilter.isRenegotiateOnClientAuthWant());
+                sniFilterLocal = new SNIFilter(sslFilter.getServerSSLEngineConfigurator(), // default SSLEngineConfigurator
+                        null, sslFilter.isRenegotiateOnClientAuthWant());
                 sniFilterLocal.setServerSSLConfigResolver(serverConfigResolver);
             }
-            
+
             builder.set(sslFilterIdx, sniFilterLocal);
         }
     }

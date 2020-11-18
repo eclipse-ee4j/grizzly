@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,7 +18,7 @@ package org.glassfish.grizzly;
 
 /**
  * The interface represents the result of {@link Processor} execution.
- * 
+ *
  * @author Alexey Stashok
  */
 public class ProcessorResult {
@@ -29,7 +29,7 @@ public class ProcessorResult {
     private static final ProcessorResult REREGISTER_RESULT = new ProcessorResult(Status.REREGISTER, null);
     private static final ProcessorResult ERROR_RESULT = new ProcessorResult(Status.ERROR, null);
     private static final ProcessorResult TERMINATE_RESULT = new ProcessorResult(Status.TERMINATE, null);
-    
+
     private static ProcessorResult create() {
         return new ProcessorResult();
     }
@@ -40,7 +40,7 @@ public class ProcessorResult {
     public enum Status {
         COMPLETE, LEAVE, REREGISTER, RERUN, ERROR, TERMINATE, NOT_RUN
     }
-    
+
     /**
      * Result status
      */

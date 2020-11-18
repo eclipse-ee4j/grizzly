@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,9 @@
 
 package org.glassfish.grizzly.http2.hpack;
 
-import org.glassfish.grizzly.Buffer;
-
 import java.io.IOException;
+
+import org.glassfish.grizzly.Buffer;
 
 //
 // Custom implementation of ISO/IEC 8859-1:1998
@@ -35,7 +35,8 @@ import java.io.IOException;
 //
 final class ISO_8859_1 {
 
-    private ISO_8859_1() { }
+    private ISO_8859_1() {
+    }
 
     public static final class Reader {
 
@@ -45,8 +46,7 @@ final class ISO_8859_1 {
                 try {
                     destination.append(c);
                 } catch (IOException e) {
-                    throw new RuntimeException
-                            ("Error appending to the destination", e);
+                    throw new RuntimeException("Error appending to the destination", e);
                 }
             }
         }
@@ -73,8 +73,7 @@ final class ISO_8859_1 {
             for (; pos < end; pos++) {
                 char c = source.charAt(pos);
                 if (c > '\u00FF') {
-                    throw new IllegalArgumentException(
-                            "Illegal ISO-8859-1 char: " + (int) c);
+                    throw new IllegalArgumentException("Illegal ISO-8859-1 char: " + (int) c);
                 }
                 if (destination.hasRemaining()) {
                     destination.put((byte) c);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,24 +23,24 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.filterchain.Filter;
 import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.http.server.filecache.FileCache;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.io.OutputBuffer;
-import org.glassfish.grizzly.http.util.MimeType;
+import org.glassfish.grizzly.http.server.filecache.FileCache;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.http.util.MimeType;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.memory.MemoryManager;
 
 /**
- * The basic class for {@link HttpHandler} implementations,
- * which processes requests to a static resources.
+ * The basic class for {@link HttpHandler} implementations, which processes requests to a static resources.
  *
  * @author Jeanfrancois Arcand
  * @author Alexey Stashok
@@ -49,22 +49,18 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
     private static final Logger LOGGER = Grizzly.logger(StaticHttpHandlerBase.class);
 
     private volatile int fileCacheFilterIdx = -1;
-    
+
     private volatile boolean isFileCacheEnabled = true;
-    
+
     /**
-     * Returns <tt>true</tt> if this <tt>StaticHttpHandler</tt> has been
-     * configured to use file cache to serve static resources,
-     * or <tt>false</tt> otherwise.
-     * 
-     * Please note, even though this StaticHttpHandler might be configured
-     * to use file cache, file cache itself might be disabled
-     * {@link FileCache#isEnabled()}. In this case StaticHttpHandler will operate
-     * as if file cache was disabled.
-     * 
-     * @return <tt>true</tt> if this <tt>StaticHttpHandler</tt> has been
-     * configured to use file cache to serve static resources,
-     * or <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if this <tt>StaticHttpHandler</tt> has been configured to use file cache to serve static
+     * resources, or <tt>false</tt> otherwise.
+     *
+     * Please note, even though this StaticHttpHandler might be configured to use file cache, file cache itself might be
+     * disabled {@link FileCache#isEnabled()}. In this case StaticHttpHandler will operate as if file cache was disabled.
+     *
+     * @return <tt>true</tt> if this <tt>StaticHttpHandler</tt> has been configured to use file cache to serve static
+     * resources, or <tt>false</tt> otherwise.
      */
     @SuppressWarnings("UnusedDeclaration")
     public boolean isFileCacheEnabled() {
@@ -72,25 +68,21 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
     }
 
     /**
-     * Set <tt>true</tt> to configure this <tt>StaticHttpHandler</tt> 
-     * to use file cache to serve static resources, or <tt>false</tt> otherwise.
-     * 
-     * Please note, even though this StaticHttpHandler might be configured
-     * to use file cache, file cache itself might be disabled
-     * {@link FileCache#isEnabled()}. In this case StaticHttpHandler will operate
-     * as if file cache was disabled.
-     * 
-     * @param isFileCacheEnabled <tt>true</tt> to configure this
-     * <tt>StaticHttpHandler</tt> to use file cache to serve static resources,
-     * or <tt>false</tt> otherwise.
+     * Set <tt>true</tt> to configure this <tt>StaticHttpHandler</tt> to use file cache to serve static resources, or
+     * <tt>false</tt> otherwise.
+     *
+     * Please note, even though this StaticHttpHandler might be configured to use file cache, file cache itself might be
+     * disabled {@link FileCache#isEnabled()}. In this case StaticHttpHandler will operate as if file cache was disabled.
+     *
+     * @param isFileCacheEnabled <tt>true</tt> to configure this <tt>StaticHttpHandler</tt> to use file cache to serve
+     * static resources, or <tt>false</tt> otherwise.
      */
     @SuppressWarnings("UnusedDeclaration")
     public void setFileCacheEnabled(boolean isFileCacheEnabled) {
         this.isFileCacheEnabled = isFileCacheEnabled;
     }
-    
-    public static void sendFile(final Response response, final File file)
-            throws IOException {
+
+    public static void sendFile(final Response response, final File file) throws IOException {
         response.setStatus(HttpStatus.OK_200);
 
         // In case this sendFile(...) is called directly by user - pickup the content-type
@@ -106,29 +98,23 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
         }
     }
 
-    private static void sendUsingBuffers(final Response response, final File file)
-            throws FileNotFoundException, IOException {
+    private static void sendUsingBuffers(final Response response, final File file) throws FileNotFoundException, IOException {
         final int chunkSize = 8192;
-        
+
         response.suspend();
-        
+
         final NIOOutputStream outputStream = response.getNIOOutputStream();
-        
-        outputStream.notifyCanWrite(
-                new NonBlockingDownloadHandler(response, outputStream,
-                        file, chunkSize));
+
+        outputStream.notifyCanWrite(new NonBlockingDownloadHandler(response, outputStream, file, chunkSize));
 
     }
 
-    private static void sendZeroCopy(final Response response, final File file)
-            throws IOException {
+    private static void sendZeroCopy(final Response response, final File file) throws IOException {
         final OutputBuffer outputBuffer = response.getOutputBuffer();
         outputBuffer.sendfile(file, null);
     }
 
-    public final boolean addToFileCache(final Request req,
-                                        final Response res,
-                                        final File resource) {
+    public final boolean addToFileCache(final Request req, final Response res, final File resource) {
         if (isFileCacheEnabled) {
             final FilterChainContext fcContext = req.getContext();
             final FileCacheFilter fileCacheFilter = lookupFileCache(fcContext);
@@ -146,30 +132,26 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
 
         return false;
     }
-    
+
     // ------------------------------------------------ Methods from HttpHandler
-    
-    
+
     /**
-     * Based on the {@link Request} URI, try to map the file from the
-     * {@link #getDocRoots()}, and send it back to a client.
+     * Based on the {@link Request} URI, try to map the file from the {@link #getDocRoots()}, and send it back to a client.
+     * 
      * @param request the {@link Request}
      * @param response the {@link Response}
      * @throws Exception
      */
     @Override
-    public void service(final Request request, final Response response)
-            throws Exception {
+    public void service(final Request request, final Response response) throws Exception {
         final String uri = getRelativeURI(request);
 
         if (uri == null || !handle(uri, request, response)) {
             onMissingResource(request, response);
         }
     }
-    
-    
+
     // ------------------------------------------------------- Protected Methods
-    
 
     protected String getRelativeURI(final Request request) throws Exception {
         String uri = request.getDecodedRequestURI();
@@ -190,17 +172,15 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
     }
 
     /**
-     * The method will be called, if the static resource requested by the {@link Request}
-     * wasn't found, so {@link StaticHttpHandler} implementation may try to
-     * workaround this situation.
-     * The default implementation - sends a 404 response page by calling {@link #customizedErrorPage(Request, Response)}.
+     * The method will be called, if the static resource requested by the {@link Request} wasn't found, so
+     * {@link StaticHttpHandler} implementation may try to workaround this situation. The default implementation - sends a
+     * 404 response page by calling {@link #customizedErrorPage(Request, Response)}.
      *
      * @param request the {@link Request}
      * @param response the {@link Response}
      * @throws Exception
      */
-    protected void onMissingResource(final Request request, final Response response)
-            throws Exception {
+    protected void onMissingResource(final Request request, final Response response) throws Exception {
         response.sendError(404);
     }
 
@@ -210,17 +190,13 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
      * @param uri The request URI
      * @param request the {@link Request}
      * @param response the {@link Response}
-     * @return <tt>true</tt>, if the static resource has been found and processed,
-     *          or <tt>false</tt>, if the static resource hasn't been found
+     * @return <tt>true</tt>, if the static resource has been found and processed, or <tt>false</tt>, if the static resource
+     * hasn't been found
      * @throws Exception
      */
-    protected abstract boolean handle(final String uri,
-            final Request request,
-            final Response response) throws Exception;
+    protected abstract boolean handle(final String uri, final Request request, final Response response) throws Exception;
 
-    
     // --------------------------------------------------------- Private Methods
-    
 
     protected FileCacheFilter lookupFileCache(final FilterChainContext fcContext) {
         final FilterChain fc = fcContext.getFilterChain();
@@ -247,8 +223,7 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
         return null;
     }
 
-    protected static void pickupContentType(final Response response,
-            final String path) {
+    protected static void pickupContentType(final Response response, final String path) {
         if (!response.getResponse().isContentTypeSet()) {
             int dot = path.lastIndexOf('.');
 
@@ -264,49 +239,45 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
         }
     }
 
-    protected static void addCachingHeaders(final Response response,
-                                          final File file) {
+    protected static void addCachingHeaders(final Response response, final File file) {
         final StringBuilder sb = new StringBuilder();
 
         final long fileLength = file.length();
         final long lastModified = file.lastModified();
-        if ((fileLength >= 0) || (lastModified >= 0)) {
-            sb.append('"').append(fileLength).append('-').
-                    append(lastModified).append('"');
+        if (fileLength >= 0 || lastModified >= 0) {
+            sb.append('"').append(fileLength).append('-').append(lastModified).append('"');
             response.setHeader(Header.ETag, sb.toString());
         }
         response.addDateHeader(Header.LastModified, lastModified);
 
     }
-    
+
     private static class NonBlockingDownloadHandler implements WriteHandler {
         // keep the remaining size
         private volatile long size;
-        
+
         private final Response response;
         private final NIOOutputStream outputStream;
         private final FileChannel fileChannel;
         private final MemoryManager mm;
         private final int chunkSize;
-        
-        NonBlockingDownloadHandler(final Response response,
-                final NIOOutputStream outputStream, final File file,
-                final int chunkSize) {
-            
+
+        NonBlockingDownloadHandler(final Response response, final NIOOutputStream outputStream, final File file, final int chunkSize) {
+
             try {
                 fileChannel = new FileInputStream(file).getChannel();
             } catch (FileNotFoundException e) {
                 throw new IllegalStateException("File should have existed", e);
             }
-            
+
             size = file.length();
-            
+
             this.response = response;
             this.outputStream = outputStream;
             mm = response.getRequest().getContext().getMemoryManager();
             this.chunkSize = chunkSize;
         }
-        
+
         @Override
         public void onWritePossible() throws Exception {
             LOGGER.log(Level.FINE, "[onWritePossible]");
@@ -336,9 +307,8 @@ public abstract class StaticHttpHandlerBase extends HttpHandler {
             buffer.allowBufferDispose(true);
 
             // read file to the Buffer
-            final int justReadBytes = (int) Buffers.readFromFileChannel(
-                    fileChannel, buffer);
-            
+            final int justReadBytes = (int) Buffers.readFromFileChannel(fileChannel, buffer);
+
             if (justReadBytes <= 0) {
                 complete(false);
                 return false;

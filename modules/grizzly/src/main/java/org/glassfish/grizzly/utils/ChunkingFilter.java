@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,8 @@
 
 package org.glassfish.grizzly.utils;
 
+import java.util.logging.Logger;
+
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Grizzly;
@@ -25,15 +27,12 @@ import org.glassfish.grizzly.attributes.AttributeStorage;
 import org.glassfish.grizzly.filterchain.AbstractCodecFilter;
 import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.memory.Buffers;
-import java.util.logging.Logger;
-
 
 /**
- * The Filter is responsible to break the incoming/outgoing data into chunks and
- * pass them down/up by the {@link FilterChain}.
- * This Filter could be useful for testing reasons to check if all Filters in
- * the {@link FilterChain} work properly with chunked data.
- * 
+ * The Filter is responsible to break the incoming/outgoing data into chunks and pass them down/up by the
+ * {@link FilterChain}. This Filter could be useful for testing reasons to check if all Filters in the
+ * {@link FilterChain} work properly with chunked data.
+ *
  * @author Alexey Stashok
  */
 public class ChunkingFilter extends AbstractCodecFilter<Buffer, Buffer> {
@@ -42,14 +41,12 @@ public class ChunkingFilter extends AbstractCodecFilter<Buffer, Buffer> {
     private final int chunkSize;
 
     /**
-     * Construct a <tt>ChunkFilter</tt>, which will break incoming/outgoing data
-     * into chunks of the specified size.
+     * Construct a <tt>ChunkFilter</tt>, which will break incoming/outgoing data into chunks of the specified size.
      *
      * @param chunkSize the chunk size.
      */
     public ChunkingFilter(int chunkSize) {
-        super(new ChunkingDecoder(chunkSize),
-                new ChunkingEncoder(chunkSize));
+        super(new ChunkingDecoder(chunkSize), new ChunkingEncoder(chunkSize));
         this.chunkSize = chunkSize;
     }
 
@@ -73,8 +70,7 @@ public class ChunkingFilter extends AbstractCodecFilter<Buffer, Buffer> {
 
     }
 
-    public static abstract class ChunkingTransformer
-            extends AbstractTransformer<Buffer, Buffer> {
+    public static abstract class ChunkingTransformer extends AbstractTransformer<Buffer, Buffer> {
         private final int chunk;
 
         public ChunkingTransformer(int chunk) {
@@ -87,9 +83,7 @@ public class ChunkingFilter extends AbstractCodecFilter<Buffer, Buffer> {
         }
 
         @Override
-        protected TransformationResult<Buffer, Buffer> transformImpl(
-                AttributeStorage storage, Buffer input)
-                throws TransformationException {
+        protected TransformationResult<Buffer, Buffer> transformImpl(AttributeStorage storage, Buffer input) throws TransformationException {
 
             if (!input.hasRemaining()) {
                 return TransformationResult.createIncompletedResult(input);
@@ -101,14 +95,13 @@ public class ChunkingFilter extends AbstractCodecFilter<Buffer, Buffer> {
             final int oldInputLimit = input.limit();
 
             Buffers.setPositionLimit(input, oldInputPos, oldInputPos + chunkSize);
-            
+
             final Buffer output = obtainMemoryManager(storage).allocate(chunkSize);
             output.put(input).flip();
 
             Buffers.setPositionLimit(input, oldInputPos + chunkSize, oldInputLimit);
 
-            return TransformationResult.createCompletedResult(
-                    output, input);
+            return TransformationResult.createCompletedResult(output, input);
         }
 
         @Override

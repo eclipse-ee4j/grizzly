@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,17 @@
 
 package org.glassfish.grizzly.http.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -43,14 +48,13 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.utils.ChunkingFilter;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * Test the error page generation.
  */
 public class ErrorPageTest {
     private static final int PORT = 18906;
-    
+
     @Test
     public void testNoPage() throws Exception {
         final HttpPacket request = createRequest("/index.html", null);
@@ -62,13 +66,12 @@ public class ErrorPageTest {
             }
         });
 
-        final HttpResponsePacket responsePacket =
-                (HttpResponsePacket) responseContent.getHttpHeader();
+        final HttpResponsePacket responsePacket = (HttpResponsePacket) responseContent.getHttpHeader();
         assertEquals(500, responsePacket.getStatus());
         assertEquals(0, responsePacket.getContentLength());
         assertFalse(responseContent.getContent().hasRemaining());
     }
-    
+
     @Test
     public void testSendError() throws Exception {
         final HttpPacket request = createRequest("/index.html", null);
@@ -80,12 +83,11 @@ public class ErrorPageTest {
             }
         });
 
-        final HttpResponsePacket responsePacket =
-                (HttpResponsePacket) responseContent.getHttpHeader();
+        final HttpResponsePacket responsePacket = (HttpResponsePacket) responseContent.getHttpHeader();
         assertEquals(500, responsePacket.getStatus());
         assertTrue(responseContent.getContent().hasRemaining());
     }
-    
+
     @Test
     public void testUncaughtException() throws Exception {
         final HttpPacket request = createRequest("/index.html", null);
@@ -97,50 +99,44 @@ public class ErrorPageTest {
             }
         });
 
-        final HttpResponsePacket responsePacket =
-                (HttpResponsePacket) responseContent.getHttpHeader();
+        final HttpResponsePacket responsePacket = (HttpResponsePacket) responseContent.getHttpHeader();
         assertEquals(500, responsePacket.getStatus());
         assertTrue(responseContent.getContent().hasRemaining());
         // test the default error-page content-type
         assertTrue(responsePacket.getContentType().startsWith("text/html"));
-        
+
         String errorPage = responseContent.getContent().toStringContent();
         System.out.println(errorPage);
         assertTrue(errorPage.contains("TestError"));
         assertTrue(errorPage.contains("service")); // check the stacktrace
     }
-    
+
     @Test
     public void testCustomErrorPageContentType() throws Exception {
         final HttpPacket request = createRequest("/index.html", null);
-        final HttpContent responseContent = doTest(request, 10,
-                new HttpHandler() {
+        final HttpContent responseContent = doTest(request, 10, new HttpHandler() {
+
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                response.setErrorPageGenerator(new DefaultErrorPageGenerator() {
 
                     @Override
-                    public void service(Request request, Response response) throws Exception {
-                        response.setErrorPageGenerator(new DefaultErrorPageGenerator() {
-
-                            @Override
-                            public String generate(Request request, int status,
-                                    String reasonPhrase, String description,
-                                    Throwable exception) {
-                                request.getResponse().setContentType("text/mytype");
-                                return super.generate(request, status,
-                                        reasonPhrase, description, exception);
-                            }
-                        });
-                        
-                        throw new IOException("TestError");
+                    public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
+                        request.getResponse().setContentType("text/mytype");
+                        return super.generate(request, status, reasonPhrase, description, exception);
                     }
                 });
 
-        final HttpResponsePacket responsePacket =
-                (HttpResponsePacket) responseContent.getHttpHeader();
+                throw new IOException("TestError");
+            }
+        });
+
+        final HttpResponsePacket responsePacket = (HttpResponsePacket) responseContent.getHttpHeader();
         assertEquals(500, responsePacket.getStatus());
         assertTrue(responseContent.getContent().hasRemaining());
         // check the custom error-page content type
         assertTrue(responsePacket.getContentType().startsWith("text/mytype"));
-        
+
         String errorPage = responseContent.getContent().toStringContent();
         System.out.println(errorPage);
         assertTrue(errorPage.contains("TestError"));
@@ -150,13 +146,13 @@ public class ErrorPageTest {
     @Test
     public void testErrorMessageXSSVulnerability() throws Exception {
         final HttpPacket request = createRequest("/", null);
-        final HttpContent responseContent = doTest(request, 10,
-                new HttpHandler() {
-                    public void service(Request request, Response response) throws Exception
-                    { throw new RuntimeException("Accept: <script>alert(1)</script>"); }
-                });
-        final HttpResponsePacket responsePacket =
-                (HttpResponsePacket) responseContent.getHttpHeader();
+        final HttpContent responseContent = doTest(request, 10, new HttpHandler() {
+            @Override
+            public void service(Request request, Response response) throws Exception {
+                throw new RuntimeException("Accept: <script>alert(1)</script>");
+            }
+        });
+        final HttpResponsePacket responsePacket = (HttpResponsePacket) responseContent.getHttpHeader();
         assertEquals(500, responsePacket.getStatus());
         assertTrue(responseContent.getContent().hasRemaining());
         String errorPage = responseContent.getContent().toStringContent();
@@ -164,7 +160,7 @@ public class ErrorPageTest {
         assertTrue(errorPage.contains("&lt;script&gt;alert(1)&lt;"));
         assertFalse(errorPage.contains("<script>alert(1)</script>"));
     }
-    
+
     private HttpPacket createRequest(String uri, Map<String, String> headers) {
 
         HttpRequestPacket.Builder b = HttpRequestPacket.builder();
@@ -177,15 +173,10 @@ public class ErrorPageTest {
 
         return b.build();
     }
-    
-    private HttpContent doTest(
-            final HttpPacket request,
-            final int timeout,
-            final HttpHandler... httpHandlers)
-            throws Exception {
 
-        final TCPNIOTransport clientTransport =
-                TCPNIOTransportBuilder.newInstance().build();
+    private HttpContent doTest(final HttpPacket request, final int timeout, final HttpHandler... httpHandlers) throws Exception {
+
+        final TCPNIOTransport clientTransport = TCPNIOTransportBuilder.newInstance().build();
         final HttpServer server = createWebServer(httpHandlers);
         try {
             final FutureImpl<HttpContent> testResultFuture = SafeFutureImpl.create();
@@ -221,10 +212,7 @@ public class ErrorPageTest {
     private HttpServer createWebServer(final HttpHandler... httpHandlers) {
 
         final HttpServer server = new HttpServer();
-        final NetworkListener listener =
-                new NetworkListener("grizzly",
-                        NetworkListener.DEFAULT_NETWORK_HOST,
-                        PORT);
+        final NetworkListener listener = new NetworkListener("grizzly", NetworkListener.DEFAULT_NETWORK_HOST, PORT);
         listener.getKeepAlive().setIdleTimeoutInSeconds(-1);
         server.addListener(listener);
         server.getServerConfiguration().addHttpHandler(httpHandlers[0], "/");
@@ -237,7 +225,6 @@ public class ErrorPageTest {
 
     }
 
-
     private static class ClientFilter extends BaseFilter {
         private final static Logger logger = Grizzly.logger(ClientFilter.class);
 
@@ -245,19 +232,16 @@ public class ErrorPageTest {
 
         // -------------------------------------------------------- Constructors
 
-
         public ClientFilter(FutureImpl<HttpContent> testFuture) {
 
             this.testFuture = testFuture;
 
         }
 
-
         // ------------------------------------------------- Methods from Filter
 
         @Override
-        public NextAction handleRead(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleRead(FilterChainContext ctx) throws IOException {
 
             // Cast message to a HttpContent
             final HttpContent httpContent = ctx.getMessage();
@@ -281,8 +265,7 @@ public class ErrorPageTest {
         }
 
         @Override
-        public NextAction handleClose(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleClose(FilterChainContext ctx) throws IOException {
             close();
             return ctx.getStopAction();
         }
@@ -290,11 +273,11 @@ public class ErrorPageTest {
         private void close() throws IOException {
 
             if (!testFuture.isDone()) {
-                //noinspection ThrowableInstanceNeverThrown
+                // noinspection ThrowableInstanceNeverThrown
                 testFuture.failure(new IOException("Connection was closed"));
             }
 
         }
 
-    } // END ClientFilter        
+    } // END ClientFilter
 }

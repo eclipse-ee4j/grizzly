@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -17,6 +17,7 @@ import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
@@ -29,15 +30,20 @@ import org.glassfish.grizzly.utils.StringFilter;
 
 /**
  * Simple chat application based on UDP multicast.
- * 
+ *
  * Requires JDK 1.7+
  *
- * When you run MulticastChat application, the first thing you might want to know
- * is network interfaces' names available on your system (command #6), so type:
+ * When you run MulticastChat application, the first thing you might want to know is network interfaces' names available
+ * on your system (command #6), so type:
+ *
+ * <pre>
+ * '$ 6'
+ * </pre>
  * 
- * <pre>'$ 6'</pre> and press enter to see the interfaces and check if they support multicasting.
- * 
+ * and press enter to see the interfaces and check if they support multicasting.
+ *
  * On my system I see:
+ * 
  * <pre>
  * "
  * $6
@@ -46,42 +52,45 @@ import org.glassfish.grizzly.utils.StringFilter;
  * lo support-multicast=false
  * "
  * </pre>
- * which means I can use wlan0 and eth0 interfaces to test multicasting.
  * 
+ * which means I can use wlan0 and eth0 interfaces to test multicasting.
+ *
  * So now I have to join the multicasting group
+ * 
  * <pre>
  * "
  * $2 228.5.6.7 eth0
  * "
  * </pre>
- * 
+ *
  * The output would be like:
+ * 
  * <pre>
  * "
  * Tue Sep 11 16:09:42 CEST 2012 /10.163.25.1:8888: joined the group /228.5.6.7
  * "
  * </pre>
- * 
- * Run MulticastChat application on different machine (it's better to use
- * local network, cause multicasting might be blocked by routers), run the
- * same/similar commands, so both clients join the same multicast group.
- * 
+ *
+ * Run MulticastChat application on different machine (it's better to use local network, cause multicasting might be
+ * blocked by routers), run the same/similar commands, so both clients join the same multicast group.
+ *
  * To send message to the multicast group use the command like:
+ * 
  * <pre>
  * "
  * $1 228.5.6.7 hello
  * "
  * </pre>
- * 
+ *
  * @see UDPNIOConnection
- * 
+ *
  * @author Alexey Stashok
  */
 public class MulticastChat {
     private static final Logger logger = Logger.getLogger(MulticastChat.class.getName());
 
     private static final int PORT = 8888;
-    
+
     public static void main(String[] args) throws Exception {
         new MulticastChat().run();
     }
@@ -90,12 +99,12 @@ public class MulticastChat {
         // Check if current JDK version is higher or equals to 1.7.0
         final JdkVersion jdkVersion = JdkVersion.getJdkVersion();
         final JdkVersion minimumVersion = JdkVersion.parseVersion("1.7.0");
-        
+
         if (minimumVersion.compareTo(jdkVersion) > 0) { // If JDK version is >= 1.7
             System.out.println("Sample requires JDK 1.7+");
             System.exit(1);
         }
-        
+
         // Build FilterChain to parse incoming UDP packets and print to System.out
         final FilterChain filterChain = FilterChainBuilder.stateless()
                 // Add TransportFilter, which will be responsible for reading and
@@ -104,31 +113,26 @@ public class MulticastChat {
                 // Add String codec (responsible for byte[] <-> String conversion)
                 .add(new StringFilter(Charset.forName("UTF-8")))
                 // Add PrintFilter, which is responsible for printing incoming messages
-                .add(new PrintFilter())
-                .build();
+                .add(new PrintFilter()).build();
 
         // Create UDP transport
-        final UDPNIOTransport transport =
-                UDPNIOTransportBuilder.newInstance()
-                .setProcessor(filterChain)
-                .build();
-        
+        final UDPNIOTransport transport = UDPNIOTransportBuilder.newInstance().setProcessor(filterChain).build();
+
         UDPNIOConnection connection = null;
-        
+
         try {
             // start the transport
             transport.start();
 
             // Create non-connected UDP connection and bind it to the local PORT
-            final Future<Connection> connectFuture = transport.connect(
-                    null, new InetSocketAddress(PORT));
-            
+            final Future<Connection> connectFuture = transport.connect(null, new InetSocketAddress(PORT));
+
             connection = (UDPNIOConnection) connectFuture.get(10, TimeUnit.SECONDS);
-            
+
             // Prepare the console reader
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, Charset.forName("UTF-8")));
             printCommands();
-            
+
             do {
                 System.out.print("\n$");
                 try {
@@ -140,7 +144,7 @@ public class MulticastChat {
                     } else {
                         // Run the command
                         command.run(connection);
-                        
+
                         // Exit if needed (only exit command returns true)
                         if (command.isExit()) {
                             return;
@@ -150,22 +154,22 @@ public class MulticastChat {
                     System.out.println(t.getClass().getName() + ": " + t.getMessage());
                 }
             } while (true);
-            
+
         } finally {
             // Close connection is it's not null
             if (connection != null) {
                 connection.close();
             }
-            
+
             logger.fine("Stopping transport...");
             // stop the transport
             transport.shutdownNow();
 
             logger.fine("Stopped transport...");
         }
-        
+
     }
-    
+
     /**
      * Prints the menu of the available commands.
      */

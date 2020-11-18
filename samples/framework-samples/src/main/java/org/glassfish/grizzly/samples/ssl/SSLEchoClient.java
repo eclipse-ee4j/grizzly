@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -10,17 +10,20 @@
 
 package org.glassfish.grizzly.samples.ssl;
 
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.NextAction;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+
+import javax.net.ssl.SSLEngine;
+
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.Filter;
 import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
@@ -28,13 +31,11 @@ import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.ssl.SSLFilter;
 import org.glassfish.grizzly.utils.StringFilter;
-import javax.net.ssl.SSLEngine;
 
 /**
- * The simple {@link FilterChain} based SSL client, which sends a message to
- * the echo server and waits for response. In this sample we add
- * a {@link StringFilter} to a {@link FilterChain}, so there is no need to do
- * Buffer <-> String transformation explicitly.
+ * The simple {@link FilterChain} based SSL client, which sends a message to the echo server and waits for response. In
+ * this sample we add a {@link StringFilter} to a {@link FilterChain}, so there is no need to do Buffer <-> String
+ * transformation explicitly.
  *
  * @see StringFilter
  * @see SSLFilter
@@ -67,8 +68,7 @@ public class SSLEchoClient {
         filterChainBuilder.add(new SendMessageFilter(sslFilter));
 
         // Create TCP transport
-        final TCPNIOTransport transport =
-                TCPNIOTransportBuilder.newInstance().build();
+        final TCPNIOTransport transport = TCPNIOTransportBuilder.newInstance().build();
         transport.setProcessor(filterChainBuilder.build());
 
         try {
@@ -90,11 +90,10 @@ public class SSLEchoClient {
     }
 
     /**
-     * The {@link Filter}, responsible for handling client {@link Connection}
-     * events.
+     * The {@link Filter}, responsible for handling client {@link Connection} events.
      */
     private static class SendMessageFilter extends BaseFilter {
-        
+
         private final SSLFilter sslFilter;
 
         public SendMessageFilter(SSLFilter sslFilter) {
@@ -102,8 +101,7 @@ public class SSLEchoClient {
         }
 
         /**
-         * Handle newly connected {@link Connection}, perform SSL handshake and
-         * send greeting message to a server.
+         * Handle newly connected {@link Connection}, perform SSL handshake and send greeting message to a server.
          *
          * @param ctx {@link FilterChain} context
          * @return nextAction
@@ -111,13 +109,11 @@ public class SSLEchoClient {
          */
         @Override
         @SuppressWarnings("unchecked")
-        public NextAction handleConnect(FilterChainContext ctx)
-                throws IOException {
+        public NextAction handleConnect(FilterChainContext ctx) throws IOException {
             final Connection connection = ctx.getConnection();
 
             // Execute async SSL handshake
-            sslFilter.handshake(connection,
-                    new EmptyCompletionHandler<SSLEngine>() {
+            sslFilter.handshake(connection, new EmptyCompletionHandler<SSLEngine>() {
 
                 /**
                  * Once SSL handshake will be completed - send greeting message
@@ -134,6 +130,7 @@ public class SSLEchoClient {
 
         /**
          * Handle server response and check, whether it has expected data
+         * 
          * @param ctx {@link FilterChain} context
          * @return nextAction
          * @throws IOException
@@ -148,8 +145,7 @@ public class SSLEchoClient {
             if (MESSAGE.equals(message)) {
                 System.out.println("Got echo message: \"" + message + "\"");
             } else {
-                System.out.println("Got unexpected echo message: \"" +
-                        message + "\"");
+                System.out.println("Got unexpected echo message: \"" + message + "\"");
             }
 
             return ctx.getStopAction();
@@ -159,7 +155,7 @@ public class SSLEchoClient {
 
     /**
      * Initialize server side SSL configuration.
-     * 
+     *
      * @return server side {@link SSLEngineConfigurator}.
      */
     private static SSLEngineConfigurator initializeSSL() {
@@ -181,9 +177,7 @@ public class SSLEchoClient {
             sslContextConfig.setKeyStorePass("changeit");
         }
 
-
         // Create SSLEngine configurator
-        return new SSLEngineConfigurator(sslContextConfig.createSSLContext(),
-                false, false, false);
+        return new SSLEngineConfigurator(sslContextConfig.createSSLContext(), false, false, false);
     }
 }

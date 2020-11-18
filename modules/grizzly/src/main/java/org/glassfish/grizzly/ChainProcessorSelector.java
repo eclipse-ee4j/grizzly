@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,18 +24,15 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * {@link ProcessorSelector} implementation, which acts like wrapper for chain
- * of {@link ProcessorSelector}s.
- * So, when {@link ProcessorSelector#select(IOEvent, Connection)} operation is
- * called - it delegates selecting to the first {@link ProcessorSelector} from
- * chain. If first {@link ProcessorSelector} returns not <tt>null</tt>
- * {@link Processor} - {@link ChainProcessorSelector} returns it as result,
- * otherwise next {@link ProcessorSelector} will be taken from chain... etc
- * 
+ * {@link ProcessorSelector} implementation, which acts like wrapper for chain of {@link ProcessorSelector}s. So, when
+ * {@link ProcessorSelector#select(IOEvent, Connection)} operation is called - it delegates selecting to the first
+ * {@link ProcessorSelector} from chain. If first {@link ProcessorSelector} returns not <tt>null</tt> {@link Processor}
+ * - {@link ChainProcessorSelector} returns it as result, otherwise next {@link ProcessorSelector} will be taken from
+ * chain... etc
+ *
  * @author Alexey Stashok
  */
-public class ChainProcessorSelector implements ProcessorSelector,
-        List<ProcessorSelector> {
+public class ChainProcessorSelector implements ProcessorSelector, List<ProcessorSelector> {
 
     private final List<ProcessorSelector> selectorChain;
 
@@ -44,7 +41,7 @@ public class ChainProcessorSelector implements ProcessorSelector,
     }
 
     public ChainProcessorSelector(ProcessorSelector... selectorChain) {
-        this(new ArrayList<ProcessorSelector>(Arrays.asList(selectorChain)));
+        this(new ArrayList<>(Arrays.asList(selectorChain)));
     }
 
     public ChainProcessorSelector(List<ProcessorSelector> selectorChain) {
@@ -55,9 +52,8 @@ public class ChainProcessorSelector implements ProcessorSelector,
      * {@inheritDoc}
      */
     @Override
-    public Processor select(IOEvent ioEvent,
-            Connection connection) {
-        for(ProcessorSelector processorSelector : selectorChain) {
+    public Processor select(IOEvent ioEvent, Connection connection) {
+        for (ProcessorSelector processorSelector : selectorChain) {
             Processor processor = processorSelector.select(ioEvent, connection);
             if (processor != null) {
                 return processor;
@@ -151,8 +147,7 @@ public class ChainProcessorSelector implements ProcessorSelector,
      * {@inheritDoc}
      */
     @Override
-    public boolean addAll(int index,
-            Collection<? extends ProcessorSelector> c) {
+    public boolean addAll(int index, Collection<? extends ProcessorSelector> c) {
         return selectorChain.addAll(index, c);
     }
 
@@ -192,8 +187,7 @@ public class ChainProcessorSelector implements ProcessorSelector,
      * {@inheritDoc}
      */
     @Override
-    public ProcessorSelector set(int index,
-            ProcessorSelector element) {
+    public ProcessorSelector set(int index, ProcessorSelector element) {
         return selectorChain.set(index, element);
     }
 

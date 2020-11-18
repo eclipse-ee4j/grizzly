@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -33,8 +33,7 @@ public class ServletWriterImpl extends PrintWriter {
     // -------------------------------------------------------------- Constants
     // No need for a do privileged block - every web app has permission to read
     // this by default
-    private static final char[] LINE_SEP =
-            System.getProperty("line.separator").toCharArray();
+    private static final char[] LINE_SEP = System.getProperty("line.separator").toCharArray();
     // ----------------------------------------------------- Instance Variables
     protected Writer ob;
     protected boolean error = false;
@@ -50,8 +49,7 @@ public class ServletWriterImpl extends PrintWriter {
      * Prevent cloning the facade.
      */
     @Override
-    protected Object clone()
-            throws CloneNotSupportedException {
+    protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 
