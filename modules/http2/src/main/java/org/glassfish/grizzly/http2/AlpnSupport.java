@@ -41,8 +41,8 @@ import org.glassfish.grizzly.Transport;
 import org.glassfish.grizzly.npn.AlpnClientNegotiator;
 import org.glassfish.grizzly.npn.AlpnServerNegotiator;
 import org.glassfish.grizzly.npn.NegotiationSupport;
-import org.glassfish.grizzly.ssl.HandshakeListener;
 import org.glassfish.grizzly.ssl.SSLBaseFilter;
+import org.glassfish.grizzly.ssl.SSLBaseFilter.HandshakeListener;
 import org.glassfish.grizzly.ssl.SSLUtils;
 
 /**
