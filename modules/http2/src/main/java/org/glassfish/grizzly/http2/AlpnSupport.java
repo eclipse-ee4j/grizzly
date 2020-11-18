@@ -13,7 +13,7 @@
  * https://www.gnu.org/software/classpath/license.html.
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
- * 
+ *
  * Contributors:
  *  Payara Services - Add support for JDK 9 ALPN API
  */
@@ -56,7 +56,7 @@ public class AlpnSupport {
 
     private static final AlpnSupport INSTANCE;
     private static final Method nativeHandshakeMethod;
-    
+
     static {
         boolean isExtensionFound = false;
         Method setHandshakeAlpnSelector = null;
@@ -109,8 +109,7 @@ public class AlpnSupport {
     private final Map<Object, AlpnClientNegotiator> clientSideNegotiators = new WeakHashMap<>();
     private final ReadWriteLock clientSideLock = new ReentrantReadWriteLock();
 
-    private final HandshakeListener handshakeListener = 
-            new HandshakeListener() {
+    private final HandshakeListener handshakeListener = new HandshakeListener() {
 
         @Override
         public void onInit(final Connection<?> connection, final SSLEngine sslEngine) {
@@ -136,7 +135,7 @@ public class AlpnSupport {
 
             if (sslEngine.getUseClientMode()) {
                 AlpnClientNegotiator negotiator = getClientNegotiator(connection);
-                
+
                 if (negotiator != null) {
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
@@ -152,7 +151,7 @@ public class AlpnSupport {
                 }
             } else {
                 AlpnServerNegotiator negotiator = getServerNegotiator(connection);
-                
+
                 if (negotiator != null) {
 
                     // add a CloseListener to ensure we remove the
@@ -179,6 +178,7 @@ public class AlpnSupport {
         public void onFailure(Connection<?> connection, Throwable t) {
         }
     };
+
 
     private AlpnSupport() {
     }
@@ -222,12 +222,11 @@ public class AlpnSupport {
             clientSideLock.writeLock().unlock();
         }
     }
-    
 
     private AlpnClientNegotiator getClientNegotiator(Connection<?> connection) {
         AlpnClientNegotiator negotiator;
         clientSideLock.readLock().lock();
-        
+
         try {
             negotiator = clientSideNegotiators.get(connection);
             if (negotiator == null) {
@@ -243,7 +242,7 @@ public class AlpnSupport {
     private AlpnServerNegotiator getServerNegotiator(Connection<?> connection) {
         AlpnServerNegotiator negotiator;
         serverSideLock.readLock().lock();
-        
+
         try {
             negotiator = serverSideNegotiators.get(connection);
             if (negotiator == null) {
