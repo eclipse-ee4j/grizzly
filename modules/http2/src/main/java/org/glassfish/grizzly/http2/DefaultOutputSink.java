@@ -17,6 +17,8 @@
 package org.glassfish.grizzly.http2;
 
 import static org.glassfish.grizzly.http2.Termination.OUT_FIN_TERMINATION;
+import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.WARNING;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Buffer;
@@ -113,8 +115,8 @@ class DefaultOutputSink implements StreamOutputSink {
     private void assertReady() throws IOException {
         // if the last frame (fin flag == 1) has been queued already - throw an IOException
         if (isTerminated()) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Terminated!!! id={0} description={1}", new Object[] { stream.getId(), terminationFlag.getDescription() });
+            if (LOGGER.isLoggable(FINE)) {
+                LOGGER.log(FINE, "Terminated!!! id={0} description={1}", new Object[] { stream.getId(), terminationFlag.getDescription() });
             }
             throw new IOException(terminationFlag.getDescription());
         } else if (isLastFrameQueued) {
@@ -162,6 +164,18 @@ class DefaultOutputSink implements StreamOutputSink {
             final boolean isZeroSizeData = outputQueueRecord.isZeroSizeData;
             final Source resource = outputQueueRecord.resource;
 
+            final HttpTrailer currentTrailer = outputQueueRecord.trailer;
+            final MessageCloner messageCloner = outputQueueRecord.cloner;
+
+            if (currentTrailer != null) {
+                try {
+                    sendTrailers(completionHandler, messageCloner, currentTrailer);
+                } catch (IOException ex) {
+                    LOGGER.log(WARNING, "Error sending trailers.", ex);
+                }
+                return;
+            }
+
             // check if output record's buffer is fitting into window size
             // if not - split it into 2 parts: part to send, part to keep in the queue
             final int bytesToSend = checkOutputWindow(resource.remaining());
@@ -205,6 +219,21 @@ class DefaultOutputSink implements StreamOutputSink {
                 break;
             }
         }
+
+        if (outputQueue.peek() != null && outputQueue.peek().trailer != null) {
+            // pick up the first output record in the queue
+            final OutputQueueRecord outputQueueRecord = outputQueue.poll();
+
+            final FlushCompletionHandler completionHandler = outputQueueRecord.chunkedCompletionHandler;
+            final HttpTrailer currentTrailer = outputQueueRecord.trailer;
+            final MessageCloner messageCloner = outputQueueRecord.cloner;
+            try {
+                sendTrailers(completionHandler, messageCloner, currentTrailer);
+            } catch (IOException ex) {
+                LOGGER.log(WARNING, "Error sending trailers.", ex);
+            }
+            return;
+        }
     }
 
     /**
@@ -232,7 +261,7 @@ class DefaultOutputSink implements StreamOutputSink {
         List<Http2Frame> headerFrames = null;
         OutputQueueRecord outputQueueRecord = null;
 
-        boolean isDeflaterLocked = false;
+        final ReentrantLock deflatorLock = http2Session.getDeflaterLock();
 
         try { // try-finally block to release deflater lock if needed
 
@@ -243,8 +272,7 @@ class DefaultOutputSink implements StreamOutputSink {
                         || httpContent != null && httpContent.isLast() && !httpContent.getContent().hasRemaining();
 
                 // !!!!! LOCK the deflater
-                isDeflaterLocked = true;
-                http2Session.getDeflaterLock().lock();
+                deflatorLock.lock();
                 final boolean logging = NetLogger.isActive();
                 final Map<String, String> capture = logging ? new HashMap<>() : null;
                 headerFrames = http2Session.encodeHttpHeaderAsHeaderFrames(ctx, httpHeader, stream.getId(), isNoPayload, null, capture);
@@ -294,15 +322,6 @@ class DefaultOutputSink implements StreamOutputSink {
             Buffer data = httpContent.getContent();
             final int dataSize = data.remaining();
 
-            if (isLast && dataSize == 0) {
-                if (isTrailer) {
-                    // !!!!! LOCK the deflater
-                    isDeflaterLocked = true;
-                    sendTrailers(completionHandler, messageCloner, (HttpTrailer) httpContent);
-                }
-                close();
-                return;
-            }
 
             unflushedWritesCounter.incrementAndGet();
             final FlushCompletionHandler flushCompletionHandler = new FlushCompletionHandler(completionHandler);
@@ -322,7 +341,17 @@ class DefaultOutputSink implements StreamOutputSink {
                     isDataCloned = true;
                 }
 
-                outputQueueRecord = new OutputQueueRecord(Source.factory(stream).createBufferSource(data), flushCompletionHandler, isLast, isZeroSizeData);
+                if (isTrailer) {
+                    outputQueueRecord = new OutputQueueRecord(
+                            Source.factory(stream).createBufferSource(data),
+                            flushCompletionHandler,
+                            (HttpTrailer) httpContent,
+                            isZeroSizeData);
+                } else {
+                    outputQueueRecord = new OutputQueueRecord(
+                            Source.factory(stream).createBufferSource(data),
+                            flushCompletionHandler, isLast, isZeroSizeData);
+                }
 
                 outputQueue.offer(outputQueueRecord);
 
@@ -336,7 +365,6 @@ class DefaultOutputSink implements StreamOutputSink {
             }
 
             // our element is first in the output queue
-
             final int remaining = data.remaining();
 
             // check if output record's buffer is fitting into window size
@@ -388,7 +416,6 @@ class DefaultOutputSink implements StreamOutputSink {
             if (isLast) {
                 if (isTrailer) {
                     // !!!!! LOCK the deflater
-                    isDeflaterLocked = true;
                     sendTrailers(completionHandler, messageCloner, (HttpTrailer) httpContent);
                 }
                 close();
@@ -396,8 +423,8 @@ class DefaultOutputSink implements StreamOutputSink {
             }
 
         } finally {
-            if (isDeflaterLocked) {
-                http2Session.getDeflaterLock().unlock();
+            if (deflatorLock.isHeldByCurrentThread()) {
+                deflatorLock.unlock();
             }
         }
 
@@ -559,6 +586,17 @@ class DefaultOutputSink implements StreamOutputSink {
 
                 final FlushCompletionHandler chunkedCompletionHandler = outputQueueRecord.chunkedCompletionHandler;
 
+                final HttpTrailer currentTrailer = outputQueueRecord.trailer;
+                final MessageCloner messageCloner = outputQueueRecord.cloner;
+                if (currentTrailer != null) {
+                    try {
+                        sendTrailers(chunkedCompletionHandler, messageCloner, currentTrailer);
+                    } catch (IOException ex) {
+                        LOGGER.log(WARNING, "Error sending trailers.", ex);
+                    }
+                    return;
+                }
+
                 boolean isLast = outputQueueRecord.isLast;
                 final boolean isZeroSizeData = outputQueueRecord.isZeroSizeData;
 
@@ -636,11 +674,16 @@ class DefaultOutputSink implements StreamOutputSink {
         }
         unflushedWritesCounter.incrementAndGet();
         flushToConnectionOutputSink(trailerFrames, null, new FlushCompletionHandler(completionHandler), messageCloner, true);
+        http2Session.getDeflaterLock().unlock();
+        close();
     }
 
     private static class OutputQueueRecord extends AsyncQueueRecord<WriteResult> {
         private Source resource;
         private FlushCompletionHandler chunkedCompletionHandler;
+
+        private HttpTrailer trailer;
+        private MessageCloner cloner;
 
         private boolean isLast;
 
@@ -653,6 +696,18 @@ class DefaultOutputSink implements StreamOutputSink {
             this.chunkedCompletionHandler = completionHandler;
             this.isLast = isLast;
             this.isZeroSizeData = isZeroSizeData;
+        }
+
+        public OutputQueueRecord(final Source resource,
+                final FlushCompletionHandler completionHandler,
+                final HttpTrailer trailer, final boolean isZeroDataSize) {
+            super(null, null, null);
+
+            this.resource = resource;
+            this.chunkedCompletionHandler = completionHandler;
+            this.isLast = true;
+            this.trailer = trailer;
+            this.isZeroSizeData = isZeroDataSize;
         }
 
         private void incChunksCounter() {
