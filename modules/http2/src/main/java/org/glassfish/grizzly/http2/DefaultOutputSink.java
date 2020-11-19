@@ -251,7 +251,6 @@ class DefaultOutputSink implements StreamOutputSink {
         boolean sendTrailers = false;
         boolean lockedByMe = false;
         try {
-            // try-finally block to release deflater lock if needed
             boolean isLast = httpContent != null && httpContent.isLast();
             final boolean isTrailer = HttpTrailer.isTrailer(httpContent);
 
@@ -334,10 +333,15 @@ class DefaultOutputSink implements StreamOutputSink {
                     isLast, isZeroSizeData);
                 outputQueue.offer(record);
 
-                // check if our element wasn't forgotten (async)
-                if (outputQueue.size() != spaceToReserve || !outputQueue.remove(record)) {
+                // there is yet something in the queue before current record
+                if (outputQueue.size() != spaceToReserve) {
+                    sendTrailers = isLast && isTrailer;
+                    return null;
+                }
+                //
+                if (!outputQueue.remove(record)) {
                     sendTrailers = false;
-                    LOGGER.finest("In some weird condition. FIXME... why are we removing what we added in previous if/else?");
+                    LOGGER.finest("The record has been already processed.");
                     return null;
                 }
             }
