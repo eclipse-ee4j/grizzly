@@ -198,6 +198,7 @@ public class Http2SessionOutputSink {
             int writeCompletionHandlerBytes = 0;
             int bytesToTransfer = 0;
             int queueSizeToFree = 0;
+            boolean breakNow = false;
 
             // gather all available output data frames
             while (availWindowSize > bytesToTransfer && queueSize > queueSizeToFree) {
@@ -208,10 +209,9 @@ public class Http2SessionOutputSink {
                     LOGGER.log(Level.WARNING, "UNEXPECTED NULL RECORD. Queue-size: {0} "
                                     + "byteToTransfer={1} queueSizeToFree={2} queueSize={3}",
                             new Object[]{outputQueue.size(), bytesToTransfer, queueSizeToFree, queueSize});
+                    breakNow = true;
+                    break;
                 }
-
-                assert record != null;
-
                 final int serializedBytes = record.serializeTo(tmpFramesList,
                     Math.min(MAX_FRAME_PAYLOAD_SIZE, availWindowSize - bytesToTransfer));
                 bytesToTransfer += serializedBytes;
@@ -264,6 +264,9 @@ public class Http2SessionOutputSink {
 
             // release the writer lock, so other thread can start to write
             writerLock.set(false);
+            if (breakNow) {
+                break;
+            }
 
             // we don't want this thread to write all the time - so give more
             // time for another thread to start writing
