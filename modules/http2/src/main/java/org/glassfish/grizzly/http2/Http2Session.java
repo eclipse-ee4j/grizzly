@@ -280,7 +280,9 @@ public class Http2Session {
     public Http2Frame parseHttp2FrameHeader(final Buffer buffer) throws Http2SessionException {
         // we assume the passed buffer represents only this frame, no remainders allowed
         final int len = getFrameSize(buffer);
-        assert buffer.remaining() == len;
+        if (buffer.remaining() != len) {
+            throw new Http2SessionException(ErrorCode.FRAME_SIZE_ERROR);
+        }
 
         final int i1 = buffer.getInt();
 
