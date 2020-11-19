@@ -48,7 +48,6 @@ import org.glassfish.grizzly.http2.frames.Http2Frame;
 public class Http2SessionOutputSink {
     protected final Http2Session http2Session;
     private static final Logger LOGGER = Grizzly.logger(Http2SessionOutputSink.class);
-    private static final Level LOGGER_LEVEL = Level.FINE;
 
     private static final int MAX_FRAME_PAYLOAD_SIZE = 16383;
     private static final int MAX_OUTPUT_QUEUE_SIZE = 65536;
@@ -127,10 +126,9 @@ public class Http2SessionOutputSink {
             throw new Http2SessionException(ErrorCode.FLOW_CONTROL_ERROR, "Session flow-control window overflow.");
         }
         final int newWindowSize = availConnectionWindowSize.addAndGet(delta);
-        if (LOGGER.isLoggable(LOGGER_LEVEL)) {
-            LOGGER.log(LOGGER_LEVEL, "Http2Session. Expand connection window size by {0} bytes. Current connection window size is: {1}",
-                    new Object[] { delta, newWindowSize });
-        }
+        LOGGER.log(Level.FINE,
+            "Http2Session. Expand connection window size by {0} bytes. Current connection window size is: {1}",
+            new Object[] {delta, newWindowSize});
 
         flushOutputQueue();
     }
@@ -171,7 +169,6 @@ public class Http2SessionOutputSink {
         }
 
         final Http2OutputQueueRecord record = new Http2OutputQueueRecord(stream.getId(), data, completionHandler, isLast);
-
         outputQueue.offer(record);
         outputQueue.reserveSpace(record.isZeroSizeData() ? 1 : dataSize);
 
@@ -184,10 +181,7 @@ public class Http2SessionOutputSink {
         int availWindowSize;
         int queueSize;
 
-        boolean needToNotify = false;
-
-        // for debug purposes only
-        int tmpcnt = 0;
+        boolean needToNotifyQueueManagement = false;
 
         // try to flush entire output queue
 
@@ -199,29 +193,27 @@ public class Http2SessionOutputSink {
             availWindowSize = availConnectionWindowSize.get();
             queueSize = outputQueue.size();
 
+            AggrCompletionHandler completionHandlers = null;
             CompletionHandler<WriteResult> writeCompletionHandler = null;
             int writeCompletionHandlerBytes = 0;
-
             int bytesToTransfer = 0;
             int queueSizeToFree = 0;
-
-            AggrCompletionHandler completionHandlers = null;
 
             // gather all available output data frames
             while (availWindowSize > bytesToTransfer && queueSize > queueSizeToFree) {
 
                 final Http2OutputQueueRecord record = outputQueue.poll();
-
                 if (record == null) {
-                    // keep this warning for now
-                    // should be reported when null record is spotted
-                    LOGGER.log(Level.WARNING, "UNEXPECTED NULL RECORD. Queue-size: {0} " + "tmpcnt={1} byteToTransfer={2} queueSizeToFree={3} queueSize={4}",
-                            new Object[] { outputQueue.size(), tmpcnt, bytesToTransfer, queueSizeToFree, queueSize });
+                    // keep this warning for now - should be reported when null record is spotted
+                    LOGGER.log(Level.WARNING, "UNEXPECTED NULL RECORD. Queue-size: {0} "
+                                    + "byteToTransfer={1} queueSizeToFree={2} queueSize={3}",
+                            new Object[]{outputQueue.size(), bytesToTransfer, queueSizeToFree, queueSize});
                 }
 
                 assert record != null;
 
-                final int serializedBytes = record.serializeTo(tmpFramesList, Math.min(MAX_FRAME_PAYLOAD_SIZE, availWindowSize - bytesToTransfer));
+                final int serializedBytes = record.serializeTo(tmpFramesList,
+                    Math.min(MAX_FRAME_PAYLOAD_SIZE, availWindowSize - bytesToTransfer));
                 bytesToTransfer += serializedBytes;
                 queueSizeToFree += serializedBytes;
 
@@ -264,12 +256,10 @@ public class Http2SessionOutputSink {
 
                 outputQueue.releaseSpace(queueSizeToFree);
 
-                needToNotify = true;
-                if (LOGGER.isLoggable(LOGGER_LEVEL)) {
-                    LOGGER.log(LOGGER_LEVEL, "Http2Session. Shrink connection window size by {0} bytes. Current connection window size is: {1}",
-                            new Object[] { bytesToTransfer, newWindowSize });
-                }
-
+                needToNotifyQueueManagement = true;
+                LOGGER.log(Level.FINE,
+                    "Http2Session. Shrink connection window size by {0} bytes. Current connection window size is: {1}",
+                    new Object[] {bytesToTransfer, newWindowSize});
             }
 
             // release the writer lock, so other thread can start to write
@@ -278,10 +268,9 @@ public class Http2SessionOutputSink {
             // we don't want this thread to write all the time - so give more
             // time for another thread to start writing
             LockSupport.parkNanos(backoffDelay++);
-            tmpcnt++;
         }
 
-        if (needToNotify) {
+        if (needToNotifyQueueManagement) {
             outputQueue.doNotify();
         }
     }

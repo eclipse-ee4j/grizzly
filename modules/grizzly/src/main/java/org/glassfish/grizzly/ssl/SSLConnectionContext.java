@@ -61,7 +61,6 @@ public final class SSLConnectionContext {
     }
 
     final ByteBufferArray outputByteBufferArray = ByteBufferArray.create();
-
     final ByteBufferArray inputByteBufferArray = ByteBufferArray.create();
 
     private Buffer lastOutputBuffer;
@@ -225,11 +224,9 @@ public final class SSLConnectionContext {
             if (input.hasRemaining()) {
                 do {
                     result = wrap(input, inputArray, inputArraySize, null, allocator);
-
                     if (result.isError()) {
                         throw result.getError();
                     }
-
                     final Buffer newOutput = result.getOutput();
                     newOutput.trim();
 
@@ -272,13 +269,11 @@ public final class SSLConnectionContext {
         }
 
         final Status status = sslEngineResult.getStatus();
-
         if (status == Status.CLOSED) {
             return new SslResult(output, new SSLException("SSLEngine is CLOSED"));
         }
 
         final boolean isOverflow = status == Status.BUFFER_OVERFLOW;
-
         if (allocator != null && isOverflow) {
             updateBufferSizes();
             output = ensureBufferSize(output, netBufferSize, allocator);

@@ -39,17 +39,18 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
      */
     private final Queue<E> queue;
 
-    private static final AtomicReferenceFieldUpdater<TaskQueue, AsyncQueueRecord> currentElementUpdater = AtomicReferenceFieldUpdater
-            .newUpdater(TaskQueue.class, AsyncQueueRecord.class, "currentElement");
+    private static final AtomicReferenceFieldUpdater<TaskQueue, AsyncQueueRecord> currentElementUpdater
+        = AtomicReferenceFieldUpdater.newUpdater(TaskQueue.class, AsyncQueueRecord.class, "currentElement");
     private volatile E currentElement;
 
-    private static final AtomicIntegerFieldUpdater<TaskQueue> spaceInBytesUpdater = AtomicIntegerFieldUpdater.newUpdater(TaskQueue.class, "spaceInBytes");
+    private static final AtomicIntegerFieldUpdater<TaskQueue> spaceInBytesUpdater
+        = AtomicIntegerFieldUpdater.newUpdater(TaskQueue.class, "spaceInBytes");
     private volatile int spaceInBytes;
 
     private final MutableMaxQueueSize maxQueueSizeHolder;
 
-    private static final AtomicIntegerFieldUpdater<TaskQueue> writeHandlersCounterUpdater = AtomicIntegerFieldUpdater.newUpdater(TaskQueue.class,
-            "writeHandlersCounter");
+    private static final AtomicIntegerFieldUpdater<TaskQueue> writeHandlersCounterUpdater
+        = AtomicIntegerFieldUpdater.newUpdater(TaskQueue.class, "writeHandlersCounter");
     private volatile int writeHandlersCounter;
     protected final Queue<WriteHandler> writeHandlersQueue = new ConcurrentLinkedQueue<>();
     // ------------------------------------------------------------ Constructors
@@ -84,14 +85,15 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
     @SuppressWarnings("unchecked")
     public E poll() {
         E current = (E) currentElementUpdater.getAndSet(this, null);
-        return current != null ? current : queue.poll();
+        return current == null ? queue.poll() : current;
     }
 
     /**
-     * Get the current processing task, if the current in not set, take the task from the queue. Note: after this operation
-     * call, the current element could be removed from the queue using
-     * {@link #setCurrentElement(org.glassfish.grizzly.asyncqueue.AsyncQueueRecord)} and passing <tt>null</tt> as a
-     * parameter, this is a little bit more optimal alternative to {@link #poll()}.
+     * Get the current processing task, if the current in not set, take the task from the queue.
+     * <p>
+     * Note: after this operation call, the current element could be removed from the queue using
+     * {@link #setCurrentElement(org.glassfish.grizzly.asyncqueue.AsyncQueueRecord)}
+     * and passing <tt>null</tt> as a parameter, this is a little bit more optimal alternative to {@link #poll()}.
      *
      * @return the current processing task
      */
@@ -155,7 +157,7 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
 
     /**
      * Get the queue of tasks, which will be processed asynchronously
-     * 
+     *
      * @return the queue of tasks, which will be processed asynchronously
      */
     public Queue<E> getQueue() {
@@ -209,21 +211,21 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
             writeHandler.onError(new IOException("Connection is closed"));
         }
     }
-    // ------------------------------------------------------- Protected Methods
 
+    /**
+     * Notifies processing the queue by write handlers.
+     */
     public void doNotify() {
         if (maxQueueSizeHolder == null || writeHandlersCounter == 0) {
             return;
         }
 
         final int maxQueueSize = maxQueueSizeHolder.getMaxQueueSize();
-
         while (spaceInBytes() < maxQueueSize) {
-            WriteHandler writeHandler = pollWriteHandler();
+            final WriteHandler writeHandler = pollWriteHandler();
             if (writeHandler == null) {
                 return;
             }
-
             try {
                 writeHandler.onWritePossible();
             } catch (Throwable e) {
@@ -234,7 +236,7 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
 
     /**
      * Set current task element.
-     * 
+     *
      * @param task current element.
      */
     public void setCurrentElement(final E task) {
@@ -260,7 +262,7 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
 
     /**
      * Remove the task from queue.
-     * 
+     *
      * @param task the task to remove.
      * @return <tt>true</tt> if tasked was removed, or <tt>false</tt> otherwise.
      */
@@ -335,8 +337,6 @@ public final class TaskQueue<E extends AsyncQueueRecord> {
 
         return null;
     }
-
-    // ----------------------------------------------------------- Nested Classes
 
     public interface MutableMaxQueueSize {
         int getMaxQueueSize();

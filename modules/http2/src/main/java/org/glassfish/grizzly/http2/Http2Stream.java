@@ -75,8 +75,8 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
 
     static final int UPGRADE_STREAM_ID = 1;
 
-    private static final Attribute<Http2Stream> HTTP_RQST_HTTP2_STREAM_ATTR = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER
-            .createAttribute("http2.request.stream");
+    private static final Attribute<Http2Stream> HTTP_RQST_HTTP2_STREAM_ATTR
+        = AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("http2.request.stream");
 
     State state = State.IDLE;
 
@@ -94,13 +94,14 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
     final StreamOutputSink outputSink;
 
     // number of bytes reported to be read, but still unacked to the peer
-    static final AtomicIntegerFieldUpdater<Http2Stream> unackedReadBytesUpdater = AtomicIntegerFieldUpdater.newUpdater(Http2Stream.class, "unackedReadBytes");
+    static final AtomicIntegerFieldUpdater<Http2Stream> unackedReadBytesUpdater
+        = AtomicIntegerFieldUpdater.newUpdater(Http2Stream.class, "unackedReadBytes");
     @SuppressWarnings("unused")
     private volatile int unackedReadBytes;
 
     // closeReasonRef, "null" value means the connection is open.
-    private static final AtomicReferenceFieldUpdater<Http2Stream, CloseReason> closeReasonUpdater = AtomicReferenceFieldUpdater.newUpdater(Http2Stream.class,
-            CloseReason.class, "closeReason");
+    private static final AtomicReferenceFieldUpdater<Http2Stream, CloseReason> closeReasonUpdater
+        = AtomicReferenceFieldUpdater.newUpdater(Http2Stream.class, CloseReason.class, "closeReason");
     @SuppressWarnings("unused")
     private volatile CloseReason closeReason;
 
@@ -108,8 +109,8 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
 
     private final Queue<CloseListener> closeListeners = new ConcurrentLinkedQueue<>();
 
-    private static final AtomicIntegerFieldUpdater<Http2Stream> completeFinalizationCounterUpdater = AtomicIntegerFieldUpdater.newUpdater(Http2Stream.class,
-            "completeFinalizationCounter");
+    private static final AtomicIntegerFieldUpdater<Http2Stream> completeFinalizationCounterUpdater
+        = AtomicIntegerFieldUpdater.newUpdater(Http2Stream.class, "completeFinalizationCounter");
     @SuppressWarnings("unused")
     private volatile int completeFinalizationCounter;
 
@@ -179,7 +180,6 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
 
         this.exclusive = false;
         inputBuffer = http2Session.isServer() ? new UpgradeInputBuffer(this) : new DefaultInputBuffer(this);
-
         outputSink = http2Session.isServer() ? new DefaultOutputSink(this) : new UpgradeOutputSink(http2Session);
 
         HTTP_RQST_HTTP2_STREAM_ATTR.set(request, this);
@@ -318,7 +318,7 @@ public class Http2Stream implements AttributeStorage, OutputSink, Closeable {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @deprecated please use {@link #close()} with the following
      * {@link GrizzlyFuture#addCompletionHandler(org.glassfish.grizzly.CompletionHandler)} call
      */

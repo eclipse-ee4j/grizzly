@@ -800,12 +800,11 @@ public class OutputBuffer {
 
         if (isNonBlockingWriteGuaranteed || canWrite()) {
             final Reentrant reentrant = Reentrant.getWriteReentrant();
-            if (!reentrant.isMaxReentrantsReached()) {
-                notifyWritePossible();
-            } else {
+            if (reentrant.isMaxReentrantsReached()) {
                 notifyWritePossibleAsync();
+            } else {
+                notifyWritePossible();
             }
-
             return;
         }
 
@@ -847,7 +846,6 @@ public class OutputBuffer {
     /**
      * Notify WriteHandler asynchronously
      */
-    @SuppressWarnings("unchecked")
     private void notifyWritePossibleAsync() {
         if (writePossibleRunnable == null) {
             writePossibleRunnable = new Runnable() {
@@ -1156,8 +1154,10 @@ public class OutputBuffer {
     }
 
     private void notifyCommit() throws IOException {
-        for (int i = 0, len = lifeCycleListeners.size(); i < len; i++) {
-            lifeCycleListeners.get(i).onCommit();
+        // the collection is not synchronized and may be accessed in parallel
+        final LifeCycleListener[] array = lifeCycleListeners.toArray(new LifeCycleListener[lifeCycleListeners.size()]);
+        for (LifeCycleListener lifeCycleListener : array) {
+            lifeCycleListener.onCommit();
         }
     }
 
