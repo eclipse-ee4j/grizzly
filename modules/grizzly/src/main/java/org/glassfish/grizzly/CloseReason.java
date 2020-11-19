@@ -64,10 +64,19 @@ public class CloseReason {
      *
      * If the cause wasn't specified by user and it was closed locally then {@link #LOCALLY_CLOSED} will be returned. If the
      * cause wasn't specified by user and it was closed remotely then {@link #REMOTELY_CLOSED} will be returned.
-     * 
+     *
      * @return information about an error, that caused the {@link Connection} to be closed
      */
     public IOException getCause() {
         return cause;
+    }
+
+
+    /**
+     * Returns also type and cause.
+     */
+    @Override
+    public String toString() {
+        return super.toString() + "[type="+ getType() + ", cause=" + getCause() + "]";
     }
 }
