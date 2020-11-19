@@ -634,6 +634,7 @@ public class Http2Session {
 
     // Must be locked by sessionLock
     private void pruneStreams() {
+        LOGGER.log(Level.FINE, "pruneStreams()");
         // close streams that rank above the last stream ID specified by the GOAWAY frame.
         // Allow other streams to continue processing. Once the concurrent stream count reaches zero,
         // the session will be closed.
@@ -1060,6 +1061,7 @@ public class Http2Session {
      * Called from {@link Http2Stream} once stream is completely closed.
      */
     void deregisterStream() {
+        LOGGER.fine("deregisterStream()");
         final boolean isCloseSession;
         synchronized (sessionLock) {
             decStreamCount();
