@@ -115,7 +115,7 @@ public class Http2FrameCodec {
 
         final int len = http2Session.getFrameSize(buffer);
 
-        if (len > http2Session.getLocalMaxFramePayloadSize() + Http2Frame.FRAME_HEADER_SIZE) {
+        if (len > http2Session.getPeerMaxFramePayloadSize() + Http2Frame.FRAME_HEADER_SIZE) {
 
             http2Session.onOversizedFrame(buffer);
 
