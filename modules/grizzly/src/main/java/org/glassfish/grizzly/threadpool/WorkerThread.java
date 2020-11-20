@@ -32,8 +32,6 @@ public interface WorkerThread extends Runnable, AttributeStorage {
 
     void stop();
 
-    void destroy();
-
     String getName();
 
     Thread getThread();
