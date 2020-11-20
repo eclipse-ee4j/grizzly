@@ -286,7 +286,7 @@ public class Buffers {
                 if (srcByteBuffer.hasArray()) {
                     dstBuffer.put(srcByteBuffer.array(), srcByteBuffer.arrayOffset() + initialPosition, srcByteBufferLen);
                 } else {
-                    for (int j = 0; j < srcByteBufferLen; i++) {
+                    for (int j = 0; j < srcByteBufferLen; j++) {
                         dstBuffer.put(srcByteBuffer.get(initialPosition + j));
                     }
                 }
