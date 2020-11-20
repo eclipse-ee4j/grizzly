@@ -1,9 +1,15 @@
 language: java
-dist: bionic
-jdk:
-  - openjdk8
+os: linux
+dist: focal
+addons:
+  apt:
+    packages:
+      - openjdk-8-jdk
+env:
+  global:
+    - PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH
+    - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 before_install:
   - mvn -v
-sudo: false
 script: mvn --fail-at-end clean verify
 
