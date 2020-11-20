@@ -17,6 +17,7 @@ import org.glassfish.grizzly.npn.NegotiationSupport;
 import org.glassfish.grizzly.ssl.SSLUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 public class AlpnSupportTest extends AbstractHttp2Test {
 
@@ -42,7 +43,7 @@ public class AlpnSupportTest extends AbstractHttp2Test {
     /**
      * Tests that the SSL_TO_CONNECTION_MAP removes entries from it after the connection closes.
      */
-    // @Test
+    @Test
     public void sslToConnectionMapClearTest() throws Exception {
         SSLEngine engine = null;
 
