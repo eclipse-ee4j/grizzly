@@ -125,8 +125,8 @@
         <felix-version>4.2.1</felix-version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
-        <grizzly.npn.api.version>2.0</grizzly.npn.api.version>
-        <grizzly.npn.bootstrap.version>2.0</grizzly.npn.bootstrap.version>
+        <grizzly.npn.api.version>2.0.0</grizzly.npn.api.version>
+        <grizzly.npn.bootstrap.version>2.0.0</grizzly.npn.bootstrap.version>
         <openjsse.version>1.1.5</openjsse.version>
         <osgi.version>4.2.0</osgi.version>
         <release.arguments></release.arguments>
