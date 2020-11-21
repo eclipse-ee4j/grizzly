@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates and others.
+ * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -279,7 +280,9 @@ public class Http2Session {
     public Http2Frame parseHttp2FrameHeader(final Buffer buffer) throws Http2SessionException {
         // we assume the passed buffer represents only this frame, no remainders allowed
         final int len = getFrameSize(buffer);
-        assert buffer.remaining() == len;
+        if (buffer.remaining() != len) {
+            throw new Http2SessionException(ErrorCode.FRAME_SIZE_ERROR);
+        }
 
         final int i1 = buffer.getInt();
 
@@ -389,7 +392,6 @@ public class Http2Session {
     /**
      * @return The max <tt>payload</tt> size to be accepted by the peer
      */
-    @SuppressWarnings("unused")
     public int getPeerMaxFramePayloadSize() {
         return peerMaxFramePayloadSize;
     }
@@ -442,12 +444,10 @@ public class Http2Session {
         return localConnectionWindowSize;
     }
 
-    @SuppressWarnings("unused")
     public void setLocalConnectionWindowSize(final int localConnectionWindowSize) {
         this.localConnectionWindowSize = localConnectionWindowSize;
     }
 
-    @SuppressWarnings("unused")
     public int getAvailablePeerConnectionWindowSize() {
         return outputSink.getAvailablePeerConnectionWindowSize();
     }
@@ -489,7 +489,7 @@ public class Http2Session {
      * Push is enabled by default.
      */
     public boolean isPushEnabled() {
-        return pushEnabled;
+        return pushEnabled && http2Configuration.isPushEnabled();
     }
 
     /**
@@ -589,9 +589,7 @@ public class Http2Session {
 
                 @Override
                 public void failed(final Throwable throwable) {
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE, "Unable to write GOAWAY.  Terminating session.", throwable);
-                    }
+                    LOGGER.log(Level.WARNING, "Unable to write GOAWAY.  Terminating session.", throwable);
                     close();
                 }
 
@@ -602,9 +600,7 @@ public class Http2Session {
 
                 @Override
                 public void cancelled() {
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE, "GOAWAY write cancelled.  Terminating session.");
-                    }
+                    LOGGER.log(Level.FINE, "GOAWAY write cancelled.  Terminating session.");
                     close();
                 }
             }, null);
@@ -638,6 +634,7 @@ public class Http2Session {
 
     // Must be locked by sessionLock
     private void pruneStreams() {
+        LOGGER.log(Level.FINE, "pruneStreams()");
         // close streams that rank above the last stream ID specified by the GOAWAY frame.
         // Allow other streams to continue processing. Once the concurrent stream count reaches zero,
         // the session will be closed.
@@ -871,7 +868,7 @@ public class Http2Session {
     private List<Http2Frame> completeHeadersProviderFrameSerialization(final HeaderBlockFragment.HeaderBlockFragmentBuilder builder, final int streamId,
             final Buffer compressedHeaders, List<Http2Frame> toList) {
         // we assume deflaterLock is acquired and held by this thread
-        assert deflaterLock.isHeldByCurrentThread();
+        assert getDeflaterLock().isHeldByCurrentThread();
 
         if (toList == null) {
             toList = tmpHeaderFramesList;
@@ -1064,6 +1061,7 @@ public class Http2Session {
      * Called from {@link Http2Stream} once stream is completely closed.
      */
     void deregisterStream() {
+        LOGGER.fine("deregisterStream()");
         final boolean isCloseSession;
         synchronized (sessionLock) {
             decStreamCount();

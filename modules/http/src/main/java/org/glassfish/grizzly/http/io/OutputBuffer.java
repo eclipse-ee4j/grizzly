@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.CloseReason;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.FileTransfer;
@@ -791,8 +792,14 @@ public class OutputBuffer {
             throw new IllegalStateException("Illegal attempt to set a new handler before the existing handler has been notified.");
         }
 
-        if (!httpContext.getCloseable().isOpen()) {
-            handler.onError(connection.getCloseReason().getCause());
+        if (handler != null && !httpContext.getCloseable().isOpen()) {
+            final CloseReason closeReason = connection.getCloseReason();
+            if (closeReason == null) {
+                LOGGER.log(Level.WARNING, "No close reason set, using default: {0}", CloseReason.LOCALLY_CLOSED_REASON);
+                handler.onError(CloseReason.LOCALLY_CLOSED_REASON.getCause());
+            } else {
+                handler.onError(closeReason.getCause());
+            }
             return;
         }
 
@@ -800,12 +807,11 @@ public class OutputBuffer {
 
         if (isNonBlockingWriteGuaranteed || canWrite()) {
             final Reentrant reentrant = Reentrant.getWriteReentrant();
-            if (!reentrant.isMaxReentrantsReached()) {
-                notifyWritePossible();
-            } else {
+            if (reentrant.isMaxReentrantsReached()) {
                 notifyWritePossibleAsync();
+            } else {
+                notifyWritePossible();
             }
-
             return;
         }
 
@@ -821,6 +827,7 @@ public class OutputBuffer {
             // have been processed by WriteHandler.onError().
             httpContext.getOutputSink().notifyCanWrite(asyncWriteHandler);
         } catch (Exception ignored) {
+            LOGGER.log(Level.FINE, "Ignoring exception.", ignored);
         }
     }
 
@@ -847,7 +854,6 @@ public class OutputBuffer {
     /**
      * Notify WriteHandler asynchronously
      */
-    @SuppressWarnings("unchecked")
     private void notifyWritePossibleAsync() {
         if (writePossibleRunnable == null) {
             writePossibleRunnable = new Runnable() {
@@ -1156,8 +1162,10 @@ public class OutputBuffer {
     }
 
     private void notifyCommit() throws IOException {
-        for (int i = 0, len = lifeCycleListeners.size(); i < len; i++) {
-            lifeCycleListeners.get(i).onCommit();
+        // the collection is not synchronized and may be accessed in parallel
+        final LifeCycleListener[] array = lifeCycleListeners.toArray(new LifeCycleListener[lifeCycleListeners.size()]);
+        for (LifeCycleListener lifeCycleListener : array) {
+            lifeCycleListener.onCommit();
         }
     }
 

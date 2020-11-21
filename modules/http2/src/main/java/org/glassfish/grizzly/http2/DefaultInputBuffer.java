@@ -47,9 +47,9 @@ class DefaultInputBuffer implements StreamInputBuffer {
 
     private static final long NULL_CONTENT_LENGTH = Long.MIN_VALUE;
 
-    private static final AtomicIntegerFieldUpdater<DefaultInputBuffer> inputQueueSizeUpdater = AtomicIntegerFieldUpdater.newUpdater(DefaultInputBuffer.class,
-            "inputQueueSize");
-    @SuppressWarnings("unused")
+    private static final AtomicIntegerFieldUpdater<DefaultInputBuffer> inputQueueSizeUpdater
+        = AtomicIntegerFieldUpdater.newUpdater(DefaultInputBuffer.class, "inputQueueSize");
+
     private volatile int inputQueueSize;
 
     private final BlockingQueue<InputElement> inputQueue = new LinkedTransferQueue<>();
@@ -59,8 +59,8 @@ class DefaultInputBuffer implements StreamInputBuffer {
 
     // the termination flag. When is not null contains the reason why input was terminated.
     // when the flag is not null - poll0() will return -1.
-    private static final AtomicReferenceFieldUpdater<DefaultInputBuffer, Termination> closeFlagUpdater = AtomicReferenceFieldUpdater
-            .newUpdater(DefaultInputBuffer.class, Termination.class, "closeFlag");
+    private static final AtomicReferenceFieldUpdater<DefaultInputBuffer, Termination> closeFlagUpdater
+        = AtomicReferenceFieldUpdater.newUpdater(DefaultInputBuffer.class, Termination.class, "closeFlag");
     @SuppressWarnings("unused")
     private volatile Termination closeFlag;
 
@@ -93,7 +93,6 @@ class DefaultInputBuffer implements StreamInputBuffer {
         // If input stream has been terminated - send error message upstream
         if (isClosed()) {
             http2Session.sendMessageUpstream(stream, buildBrokenHttpContent(new EOFException(closeFlag.getDescription())));
-
             return;
         }
 
@@ -262,17 +261,16 @@ class DefaultInputBuffer implements StreamInputBuffer {
                 if (inputElement == null) {
                     // timeout expired
                     throw new IOException("Blocking read timeout");
-                } else {
-                    // Due to asynchronous inputQueueSize update - the inputQueueSizeNow may be < 0.
-                    // It means the inputQueueSize.getAndSet(0); above, may unintentionally increase the counter.
-                    // So, once we read a Buffer - we have to properly restore the counter value.
-                    // Normally it had to be inputQueueSize.decrementAndGet(); , but we have to
-                    // take into account fact described above.
-                    inputQueueSizeUpdater.addAndGet(this, inputQueueSizeNow - 1);
-
-                    checkEOF(inputElement);
-                    buffer = inputElement.toBuffer();
                 }
+                // Due to asynchronous inputQueueSize update - the inputQueueSizeNow may be < 0.
+                // It means the inputQueueSize.getAndSet(0); above, may unintentionally increase the counter.
+                // So, once we read a Buffer - we have to properly restore the counter value.
+                // Normally it had to be inputQueueSize.decrementAndGet(); , but we have to
+                // take into account fact described above.
+                inputQueueSizeUpdater.addAndGet(this, inputQueueSizeNow - 1);
+
+                checkEOF(inputElement);
+                buffer = inputElement.toBuffer();
             } else if (inputQueueSizeNow == 1) {
                 // if there is one element available
                 inputElement = inputQueue.poll();
@@ -375,14 +373,15 @@ class DefaultInputBuffer implements StreamInputBuffer {
 
     /**
      * Checks if the passed InputElement is input buffer EOF element.
-     * 
+     *
      * @param inputElement the {@link InputElement} to check EOF status against.
      */
     private void checkEOF(final InputElement inputElement) {
         // first of all it has to be the last element
         if (inputElement.isLast) {
 
-            final Termination termination = !inputElement.isService ? IN_FIN_TERMINATION : (Termination) inputElement.content;
+            final Termination termination = inputElement.isService
+                ? (Termination) inputElement.content : IN_FIN_TERMINATION;
 
             if (closeFlagUpdater.compareAndSet(this, null, termination)) {
 

@@ -13,7 +13,7 @@
  * https://www.gnu.org/software/classpath/license.html.
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
- * 
+ *
  * Contributors:
  *   Payara Services - Add support for JDK 9 ALPN API
  *                   - Propagate stop action on a closed SSL connection
@@ -193,7 +193,7 @@ public class SSLBaseFilter extends BaseFilter {
 
     /**
      * Sets the handshake timeout.
-     * 
+     *
      * @param handshakeTimeout timeout value, or <code>-1</code> means for non-blocking handshake mode.
      * @param timeUnit {@link TimeUnit}
      */
@@ -794,9 +794,7 @@ public class SSLBaseFilter extends BaseFilter {
         try {
             return sslCtx.getSslEngine().getSession().getPeerCertificates();
         } catch (Throwable t) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, "Error getting client certs", t);
-            }
+            LOGGER.log(Level.FINE, "Error getting client certs", t);
             return null;
         }
     }
@@ -891,14 +889,6 @@ public class SSLBaseFilter extends BaseFilter {
         }
 
     } // END InternalProcessingHandler
-
-    public interface HandshakeListener {
-        void onStart(Connection<?> connection);
-
-        void onComplete(Connection<?> connection);
-
-        void onFailure(Connection<?> connection, Throwable t);
-    }
 
     protected static class SSLTransportFilterWrapper extends TransportFilter {
         protected final TransportFilter wrappedFilter;
@@ -1008,5 +998,16 @@ public class SSLBaseFilter extends BaseFilter {
 
             return originalMessage;
         }
+    }
+
+
+    // don't move to own file, Tyrus has a dependency on this interface
+    public interface HandshakeListener {
+        default void onInit(Connection<?> connection, SSLEngine sslEngine) {
+            // nothing
+        }
+        void onStart(Connection<?> connection);
+        void onComplete(Connection<?> connection);
+        void onFailure(Connection<?> connection, Throwable t);
     }
 }

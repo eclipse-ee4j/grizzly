@@ -58,7 +58,7 @@ import junit.framework.TestCase;
 public class HttpResponseParseTest extends TestCase {
     private static final Logger logger = Grizzly.logger(HttpResponseParseTest.class);
 
-    public static final int PORT = 19001;
+    public static final int PORT = 19021;
 
     public void testHeaderlessResponseLine() throws Exception {
         doHttpResponseTest("HTTP/1.0", 200, "OK", Collections.<String, Pair<String, String>>emptyMap(), "\r\n");

@@ -119,7 +119,7 @@ public abstract class Http2BaseFilter extends HttpBaseFilter {
 
     /**
      * Sets the maximum allowed HTTP2 frame size.
-     * 
+     *
      * @param localMaxFramePayloadSize the maximum allowed HTTP2 frame size
      */
     public void setLocalMaxFramePayloadSize(final int localMaxFramePayloadSize) {
@@ -480,10 +480,10 @@ public abstract class Http2BaseFilter extends HttpBaseFilter {
         } finally {
             frame.recycle();
         }
-
     }
 
-    void applySettings(final Http2Session http2Session, final SettingsFrame settingsFrame) throws Http2SessionException, Http2StreamException {
+    void applySettings(final Http2Session http2Session, final SettingsFrame settingsFrame)
+    throws Http2SessionException, Http2StreamException {
 
         for (int i = 0, numberOfSettings = settingsFrame.getNumberOfSettings(); i < numberOfSettings; i++) {
             final SettingsFrame.Setting setting = settingsFrame.getSettingByIndex(i);
@@ -730,7 +730,7 @@ public abstract class Http2BaseFilter extends HttpBaseFilter {
 
     /**
      * Creates {@link Http2Session} with pre-configured initial-windows-size and max-concurrent-streams
-     * 
+     *
      * @param connection the TCP {@link Connection}
      * @param isServer flag indicating whether this connection is server side or not.
      * @return {@link Http2Session}
@@ -841,7 +841,7 @@ public abstract class Http2BaseFilter extends HttpBaseFilter {
     final Http2Session obtainHttp2Session(final Http2State http2State, final FilterChainContext context, final boolean isUpStream) {
         final Connection connection = context.getConnection();
 
-        Http2Session http2Session = http2State != null ? http2State.getHttp2Session() : null;
+        Http2Session http2Session = http2State == null ? null : http2State.getHttp2Session();
 
         if (http2Session == null) {
             http2Session = Http2Session.get(connection);

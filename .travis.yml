@@ -1,11 +1,17 @@
 language: java
-dist: trusty
-jdk:
-  - oraclejdk8
+os: linux
+dist: focal
+addons:
+  apt:
+    packages:
+      - openjdk-8-jdk
+env:
+  global:
+    - PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH
+    - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 before_install:
-  - wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
-  - tar xzvf apache-maven-3.6.3-bin.tar.gz
-  - export PATH=`pwd`/apache-maven-3.6.3/bin:$PATH
   - mvn -v
-sudo: false
-script: mvn --fail-at-end clean verify
+install:
+  - mvn install -DskipTests=true -Pstaging -Dmaven.javadoc.skip=true -B -V
+script: mvn --fail-at-end clean verify -Pstaging
+

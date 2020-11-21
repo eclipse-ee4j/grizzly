@@ -71,20 +71,6 @@ public class Http2FrameCodec {
         }
 
         return parsingResult.frameList();
-
-//        // ------------ ERROR processing block -----------------------------
-//        final Buffer sndBuffer;
-//        final GoAwayFrame goAwayFrame =
-//                GoAwayFrame.builder()
-//                .errorCode(error.getErrorCode())
-//                .build();
-//        sndBuffer = goAwayFrame.toBuffer(http2State.getHttp2Session());
-//
-//        // send last message and close the connection
-//        ctx.write(sndBuffer);
-//        connection.closeSilently();
-//
-//        return ctx.getStopAction();
     }
 
     public Buffer serializeAndRecycle(final Http2Session http2Session, final Http2Frame frame) {
@@ -129,7 +115,7 @@ public class Http2FrameCodec {
 
         final int len = http2Session.getFrameSize(buffer);
 
-        if (len > http2Session.getLocalMaxFramePayloadSize() + Http2Frame.FRAME_HEADER_SIZE) {
+        if (len > http2Session.getPeerMaxFramePayloadSize() + Http2Frame.FRAME_HEADER_SIZE) {
 
             http2Session.onOversizedFrame(buffer);
 

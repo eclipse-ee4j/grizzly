@@ -13,7 +13,7 @@
  * https://www.gnu.org/software/classpath/license.html.
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
- * 
+ *
  * Contributors:
  *  Payara Services - Add support for JDK 9 ALPN API
  */
@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,42 +40,24 @@ import org.glassfish.grizzly.Transport;
 import org.glassfish.grizzly.npn.AlpnClientNegotiator;
 import org.glassfish.grizzly.npn.AlpnServerNegotiator;
 import org.glassfish.grizzly.npn.NegotiationSupport;
-import org.glassfish.grizzly.ssl.HandshakeListener;
 import org.glassfish.grizzly.ssl.SSLBaseFilter;
+import org.glassfish.grizzly.ssl.SSLBaseFilter.HandshakeListener;
 import org.glassfish.grizzly.ssl.SSLUtils;
 
 /**
  * Grizzly TLS Next Protocol Negotiation support class.
- *
  */
 public class AlpnSupport {
-    private final static Logger LOGGER = Grizzly.logger(AlpnSupport.class);
+    private static final Logger LOGGER = Grizzly.logger(AlpnSupport.class);
 
-    private final static Map<SSLEngine, Connection<?>> SSL_TO_CONNECTION_MAP = new WeakHashMap<>();
-
+    private static final Map<SSLEngine, Connection<?>> SSL_TO_CONNECTION_MAP = new WeakHashMap<>();
     private static final AlpnSupport INSTANCE;
-    private static final Method nativeHandshakeMethod;
-    
+    private static final AplnExtensionCompatibility COMPATIBILITY;
+
     static {
-        boolean isExtensionFound = false;
-        Method setHandshakeAlpnSelector = null;
-
-        try {
-            setHandshakeAlpnSelector = SSLEngine.class.getMethod("setHandshakeApplicationProtocolSelector", BiFunction.class);
-        } catch (Exception e) {
-            try {
-                ClassLoader.getSystemClassLoader().loadClass("sun.security.ssl.GrizzlyNPN");
-                isExtensionFound = true;
-            } catch (Exception e2) {
-                LOGGER.log(Level.FINE, "Native ALPN is not found:", e);
-                LOGGER.log(Level.FINE, "TLS ALPN extension is not found:", e2);
-            }
-        }
-
-        nativeHandshakeMethod = setHandshakeAlpnSelector;
-        INSTANCE = isExtensionFound
-                || nativeHandshakeMethod != null
-                ? new AlpnSupport() : null;
+        COMPATIBILITY = AplnExtensionCompatibility.getInstance();
+        LOGGER.config(() -> "Detected ALPN compatibility info: " + COMPATIBILITY);
+        INSTANCE = COMPATIBILITY.isAlpnExtensionAvailable() ? new AlpnSupport() : null;
     }
 
     public static boolean isEnabled() {
@@ -87,7 +68,6 @@ public class AlpnSupport {
         if (!isEnabled()) {
             throw new IllegalStateException("TLS ALPN is disabled");
         }
-
         return INSTANCE;
     }
 
@@ -109,23 +89,29 @@ public class AlpnSupport {
     private final Map<Object, AlpnClientNegotiator> clientSideNegotiators = new WeakHashMap<>();
     private final ReadWriteLock clientSideLock = new ReentrantReadWriteLock();
 
-    private final HandshakeListener handshakeListener = 
-            new HandshakeListener() {
+    private final HandshakeListener handshakeListener = new HandshakeListener() {
 
         @Override
         public void onInit(final Connection<?> connection, final SSLEngine sslEngine) {
             assert sslEngine != null;
-
-            AlpnServerNegotiator negotiator = getServerNegotiator(connection);
-
-            if (negotiator != null && nativeHandshakeMethod != null) {
-                // Code only works for JDK9+
-                // sslEngine.setHandshakeApplicationProtocolSelector(negotiator);
-                try {
-                    nativeHandshakeMethod.invoke(sslEngine, negotiator);
-                } catch (Exception ex) {
-                    LOGGER.log(Level.SEVERE, "Couldn't execute sslEngine.setHandshakeApplicationProtocolSelector", ex);
-                }
+            if (sslEngine.getUseClientMode()) {
+                // makes sense only for the server
+                return;
+            }
+            if (!COMPATIBILITY.isProtocolSelectorSetterInImpl()) {
+                // even when the api implements it, impl doesn't
+                return;
+            }
+            final AlpnServerNegotiator negotiator = getServerNegotiator(connection);
+            if (negotiator == null) {
+                return;
+            }
+            // Older JDK8 versions are missing this method in API, that's why we do this.
+            final Method setter = COMPATIBILITY.getProtocolSelectorSetter(sslEngine);
+            try {
+                setter.invoke(sslEngine, negotiator);
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Couldn't execute " + setter, ex);
             }
         }
 
@@ -136,7 +122,6 @@ public class AlpnSupport {
 
             if (sslEngine.getUseClientMode()) {
                 AlpnClientNegotiator negotiator = getClientNegotiator(connection);
-                
                 if (negotiator != null) {
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
@@ -152,9 +137,7 @@ public class AlpnSupport {
                 }
             } else {
                 AlpnServerNegotiator negotiator = getServerNegotiator(connection);
-                
                 if (negotiator != null) {
-
                     // add a CloseListener to ensure we remove the
                     // negotiator associated with this SSLEngine
                     connection.addCloseListener(new CloseListener<Closeable, CloseType>() {
@@ -205,7 +188,6 @@ public class AlpnSupport {
 
     private void putServerSideNegotiator(final Object object, final AlpnServerNegotiator negotiator) {
         serverSideLock.writeLock().lock();
-
         try {
             serverSideNegotiators.put(object, negotiator);
         } finally {
@@ -222,12 +204,10 @@ public class AlpnSupport {
             clientSideLock.writeLock().unlock();
         }
     }
-    
 
     private AlpnClientNegotiator getClientNegotiator(Connection<?> connection) {
         AlpnClientNegotiator negotiator;
         clientSideLock.readLock().lock();
-        
         try {
             negotiator = clientSideNegotiators.get(connection);
             if (negotiator == null) {
@@ -243,7 +223,6 @@ public class AlpnSupport {
     private AlpnServerNegotiator getServerNegotiator(Connection<?> connection) {
         AlpnServerNegotiator negotiator;
         serverSideLock.readLock().lock();
-        
         try {
             negotiator = serverSideNegotiators.get(connection);
             if (negotiator == null) {
