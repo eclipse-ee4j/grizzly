@@ -11,5 +11,7 @@ env:
     - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 before_install:
   - mvn -v
-script: mvn --fail-at-end clean verify
+install:
+  - mvn install -DskipTests=true -Pstaging -Dmaven.javadoc.skip=true -B -V
+script: mvn --fail-at-end clean verify -Pstaging
 
