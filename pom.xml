@@ -29,7 +29,7 @@
 
     <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-project</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
