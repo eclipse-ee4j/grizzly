@@ -1346,12 +1346,16 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
         httpHeader.setIgnoreContentModifiers(true);
 
         ctx.notifyUpstream(HttpEvents.createIncomingUpgradeEvent(httpHeader));
+
+        httpHeader.setIgnoreContentModifiers(false);
     }
 
     protected void onOutgoingUpgrade(final FilterChainContext ctx, final HttpHeader httpHeader) {
         httpHeader.setIgnoreContentModifiers(true);
 
         ctx.notifyUpstream(HttpEvents.createOutgoingUpgradeEvent(httpHeader));
+
+        httpHeader.setIgnoreContentModifiers(false);
     }
 
     protected Buffer encodeHttpPacket(final FilterChainContext ctx, final HttpPacket input) {
