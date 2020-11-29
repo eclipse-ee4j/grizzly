@@ -926,7 +926,7 @@ public class FilterChainContext implements AttributeStorage {
         sb.append("connection=").append(getConnection());
         sb.append(", closeable=").append(getCloseable());
         sb.append(", operation=").append(getOperation());
-        sb.append(", message=").append(String.valueOf(getMessage()));
+        sb.append(", message=").append((Object) getMessage());
         sb.append(", address=").append(getAddress());
         sb.append(']');
 
