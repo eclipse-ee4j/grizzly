@@ -7,7 +7,7 @@
     <!-- Grizzly logo banner on all pages -->
     <bannerLeft>
         <!-- Reflow Maven Skin, but with "Reflow" highlighted -->
-        <name><![CDATA[
+        <name><![CDATA[		
           <img src="images/grizzlyHead.png"/>&nbsp;<span class="color-black">Project</span> Eclipse Grizzly
           ]]>
         </name>
@@ -28,7 +28,7 @@
             <protocolRelativeURLs>true</protocolRelativeURLs>  
 
             <!-- Comment this out for local development.   -->
-            <absoluteResourceURL>https://eclipse-ee4j.github.io/grizzly/</absoluteResourceURL>
+            <absoluteResourceURL>https://eclipse-ee4j.github.io/grizzly</absoluteResourceURL>
 
             <!-- Brand on the top menu bar -->
             <brand>
