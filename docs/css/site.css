@@ -1,0 +1,108 @@
+.color-black {
+    color: #000000;
+}
+
+.color-brown {
+    color: #AE8C54;
+}
+
+h2 {
+    color: #AE8C54;
+}
+
+h1 {
+    color: #AE8C54;
+}
+
+body {
+    background-image: url(../images/bg.png);
+}
+
+.project-site.page-index img[alt=stack] {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* A bit of workaround for links being not clickable due to :before element in headings */
+.project-site.page-index h2[id]:before {
+    height: 30px;
+    margin-top: -30px;
+}
+
+.project-site.page-contribute h2[id]:before {
+    height: 30px;
+    margin-top: -30px;
+}
+
+/* Link styles for img/headers */
+.project-site.page-index a.headerlink:link {
+    color: #AE8C54;
+    text-decoration: none;
+}
+
+.project-site.page-index a.headerlink:visited {
+    color: #AE8C54;
+    text-decoration: none;
+}
+
+.project-site.page-index a.headerlink:hover {
+    color: #AE8C54;
+    text-decoration: none;
+}
+
+.project-site.page-index a.headerlink:active {
+    color: #AE8C54;
+    text-decoration: none;
+}
+
+.thumbnail .caption {
+    color: rgb(0, 0, 0);
+}
+
+/*
+   Tweak the color of the font in code/pre blocks.
+   We have to do this as bootstrap's css is overriding that
+   of highlight.js
+*/
+code, pre {
+    padding: 0px 3px 2px;
+    font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: rgb(100, 100, 100);
+    border-radius: 3px 3px 3px 3px;
+    display: block;
+    padding: 9.5px;
+    margin: 0px 0px 10px;
+    font-size: 13px;
+    line-height: 20px;
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    background-color: rgb(245, 245, 245);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+
+}
+#archive-footer {
+    position: fixed;
+	left: 0px;
+    bottom: 0;
+    width: 100%;
+}
+
+#archive-footer {
+  background: #B45252;
+  line-height: 1.3;
+  text-align: center;
+  color: #FFF;
+  font-size: 15px;
+  font-family: sans-serif;
+  font-weight: 100;
+  text-shadow: 2px 2px 2px #8D0614;
+  box-shadow: 0 0 12px #424242;
+}
+
+#archive-footer a:link { color: white; font-weight: 700; }
+#archive-footer a:visited { color: white; font-weight: 700;}
+#archive-footer a:hover { color: white; font-weight: 700; text-decoration: underline;}
+#archive-footer a:active { color: white; font-weight: 700; text-decoration: underline;}
