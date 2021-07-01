@@ -114,7 +114,7 @@ public class AccessLogBuilder {
                 appender = new RotatingFileAppender(directory, name, archive);
             }
         } catch (IOException exception) {
-            throw new IllegalStateException("I/O error creating acces log", exception);
+            throw new IllegalStateException("I/O error creating access log", exception);
         }
 
         /* Wrap the synch in a queue in a-synchronous */
