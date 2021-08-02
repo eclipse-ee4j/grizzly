@@ -33,7 +33,7 @@ Apache Maven 3.3.9 or later in order to build and run the tests.
 
 ### Installing
 
-See https://javaee.github.io/grizzly/dependencies.html for the maven
+See https://eclipse-ee4j.github.io/grizzly/dependencies.html for the maven
 coordinates of the 2.3.x release artifacts.
 
 If building in your local environment:
