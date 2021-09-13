@@ -23,6 +23,8 @@ import org.glassfish.grizzly.compression.zip.GZipDecoder;
 import org.glassfish.grizzly.compression.zip.GZipEncoder;
 import org.glassfish.grizzly.memory.Buffers;
 
+import java.util.zip.Deflater;
+
 /**
  * GZip {@link ContentEncoding} implementation, which compresses/decompresses HTTP content using gzip algorithm.
  *
@@ -50,7 +52,7 @@ public class GZipContentEncoding implements ContentEncoding {
 
     /**
      * Construct <tt>GZipContentEncoding</tt> using specific buffer sizes.
-     * 
+     *
      * @param inBufferSize input buffer size
      * @param outBufferSize output buffer size
      */
@@ -59,17 +61,32 @@ public class GZipContentEncoding implements ContentEncoding {
     }
 
     /**
-     * Construct <tt>GZipContentEncoding</tt> using specific buffer sizes.
-     * 
+     * Construct <tt>GZipContentEncoding</tt> using specific buffer sizes, with default compression level and strategy.
      * @param inBufferSize input buffer size
      * @param outBufferSize output buffer size
-     * @param encoderFilter {@link EncodingFilter}, which will decide if <tt>GZipContentEncoding</tt> should be applied to
-     * encode specific {@link HttpHeader} packet.
+     * @param encoderFilter {@link EncodingFilter}, which will decide if
+     * <tt>GZipContentEncoding</tt> should be applied to encode specific
+     *                 {@link HttpHeader} packet.
      */
     public GZipContentEncoding(int inBufferSize, int outBufferSize, EncodingFilter encoderFilter) {
-        this.decoder = new GZipDecoder(inBufferSize);
-        this.encoder = new GZipEncoder(outBufferSize);
+        this(inBufferSize, outBufferSize, Deflater.DEFAULT_COMPRESSION, Deflater.DEFAULT_STRATEGY, encoderFilter);
+    }
 
+    /**
+     * Construct <tt>GZipContentEncoding</tt> using specific buffer sizes, compression level and strategy.
+     * @param inBufferSize input buffer size
+     * @param outBufferSize output buffer size
+     * @param compressionLevel the compression level used by the GZipEncoder
+     * @param compressionStrategy the compression strategy used by the GZipEncoder
+     * @param encoderFilter {@link EncodingFilter}, which will decide if
+     * <tt>GZipContentEncoding</tt> should be applied to encode specific
+     *                 {@link HttpHeader} packet.
+     */
+    public GZipContentEncoding(int inBufferSize, int outBufferSize, int compressionLevel, int compressionStrategy,
+                               EncodingFilter encoderFilter) {
+
+        this.decoder = new GZipDecoder(inBufferSize);
+        this.encoder = new GZipEncoder(outBufferSize, compressionLevel, compressionStrategy);
         if (encoderFilter != null) {
             this.encoderFilter = encoderFilter;
         } else {

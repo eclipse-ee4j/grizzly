@@ -43,6 +43,8 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
     private static final int TRAILER_SIZE = 8;
 
     private final int bufferSize;
+    private static int compressionLevel;
+    private static int compressionStrategy;
 
     private static final Buffer header;
 
@@ -67,7 +69,13 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
     }
 
     public GZipEncoder(int bufferSize) {
+        this(bufferSize, Deflater.DEFAULT_COMPRESSION, Deflater.DEFAULT_STRATEGY);
+    }
+
+    public GZipEncoder(int bufferSize, int compressionLevel, int compressionStrategy) {
         this.bufferSize = bufferSize;
+        this.compressionLevel = compressionLevel;
+        this.compressionStrategy = compressionStrategy;
     }
 
     /**
@@ -283,7 +291,8 @@ public class GZipEncoder extends AbstractTransformer<Buffer, Buffer> {
         private Deflater deflater;
 
         private void initialize() {
-            final Deflater newDeflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
+            final Deflater newDeflater = new Deflater(compressionLevel, true);
+            newDeflater.setStrategy(compressionStrategy);
             final CRC32 newCrc32 = new CRC32();
             newCrc32.reset();
             deflater = newDeflater;
