@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
+	Copyright 2021 Contributors to the Eclipse Foundation.
     Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
@@ -29,7 +30,7 @@
 
     <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-bom</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>grizzly-bom</name>
