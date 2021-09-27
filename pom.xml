@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
+    Copyright 2021 Contributors to the Eclipse Foundation.
     Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
@@ -27,9 +28,7 @@
         <relativePath>boms/bom/pom.xml</relativePath>
     </parent>
 
-    <groupId>org.glassfish.grizzly</groupId>
     <artifactId>grizzly-project</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
@@ -94,8 +93,8 @@
 
     <mailingLists>
         <mailingList>
-            <name>Grizzly Discussion Group</name>
-            <archive>https://javaee.groups.io/g/grizzly</archive>
+            <name>Mailing list: grizzly-dev</name>
+            <archive>grizzly-dev@eclipse.org</archive>
         </mailingList>
     </mailingLists>
 
@@ -119,10 +118,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit-version>4.13</junit-version>
-        <maven-plugin.version>1.0.0</maven-plugin.version>
         <servlet-version>5.0.0</servlet-version>
-        <felix-version>4.2.1</felix-version>
+        <maven-plugin.version>1.0.0</maven-plugin.version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>
         <grizzly.npn.api.version>2.0.0</grizzly.npn.api.version>
@@ -137,12 +134,7 @@
             <dependency>
                 <groupId>org.glassfish.gmbal</groupId>
                 <artifactId>gmbal</artifactId>
-                <version>${gmbal.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>${felix-version}</version>
+                <version>4.0.3</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.servlet</groupId>
@@ -152,7 +144,7 @@
             <dependency>
                 <groupId>jakarta.persistence</groupId>
                 <artifactId>jakarta.persistence-api</artifactId>
-                <version>3.0.0-RC2</version>
+                <version>3.0.0</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
@@ -176,10 +168,11 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit-version}</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
+    
 
     <build>
         <defaultGoal>install</defaultGoal>
@@ -195,12 +188,23 @@
                 <directory>src/test/resources/</directory>
             </testResource>
         </testResources>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>5.1.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        
         <plugins>
-            <!-- Sets minimal Maven version to 3.5.4 -->
+            <!-- Sets minimal Maven version to 3.6.3 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -213,7 +217,7 @@
                                     <version>[1.8,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>3.5.4</version>
+                                    <version>3.6.3</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -222,8 +226,7 @@
             </plugin>
 
             <!-- Restricts the Java version to 1.8 -->
-            <plugin>
-                <inherited>true</inherited>
+            <plugin><inherited>true</inherited>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
@@ -277,7 +280,7 @@
             <plugin>
                 <groupId>org.glassfish.copyright</groupId>
                 <artifactId>glassfish-copyright-maven-plugin</artifactId>
-                <version>2.3</version>
+                <version>2.4</version>
                 <configuration>
                     <excludeFile>copyright-exclude</excludeFile>
                     <scm>git</scm>
