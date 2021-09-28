@@ -29,6 +29,7 @@
     </parent>
 
     <artifactId>grizzly-project</artifactId>
+    <version>3.0.1-SNAPSHOT</version> <!-- Version must be repeated so versions-maven-plugin:set works correctly -->
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
