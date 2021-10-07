@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2021 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,7 +19,6 @@ package org.glassfish.grizzly.http.server;
 import java.nio.charset.Charset;
 
 import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.utils.JdkVersion;
 
 /**
  * {@link HttpServerFilter} configuration.
@@ -482,7 +481,7 @@ public class ServerFilterConfiguration {
 
     private void configureSendFileSupport() {
 
-        if (System.getProperty("os.name").equalsIgnoreCase("linux") && !linuxSendFileSupported() || System.getProperty("os.name").equalsIgnoreCase("HP-UX")) {
+        if (System.getProperty("os.name").equalsIgnoreCase("HP-UX")) {
             sendFileEnabled = false;
         }
 
@@ -491,12 +490,6 @@ public class ServerFilterConfiguration {
             sendFileEnabled = Boolean.valueOf(System.getProperty(USE_SEND_FILE));
         }
 
-    }
-
-    private static boolean linuxSendFileSupported() {
-        JdkVersion jdkVersion = JdkVersion.getJdkVersion();
-        JdkVersion minimumVersion = JdkVersion.parseVersion("1.6.0_18");
-        return minimumVersion.compareTo(jdkVersion) <= 0;
     }
 
 }

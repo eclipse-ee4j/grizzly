@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -34,7 +34,6 @@ import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.utils.Futures;
-import org.glassfish.grizzly.utils.JdkVersion;
 import org.glassfish.grizzly.utils.StringFilter;
 import org.junit.Test;
 
@@ -48,9 +47,7 @@ import static org.junit.Assert.*;
 @SuppressWarnings("unchecked")
 public class SNITest {
     public static final int PORT = 19283;
-    private static final boolean JDK7_OR_HIGHER = JdkVersion.getJdkVersion()
-            .compareTo(JdkVersion.parseVersion("1.7")) >= 0;
-    
+
     @Test
     public void testClientServerSNI() throws Exception {
         final String sniHostValue = "sni-test.com";
@@ -58,11 +55,7 @@ public class SNITest {
         
         final Attribute<String> sniHostAttr =
                 Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("sni-host-attr");
-        
-        if (!JDK7_OR_HIGHER) {
-            return;
-        }
-        
+
         final SSLEngineConfigurator sslServerEngineConfig = 
                     new SSLEngineConfigurator(
                             createSSLContextConfigurator().createSSLContext(),
