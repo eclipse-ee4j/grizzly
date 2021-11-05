@@ -30,7 +30,7 @@ import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseReason;
 import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.FileTransfer;
+import org.glassfish.grizzly.FileChunk;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.IOEvent;
 import org.glassfish.grizzly.WriteResult;
@@ -102,8 +102,8 @@ public final class TCPNIOAsyncQueueWriter extends AbstractNIOAsyncQueueWriter {
                 ((TCPNIOConnection) connection).terminate0(null, new CloseReason(CloseType.REMOTELY, e));
                 throw e;
             }
-        } else if (message instanceof FileTransfer) {
-            written = ((FileTransfer) message).writeTo((SocketChannel) connection.getChannel());
+        } else if (message instanceof FileChunk) {
+            written = ((FileChunk) message).writeTo((SocketChannel) connection.getChannel());
             ((TCPNIOConnection) connection).onWrite(null, written);
         } else {
             throw new IllegalStateException("Unhandled message type");
