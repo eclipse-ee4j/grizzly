@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2021 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Services Ltd.
  *
  * This program and the accompanying materials are made available under the
@@ -24,15 +24,13 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 
-import org.glassfish.grizzly.asyncqueue.WritableMessage;
-
 /**
  * A simple class that abstracts {@link FileChannel#transferTo(long, long, java.nio.channels.WritableByteChannel)} for
  * use with Grizzly 2.0 {@link org.glassfish.grizzly.asyncqueue.AsyncQueueWriter}.
  *
  * @since 2.2
  */
-public class FileTransfer implements WritableMessage {
+public class FileTransfer implements FileChunk {
 
     private FileChannel fileChannel;
     private long len;
