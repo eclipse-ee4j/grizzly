@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015, 2020 Oracle and/or its affiliates and others.
  * All rights reserved.
+ * Copyright (c) 2021 Contributors to the Eclipse Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -850,9 +851,29 @@ public class Http2ServerFilter extends Http2BaseFilter {
     private void prepareOutgoingResponse(final HttpResponsePacket response) {
         response.setProtocol(Protocol.HTTP_2_0);
 
-        String contentType = response.getContentType();
-        if (contentType != null) {
-            response.getHeaders().setValue(Header.ContentType).setString(contentType);
+        boolean entityBody = true;
+        final int statusCode = response.getStatus();
+
+        if (HttpStatus.NO_CONTENT_204.statusMatches(statusCode)
+                || HttpStatus.RESET_CONTENT_205.statusMatches(statusCode)
+                || HttpStatus.NOT_MODIFIED_304.statusMatches(statusCode)) {
+            // No entity body
+            entityBody = false;
+            response.setExpectContent(false);
+        }
+
+        if (!entityBody) {
+            response.setContentLength(-1);
+        } else {
+            String contentLanguage = response.getContentLanguage();
+            if (contentLanguage != null) {
+                response.getHeaders().setValue(Header.ContentLanguage).setString(contentLanguage);
+            }
+
+            String contentType = response.getContentType();
+            if (contentType != null) {
+                response.getHeaders().setValue(Header.ContentType).setString(contentType);
+            }
         }
 
         if (response.getContentLength() != -1) {
