@@ -18,6 +18,7 @@
 package org.glassfish.grizzly.ssl;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
 
 /**
  * SSLSupport
@@ -51,16 +52,35 @@ public interface SSLSupport {
     String getCipherSuite() throws IOException;
 
     /**
-     * The client certificate chain (if any).
+     * @return The client certificate chain (if any).
+     * @deprecated use {@link #getPeerCertificates()} instead.
      */
-    Object[] getPeerCertificateChain() throws IOException;
+    @Deprecated(forRemoval = true)
+    default Object[] getPeerCertificateChain() throws IOException {
+        return getPeerCertificates();
+    }
 
     /**
-     * The client certificate chain (if any).
-     * 
-     * @param force If <tt>true</tt>, then re-negotiate the connection if necessary.
+     * @return The client certificate chain (if any).
+     * @throws IOException
      */
-    Object[] getPeerCertificateChain(boolean force) throws IOException;
+    Certificate[] getPeerCertificates() throws IOException;
+
+    /**
+     * @param force If <tt>true</tt>, then re-negotiate the connection if necessary.
+     * @return The client certificate chain (if any).
+     * @deprecated use {@link #getPeerCertificates(boolean)} instead.
+     */
+    @Deprecated(forRemoval = true)
+    default Object[] getPeerCertificateChain(boolean force) throws IOException {
+        return getPeerCertificates(force);
+    }
+
+    /**
+     * @param force If <tt>true</tt>, then re-negotiate the connection if necessary.
+     * @return The client certificate chain (if any).
+     */
+    Certificate[] getPeerCertificates(boolean force) throws IOException;
 
     /**
      * Get the keysize.
