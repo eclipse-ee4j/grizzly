@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2021 Contributors to the Eclipse Foundation
  * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -19,14 +20,14 @@ package org.glassfish.grizzly.ssl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
-
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 
@@ -72,29 +73,29 @@ public class SSLSupportImpl implements SSLSupport {
     }
 
     @Override
-    public Object[] getPeerCertificateChain() throws IOException {
-        return getPeerCertificateChain(false);
+    public Certificate[] getPeerCertificates() throws IOException {
+        return getPeerCertificates(false);
     }
 
-    protected java.security.cert.X509Certificate[] getX509Certificates(SSLSession session) throws IOException {
-        X509Certificate jsseCerts[] = null;
+    protected Certificate[] getCertificates(SSLSession session) throws IOException {
+        Certificate jsseCerts[] = null;
         try {
-            jsseCerts = session.getPeerCertificateChain();
+            jsseCerts = session.getPeerCertificates();
         } catch (Throwable ex) {
             // Get rid of the warning in the logs when no Client-Cert is
             // available
         }
 
         if (jsseCerts == null) {
-            jsseCerts = new X509Certificate[0];
+            jsseCerts = new Certificate[0];
         }
-        java.security.cert.X509Certificate[] x509Certs = new java.security.cert.X509Certificate[jsseCerts.length];
+        X509Certificate[] x509Certs = new X509Certificate[jsseCerts.length];
         for (int i = 0; i < x509Certs.length; i++) {
             try {
                 byte buffer[] = jsseCerts[i].getEncoded();
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
                 ByteArrayInputStream stream = new ByteArrayInputStream(buffer);
-                x509Certs[i] = (java.security.cert.X509Certificate) cf.generateCertificate(stream);
+                x509Certs[i] = (X509Certificate) cf.generateCertificate(stream);
                 if (logger.isLoggable(Level.FINE)) {
                     logger.log(Level.FINE, "Cert #" + i + " = " + x509Certs[i]);
                 }
@@ -111,7 +112,7 @@ public class SSLSupportImpl implements SSLSupport {
     }
 
     @Override
-    public Object[] getPeerCertificateChain(boolean force) throws IOException {
+    public Certificate[] getPeerCertificates(boolean force) throws IOException {
         // Look up the current SSLSession
         /*
          * SJSAS 6439313 SSLSession session = ssl.getSession();
@@ -121,14 +122,14 @@ public class SSLSupportImpl implements SSLSupport {
         }
 
         // Convert JSSE's certificate format to the ones we need
-        X509Certificate[] jsseCerts = null;
+        Certificate[] jsseCerts = null;
         try {
-            jsseCerts = session.getPeerCertificateChain();
+            jsseCerts = session.getPeerCertificates();
         } catch (Exception bex) {
             // ignore.
         }
         if (jsseCerts == null) {
-            jsseCerts = new X509Certificate[0];
+            jsseCerts = new Certificate[0];
         }
         if (jsseCerts.length <= 0 && force) {
             session.invalidate();
@@ -140,7 +141,7 @@ public class SSLSupportImpl implements SSLSupport {
             session = engine.getSession();
             // END SJSAS 6439313
         }
-        return getX509Certificates(session);
+        return getCertificates(session);
     }
 
     /**
@@ -149,10 +150,7 @@ public class SSLSupportImpl implements SSLSupport {
     @Override
     public Integer getKeySize() throws IOException {
         // Look up the current SSLSession
-        /*
-         * SJSAS 6439313 SSLSession session = ssl.getSession();
-         */
-        SSLSupport.CipherData c_aux[] = ciphers;
+        // SJSAS 6439313 SSLSession session = ssl.getSession();
         if (session == null) {
             return null;
         }
@@ -161,9 +159,9 @@ public class SSLSupportImpl implements SSLSupport {
             int size = 0;
             String cipherSuite = session.getCipherSuite();
 
-            for (int i = 0; i < c_aux.length; i++) {
-                if (cipherSuite.contains(c_aux[i].phrase)) {
-                    size = c_aux[i].keySize;
+            for (CipherData element : ciphers) {
+                if (cipherSuite.contains(element.phrase)) {
+                    size = element.keySize;
                     break;
                 }
             }
@@ -188,8 +186,8 @@ public class SSLSupportImpl implements SSLSupport {
             return null;
         }
         StringBuilder buf = new StringBuilder("");
-        for (int x = 0; x < ssl_session.length; x++) {
-            String digit = Integer.toHexString(ssl_session[x]);
+        for (byte element : ssl_session) {
+            String digit = Integer.toHexString(element);
             if (digit.length() < 2) {
                 buf.append('0');
             }
