@@ -9,24 +9,25 @@ help developers to build scalable and robust servers using NIO as well
 as offering extended framework components: Web Framework (HTTP/S),
 WebSocket, Comet, and more!
 
-## Getting Started
 
-Grizzly currently has several lines of development in the following
-branches:
+### Versions and Branches
 
-- 2.3.x : This is the sustaining branch for 2.3. (latest release is 2.3.33)
-- master : This is the sustaining branch for the most recent major release of Grizzly. (latest release is 2.4.2)
-- 3.0.x : This is our upcoming 3.0 release.  Fair warning; it's not backwards compatible with previous releases.
+- 4.x.x : Next main version in development (Jakarta EE 10).
+- 3.x.x : This is the sustaining branch for 3.x (Jakarta EE 9). (latest release is 3.0.1)
+- 2.4.x : This is the sustaining branch for 2.4 (Jakarta EE 8). (latest release is 2.4.4)
+- 2.3.x : This is the sustaining branch for 2.3 (Java EE 8). (latest release is 2.3.35)
 
 There are other branches for older releases of Grizzly that we don't
 actively maintain at this time, but we keep them for the history.
 
+## Getting Started
 
 ### Prerequisites
 
 We have different JDK requirements depending on the branch in use:
 
-- Oracle JDK 1.8 for master and 3.0.x branches.
+- JDK 11+ for master and 3.x.x.
+- Oracle JDK 1.8 for 2.4.x.
 - Oracle JDK 1.7 for 2.3.x.
 
 Apache Maven 3.3.9 or later in order to build and run the tests.
