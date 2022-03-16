@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -53,6 +54,7 @@ import org.glassfish.grizzly.localization.LogMessages;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -79,7 +81,6 @@ import jakarta.servlet.http.WebConnection;
  * @author Jean-Francois Arcand
  * @version $Revision: 1.7 $ $Date: 2007/08/01 19:04:28 $
  */
-@SuppressWarnings("deprecation")
 public class HttpServletRequestImpl implements HttpServletRequest, Holders.RequestHolder {
     private static final Logger LOGGER = Grizzly.logger(HttpServletRequestImpl.class);
 
@@ -523,11 +524,11 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
         ServletRequestAttributeEvent event = null;
 
-        for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
+        for (EventListener eventListener : listeners) {
+            if (!(eventListener instanceof ServletRequestAttributeListener)) {
                 continue;
             }
-            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) listeners[i];
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) eventListener;
             try {
                 if (event == null) {
                     if (oldValue != null) {
@@ -568,11 +569,11 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
             return;
         }
         ServletRequestAttributeEvent event = null;
-        for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
+        for (EventListener listener2 : listeners) {
+            if (!(listener2 instanceof ServletRequestAttributeListener)) {
                 continue;
             }
-            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) listeners[i];
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) listener2;
             try {
                 if (event == null) {
                     event = new ServletRequestAttributeEvent(contextImpl, this, name, value);
@@ -688,15 +689,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
 
         return contextImpl.getRequestDispatcher(relative);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public String getRealPath(String path) {
-        return contextImpl.getRealPath(path);
     }
 
     /**
@@ -1038,15 +1030,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings({ "deprecation" })
-    public boolean isRequestedSessionIdFromUrl() {
-        return isRequestedSessionIdFromURL();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public jakarta.servlet.http.Cookie[] getCookies() {
         final Cookie[] internalCookies = request.getCookies();
         if (internalCookies == null) {
@@ -1131,7 +1114,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     /**
      * Return the underlying {@link WebappContext}
-     * 
+     *
      * @return Return the underlying {@link WebappContext}
      */
     protected WebappContext getContextImpl() {
@@ -1140,7 +1123,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     /**
      * Set the underlying {@link WebappContext}
-     * 
+     *
      * @param contextImpl the underlying {@link WebappContext}
      */
     protected void setContextImpl(WebappContext contextImpl) {
@@ -1149,7 +1132,7 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
 
     /**
      * Programmatically set the servlet path value. Default is an empty String.
-     * 
+     *
      * @param servletPath Servlet path to set.
      */
     public void setServletPath(final String servletPath) {
@@ -1608,6 +1591,22 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         return request.areTrailersAvailable();
     }
 
+    @Override
+    public String getRequestId() {
+        return this.request.getRequestId();
+    }
+
+    @Override
+    public String getProtocolRequestId() {
+        return this.request.getProtocolRequestId();
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        String connectionId = request.getConnection() == null ? null : Long.toString(request.getConnection().getId());
+        return new ServletConnectionImpl(connectionId, request.getProtocol(), isSecure());
+    }
+
     // ----------------------------------------------------------- DoPrivileged
 
     private final class GetAttributePrivilegedAction implements PrivilegedAction<Enumeration<String>> {
@@ -1730,20 +1729,6 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
         }
     }
 
-//    private static final class GetSessionPrivilegedAction
-//            implements PrivilegedAction {
-//
-//        private final boolean create;
-//
-//        public GetSessionPrivilegedAction(boolean create){
-//            this.create = create;
-//        }
-//
-//        @Override
-//        public Object run() {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//    }
 
     /**
      * The static factory is required to avoid NoClassDefFoundError when running w/ Servlet 3.0 API and JDK6
@@ -1757,8 +1742,8 @@ public class HttpServletRequestImpl implements HttpServletRequest, Holders.Reque
     private static final class Mapping implements HttpServletMapping {
 
         private String matchValue;
-        private String pattern;
-        private String servletName;
+        private final String pattern;
+        private final String servletName;
         private MappingMatch mappingMatch;
 
         private Mapping(final Request request) {

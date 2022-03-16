@@ -106,18 +106,22 @@ public abstract class HttpRequestPacket extends HttpHeader {
         return new Builder();
     }
 
-    // ----------------------------------------------------------- Constructors
-
     protected HttpRequestPacket() {
         setMethod(Method.GET);
     }
 
-    // ---------------------------------------------------------- Public Methods
-
+    /**
+     * Sets the underlying connection used by the request.
+     *
+     * @param connection
+     */
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * @return underlying connection used by the request
+     */
     public Connection getConnection() {
         return connection;
     }
@@ -125,6 +129,14 @@ public abstract class HttpRequestPacket extends HttpHeader {
     public HttpResponsePacket getResponse() {
         return response;
     }
+
+    /**
+     * @return an empty string by default.
+     */
+    public String getProtocolRequestId() {
+        return "";
+    }
+
 
     // -------------------- Request data --------------------
 
@@ -158,7 +170,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
     /**
      * Set the HTTP request method.
-     * 
+     *
      * @param method the HTTP request method. Format is "GET|POST...".
      */
     public void setMethod(final String method) {
@@ -168,7 +180,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
     /**
      * Set the HTTP request method.
-     * 
+     *
      * @param method the HTTP request method. Format is "GET|POST...".
      */
     public void setMethod(final Method method) {
@@ -247,7 +259,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
     /**
      * Return the buffer holding the server name, if any. Use isNull() to check if there is no value set. This is the
      * "virtual host", derived from the Host: header.
-     * 
+     *
      * @return the buffer holding the server name, if any
      */
     public DataChunk serverName() {
@@ -438,7 +450,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
     /**
      * Set the host name of the server servicing this request.
-     * 
+     *
      * @param host the host name of the server servicing this request.
      */
     public void setLocalHost(String host) {
@@ -677,7 +689,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
         /**
          * Set the HTTP request method.
-         * 
+         *
          * @param method the HTTP request method..
          */
         public Builder method(final Method method) {
@@ -688,7 +700,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
         /**
          * Set the HTTP request method.
-         * 
+         *
          * @param method the HTTP request method. Format is "GET|POST...".
          */
         public Builder method(final String method) {
@@ -709,7 +721,7 @@ public abstract class HttpRequestPacket extends HttpHeader {
 
         /**
          * Set the value for the Host header.
-         * 
+         *
          * @param host the value for the Host header.
          *
          * @return this.

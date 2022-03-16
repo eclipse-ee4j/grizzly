@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 1994-2004 The Apache Software Foundation
  *
@@ -218,4 +219,13 @@ public final class Constants {
     // START SJSAS 6337561
     public final static String PROXY_JROUTE = "proxy-jroute";
     // END SJSAS 6337561
+
+    public static final String COOKIE_COMMENT_ATTR = "Comment";
+    public static final String COOKIE_DOMAIN_ATTR = "Domain";
+    public static final String COOKIE_MAX_AGE_ATTR = "Max-Age";
+    public static final String COOKIE_PATH_ATTR = "Path";
+    public static final String COOKIE_SECURE_ATTR = "Secure";
+    public static final String COOKIE_HTTP_ONLY_ATTR = "HttpOnly";
+    public static final String COOKIE_SAME_SITE_ATTR = "SameSite";
+
 }

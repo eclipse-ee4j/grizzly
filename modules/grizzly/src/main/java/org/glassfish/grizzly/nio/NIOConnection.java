@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -32,6 +33,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,6 +75,8 @@ import org.glassfish.grizzly.utils.NullaryFunction;
  * @author Alexey Stashok
  */
 public abstract class NIOConnection implements Connection<SocketAddress> {
+
+    private static final AtomicLong CONNECTION_ID_GENERATOR = new AtomicLong(0);
     protected static final Object NOTIFICATION_INITIALIZED = Boolean.TRUE;
     protected static final Object NOTIFICATION_CLOSED_COMPLETE = Boolean.FALSE;
 
@@ -80,15 +84,14 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
     private static final Logger LOGGER = Grizzly.logger(NIOConnection.class);
     private static final short MAX_ZERO_READ_COUNT = 100;
 
-    /**
-     * Is initial OP_READ enabling required for the connection
-     */
+    private final long id = CONNECTION_ID_GENERATOR.incrementAndGet();
+    /** Is initial OP_READ enabling required for the connection */
     private boolean isInitialReadRequired = true;
 
     protected final NIOTransport transport;
     protected volatile int maxAsyncWriteQueueSize;
-    protected volatile long readTimeoutMillis = 30000;
-    protected volatile long writeTimeoutMillis = 30000;
+    protected volatile long readTimeoutMillis = 30_000L;
+    protected volatile long writeTimeoutMillis = 30_000L;
     protected volatile SelectableChannel channel;
     protected volatile SelectionKey selectionKey;
     protected volatile SelectorRunner selectorRunner;
@@ -100,13 +103,13 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
     private volatile TaskQueue<AsyncReadQueueRecord> asyncReadQueue;
     private final TaskQueue<AsyncWriteQueueRecord> asyncWriteQueue;
 
-    // Semaphore responsible for connect/close notification
+    /** Semaphore responsible for connect/close notification */
     protected static final AtomicReferenceFieldUpdater<NIOConnection, Object> connectCloseSemaphoreUpdater = AtomicReferenceFieldUpdater
             .newUpdater(NIOConnection.class, Object.class, "connectCloseSemaphore");
     @SuppressWarnings("unused")
     private volatile Object connectCloseSemaphore;
 
-    // closeTypeFlag, "null" value means the connection is open.
+    /** closeTypeFlag, "null" value means the connection is open. */
     private final AtomicBoolean isCloseScheduled = new AtomicBoolean();
 
     private static final AtomicReferenceFieldUpdater<NIOConnection, CloseReason> closeReasonUpdater = AtomicReferenceFieldUpdater
@@ -140,6 +143,11 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
         });
 
         attributes = transport.getAttributeBuilder().createSafeAttributeHolder();
+    }
+
+    @Override
+    public long getId() {
+        return this.id;
     }
 
     @Override
@@ -458,7 +466,7 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @deprecated please use {@link #close()} with the following
      * {@link GrizzlyFuture#addCompletionHandler(org.glassfish.grizzly.CompletionHandler)} call
      */
@@ -469,7 +477,6 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public final void closeSilently() {
         closeGracefully0(null, CloseReason.LOCALLY_CLOSED_REASON);
     }
@@ -939,7 +946,7 @@ public abstract class NIOConnection implements Connection<SocketAddress> {
 
     /**
      * Set the monitoringProbes array directly.
-     * 
+     *
      * @param monitoringProbes
      */
     void setMonitoringProbes(final ConnectionProbe[] monitoringProbes) {

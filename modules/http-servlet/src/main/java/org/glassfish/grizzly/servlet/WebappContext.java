@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -71,7 +72,6 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.SessionTrackingMode;
-import jakarta.servlet.SingleThreadModel;
 import jakarta.servlet.descriptor.JspConfigDescriptor;
 import jakarta.servlet.http.HttpUpgradeHandler;
 
@@ -586,9 +586,6 @@ public class WebappContext implements ServletContext {
         }
         if (servlet == null) {
             throw new IllegalArgumentException("'servlet' cannot be null");
-        }
-        if (servlet instanceof SingleThreadModel) {
-            throw new IllegalArgumentException("SingleThreadModel Servlet instances are not allowed.");
         }
 
         ServletRegistration registration = servletRegistrations.get(servletName);
@@ -1244,55 +1241,10 @@ public class WebappContext implements ServletContext {
 
     /**
      * {@inheritDoc}
-     *
-     * @deprecated
-     */
-    @Override
-    @Deprecated
-    public Servlet getServlet(String name) throws ServletException {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @deprecated
-     */
-    @Override
-    @Deprecated
-    public Enumeration<Servlet> getServlets() {
-        return new Enumerator<>(Collections.emptyList());
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * 
-     * @deprecated
-     */
-    @Override
-    @Deprecated
-    public Enumeration<String> getServletNames() {
-        return new Enumerator<>(Collections.emptyList());
-    }
-
-    /**
-     * {@inheritDoc}
      */
     @Override
     public void log(String message) {
         LOGGER.log(Level.INFO, String.format("[%s] %s", displayName, message));
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @deprecated
-     */
-    @Override
-    @Deprecated
-    public void log(Exception e, String message) {
-        log(message, e);
     }
 
     /**
@@ -1400,11 +1352,11 @@ public class WebappContext implements ServletContext {
         Object oldValue = attributes.put(name, value);
 
         ServletContextAttributeEvent event = null;
-        for (int i = 0, len = eventListeners.length; i < len; i++) {
-            if (!(eventListeners[i] instanceof ServletContextAttributeListener)) {
+        for (EventListener eventListener : eventListeners) {
+            if (!(eventListener instanceof ServletContextAttributeListener)) {
                 continue;
             }
-            ServletContextAttributeListener listener = (ServletContextAttributeListener) eventListeners[i];
+            ServletContextAttributeListener listener = (ServletContextAttributeListener) eventListener;
             try {
                 if (event == null) {
                     if (oldValue != null) {
@@ -1439,11 +1391,11 @@ public class WebappContext implements ServletContext {
         }
 
         ServletContextAttributeEvent event = null;
-        for (int i = 0, len = eventListeners.length; i < len; i++) {
-            if (!(eventListeners[i] instanceof ServletContextAttributeListener)) {
+        for (EventListener eventListener : eventListeners) {
+            if (!(eventListener instanceof ServletContextAttributeListener)) {
                 continue;
             }
-            ServletContextAttributeListener listener = (ServletContextAttributeListener) eventListeners[i];
+            ServletContextAttributeListener listener = (ServletContextAttributeListener) eventListener;
             try {
                 if (event == null) {
                     event = new ServletContextAttributeEvent(this, name, value);
@@ -1956,11 +1908,11 @@ public class WebappContext implements ServletContext {
         ServletContextEvent event = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(webappClassLoader);
-        for (int i = 0, len = eventListeners.length; i < len; i++) {
-            if (!(eventListeners[i] instanceof ServletContextListener)) {
+        for (EventListener eventListener : eventListeners) {
+            if (!(eventListener instanceof ServletContextListener)) {
                 continue;
             }
-            ServletContextListener listener = (ServletContextListener) eventListeners[i];
+            ServletContextListener listener = (ServletContextListener) eventListener;
             if (event == null) {
                 event = new ServletContextEvent(this);
             }
@@ -1981,11 +1933,11 @@ public class WebappContext implements ServletContext {
      */
     private void contextDestroyed() {
         ServletContextEvent event = null;
-        for (int i = 0, len = eventListeners.length; i < len; i++) {
-            if (!(eventListeners[i] instanceof ServletContextListener)) {
+        for (EventListener eventListener : eventListeners) {
+            if (!(eventListener instanceof ServletContextListener)) {
                 continue;
             }
-            ServletContextListener listener = (ServletContextListener) eventListeners[i];
+            ServletContextListener listener = (ServletContextListener) eventListener;
             if (event == null) {
                 event = new ServletContextEvent(this);
             }

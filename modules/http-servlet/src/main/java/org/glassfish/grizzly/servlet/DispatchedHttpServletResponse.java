@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -178,14 +179,6 @@ public class DispatchedHttpServletResponse extends HttpServletResponseWrapper {
             return;
         }
         super.setStatus(sc);
-    }
-
-    @Override
-    public void setStatus(int sc, String sm) {
-        if (included) {
-            return;
-        }
-        super.setStatus(sc, sm);
     }
 
     @Override

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -70,6 +71,18 @@ class Http2Request extends HttpRequestPacket implements Http2Header {
     @Override
     public Http2Stream getHttp2Stream() {
         return Http2Stream.getStreamFor(this);
+    }
+
+    /**
+     * @return an empty string if the {@link #getHttp2Stream()} returns null, it's id otherwise.
+     */
+    @Override
+    public String getProtocolRequestId() {
+        Http2Stream stream = getHttp2Stream();
+        if (stream == null) {
+            return "";
+        }
+        return Integer.toString(stream.getId());
     }
 
     @Override
