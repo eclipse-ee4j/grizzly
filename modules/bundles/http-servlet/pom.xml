@@ -79,13 +79,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
@@ -152,11 +145,11 @@
                         <configuration>
                             <classifier>sources</classifier>
                             <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
+                            <excludes>module-info.java</excludes>
                             <!-- fudge an actual source hierarchy so that the source
                                  plugin can actually do something useful.  Otherwise,
                                  you'll end up with an empty source jar -->
-                            <outputDirectory>${basedir}/src/main/java
-                            </outputDirectory>
+                            <outputDirectory>${basedir}/src/main/java</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>

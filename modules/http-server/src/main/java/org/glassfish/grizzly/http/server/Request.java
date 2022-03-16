@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -16,8 +17,6 @@
  */
 
 package org.glassfish.grizzly.http.server;
-
-import static org.glassfish.grizzly.http.util.Constants.FORM_POST_CONTENT_TYPE;
 
 import java.io.CharConversionException;
 import java.io.IOException;
@@ -69,7 +68,8 @@ import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.localization.LogMessages;
 import org.glassfish.grizzly.utils.Charsets;
-import org.glassfish.grizzly.utils.JdkVersion;
+
+import static org.glassfish.grizzly.http.util.Constants.FORM_POST_CONTENT_TYPE;
 
 /**
  * Wrapper object for the Coyote request.
@@ -92,31 +92,7 @@ public class Request {
     // Duplicated in http2 Constants. Keep values in sync.
     private static final String HTTP2_PUSH_ENABLED = "http2-push-enabled";
 
-    private static final LocaleParser localeParser;
-    static {
-        LocaleParser lp;
-        final JdkVersion version = JdkVersion.getJdkVersion();
-
-        if (version.compareTo("1.7.0") >= 0) {
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends LocaleParser> localeParserClazz = (Class<? extends LocaleParser>) Class
-                        .forName("org.glassfish.grizzly.http.server.TagLocaleParser");
-                lp = localeParserClazz.newInstance();
-            } catch (Throwable e) {
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE, "Can't load JDK7 TagLocaleParser", e);
-                }
-                lp = new LegacyLocaleParser();
-            }
-        } else {
-            lp = new LegacyLocaleParser();
-        }
-
-        localeParser = lp;
-
-        assert localeParser != null;
-    }
+    private static final LocaleParser localeParser = new TagLocaleParser();
 
     public static Request create() {
         final Request request = ThreadCache.takeFromCache(CACHE_IDX);
@@ -526,7 +502,7 @@ public class Request {
 
     /**
      * Add the listener, which will be notified, once <tt>Request</tt> processing will be finished.
-     * 
+     *
      * @param listener the listener, which will be notified, once <tt>Request</tt> processing will be finished.
      */
     public void addAfterServiceListener(final AfterServiceListener listener) {
@@ -536,11 +512,10 @@ public class Request {
     /**
      * Remove the "after-service" listener, which was previously added by
      * {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
-     * 
+     *
      * @param listener the "after-service" listener, which was previously added by
      * {@link #addAfterServiceListener(org.glassfish.grizzly.http.server.AfterServiceListener)}.
      */
-    @SuppressWarnings("unused")
     public void removeAfterServiceListener(final AfterServiceListener listener) {
         afterServicesList.remove(listener);
     }
@@ -551,8 +526,7 @@ public class Request {
         }
 
         if (!afterServicesList.isEmpty()) {
-            for (int i = 0, size = afterServicesList.size(); i < size; i++) {
-                final AfterServiceListener anAfterServicesList = afterServicesList.get(i);
+            for (final AfterServiceListener anAfterServicesList : afterServicesList) {
                 try {
                     anAfterServicesList.onAfterService(this);
                 } catch (Exception e) {
@@ -627,7 +601,7 @@ public class Request {
     // -------------------------------------------------------- Request Methods
 
     /**
-     * Return the authorization credentials sent with this request.
+     * @return the authorization credentials sent with this request.
      */
     public String getAuthorization() {
         return request.getHeader(Constants.AUTHORIZATION_HEADER);
@@ -704,7 +678,6 @@ public class Request {
      *
      * @return a {@link Set} containing the String names of all note bindings that exist for this request.
      */
-    @SuppressWarnings("unused")
     public Set<String> getNoteNames() {
         return request.getNoteNames();
     }
@@ -715,7 +688,6 @@ public class Request {
      *
      * @param note {@link Note} value to be removed
      */
-    @SuppressWarnings("unused")
     public <E> E removeNote(final Note<E> note) {
         return request.removeNote(note);
     }
@@ -736,7 +708,6 @@ public class Request {
      *
      * @param name The server name
      */
-    @SuppressWarnings("unused")
     public void setServerName(String name) {
         request.serverName().setString(name);
     }
@@ -746,7 +717,6 @@ public class Request {
      *
      * @param port The server port
      */
-    @SuppressWarnings("unused")
     public void setServerPort(int port) {
         request.setServerPort(port);
     }
@@ -786,7 +756,6 @@ public class Request {
      * @throws IllegalStateException if HttpHandler path was not set explicitly and attempt to URI-decode
      * {@link org.glassfish.grizzly.http.util.RequestURIRef#getDecodedURI()} failed.
      */
-    @SuppressWarnings("unused")
     public String getHttpHandlerPath() {
         return httpHandlerPath.get();
     }
@@ -1168,28 +1137,28 @@ public class Request {
     }
 
     /**
-     * Return the scheme used to make this Request.
+     * @return the scheme used to make this Request.
      */
     public String getScheme() {
         return scheme;
     }
 
     /**
-     * Return the server name responding to this Request.
+     * @return the server name responding to this Request.
      */
     public String getServerName() {
         return request.serverName().toString();
     }
 
     /**
-     * Return the server port responding to this Request.
+     * @return the server port responding to this Request.
      */
     public int getServerPort() {
         return request.getServerPort();
     }
 
     /**
-     * Was this request received on a secure connection?
+     * @return true if this request received on a secure connection
      */
     public boolean isSecure() {
         return request.isSecure();
@@ -1252,7 +1221,6 @@ public class Request {
      *
      * @since Servlet 2.3
      */
-    @SuppressWarnings({ "unchecked" })
     public void setCharacterEncoding(final String encoding) throws UnsupportedEncodingException {
 
         // START SJSAS 4936855
@@ -1268,16 +1236,13 @@ public class Request {
 
     }
 
-    // START S1AS 4703023
     /**
      * Static setter method for the maximum dispatch depth
      */
-    @SuppressWarnings("unused")
     public static void setMaxDispatchDepth(int depth) {
         maxDispatchDepth = depth;
     }
 
-    @SuppressWarnings("unused")
     public static int getMaxDispatchDepth() {
         return maxDispatchDepth;
     }
@@ -1285,7 +1250,6 @@ public class Request {
     /**
      * Increment the depth of application dispatch
      */
-    @SuppressWarnings("unused")
     public int incrementDispatchDepth() {
         return ++dispatchDepth;
     }
@@ -1293,7 +1257,6 @@ public class Request {
     /**
      * Decrement the depth of application dispatch
      */
-    @SuppressWarnings("unused")
     public int decrementDispatchDepth() {
         return --dispatchDepth;
     }
@@ -1301,11 +1264,9 @@ public class Request {
     /**
      * Check if the application dispatching has reached the maximum
      */
-    @SuppressWarnings("unused")
     public boolean isMaxDispatchDepthReached() {
         return dispatchDepth > maxDispatchDepth;
     }
-    // END S1AS 4703023
 
     // ---------------------------------------------------- HttpRequest Methods
 
@@ -1314,7 +1275,6 @@ public class Request {
      *
      * @param cookie The new cookie
      */
-    @SuppressWarnings("unused")
     public void addCookie(Cookie cookie) {
 
         // For compatibility only
@@ -1352,7 +1312,6 @@ public class Request {
      * @param name Name of this request parameter
      * @param values Corresponding values for this request parameter
      */
-    @SuppressWarnings("unused")
     public void addParameter(String name, String values[]) {
         parameters.addParameterValues(name, values);
     }
@@ -1360,7 +1319,6 @@ public class Request {
     /**
      * Clear the collection of Cookies associated with this Request.
      */
-    @SuppressWarnings("unused")
     public void clearCookies() {
         cookiesParsed = true;
         cookies = null;
@@ -1369,7 +1327,6 @@ public class Request {
     /**
      * Clear the collection of Headers associated with this Request.
      */
-    @SuppressWarnings("unused")
     public void clearHeaders() {
         // Not used
     }
@@ -1377,7 +1334,6 @@ public class Request {
     /**
      * Clear the collection of Locales associated with this Request.
      */
-    @SuppressWarnings("unused")
     public void clearLocales() {
         locales.clear();
     }
@@ -1385,7 +1341,6 @@ public class Request {
     /**
      * Clear the collection of parameters associated with this Request.
      */
-    @SuppressWarnings("unused")
     public void clearParameters() {
         // Not used
     }
@@ -1477,7 +1432,6 @@ public class Request {
      *
      * @since 2.1.2
      */
-    @SuppressWarnings("unused")
     public long getDateHeader(Header header) {
 
         String value = getHeader(header);
@@ -1610,7 +1564,6 @@ public class Request {
      *
      * @since 2.1.2
      */
-    @SuppressWarnings("unused")
     public int getIntHeader(final Header header) {
 
         String value = getHeader(header);
@@ -1631,7 +1584,7 @@ public class Request {
 
     /**
      * Sets the HTTP request method used in this Request.
-     * 
+     *
      * @param method the HTTP request method used in this Request.
      */
     public void setMethod(String method) {
@@ -1649,10 +1602,9 @@ public class Request {
 
     /**
      * Sets the query string associated with this request.
-     * 
+     *
      * @param queryString the query string associated with this request.
      */
-    @SuppressWarnings("unused")
     public void setQueryString(String queryString) {
         request.setQueryString(queryString);
     }
@@ -1686,7 +1638,7 @@ public class Request {
 
     /**
      * Sets the request URI for this request.
-     * 
+     *
      * @param uri the request URI for this request.
      */
     public void setRequestURI(String uri) {
@@ -1798,7 +1750,6 @@ public class Request {
         return ctx;
     }
 
-    @SuppressWarnings("unused")
     protected String unescape(String s) {
         if (s == null) {
             return null;
@@ -2113,7 +2064,6 @@ public class Request {
     /**
      * Parses the value of the JROUTE cookie, if present.
      */
-    @SuppressWarnings("unused")
     void parseJrouteCookie() {
         if (!cookiesParsed) {
             parseCookies();
@@ -2125,11 +2075,10 @@ public class Request {
         }
     }
 
-    /*
+    /**
      * @return <code>true</code> if the given string is composed of upper- or lowercase letters only, <code>false</code>
      * otherwise.
      */
-    @SuppressWarnings("unused")
     static boolean isAlpha(String value) {
 
         if (value == null) {
@@ -2228,8 +2177,7 @@ public class Request {
             assert cookiesLocale != null;
 
             final String sessionCookieNameLocal = obtainSessionCookieName();
-            for (int i = 0; i < cookiesLocale.length; i++) {
-                final Cookie c = cookiesLocale[i];
+            for (final Cookie c : cookiesLocale) {
                 if (sessionCookieNameLocal.equals(c.getName())) {
                     setRequestedSessionId(c.getValue());
                     setRequestedSessionCookie(true);
