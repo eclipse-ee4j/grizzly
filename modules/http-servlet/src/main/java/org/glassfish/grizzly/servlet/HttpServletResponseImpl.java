@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -44,7 +45,6 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author Jean-Francois Arcand
  * @version $Revision: 1.9 $ $Date: 2007/05/05 05:32:43 $
  */
-@SuppressWarnings("deprecation")
 public class HttpServletResponseImpl implements HttpServletResponse, Holders.ResponseHolder {
 
     private final ServletOutputStreamImpl outputStream;
@@ -289,35 +289,25 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     @SuppressWarnings("unchecked")
     public void flushBuffer() throws IOException {
 
-//        if (isFinished())
-//            //            throw new IllegalStateException
-//            //                (/*sm.getString("HttpServletResponseImpl.finished")*/);
-//            return;
-
-        if (System.getSecurityManager() != null) {
-            try {
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-
-                    @Override
-                    public Object run() throws IOException {
-//                        response.setAppCommitted(true);
-
-                        response.flush();
-                        return null;
-                    }
-                });
-            } catch (PrivilegedActionException e) {
-                Exception ex = e.getException();
-                if (ex instanceof IOException) {
-                    throw (IOException) ex;
-                }
-            }
-        } else {
-//            response.setAppCommitted(true);
-
+        if (System.getSecurityManager() == null) {
             response.flush();
+            return;
         }
+        try {
+            AccessController.doPrivileged(new PrivilegedExceptionAction() {
 
+                @Override
+                public Object run() throws IOException {
+                    response.flush();
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            Exception ex = e.getException();
+            if (ex instanceof IOException) {
+                throw (IOException) ex;
+            }
+        }
     }
 
     /**
@@ -358,7 +348,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.reset();
-
     }
 
     /**
@@ -445,32 +434,12 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
      * {@inheritDoc}
      */
     @Override
-    public String encodeUrl(String url) {
-        return encodeURL(url);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String encodeRedirectUrl(String url) {
-        return encodeRedirectURL(url);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void sendError(int sc, String msg) throws IOException {
 
         if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to call sendError() after the response has been committed.");
         }
-
-//        response.setAppCommitted(true);
-
         response.sendError(sc, msg);
-
     }
 
     /**
@@ -482,11 +451,7 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to call sendError() after the response has already been committed.");
         }
-
-//        response.setAppCommitted(true);
-
         response.sendError(sc);
-
     }
 
     /**
@@ -498,11 +463,7 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to redirect the response after it has been committed.");
         }
-
-//        response.setAppCommitted(true);
-
         response.sendRedirect(location);
-
     }
 
     /**
@@ -540,7 +501,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.setDateHeader(name, date);
-
     }
 
     /**
@@ -554,7 +514,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.addDateHeader(name, date);
-
     }
 
     /**
@@ -582,7 +541,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.addHeader(name, value);
-
     }
 
     /**
@@ -596,7 +554,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.setIntHeader(name, value);
-
     }
 
     /**
@@ -610,7 +567,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
         }
 
         response.addIntHeader(name, value);
-
     }
 
     /**
@@ -627,20 +583,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
 
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setStatus(int sc, String sm) {
-
-        if (isCommitted()) {
-            return;
-        }
-
-        response.setStatus(sc, sm);
-
-    }
-
     @Override
     public int getStatus() {
         return response.getStatus();
@@ -649,19 +591,6 @@ public class HttpServletResponseImpl implements HttpServletResponse, Holders.Res
     public String getMessage() {
         return response.getMessage();
     }
-
-//    public void setSuspended(boolean suspended) {
-//        response.setSuspended(suspended);
-//    }
-
-//    public void setAppCommitted(boolean appCommitted) {
-//        response.setAppCommitted(appCommitted);
-//    }
-//
-//
-//    public int getContentCount() {
-//        return response.getContentCount();
-//    }
 
     public boolean isError() {
         return response.isError();

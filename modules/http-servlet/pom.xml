@@ -86,7 +86,7 @@
                     <instructions>
                         <Import-Package>
                             org.glassfish.grizzly*;version=${project.version},
-                            jakarta.servlet*;version="[5.0,6)",
+                            jakarta.servlet*;version="[6.0,7)",
                             *,
                         </Import-Package>
                         <Export-Package>

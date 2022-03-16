@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -43,7 +44,6 @@ import jakarta.servlet.http.HttpSessionListener;
  *
  * @author Jeanfrancois Arcand
  */
-@SuppressWarnings("deprecation")
 public class HttpSessionImpl implements HttpSession {
 
     private static final Logger LOGGER = Grizzly.logger(HttpSessionImpl.class);
@@ -58,7 +58,7 @@ public class HttpSessionImpl implements HttpSession {
 
     /**
      * Create an HttpSession.
-     * 
+     *
      * @param contextImpl
      * @param session internal session object
      */
@@ -89,7 +89,7 @@ public class HttpSessionImpl implements HttpSession {
 
     /**
      * Is the current Session valid?
-     * 
+     *
      * @return true if valid.
      */
     protected boolean isValid() {
@@ -159,14 +159,6 @@ public class HttpSessionImpl implements HttpSession {
      * {@inheritDoc}
      */
     @Override
-    public jakarta.servlet.http.HttpSessionContext getSessionContext() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Object getAttribute(String key) {
         return session.getAttribute(key);
     }
@@ -175,24 +167,8 @@ public class HttpSessionImpl implements HttpSession {
      * {@inheritDoc}
      */
     @Override
-    public Object getValue(String value) {
-        return session.getAttribute(value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Enumeration<String> getAttributeNames() {
         return Collections.enumeration(session.attributes().keySet());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String[] getValueNames() {
-        return session.attributes().entrySet().toArray(new String[session.attributes().size()]);
     }
 
     /**
@@ -242,11 +218,11 @@ public class HttpSessionImpl implements HttpSession {
         if (listeners.length == 0) {
             return;
         }
-        for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof HttpSessionAttributeListener)) {
+        for (EventListener listener2 : listeners) {
+            if (!(listener2 instanceof HttpSessionAttributeListener)) {
                 continue;
             }
-            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) listeners[i];
+            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) listener2;
             try {
                 if (unbound != null) {
                     if (event == null) {
@@ -272,14 +248,6 @@ public class HttpSessionImpl implements HttpSession {
      * {@inheritDoc}
      */
     @Override
-    public void putValue(String key, Object value) {
-        setAttribute(key, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void removeAttribute(String key) {
         Object value = session.removeAttribute(key);
 
@@ -298,11 +266,11 @@ public class HttpSessionImpl implements HttpSession {
         if (listeners.length == 0) {
             return;
         }
-        for (int i = 0, len = listeners.length; i < len; i++) {
-            if (!(listeners[i] instanceof HttpSessionAttributeListener)) {
+        for (EventListener listener2 : listeners) {
+            if (!(listener2 instanceof HttpSessionAttributeListener)) {
                 continue;
             }
-            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) listeners[i];
+            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) listener2;
             try {
                 if (event == null) {
                     event = new HttpSessionBindingEvent(this, key, value);
@@ -321,14 +289,6 @@ public class HttpSessionImpl implements HttpSession {
      * {@inheritDoc}
      */
     @Override
-    public void removeValue(String key) {
-        removeAttribute(key);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public synchronized void invalidate() {
         session.setValid(false);
         session.attributes().clear();
@@ -336,8 +296,7 @@ public class HttpSessionImpl implements HttpSession {
         EventListener[] listeners = contextImpl.getEventListeners();
         if (listeners.length > 0) {
             HttpSessionEvent event = new HttpSessionEvent(this);
-            for (int i = 0, len = listeners.length; i < len; i++) {
-                Object listenerObj = listeners[i];
+            for (EventListener listenerObj : listeners) {
                 if (!(listenerObj instanceof HttpSessionListener)) {
                     continue;
                 }
@@ -373,8 +332,7 @@ public class HttpSessionImpl implements HttpSession {
         EventListener[] listeners = contextImpl.getEventListeners();
         if (listeners.length > 0) {
             HttpSessionEvent event = new HttpSessionEvent(this);
-            for (int i = 0, len = listeners.length; i < len; i++) {
-                Object listenerObj = listeners[i];
+            for (EventListener listenerObj : listeners) {
                 if (!(listenerObj instanceof HttpSessionListener)) {
                     continue;
                 }
@@ -398,8 +356,7 @@ public class HttpSessionImpl implements HttpSession {
         EventListener[] listeners = contextImpl.getEventListeners();
         if (listeners.length > 0) {
             HttpSessionEvent event = new HttpSessionEvent(this);
-            for (int i = 0, len = listeners.length; i < len; i++) {
-                Object listenerObj = listeners[i];
+            for (EventListener listenerObj : listeners) {
                 if (!(listenerObj instanceof HttpSessionIdListener)) {
                     continue;
                 }

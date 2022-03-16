@@ -119,7 +119,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <servlet-version>5.0.0</servlet-version>
+        <servlet-version>6.0.0</servlet-version>
         <maven-plugin.version>1.0.0</maven-plugin.version>
         <cobertura.version>2.4</cobertura.version>
         <gmbal.version>4.0.0</gmbal.version>

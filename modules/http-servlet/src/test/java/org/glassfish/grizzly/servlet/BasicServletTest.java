@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -16,7 +17,14 @@
 
 package org.glassfish.grizzly.servlet;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,26 +40,27 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.net.SocketFactory;
 
 import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.http.Protocol;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
+import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.Test;
 
-import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import junit.framework.AssertionFailedError;
+
+import static jakarta.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Basic Servlet Test.
@@ -60,19 +69,20 @@ import junit.framework.AssertionFailedError;
  */
 public class BasicServletTest extends HttpServerAbstractTest {
 
-    public static int PORT = PORT();
-    private static Logger LOGGER = Grizzly.logger(BasicServletTest.class);
-    private String header = "text/html;charset=utf8";
+    private static final int PORT = PORT();
+    private static final Logger LOGGER = Grizzly.logger(BasicServletTest.class);
+    private static final String TEXT_HTML_HEADER = "text/html;charset=utf8";
+    private static final Predicate<String> PATTERN_POSITIVE_NUMBER = Pattern.compile("[1-9][0-9]*").asMatchPredicate();
 
     public void testServletName() throws Exception {
         System.out.println("testServletName");
-        
+
         try {
             newHttpServer(PORT);
             WebappContext webappContext = new WebappContext("Test", "/contextPath");
             addServlet(webappContext, "foobar", "/servletPath/*");
             webappContext.deploy(httpServer);
-            
+
             Thread.sleep(100);
             httpServer.start();
             HttpURLConnection connection = getConnection("/contextPath/servletPath/pathInfo", PORT);
@@ -93,7 +103,7 @@ public class BasicServletTest extends HttpServerAbstractTest {
             ctx.deploy(httpServer);
             HttpURLConnection conn = getConnection(alias, PORT);
             String s = conn.getHeaderField("Content-Type");
-            assertEquals(header, s);
+            assertEquals(TEXT_HTML_HEADER, s);
         } finally {
             stopHttpServer();
         }
@@ -454,6 +464,47 @@ public class BasicServletTest extends HttpServerAbstractTest {
         }
     }
 
+    public void testServlet6NewMethods() throws Exception {
+        try {
+            newHttpServer(PORT);
+            final String contextPath = "/contextPath";
+            WebappContext webappContext = new WebappContext("Test", contextPath);
+            ServletRegistration reg = webappContext.addServlet("TestServlet", new HttpServlet() {
+
+                @Override
+                protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                    LOGGER.log(Level.INFO, "{0} received request {1}", new Object[] { contextPath, req.getRequestURI() });
+                    resp.setStatus(HttpServletResponse.SC_OK);
+                    resp.setHeader("Content-Type", TEXT_HTML_HEADER);
+                    resp.setHeader("Path-Info", req.getPathInfo());
+                    ServletConnection servletConnection = req.getServletConnection();
+                    resp.setHeader("X-SC-ID", servletConnection.getConnectionId());
+                    resp.setHeader("X-SC-PROTOCOL", servletConnection.getProtocol());
+                    resp.setHeader("X-SC-PROTOCOL_CONNECTION_ID", servletConnection.getProtocolConnectionId());
+                    resp.setHeader("X-SC-SECURE", Boolean.toString(servletConnection.isSecure()));
+                    resp.setHeader("X-REQUEST_ID", req.getRequestId());
+                    resp.setHeader("X-PROTOCOL_REQUEST_ID", req.getProtocolRequestId());
+                    resp.getWriter().write(contextPath);
+                }
+            });
+            reg.addMapping(contextPath);
+            webappContext.deploy(httpServer);
+
+            Thread.sleep(100);
+            httpServer.start();
+            HttpURLConnection connection = getConnection("/contextPath/contextPath", PORT);
+            assertEquals(HttpServletResponse.SC_OK, connection.getResponseCode());
+            assertThat("request id", connection.getHeaderField("X-REQUEST_ID"), new PositiveNumberMatcher());
+            assertThat("protocol request id", connection.getHeaderField("X-PROTOCOL_REQUEST_ID"), equalTo(""));
+            assertThat("connection id", connection.getHeaderField("X-SC-ID"), new PositiveNumberMatcher());
+            assertThat(connection.getHeaderField("X-SC-PROTOCOL"), equalTo(Protocol.HTTP_1_1.getProtocolString()));
+            assertThat(connection.getHeaderField("X-SC-PROTOCOL_CONNECTION_ID"), equalTo(""));
+            assertThat(connection.getHeaderField("X-SC-SECURE"), equalTo("false"));
+        } finally {
+            stopHttpServer();
+        }
+    }
+
     private ServletRegistration addServlet(WebappContext ctx, String name, String alias) {
         ServletRegistration reg = ctx.addServlet(name, new HttpServlet() {
 
@@ -461,7 +512,7 @@ public class BasicServletTest extends HttpServerAbstractTest {
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 LOGGER.log(Level.INFO, "{0} received request {1}", new Object[] { alias, req.getRequestURI() });
                 resp.setStatus(HttpServletResponse.SC_OK);
-                resp.setHeader("Content-Type", header);
+                resp.setHeader("Content-Type", TEXT_HTML_HEADER);
                 resp.setHeader("Path-Info", req.getPathInfo());
                 resp.setHeader("Request-Was", req.getRequestURI());
                 resp.setHeader("Servlet-Name", getServletName());
@@ -552,6 +603,18 @@ public class BasicServletTest extends HttpServerAbstractTest {
         @Override
         public void contextDestroyed(ServletContextEvent sce) {
             events.add(DESTROYED);
+        }
+    }
+
+
+    private static class PositiveNumberMatcher extends CustomTypeSafeMatcher<String> {
+        PositiveNumberMatcher() {
+            super("positive number");
+        }
+
+        @Override
+        protected boolean matchesSafely(String value) {
+            return PATTERN_POSITIVE_NUMBER.test(value);
         }
     }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -34,9 +35,17 @@ import org.glassfish.grizzly.utils.NullaryFunction;
  * @author Alexey Stashok
  */
 public interface Connection<L> extends Readable<L>, Writeable<L>, Closeable, AttributeStorage, MonitoringAware<ConnectionProbe> {
+
+    /**
+     * Returns id of this instance, unique in the context of the JVM and the implementation class.
+     *
+     * @return id of this instance, never null.
+     */
+    long getId();
+
     /**
      * Get the {@link Transport}, to which this {@link Connection} belongs to.
-     * 
+     *
      * @return the {@link Transport}, to which this {@link Connection} belongs to.
      */
     Transport getTransport();
@@ -136,7 +145,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>, Closeable, Att
 
     /**
      * Returns the {@link Processor} state associated with this <tt>Connection</tt>.
-     * 
+     *
      * @param <E> state of the {@link Processor}
      * @param processor {@link Processor}
      * @param factory factory that is used to initialise the state
@@ -164,14 +173,14 @@ public interface Connection<L> extends Readable<L>, Writeable<L>, Closeable, Att
 
     /**
      * Get the connection peer address
-     * 
+     *
      * @return the connection peer address
      */
     L getPeerAddress();
 
     /**
      * Get the connection local address
-     * 
+     *
      * @return the connection local address
      */
     L getLocalAddress();
@@ -368,7 +377,7 @@ public interface Connection<L> extends Readable<L>, Writeable<L>, Closeable, Att
 
     /**
      * Add the {@link CloseListener}, which will be notified once <tt>Connection</tt> will be closed.
-     * 
+     *
      * @param closeListener {@link CloseListener}
      *
      * @deprecated use {@link #addCloseListener(org.glassfish.grizzly.CloseListener)}

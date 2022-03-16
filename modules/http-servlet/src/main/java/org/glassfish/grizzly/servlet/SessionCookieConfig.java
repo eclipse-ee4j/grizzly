@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 1997, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -16,19 +17,27 @@
 
 package org.glassfish.grizzly.servlet;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.glassfish.grizzly.http.server.Constants;
+
+
 /**
  * Class that may be used to configure various properties of cookies used for session tracking purposes.
  */
 public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig {
 
-    private String name;
-    private String domain;
-    private String path;
-    private String comment;
-    private boolean httpOnly = true;
-    private boolean secure;
+    private static final int DEFAULT_MAX_AGE = -1;
+    private static final boolean DEFAULT_HTTP_ONLY = false;
+    private static final boolean DEFAULT_SECURE = false;
+    private static final String DEFAULT_NAME = "JSESSIONID";
+
+    private String name = DEFAULT_NAME;
+
+    private final Map<String,String> attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private final WebappContext ctx;
-    private int maxAge = -1;
 
     /**
      * Constructor
@@ -46,9 +55,8 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
     @Override
     public void setName(String name) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
         this.name = name;
     }
 
@@ -69,10 +77,9 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
     @Override
     public void setDomain(String domain) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        this.domain = domain;
+        setAttribute(Constants.COOKIE_DOMAIN_ATTR, domain);
     }
 
     /**
@@ -80,7 +87,7 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
      */
     @Override
     public String getDomain() {
-        return domain;
+        return getAttribute(Constants.COOKIE_DOMAIN_ATTR);
     }
 
     /**
@@ -92,9 +99,9 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
     @Override
     public void setPath(String path) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-        this.path = path;
+        setAttribute(Constants.COOKIE_PATH_ATTR, path);
     }
 
     /**
@@ -103,7 +110,7 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
      */
     @Override
     public String getPath() {
-        return path;
+        return getAttribute(Constants.COOKIE_PATH_ATTR);
     }
 
     /**
@@ -111,22 +118,25 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
      *
      * @throws IllegalStateException if the <tt>ServletContext</tt> from which this <tt>SessionCookieConfig</tt> was
      * acquired has already been initialized
+     * @deprecated
      */
+    @Deprecated
     @Override
     public void setComment(String comment) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        this.comment = comment;
+        setAttribute(Constants.COOKIE_COMMENT_ATTR, comment);
     }
 
     /**
      * @return the cookie comment set via {@link #setComment}, or <tt>null</tt> if {@link #setComment} was never called
+     * @deprecated
      */
+    @Deprecated
     @Override
     public String getComment() {
-        return comment;
+        return getAttribute(Constants.COOKIE_COMMENT_ATTR);
     }
 
     /**
@@ -139,10 +149,9 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
     @Override
     public void setHttpOnly(boolean httpOnly) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        this.httpOnly = httpOnly;
+        setAttribute(Constants.COOKIE_HTTP_ONLY_ATTR, String.valueOf(httpOnly));
     }
 
     /**
@@ -151,7 +160,8 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
      */
     @Override
     public boolean isHttpOnly() {
-        return httpOnly;
+        String value = getAttribute(Constants.COOKIE_HTTP_ONLY_ATTR);
+        return value == null ? DEFAULT_HTTP_ONLY : Boolean.parseBoolean(value);
     }
 
     /**
@@ -166,10 +176,9 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
     @Override
     public void setSecure(boolean secure) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        this.secure = secure;
+        setAttribute(Constants.COOKIE_SECURE_ATTR, String.valueOf(secure));
     }
 
     /**
@@ -180,21 +189,36 @@ public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig 
      */
     @Override
     public boolean isSecure() {
-        return secure;
+        String value = getAttribute(Constants.COOKIE_SECURE_ATTR);
+        return value == null ? DEFAULT_SECURE : Boolean.parseBoolean(value);
     }
 
     @Override
     public void setMaxAge(int maxAge) {
         if (ctx.deployed) {
-            throw new IllegalArgumentException("WebappContext has already been deployed");
+            throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        this.maxAge = maxAge;
+        setAttribute(Constants.COOKIE_MAX_AGE_ATTR, String.valueOf(maxAge));
     }
 
     @Override
     public int getMaxAge() {
-        return maxAge;
+        String value = getAttribute(Constants.COOKIE_MAX_AGE_ATTR);
+        return value == null ? DEFAULT_MAX_AGE : Integer.parseInt(value);
     }
 
+    @Override
+    public void setAttribute(String name, String value) {
+        this.attributes.put(name, value);
+    }
+
+    @Override
+    public String getAttribute(String name) {
+        return this.attributes.get(name);
+    }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        return Collections.unmodifiableMap(this.attributes);
+    }
 }
