@@ -1,0 +1,43 @@
+#
+# Copyright (c) 2022 Contributors to the Eclipse Foundation
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License v. 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0,
+# or the Eclipse Distribution License v. 1.0 which is available at
+# http://www.eclipse.org/org/documents/edl-v10.php.
+#
+# SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+#
+
+name: Eclipse Grizzly NIO CI
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    name: Build Grizzly on JDK ${{ matrix.java_version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java_version: [ 11 ]
+
+    steps:
+    - name: Checkout for build
+      uses: actions/checkout@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java_version }}
+    - name: Maven Build
+      run: |
+        mvn --show-version \
+            --no-transfer-progress \
+            --activate-profiles staging \
+            --define skipTests=true \
+            install
+
+
