@@ -45,6 +45,7 @@ public abstract class AbstractTransport implements Transport {
      */
     protected volatile boolean isBlocking;
 
+    @Deprecated
     protected volatile boolean isStandalone;
 
     /**
@@ -110,7 +111,7 @@ public abstract class AbstractTransport implements Transport {
     /**
      * Transport probes
      */
-    protected final DefaultMonitoringConfig<TransportProbe> transportMonitoringConfig = new DefaultMonitoringConfig<TransportProbe>(TransportProbe.class) {
+    protected final DefaultMonitoringConfig<TransportProbe> transportMonitoringConfig = new DefaultMonitoringConfig<>(TransportProbe.class) {
 
         @Override
         public Object createManagementObject() {

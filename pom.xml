@@ -173,7 +173,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
 
     <build>
         <defaultGoal>install</defaultGoal>
@@ -193,13 +193,22 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.9.0</version>
+                    <configuration>
+                        <source>11</source>
+                        <target>11</target>
+                        <compilerArgument>-Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</compilerArgument>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>5.1.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
-        
+
         <plugins>
             <!-- Sets minimal Maven version to 3.6.3 -->
             <plugin>
@@ -215,7 +224,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[1.8,)</version>
+                                    <version>[11,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.6.3</version>
@@ -224,17 +233,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Restricts the Java version to 1.8 -->
-            <plugin><inherited>true</inherited>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <compilerArgument>-Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</compilerArgument>
-                </configuration>
             </plugin>
 
             <plugin><inherited>true</inherited>
