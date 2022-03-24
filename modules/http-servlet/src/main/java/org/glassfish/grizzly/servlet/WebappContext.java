@@ -111,11 +111,6 @@ public class WebappContext implements ServletContext {
     /* Servlet context initialization parameters */
     private final Map<String, String> contextInitParams = new LinkedHashMap<>(8, 1.0f);
 
-    /**
-     * The security roles for this application
-     */
-    private final List<String> securityRoles = new ArrayList<>();
-
     /* Registrations */
     protected final Map<String, ServletRegistration> servletRegistrations = new HashMap<>(8, 1.0f);
 
@@ -856,8 +851,6 @@ public class WebappContext implements ServletContext {
         if (deployed) {
             throw new IllegalStateException("WebappContext has already been deployed");
         }
-
-        securityRoles.addAll(Arrays.asList(roleNames));
     }
 
     /**
