@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to Eclipse Foundation. All rights reserved.
  * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -903,21 +904,6 @@ public class DataChunk implements Chunk {
 
     public void recycle() {
         reset();
-    }
-
-    private static boolean equalsIgnoreCase(String s, byte[] b) {
-        final int len = b.length;
-        if (s.length() != len) {
-            return false;
-        }
-
-        for (int i = 0; i < len; i++) {
-            if (Ascii.toLower(s.charAt(i)) != Ascii.toLower(b[i])) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
