@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -254,7 +255,7 @@ public class FilterChainContext implements AttributeStorage {
 
     /**
      * Get the current processing task state.
-     * 
+     *
      * @return the current processing task state.
      */
     public State state() {
@@ -433,7 +434,7 @@ public class FilterChainContext implements AttributeStorage {
 
     /**
      * Get the general Grizzly {@link Context} this filter context wraps.
-     * 
+     *
      * @return the general Grizzly {@link Context} this filter context wraps.
      */
     public final Context getInternalContext() {
@@ -926,7 +927,8 @@ public class FilterChainContext implements AttributeStorage {
         sb.append("connection=").append(getConnection());
         sb.append(", closeable=").append(getCloseable());
         sb.append(", operation=").append(getOperation());
-        sb.append(", message=").append(String.valueOf(getMessage()));
+        // message can be null, then valueOf(char[]) would be executed -> NPE
+        sb.append(", message=").append(String.valueOf(Object.class.cast(getMessage())));
         sb.append(", address=").append(getAddress());
         sb.append(']');
 
@@ -950,7 +952,6 @@ public class FilterChainContext implements AttributeStorage {
         }
     }
 
-    @SuppressWarnings("deprecation")
     public static final class TransportContext {
         private boolean isBlocking;
         CompletionHandler completionHandler;
