@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022, 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -41,6 +42,8 @@ public final class CookieUtils {
     public static final boolean COOKIE_VERSION_ONE_STRICT_COMPLIANCE = Boolean.getBoolean("org.glassfish.web.rfc2109_cookie_names_enforced");
 
     public static final boolean RFC_6265_SUPPORT_ENABLED = Boolean.getBoolean("org.glassfish.web.rfc_6265_support_enabled");
+
+    public static final boolean USE_LEGACY_PARSER = Boolean.getBoolean("org.glassfish.web.legacy_cookie_parser");
 
     /**
      * If set to false, we don't use the IE6/7 Max-Age/Expires work around
@@ -227,7 +230,7 @@ public final class CookieUtils {
         return true;
     }
 
-    // XXX will be refactored soon!
+    // XXX will be refactored soon! (said someone 20 years ago)
     public static boolean equalsIgnoreCase(String s1, String s2, int start, int end) {
         int blen = end - start;
         if (s2 == null || blen != s1.length()) {
