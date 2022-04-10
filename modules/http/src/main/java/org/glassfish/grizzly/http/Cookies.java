@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022, 2022 Contributors to the Eclipse Foundation
  * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -24,6 +25,7 @@ import java.util.logging.Logger;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.http.util.BufferChunk;
 import org.glassfish.grizzly.http.util.ByteChunk;
+import org.glassfish.grizzly.http.util.CookieHeaderParser;
 import org.glassfish.grizzly.http.util.CookieParserUtils;
 import org.glassfish.grizzly.http.util.CookieUtils;
 import org.glassfish.grizzly.http.util.DataChunk;
@@ -168,7 +170,12 @@ public final class Cookies {
                 }
 
                 final ByteChunk byteChunk = cookieValue.getByteChunk();
-                CookieParserUtils.parseClientCookies(this, byteChunk.getBuffer(), byteChunk.getStart(), byteChunk.getLength());
+
+                if (CookieUtils.USE_LEGACY_PARSER) {
+                    CookieParserUtils.parseClientCookies(this, byteChunk.getBuffer(), byteChunk.getStart(), byteChunk.getLength());
+                } else {
+                    CookieHeaderParser.parseCookie(byteChunk.getBuffer(), byteChunk.getStart(), byteChunk.getLength(), this);
+                }
             } else if (cookieValue.getType() == DataChunk.Type.Buffer) {
                 if (logger.isLoggable(Level.FINE)) {
                     log("Parsing buffer: " + cookieValue.toString());
