@@ -67,6 +67,7 @@ jobs:
             --define forkCount=1 \
             --define reuseForks=false \
             --define surefire.reportFormat=plain \
+            --define surefire.rerunFailingTestsCount=5 \
             install
 
 
