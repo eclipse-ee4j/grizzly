@@ -30,7 +30,7 @@ import org.glassfish.grizzly.http.server.Constants;
 public class SessionCookieConfig implements jakarta.servlet.SessionCookieConfig {
 
     private static final int DEFAULT_MAX_AGE = -1;
-    private static final boolean DEFAULT_HTTP_ONLY = false;
+    private static final boolean DEFAULT_HTTP_ONLY = true;
     private static final boolean DEFAULT_SECURE = false;
     private static final String DEFAULT_NAME = "JSESSIONID";
 
