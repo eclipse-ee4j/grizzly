@@ -41,7 +41,7 @@ import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Context;
 import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.FileTransfer;
+import org.glassfish.grizzly.FileChunk;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.IOEvent;
@@ -635,8 +635,8 @@ public final class TCPNIOTransport extends NIOTransport implements AsyncQueueEna
                 connection.terminate0(null, new CloseReason(CloseType.REMOTELY, e));
                 throw e;
             }
-        } else if (message instanceof FileTransfer) {
-            written = (int) ((FileTransfer) message).writeTo((SocketChannel) connection.getChannel());
+        } else if (message instanceof FileChunk) {
+            written = (int) ((FileChunk) message).writeTo((SocketChannel) connection.getChannel());
         } else {
             throw new IllegalStateException("Unhandled message type");
         }

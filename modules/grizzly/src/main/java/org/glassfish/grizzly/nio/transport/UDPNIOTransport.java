@@ -38,7 +38,7 @@ import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Context;
 import org.glassfish.grizzly.EmptyCompletionHandler;
-import org.glassfish.grizzly.FileTransfer;
+import org.glassfish.grizzly.FileChunk;
 import org.glassfish.grizzly.GracefulShutdownListener;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -571,8 +571,8 @@ public final class UDPNIOTransport extends NIOTransport implements FilterChainEn
             }
 
             connection.onWrite(buffer, (int) written);
-        } else if (message instanceof FileTransfer) {
-            written = ((FileTransfer) message).writeTo((DatagramChannel) connection.getChannel());
+        } else if (message instanceof FileChunk) {
+            written = ((FileChunk) message).writeTo((DatagramChannel) connection.getChannel());
         } else {
             throw new IllegalStateException("Unhandled message type");
         }
