@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2021 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0, which is available at
@@ -25,7 +25,6 @@ import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.UDPNIOConnection;
 import org.glassfish.grizzly.nio.transport.UDPNIOTransport;
 import org.glassfish.grizzly.nio.transport.UDPNIOTransportBuilder;
-import org.glassfish.grizzly.utils.JdkVersion;
 import org.glassfish.grizzly.utils.StringFilter;
 
 /**
@@ -96,14 +95,6 @@ public class MulticastChat {
     }
 
     private void run() throws Exception {
-        // Check if current JDK version is higher or equals to 1.7.0
-        final JdkVersion jdkVersion = JdkVersion.getJdkVersion();
-        final JdkVersion minimumVersion = JdkVersion.parseVersion("1.7.0");
-
-        if (minimumVersion.compareTo(jdkVersion) > 0) { // If JDK version is >= 1.7
-            System.out.println("Sample requires JDK 1.7+");
-            System.exit(1);
-        }
 
         // Build FilterChain to parse incoming UDP packets and print to System.out
         final FilterChain filterChain = FilterChainBuilder.stateless()

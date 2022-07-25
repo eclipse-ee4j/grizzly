@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2021 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -42,7 +42,6 @@ import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.FilterChainContext.Operation;
 import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.utils.Exceptions;
-import org.glassfish.grizzly.utils.JdkVersion;
 
 /**
  * SSL {@link Filter} to operate with SSL encrypted data.
@@ -51,7 +50,6 @@ import org.glassfish.grizzly.utils.JdkVersion;
  */
 public class SSLFilter extends SSLBaseFilter {
     private static final Logger LOGGER = Grizzly.logger(SSLFilter.class);
-    private static final boolean IS_JDK7_OR_HIGHER = JdkVersion.getJdkVersion().compareTo("1.7.0") >= 0;
 
     private final Attribute<SSLHandshakeContext> handshakeContextAttr;
     private final SSLEngineConfigurator clientSSLEngineConfigurator;
@@ -268,8 +266,7 @@ public class SSLFilter extends SSLBaseFilter {
 
     protected SSLEngine createClientSSLEngine(final SSLConnectionContext sslCtx, final SSLEngineConfigurator sslEngineConfigurator) {
 
-        return IS_JDK7_OR_HIGHER ? sslEngineConfigurator.createSSLEngine(HostNameResolver.getPeerHostName(sslCtx.getConnection()), -1)
-                : sslEngineConfigurator.createSSLEngine();
+        return sslEngineConfigurator.createSSLEngine(HostNameResolver.getPeerHostName(sslCtx.getConnection()), -1);
     }
 
     // ----------------------------------------------------------- Inner Classes
