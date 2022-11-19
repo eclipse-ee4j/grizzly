@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -400,7 +401,7 @@ public class FileCacheTest extends AbstractHttp2Test {
     }
 
     private static File createTempFile() throws IOException {
-        final File f = File.createTempFile("grizzly-file-cache", ".txt");
+        final File f = Files.createTempFile("grizzly-file-cache", ".txt").toFile();
         f.deleteOnExit();
         FileOutputStream out = null;
         try {
