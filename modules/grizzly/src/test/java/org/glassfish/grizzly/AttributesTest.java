@@ -26,11 +26,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import java.util.function.Supplier;
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.attributes.AttributeBuilder;
 import org.glassfish.grizzly.attributes.AttributeHolder;
 import org.glassfish.grizzly.attributes.DefaultAttributeBuilder;
-import org.glassfish.grizzly.utils.NullaryFunction;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -102,9 +102,9 @@ public class AttributesTest {
         AttributeBuilder builder = new DefaultAttributeBuilder();
         AttributeHolder holder = isSafe ? builder.createSafeAttributeHolder() : builder.createUnsafeAttributeHolder();
 
-        final Attribute<String> attr = builder.createAttribute("attribute", new NullaryFunction<String>() {
+        final Attribute<String> attr = builder.createAttribute("attribute", new Supplier<String>() {
             @Override
-            public String evaluate() {
+            public String get() {
                 return "default";
             }
         });

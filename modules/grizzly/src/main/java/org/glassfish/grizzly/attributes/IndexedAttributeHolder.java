@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.glassfish.grizzly.utils.NullaryFunction;
+import java.util.function.Supplier;
 
 /**
  * {@link AttributeHolder}, which supports indexed access to stored {@link Attribute}s. Access to such indexed
@@ -69,7 +69,7 @@ public final class IndexedAttributeHolder implements AttributeHolder {
      * {@inheritDoc}
      */
     @Override
-    public Object getAttribute(final String name, final NullaryFunction initializer) {
+    public Object getAttribute(final String name, final Supplier initializer) {
         final Attribute attribute = attributeBuilder.getAttributeByName(name);
         if (attribute != null) {
             return indexedAttributeAccessor.getAttribute(attribute.index(), initializer);
@@ -293,17 +293,17 @@ public final class IndexedAttributeHolder implements AttributeHolder {
          * {@inheritDoc}
          */
         @Override
-        public Object getAttribute(final int index, final NullaryFunction initializer) {
+        public Object getAttribute(final int index, final Supplier initializer) {
             Object value = weakGet(index);
 
             if (value == null && initializer != null) {
                 synchronized (sync) {
-                    // we want to make sure that parallel getAttribute(int, NullaryFunction)
-                    // won't create multiple value instances (everyone will call NullaryFunction.evaluate())
+                    // we want to make sure that parallel getAttribute(int, Suppler)
+                    // won't create multiple value instances (everyone will call Supplier.get())
                     value = weakGet(index);
 
                     if (value == null) {
-                        value = initializer.evaluate();
+                        value = initializer.get();
                         setAttribute(index, value);
                     }
                 }
