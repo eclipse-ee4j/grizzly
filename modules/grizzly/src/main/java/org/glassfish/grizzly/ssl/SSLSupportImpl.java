@@ -20,6 +20,7 @@ package org.glassfish.grizzly.ssl;
 import org.glassfish.grizzly.Connection;
 import java.io.IOException;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -81,18 +82,18 @@ public class SSLSupportImpl implements SSLSupport {
         return getPeerCertificateChain(false);
     }
 
-    protected java.security.cert.X509Certificate[] getX509Certificates(
+    protected X509Certificate[] getX509Certificates(
             SSLSession session) throws IOException {
-        java.security.cert.X509Certificate[] jsseCerts = null;
+        X509Certificate[] jsseCerts = null;
         try {
-            jsseCerts = (java.security.cert.X509Certificate[])session.getPeerCertificates();
+            jsseCerts = (X509Certificate[])session.getPeerCertificates();
         } catch (Throwable ex) {
             // Get rid of the warning in the logs when no Client-Cert is
             // available
         }
 
         if (jsseCerts == null) {
-            jsseCerts = new java.security.cert.X509Certificate[0];
+            jsseCerts = new X509Certificate[0];
         }
 
         if (jsseCerts.length < 1) {
