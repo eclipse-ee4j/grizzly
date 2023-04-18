@@ -113,7 +113,6 @@ public class SSLSupportImpl implements SSLSupport {
             return null;
         }
 
-        // Convert JSSE's certificate format to the ones we need
         Certificate[] jsseCerts = null;
         try {
             jsseCerts = session.getPeerCertificates();
