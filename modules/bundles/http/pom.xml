@@ -160,6 +160,14 @@
                         </goals>
                         <configuration>
                             <classifier>sources</classifier>
+                            <!-- 
+
+                                As this is a bundle we are excluding 
+                                module-info.java files when unpacking the 
+                                project dependencies.
+                                 
+                                -->
+                            <excludes>module-info.java</excludes>
                             <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
                             <!-- fudge an actual source hierarchy so that the source
                                  plugin can actually do something useful.  Otherwise,
