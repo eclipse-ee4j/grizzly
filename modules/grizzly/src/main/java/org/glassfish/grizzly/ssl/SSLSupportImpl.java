@@ -18,14 +18,12 @@
 package org.glassfish.grizzly.ssl;
 
 import org.glassfish.grizzly.Connection;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.cert.CertificateFactory;
-import java.util.logging.Level;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
 import org.glassfish.grizzly.Grizzly;
 
 /**
@@ -84,11 +82,11 @@ public class SSLSupportImpl implements SSLSupport {
         return getPeerCertificateChain(false);
     }
 
-    protected java.security.cert.X509Certificate[] getX509Certificates(
+    protected X509Certificate[] getX509Certificates(
             SSLSession session) throws IOException {
-        X509Certificate jsseCerts[] = null;
+        X509Certificate[] jsseCerts = null;
         try {
-            jsseCerts = session.getPeerCertificateChain();
+            jsseCerts = (X509Certificate[])session.getPeerCertificates();
         } catch (Throwable ex) {
             // Get rid of the warning in the logs when no Client-Cert is
             // available
@@ -97,29 +95,11 @@ public class SSLSupportImpl implements SSLSupport {
         if (jsseCerts == null) {
             jsseCerts = new X509Certificate[0];
         }
-        java.security.cert.X509Certificate[] x509Certs =
-                new java.security.cert.X509Certificate[jsseCerts.length];
-        for (int i = 0; i < x509Certs.length; i++) {
-            try {
-                byte buffer[] = jsseCerts[i].getEncoded();
-                CertificateFactory cf =
-                        CertificateFactory.getInstance("X.509");
-                ByteArrayInputStream stream =
-                        new ByteArrayInputStream(buffer);
-                x509Certs[i] = (java.security.cert.X509Certificate) cf.generateCertificate(stream);
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "Cert #" + i + " = " + x509Certs[i]);
-                }
-            } catch (Exception ex) {
-                logger.log(Level.INFO, "Error translating " + jsseCerts[i], ex);
-                return null;
-            }
-        }
 
-        if (x509Certs.length < 1) {
+        if (jsseCerts.length < 1) {
             return null;
         }
-        return x509Certs;
+        return jsseCerts;
     }
 
     @Override
@@ -133,15 +113,14 @@ public class SSLSupportImpl implements SSLSupport {
             return null;
         }
 
-        // Convert JSSE's certificate format to the ones we need
-        X509Certificate[] jsseCerts = null;
+        Certificate[] jsseCerts = null;
         try {
-            jsseCerts = session.getPeerCertificateChain();
+            jsseCerts = session.getPeerCertificates();
         } catch (Exception bex) {
             // ignore.
         }
         if (jsseCerts == null) {
-            jsseCerts = new X509Certificate[0];
+            jsseCerts = new Certificate[0];
         }
         if (jsseCerts.length <= 0 && force) {
             session.invalidate();
