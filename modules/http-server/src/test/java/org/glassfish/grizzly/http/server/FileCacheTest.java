@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -965,7 +966,7 @@ public class FileCacheTest {
     }
 
     private static File createTempFile() throws IOException {
-        final File f = File.createTempFile("grizzly-file-cache", ".txt");
+        final File f = Files.createTempFile("grizzly-file-cache", ".txt").toFile();
         f.deleteOnExit();
         FileOutputStream out = null;
         try {

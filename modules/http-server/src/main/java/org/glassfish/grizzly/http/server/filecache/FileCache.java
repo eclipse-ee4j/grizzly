@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -599,7 +600,7 @@ public class FileCache implements MonitoringAware<FileCacheProbe> {
      */
     protected void compressFile(final FileCacheEntry entry) {
         try {
-            final File tmpCompressedFile = File.createTempFile(String.valueOf(entry.plainFile.hashCode()), ".tmpzip", compressedFilesFolder);
+            final File tmpCompressedFile = Files.createTempFile(compressedFilesFolder.toPath(), String.valueOf(entry.plainFile.hashCode()), ".tmpzip").toFile();
             tmpCompressedFile.deleteOnExit();
 
             InputStream in = null;
