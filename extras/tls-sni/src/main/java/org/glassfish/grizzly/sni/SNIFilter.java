@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -38,7 +38,6 @@ import org.glassfish.grizzly.ssl.SSLConnectionContext;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.ssl.SSLFilter;
 import org.glassfish.grizzly.utils.Charsets;
-import org.glassfish.grizzly.utils.JdkVersion;
 
 /**
  * TLS Server Name Indication (SNI) {@link Filter} implementation. This filter supports SNI extension on both client and
@@ -57,7 +56,6 @@ import org.glassfish.grizzly.utils.JdkVersion;
  */
 public class SNIFilter extends SSLFilter {
     private static final Logger LOGGER = Grizzly.logger(SNIFilter.class);
-    private static final boolean JDK7_OR_HIGHER = JdkVersion.getJdkVersion().compareTo(JdkVersion.parseVersion("1.7")) >= 0;
 
     private static final byte HANDSHAKE_TYPE = 0x16;
     private static final int MIN_TLS_VERSION = 0x0301;
@@ -125,10 +123,6 @@ public class SNIFilter extends SSLFilter {
      * @param resolver
      */
     public void setClientSSLConfigResolver(final SNIClientConfigResolver resolver) {
-        if (!JDK7_OR_HIGHER) {
-            LOGGER.warning("Client side SNI support requires JDK 1.7+");
-        }
-
         this.clientResolver = resolver;
     }
 
@@ -141,10 +135,6 @@ public class SNIFilter extends SSLFilter {
 
     @Override
     public NextAction handleConnect(final FilterChainContext ctx) throws IOException {
-        if (!JDK7_OR_HIGHER) {
-            return super.handleConnect(ctx);
-        }
-
         // new client-side connection
         final Connection c = ctx.getConnection();
 
