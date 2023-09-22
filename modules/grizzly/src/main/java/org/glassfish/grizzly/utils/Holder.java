@@ -69,7 +69,7 @@ public abstract class Holder<E> {
     @Override
     public String toString() {
         final E obj = get();
-        return obj != null ? "{" + obj + "}" : null;
+        return obj != null ? "{" + obj + "}" : "{}";
     }
 
     public static abstract class LazyHolder<E> extends Holder<E> {
