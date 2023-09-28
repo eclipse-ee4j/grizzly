@@ -1,4 +1,5 @@
 /*
+ * Copyright 2023 Contributors to the Eclipse Foundation.
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -107,7 +108,6 @@ public class SSLEngineConfigurator implements SSLEngineFactory {
      * @param wantClientAuth
      */
     public SSLEngineConfigurator(SSLContextConfigurator sslContextConfiguration, boolean clientMode, boolean needClientAuth, boolean wantClientAuth) {
-
         if (sslContextConfiguration == null) {
             throw new IllegalArgumentException("SSLContextConfigurator can not be null");
         }
@@ -133,6 +133,7 @@ public class SSLEngineConfigurator implements SSLEngineFactory {
     }
 
     protected SSLEngineConfigurator() {
+        this.sslParameters = new SSLParameters();
     }
 
     /**
@@ -307,7 +308,7 @@ public class SSLEngineConfigurator implements SSLEngineFactory {
 
     /**
      * Return the list of allowed protocol.
-     * 
+     *
      * @return String[] an array of supported protocols.
      */
     private static String[] configureEnabledProtocols(SSLEngine sslEngine, String[] requestedProtocols) {
