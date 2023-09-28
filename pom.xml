@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2021 Contributors to the Eclipse Foundation.
+    Copyright 2021, 2023 Contributors to the Eclipse Foundation.
     Copyright (c) 2007, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
@@ -29,7 +29,8 @@
     </parent>
 
     <artifactId>grizzly-project</artifactId>
-    <version>4.0.1-SNAPSHOT</version> <!-- Version must be repeated so versions-maven-plugin:set works correctly -->
+    <version>4.0.1-SNAPSHOT</version>
+    <!-- Version must be repeated so versions-maven-plugin:set works correctly -->
     <packaging>pom</packaging>
 
     <name>grizzly-project</name>
@@ -174,7 +175,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <defaultGoal>install</defaultGoal>
         <directory>target</directory>
@@ -189,32 +189,33 @@
                 <directory>src/test/resources/</directory>
             </testResource>
         </testResources>
-
         <pluginManagement>
             <plugins>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.11.0</version>
                     <configuration>
-                        <source>11</source>
-                        <target>11</target>
+                        <release>11</release>
                         <compilerArgument>-Xlint:unchecked,deprecation,fallthrough,finally,cast,dep-ann,empty,overrides</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>5.1.2</version>
+                    <version>5.1.9</version>
+                    <configuration>
+                        <instructions>
+                            <_noimportjava>true</_noimportjava>
+                            <_runee>JavaSE-11</_runee>
+                        </instructions>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
-
         <plugins>
             <!-- Sets minimal Maven version to 3.6.3 -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -235,10 +236,8 @@
                 </executions>
             </plugin>
 
-            <plugin><inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
+            <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
@@ -251,7 +250,7 @@
                 </configuration>
             </plugin>
 
-            <plugin><inherited>true</inherited>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
