@@ -82,6 +82,34 @@
                     </filesets>
                 </configuration>
             </plugin>
+            
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>src-dependencies</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <!-- use copy-dependencies instead if you don't want to explode the sources -->
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>sources</classifier>
+                            <excludeScope>provided</excludeScope>
+                            <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
+                            <excludes>module-info.java</excludes>
+                            <!-- fudge an actual source hierarchy so that the source
+                                 plugin can actually do something useful.  Otherwise,
+                                 you'll end up with an empty source jar -->
+                            <outputDirectory>${basedir}/src/main/java</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -90,6 +118,7 @@
                     </excludes>
                 </configuration>
             </plugin>
+            
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -128,17 +157,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <sourcepath>
-                        ${basedir}/../../grizzly-httpservice/src/main/java;
-                        ${basedir}/../../../modules/bundles/http-servlet/src/main/java;
-                    </sourcepath>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                </configuration>
-            </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -149,6 +168,7 @@
                     </execution>
                 </executions>
             </plugin>
+            
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
@@ -166,32 +186,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>src-dependencies</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <!-- use copy-dependencies instead if you don't want to explode the sources -->
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>sources</classifier>
-                            <excludeScope>provided</excludeScope>
-                            <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
-                            <excludes>module-info.java</excludes>
-                            <!-- fudge an actual source hierarchy so that the source
-                                 plugin can actually do something useful.  Otherwise,
-                                 you'll end up with an empty source jar -->
-                            <outputDirectory>${basedir}/src/main/java</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            
         </plugins>
     </build>
 </project>
