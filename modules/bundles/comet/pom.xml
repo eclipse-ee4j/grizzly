@@ -48,6 +48,53 @@
         <defaultGoal>install</defaultGoal>
         <plugins>
             <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <filesets>
+                        <!-- Make sure we remove the fake source directory. -->
+                        <fileset>
+                            <directory>src</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>src-dependencies</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <!-- use copy-dependencies instead if you don't want to explode the sources -->
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>sources</classifier>
+                            
+                            <!-- 
+
+                                As this is a bundle we are excluding 
+                                module-info.java files when unpacking the 
+                                project dependencies.
+                                 
+                                -->
+                            <excludes>module-info.java</excludes>
+                            <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
+                            <!-- fudge an actual source hierarchy so that the source
+                                 plugin can actually do something useful.  Otherwise,
+                                 you'll end up with an empty source jar -->
+                            <outputDirectory>${basedir}/src/main/java</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <configuration>
@@ -73,17 +120,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <sourcepath>
-                        ${basedir}/../http/src/main/java;
-                        ${basedir}/../../comet/src/main/java;
-                    </sourcepath>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                </configuration>
-            </plugin>
+           
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -94,18 +131,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <filesets>
-                        <!-- Make sure we remove the fake source directory. -->
-                        <fileset>
-                            <directory>src</directory>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
+          
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
@@ -123,30 +149,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>src-dependencies</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <!-- use copy-dependencies instead if you don't want to explode the sources -->
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>sources</classifier>
-                            <excludeArtifactIds>junit, hamcrest-core</excludeArtifactIds>
-                            <!-- fudge an actual source hierarchy so that the source
-                                 plugin can actually do something useful.  Otherwise,
-                                 you'll end up with an empty source jar -->
-                            <outputDirectory>${basedir}/src/main/java</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            
         </plugins>
     </build>
 </project>

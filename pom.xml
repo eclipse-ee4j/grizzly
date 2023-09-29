@@ -268,7 +268,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <javadocVersion>1.8</javadocVersion>
+                    <doclint>none</doclint>
                     <notimestamp>true</notimestamp>
                     <splitindex>true</splitindex>
                     <doctitle>${project.name} ${project.version}</doctitle>
