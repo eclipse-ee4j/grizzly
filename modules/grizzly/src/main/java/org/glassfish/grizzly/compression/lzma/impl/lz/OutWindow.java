@@ -87,7 +87,7 @@ public class OutWindow {
         if (pos < 0) {
             pos += _windowSize;
         }
-        for (; len != 0; len--) {
+        for (; len > 0; len--) {
             if (pos >= _windowSize) {
                 pos = 0;
             }

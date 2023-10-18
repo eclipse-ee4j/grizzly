@@ -16,6 +16,7 @@ import static java.util.logging.Level.WARNING;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
@@ -57,7 +58,7 @@ import org.glassfish.grizzly.utils.StringFilter;
 public class MultiEndpointPoolSample implements ClientCallback {
     private static final Logger LOGGER = Grizzly.logger(MultiEndpointPoolSample.class);
 
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new SecureRandom();
 
     public static void main(String[] args) throws Exception {
         new MultiEndpointPoolSample().exec();
