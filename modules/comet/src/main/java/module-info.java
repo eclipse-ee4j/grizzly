@@ -19,12 +19,11 @@ module org.glassfish.grizzly.comet {
     exports org.glassfish.grizzly.comet;
     
     opens org.glassfish.grizzly.comet;
-
-    requires jakarta.servlet;
+    
+    requires static jakarta.servlet;
     requires java.logging;
+    requires static java.management;
     requires org.glassfish.grizzly;
     requires org.glassfish.grizzly.http.server;
     requires org.glassfish.grizzly.http;
-
-    requires static java.management;
 }
