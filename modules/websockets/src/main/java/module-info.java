@@ -26,7 +26,7 @@ module org.glassfish.grizzly.websockets {
     opens org.glassfish.grizzly.websockets.glassfish;
     opens org.glassfish.grizzly.websockets.rfc6455;
 
-    requires jakarta.servlet;
+    requires static jakarta.servlet;
     requires java.logging;
     requires org.glassfish.grizzly;
     requires org.glassfish.grizzly.http;

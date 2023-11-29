@@ -38,16 +38,16 @@ module org.glassfish.grizzly.http.server {
     requires org.glassfish.grizzly.http;
     requires org.glassfish.grizzly;
     
-    requires gmbal;
-    requires org.glassfish.external.management.api;
-    requires pfl.basic;
-    requires pfl.tf;
-    requires org.objectweb.asm;
-    requires pfl.dynamic;
-    requires org.objectweb.asm.util;
-    requires org.objectweb.asm.tree;
-    requires org.objectweb.asm.tree.analysis;
-    requires pfl.basic.tools;
-    requires pfl.tf.tools;
-    requires org.objectweb.asm.commons;
+    requires static gmbal;
+    requires static org.glassfish.external.management.api;
+    requires static pfl.basic.tools;
+    requires static pfl.dynamic;
+    requires static pfl.basic;
+    requires static pfl.tf;
+    requires static pfl.tf.tools;
+    requires static org.objectweb.asm;
+    requires static org.objectweb.asm.util;
+    requires static org.objectweb.asm.tree;
+    requires static org.objectweb.asm.tree.analysis;
+    requires static org.objectweb.asm.commons;
 }

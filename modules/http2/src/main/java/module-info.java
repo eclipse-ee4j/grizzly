@@ -26,10 +26,9 @@ module org.glassfish.grizzly.http2 {
     opens org.glassfish.grizzly.http2.hpack;
     opens org.glassfish.grizzly.http2.utils;
     
+    requires static grizzly.npn.api;
     requires java.logging;
     requires org.glassfish.grizzly.http;
     requires org.glassfish.grizzly;
     requires org.glassfish.grizzly.http.server;
-
-    requires static grizzly.npn.api;
 }
