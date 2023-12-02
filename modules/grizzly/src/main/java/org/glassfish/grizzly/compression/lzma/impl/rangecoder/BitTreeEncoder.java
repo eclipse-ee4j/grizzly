@@ -72,7 +72,7 @@ public class BitTreeEncoder {
     public int reverseGetPrice(int symbol) {
         int price = 0;
         int m = 1;
-        for (int i = NumBitLevels; i != 0; i--) {
+        for (int i = NumBitLevels; i > 0; i--) {
             int bit = symbol & 1;
             symbol >>>= 1;
             price += RangeEncoder.getPrice(Models[m], bit);
@@ -84,7 +84,7 @@ public class BitTreeEncoder {
     public static int reverseGetPrice(short[] Models, int startIndex, int NumBitLevels, int symbol) {
         int price = 0;
         int m = 1;
-        for (int i = NumBitLevels; i != 0; i--) {
+        for (int i = NumBitLevels; i > 0; i--) {
             int bit = symbol & 1;
             symbol >>>= 1;
             price += RangeEncoder.getPrice(Models[startIndex + m], bit);

@@ -11,6 +11,7 @@
 package org.glassfish.grizzly.samples.simpleauth;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +36,7 @@ public class ServerAuthFilter extends BaseFilter {
     private final Map<Connection, String> authenticatedConnections = new ConcurrentHashMap<>();
 
     // Random, to generate client ids.
-    private final Random random = new Random();
+    private final Random random = new SecureRandom();
 
     /**
      * The method is called once we have received {@link MultiLinePacket} from a client. Filter check if incoming message is

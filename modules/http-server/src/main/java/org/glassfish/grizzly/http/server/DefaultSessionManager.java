@@ -16,6 +16,7 @@
 
 package org.glassfish.grizzly.http.server;
 
+import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -50,7 +51,7 @@ public class DefaultSessionManager implements SessionManager {
      */
     private final ConcurrentMap<String, Session> sessions = new ConcurrentHashMap<>();
 
-    private final Random rnd = new Random();
+    private final Random rnd = new SecureRandom();
 
     private String sessionCookieName = Globals.SESSION_COOKIE_NAME;
 

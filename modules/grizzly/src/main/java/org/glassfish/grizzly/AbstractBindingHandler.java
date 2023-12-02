@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.channels.Channel;
+import java.security.SecureRandom;
 import java.util.Random;
 
 import org.glassfish.grizzly.nio.NIOTransport;
@@ -29,7 +30,7 @@ import org.glassfish.grizzly.nio.NIOTransport;
  * @since 2.2.19
  */
 public abstract class AbstractBindingHandler implements SocketBinder {
-    protected static final Random RANDOM = new Random();
+    protected static final Random RANDOM = new SecureRandom();
     protected final NIOTransport transport;
     protected Processor processor;
     protected ProcessorSelector processorSelector;
