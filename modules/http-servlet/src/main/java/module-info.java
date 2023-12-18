@@ -22,7 +22,7 @@ module org.glassfish.grizzly.servlet {
     
     opens org.glassfish.grizzly.servlet;
     
-    requires jakarta.servlet;
+    requires static jakarta.servlet;
     requires java.logging;
     requires org.glassfish.grizzly.http.server;
     requires org.glassfish.grizzly.http;
