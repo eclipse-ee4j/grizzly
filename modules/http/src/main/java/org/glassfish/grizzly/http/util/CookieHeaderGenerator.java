@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2022 Contributors to the Eclipse Foundation
+ * Copyright (c) 2022, 2024 Contributors to the Eclipse Foundation
  * Copyright 2004, 2022 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,8 +89,13 @@ public class CookieHeaderGenerator {
         // RFC 6265 prefers Max-Age to Expires but... (see below)
         if (maxAge > -1) {
             // Negative Max-Age is equivalent to no Max-Age
-            header.append("; Max-Age=");
-            header.append(maxAge);
+
+            // Max age 0 is omit Max-Age itself, but conditionally (see below)
+            // add Expires
+            if (maxAge > 0) {
+                header.append("; Max-Age=");
+                header.append(maxAge);
+            }
 
             if (CookieUtils.ALWAYS_ADD_EXPIRES) {
                 // Microsoft IE and Microsoft Edge don't understand Max-Age so send
@@ -149,8 +154,10 @@ public class CookieHeaderGenerator {
                     validateAttribute(entry.getKey(), entry.getValue());
                     header.append("; ");
                     header.append(entry.getKey());
-                    header.append('=');
-                    header.append(entry.getValue());
+                    if (!"".equals(entry.getValue())) {
+                        header.append('=');
+                        header.append(entry.getValue());
+                    }
                 }
             }
         }
