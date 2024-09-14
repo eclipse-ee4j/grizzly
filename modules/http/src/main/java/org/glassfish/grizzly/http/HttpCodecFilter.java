@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -37,6 +37,7 @@ import org.glassfish.grizzly.http.util.BufferChunk;
 import org.glassfish.grizzly.http.util.ByteChunk;
 import org.glassfish.grizzly.http.util.CacheableDataChunk;
 import org.glassfish.grizzly.http.util.Constants;
+import org.glassfish.grizzly.http.util.CookieHeaderParser;
 import org.glassfish.grizzly.http.util.DataChunk;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.MimeHeaders;
@@ -707,8 +708,13 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 parsingState.subState++;
             }
             case 1: { // parse header name
-                if (!parseHeaderName(httpHeader, mimeHeaders, parsingState, input, end)) {
+                final int result = parseHeaderName(httpHeader, mimeHeaders, parsingState, input, end);
+                if (result == -1) {
                     return false;
+                } else if (result == -2) { // EOL. ignore field-lines
+                    parsingState.subState = 0;
+                    parsingState.start = -1;
+                    return true;
                 }
 
                 parsingState.subState++;
@@ -754,7 +760,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
         }
     }
 
-    protected boolean parseHeaderName(final HttpHeader httpHeader, final MimeHeaders mimeHeaders, final HeaderParsingState parsingState, final byte[] input,
+    protected int parseHeaderName(final HttpHeader httpHeader, final MimeHeaders mimeHeaders, final HeaderParsingState parsingState, final byte[] input,
             final int end) {
         final int arrayOffs = parsingState.arrayOffset;
 
@@ -770,19 +776,33 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 parsingState.offset = offset + 1 - arrayOffs;
                 finalizeKnownHeaderNames(httpHeader, parsingState, input, start, offset);
 
-                return true;
+                return 0;
             } else if (b >= Constants.A && b <= Constants.Z) {
                 if (!preserveHeaderCase) {
                     b -= Constants.LC_OFFSET;
                 }
                 input[offset] = b;
+            } else if (b == Constants.CR) {
+                parsingState.offset = offset - arrayOffs;
+                final int eol = checkEOL(parsingState, input, end);
+                if (eol == 0) { // EOL
+                    // the offset is already increased in the check
+                    return -2;
+                } else if (eol == -2) { // not enough data
+                    // by keeping the offset unchanged, we will recheck the EOL at the next opportunity.
+                    break;
+                }
             }
 
+            if (!CookieHeaderParser.isToken(b)) {
+                throw new IllegalStateException(
+                        "An invalid character 0x" + Integer.toHexString(b) + " was found in the header name");
+            }
             offset++;
         }
 
         parsingState.offset = offset - arrayOffs;
-        return false;
+        return -1;
     }
 
     protected static int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final byte[] input, final int end) {
@@ -963,8 +983,13 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 parsingState.subState++;
             }
             case 1: { // parse header name
-                if (!parseHeaderName(httpHeader, mimeHeaders, parsingState, input)) {
+                final int result = parseHeaderName(httpHeader, mimeHeaders, parsingState, input);
+                if (result == -1) {
                     return false;
+                } else if (result == -2) { // EOL. ignore field-lines
+                    parsingState.subState = 0;
+                    parsingState.start = -1;
+                    return true;
                 }
 
                 parsingState.subState++;
@@ -1010,7 +1035,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
         }
     }
 
-    protected boolean parseHeaderName(final HttpHeader httpHeader, final MimeHeaders mimeHeaders, final HeaderParsingState parsingState, final Buffer input) {
+    protected int parseHeaderName(final HttpHeader httpHeader, final MimeHeaders mimeHeaders, final HeaderParsingState parsingState, final Buffer input) {
         final int limit = Math.min(input.limit(), parsingState.packetLimit);
         final int start = parsingState.start;
         int offset = parsingState.offset;
@@ -1023,19 +1048,33 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 parsingState.offset = offset + 1;
                 finalizeKnownHeaderNames(httpHeader, parsingState, input, start, offset);
 
-                return true;
+                return 0;
             } else if (b >= Constants.A && b <= Constants.Z) {
                 if (!preserveHeaderCase) {
                     b -= Constants.LC_OFFSET;
                 }
                 input.put(offset, b);
+            } else if (b == Constants.CR) {
+                parsingState.offset = offset;
+                final int eol = checkEOL(parsingState, input);
+                if (eol == 0) { // EOL
+                    // the offset is already increased in the check
+                    return -2;
+                } else if (eol == -2) { // not enough data
+                    // by keeping the offset unchanged, we will recheck the EOL at the next opportunity.
+                    break;
+                }
             }
 
+            if (!CookieHeaderParser.isToken(b)) {
+                throw new IllegalStateException(
+                        "An invalid character 0x" + Integer.toHexString(b) + " was found in the header name");
+            }
             offset++;
         }
 
         parsingState.offset = offset;
-        return false;
+        return -1;
     }
 
     protected static int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final Buffer input) {
