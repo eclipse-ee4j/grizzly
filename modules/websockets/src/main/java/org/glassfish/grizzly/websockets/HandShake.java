@@ -64,7 +64,7 @@ public abstract class HandShake {
             resourcePath += "?" + url.getQuery();
         }
         serverHostName = url.getHost();
-        secure = "wss://".equals(url.getScheme());
+        secure = "wss".equals(url.getScheme());
         port = url.getPort();
 
         final StringBuilder sb = new StringBuilder(32).append(getScheme()).append("://").append(url.getHost());
@@ -385,6 +385,6 @@ public abstract class HandShake {
     }
 
     private String getScheme() {
-        return isSecure() ? "ws" : "wss";
+        return isSecure() ? "wss" : "ws";
     }
 }
