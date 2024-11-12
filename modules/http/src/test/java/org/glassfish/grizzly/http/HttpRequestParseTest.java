@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -50,6 +49,9 @@ import org.glassfish.grizzly.utils.Pair;
 
 import junit.framework.TestCase;
 
+import static org.glassfish.grizzly.http.HttpCodecFilter.STRICT_HEADER_NAME_VALIDATION_RFC_9110;
+import static org.glassfish.grizzly.http.HttpCodecFilter.STRICT_HEADER_VALUE_VALIDATION_RFC_9110;
+
 /**
  * Testing HTTP request parsing
  *
@@ -58,6 +60,20 @@ import junit.framework.TestCase;
 public class HttpRequestParseTest extends TestCase {
 
     public static final int PORT = 19000;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        System.setProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110, String.valueOf(Boolean.TRUE));
+        System.setProperty(STRICT_HEADER_VALUE_VALIDATION_RFC_9110, String.valueOf(Boolean.TRUE));
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        System.setProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110, String.valueOf(Boolean.FALSE));
+        System.setProperty(STRICT_HEADER_VALUE_VALIDATION_RFC_9110, String.valueOf(Boolean.FALSE));
+    }
 
     public void testCustomMethod() throws Exception {
         doHttpRequestTest("TAKE", "/index.html", "HTTP/1.0", Collections.<String, Pair<String, String>>emptyMap(), "\r\n");
@@ -101,6 +117,27 @@ public class HttpRequestParseTest extends TestCase {
         }
         try {
             doTestDecoder("GET /index.html HTTP/1.1\nHost: localhost\nContent-\rLength: 1234\n\n", 128);
+            fail("Bad HTTP headers exception had to be thrown");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+    }
+
+    public void testDisallowedCharactersForHeaderContentValues() {
+        try {
+            doTestDecoder("GET /index.html HTTP/1.1\nHost: loca\\rlhost\nContent -Length: 1234\n\n", 128);
+            fail("Bad HTTP headers exception had to be thrown");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+        try {
+            doTestDecoder("GET /index.html HTTP/1.1\nHost: loca\\nlhost\nContent-Length: 1234\n\n", 128);
+            fail("Bad HTTP headers exception had to be thrown");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+        try {
+            doTestDecoder("GET /index.html HTTP/1.1\nHost: loca\\0lhost\nContent-Length: 1234\n\n", 128);
             fail("Bad HTTP headers exception had to be thrown");
         } catch (IllegalStateException e) {
             // expected

@@ -113,9 +113,9 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
      */
     private boolean removeHandledContentEncodingHeaders = false;
     
-    private static final String STRICT_HEADER_NAME_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_NAME_VALIDATION_RFC_9110";
+    public static final String STRICT_HEADER_NAME_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_NAME_VALIDATION_RFC_9110";
     
-    private static final String STRICT_HEADER_VALUE_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_VALUE_VALIDATION_RFC_9110";
+    public static final String STRICT_HEADER_VALUE_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_VALUE_VALIDATION_RFC_9110";
     
     private static final boolean isStrictHeaderNameValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110));
     
