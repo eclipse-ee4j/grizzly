@@ -22,11 +22,14 @@ import static org.glassfish.grizzly.http.util.HttpCodecUtils.skipSpaces;
 import static org.glassfish.grizzly.utils.Charsets.ASCII_CHARSET;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import java.util.regex.Pattern;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -109,6 +112,16 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
      * @see #setRemoveHandledContentEncodingHeaders
      */
     private boolean removeHandledContentEncodingHeaders = false;
+    
+    public static final String STRICT_HEADER_NAME_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_NAME_VALIDATION_RFC_9110";
+    
+    public static final String STRICT_HEADER_VALUE_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_VALUE_VALIDATION_RFC_9110";
+    
+    private static final boolean isStrictHeaderNameValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110));
+    
+    private static final boolean isStrictHeaderValueValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_VALUE_VALIDATION_RFC_9110));
+    
+    private static final String REGEX_RFC_9110_INVALID_CHARACTERS = "(\\\\n)|(\\\\0)|(\\\\r)|(\\\\x00)|(\\\\x0A)|(\\\\x0D)";
 
     /**
      * File cache probes
@@ -782,7 +795,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                     b -= Constants.LC_OFFSET;
                 }
                 input[offset] = b;
-            } else if (b == Constants.CR) {
+            } else if (isStrictHeaderNameValidationSet && b == Constants.CR) {
                 parsingState.offset = offset - arrayOffs;
                 final int eol = checkEOL(parsingState, input, end);
                 if (eol == 0) { // EOL
@@ -794,7 +807,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 }
             }
 
-            if (!CookieHeaderParser.isToken(b)) {
+            if (isStrictHeaderNameValidationSet && !CookieHeaderParser.isToken(b)) {
                 throw new IllegalStateException(
                         "An invalid character 0x" + Integer.toHexString(b) + " was found in the header name");
             }
@@ -829,6 +842,10 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                         parsingState.offset = offset + 1 - arrayOffs;
                         finalizeKnownHeaderValues(httpHeader, parsingState, input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
                         parsingState.headerValueStorage.setBytes(input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
+                        if (isStrictHeaderValueValidationSet) {
+                            //make validation with regex mode
+                            validateRFC9110Characters(input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
+                        }
                         return 0;
                     }
                 }
@@ -849,11 +866,35 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
                 }
                 parsingState.checkpoint2 = parsingState.checkpoint;
             }
-
+            
             offset++;
         }
         parsingState.offset = offset - arrayOffs;
         return -1;
+    }
+
+    private static void validateRFC9110Characters(final byte[] headerValueContent, int start, int end) {
+        if (headerValueContent != null) {
+            if (isInvalidCharacterAvailable(start, end, headerValueContent)) {
+                throw new IllegalStateException(
+                        "An invalid character NUL, LF or CR found in the header value: " + headerValueContent.toString());
+            }
+        }
+    }
+
+    /**
+     * This method evaluates the String from the bytes that contains Header Value and validates if contains literal value
+     * of \n, \r or \0 , in case any of those characters are available return true
+     * @param start index of the starting point to extract characters from the byte array
+     * @param end index of the end point to extract characters from the byte array
+     * @param bytesFromByteChunk represents the bytes from the request message to be processed
+     * @return Boolean true if any of those characters are available
+     */
+    private static boolean isInvalidCharacterAvailable(int start, int end, byte[] bytesFromByteChunk) {
+        byte[] bytesFromHeaderValue = Arrays.copyOfRange(bytesFromByteChunk, start, end);
+        String uft8String = new String(bytesFromHeaderValue, StandardCharsets.UTF_8);
+        Pattern pattern = Pattern.compile(REGEX_RFC_9110_INVALID_CHARACTERS);
+        return pattern.matcher(uft8String).find();
     }
 
     private static void finalizeKnownHeaderNames(final HttpHeader httpHeader, final HeaderParsingState parsingState, final byte[] input, final int start,
