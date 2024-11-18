@@ -124,6 +124,15 @@ public class HttpRequestParseTest extends TestCase {
     }
 
     public void testDisallowedCharactersForHeaderContentValues() {
+        final StringBuilder sb = new StringBuilder("GET / HTTP/1.1\r\n");
+        sb.append("Host: localhost\r\n");
+        sb.append("Some-Header: some-");
+        // valid header values
+        sb.append(new char[]{'\t', ' ', '\"', '(', ')', '/', ';', '<', '=', '>', '?', '@', '[', 0x5c, ']', '{', '}'})
+          .append("\r\n");
+        sb.append("\r\n");
+        doTestDecoder(sb.toString(), 128);
+
         try {
             doTestDecoder("GET /index.html HTTP/1.1\nHost: loca\\rlhost\nContent -Length: 1234\n\n", 128);
             fail("Bad HTTP headers exception had to be thrown");
@@ -141,6 +150,16 @@ public class HttpRequestParseTest extends TestCase {
             fail("Bad HTTP headers exception had to be thrown");
         } catch (IllegalStateException e) {
             // expected
+        }
+
+        final char[] invalidChars = new char[]{0x00, 0x01, 0x02, '\r'};
+        for (final char ch : invalidChars) {
+            try {
+                doTestDecoder("GET /index.html HTTP/1.1\nHost: localhost\nSome-Header: some-" + ch + "value\n\n", 128);
+                fail("Bad HTTP headers exception had to be thrown");
+            } catch (IllegalStateException e) {
+                // expected
+            }
         }
     }
 

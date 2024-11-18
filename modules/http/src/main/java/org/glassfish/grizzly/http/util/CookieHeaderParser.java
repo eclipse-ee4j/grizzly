@@ -248,6 +248,15 @@ public class CookieHeaderParser {
         }
     }
 
+    public static boolean isText(int c) {
+        // Fast for correct values, slower for incorrect ones
+        try {
+            return isText[c];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            return false;
+        }
+    }
+
 
     /**
      * Custom implementation that skips many of the safety checks in
