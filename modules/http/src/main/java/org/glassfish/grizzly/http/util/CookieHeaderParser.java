@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2022 Contributors to the Eclipse Foundation
+ * Copyright (c) 2022, 2024 Contributors to the Eclipse Foundation
  * Copyright 2004, 2022 The Apache Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
