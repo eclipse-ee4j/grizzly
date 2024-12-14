@@ -114,9 +114,9 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
     
     public static final String STRICT_HEADER_VALUE_VALIDATION_RFC_9110 = "org.glassfish.grizzly.http.STRICT_HEADER_VALUE_VALIDATION_RFC_9110";
     
-    private static final boolean isStrictHeaderNameValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110));
+    private final boolean isStrictHeaderNameValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_NAME_VALIDATION_RFC_9110));
     
-    private static final boolean isStrictHeaderValueValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_VALUE_VALIDATION_RFC_9110));
+    private final boolean isStrictHeaderValueValidationSet = Boolean.parseBoolean(System.getProperty(STRICT_HEADER_VALUE_VALIDATION_RFC_9110));
 
     /**
      * File cache probes
@@ -813,7 +813,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
         return -1;
     }
 
-    protected static int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final byte[] input, final int end) {
+    protected int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final byte[] input, final int end) {
 
         final int arrayOffs = parsingState.arrayOffset;
         final int limit = Math.min(end, arrayOffs + parsingState.packetLimit);
@@ -826,37 +826,40 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
             final byte b = input[offset];
             if (b == Constants.CR) {
                 if (isStrictHeaderValueValidationSet) {
-                    if (offset + 1 < limit) {
-                        final byte b2 = input[offset + 1];
-                        if (b2 == Constants.LF) {
-                            // Continue for next parsing without the validation
-                            offset++;
-                            continue;
-                        }
-                    } else {
-                        // not enough data
-                        parsingState.offset = offset - arrayOffs;
+                    parsingState.offset = offset - arrayOffs;
+                    final int eol = checkEOL(parsingState, input, end);
+                    if (eol == 0) { // EOL
+                        // the offset is already increased in the check
+                        finalizeKnownHeaderValues(httpHeader, parsingState, input, arrayOffs + parsingState.start,
+                                                  arrayOffs + parsingState.checkpoint2);
+                        parsingState.headerValueStorage.setBytes(input, arrayOffs + parsingState.start,
+                                                                 arrayOffs + parsingState.checkpoint2);
+                        return 0;
+                    } else if (eol == -2) { // not enough data
+                        // by keeping the offset unchanged, we will recheck the EOL at the next opportunity.
                         return -1;
                     }
                 }
             } else if (b == Constants.LF) {
-                // Check if it's not multi line header
-                if (offset + 1 < limit) {
-                    final byte b2 = input[offset + 1];
-                    if (b2 == Constants.SP || b2 == Constants.HT) {
-                        input[arrayOffs + parsingState.checkpoint++] = b2;
-                        parsingState.offset = offset + 2 - arrayOffs;
-                        return -2;
-                    } else {
-                        parsingState.offset = offset + 1 - arrayOffs;
-                        finalizeKnownHeaderValues(httpHeader, parsingState, input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
-                        parsingState.headerValueStorage.setBytes(input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
-                        return 0;
+                if (!isStrictHeaderValueValidationSet) {
+                    // Check if it's not multi line header
+                    if (offset + 1 < limit) {
+                        final byte b2 = input[offset + 1];
+                        if (b2 == Constants.SP || b2 == Constants.HT) {
+                            input[arrayOffs + parsingState.checkpoint++] = b2;
+                            parsingState.offset = offset + 2 - arrayOffs;
+                            return -2;
+                        } else {
+                            parsingState.offset = offset + 1 - arrayOffs;
+                            finalizeKnownHeaderValues(httpHeader, parsingState, input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
+                            parsingState.headerValueStorage.setBytes(input, arrayOffs + parsingState.start, arrayOffs + parsingState.checkpoint2);
+                            return 0;
+                        }
                     }
+                    // not enough data
+                    parsingState.offset = offset - arrayOffs;
+                    return -1;
                 }
-
-                parsingState.offset = offset - arrayOffs;
-                return -1;
             } else if (b == Constants.SP) {
                 if (hasShift) {
                     input[arrayOffs + parsingState.checkpoint++] = b;
@@ -1103,7 +1106,7 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
         return -1;
     }
 
-    protected static int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final Buffer input) {
+    protected int parseHeaderValue(final HttpHeader httpHeader, final HeaderParsingState parsingState, final Buffer input) {
 
         final int limit = Math.min(input.limit(), parsingState.packetLimit);
 
@@ -1115,37 +1118,39 @@ public abstract class HttpCodecFilter extends HttpBaseFilter implements Monitori
             final byte b = input.get(offset);
             if (b == Constants.CR) {
                 if (isStrictHeaderValueValidationSet) {
-                    if (offset + 1 < limit) {
-                        final byte b2 = input.get(offset + 1);
-                        if (b2 == Constants.LF) {
-                            // Continue for next parsing without the validation
-                            offset++;
-                            continue;
-                        }
-                    } else {
-                        // not enough data
-                        parsingState.offset = offset;
+                    parsingState.offset = offset;
+                    final int eol = checkEOL(parsingState, input);
+                    if (eol == 0) { // EOL
+                        // the offset is already increased in the check
+                        finalizeKnownHeaderValues(httpHeader, parsingState, input, parsingState.start,
+                                                  parsingState.checkpoint2);
+                        parsingState.headerValueStorage.setBuffer(input, parsingState.start, parsingState.checkpoint2);
+                        return 0;
+                    } else if (eol == -2) { // not enough data
+                        // by keeping the offset unchanged, we will recheck the EOL at the next opportunity.
                         return -1;
                     }
                 }
             } else if (b == Constants.LF) {
-                // Check if it's not multi line header
-                if (offset + 1 < limit) {
-                    final byte b2 = input.get(offset + 1);
-                    if (b2 == Constants.SP || b2 == Constants.HT) {
-                        input.put(parsingState.checkpoint++, b2);
-                        parsingState.offset = offset + 2;
-                        return -2;
-                    } else {
-                        parsingState.offset = offset + 1;
-                        finalizeKnownHeaderValues(httpHeader, parsingState, input, parsingState.start, parsingState.checkpoint2);
-                        parsingState.headerValueStorage.setBuffer(input, parsingState.start, parsingState.checkpoint2);
-                        return 0;
+                if (!isStrictHeaderValueValidationSet) {
+                    // Check if it's not multi line header
+                    if (offset + 1 < limit) {
+                        final byte b2 = input.get(offset + 1);
+                        if (b2 == Constants.SP || b2 == Constants.HT) {
+                            input.put(parsingState.checkpoint++, b2);
+                            parsingState.offset = offset + 2;
+                            return -2;
+                        } else {
+                            parsingState.offset = offset + 1;
+                            finalizeKnownHeaderValues(httpHeader, parsingState, input, parsingState.start, parsingState.checkpoint2);
+                            parsingState.headerValueStorage.setBuffer(input, parsingState.start, parsingState.checkpoint2);
+                            return 0;
+                        }
                     }
+                    // not enough data
+                    parsingState.offset = offset;
+                    return -1;
                 }
-
-                parsingState.offset = offset;
-                return -1;
             } else if (b == Constants.SP) {
                 if (hasShift) {
                     input.put(parsingState.checkpoint++, b);
