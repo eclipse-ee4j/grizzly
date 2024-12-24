@@ -32,9 +32,13 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java_version }}
+    - name: Install Maven
+      run: |
+        curl -o ./apache-maven-3.9.9-bin.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+        tar -xf ./apache-maven-3.9.9-bin.tar.gz
     - name: Maven Build
       run: |
-        mvn --show-version \
+        ./apache-maven-3.9.9/bin/mvn --show-version \
             --no-transfer-progress \
             --activate-profiles staging \
             --define skipTests=true \
@@ -57,9 +61,13 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java_version }}
+    - name: Install Maven
+      run: |
+        curl -o ./apache-maven-3.9.9-bin.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+        tar -xf ./apache-maven-3.9.9-bin.tar.gz
     - name: Maven Build
       run: |
-        mvn --show-version \
+        ./apache-maven-3.9.9/bin/mvn --show-version \
             --no-transfer-progress \
             --fail-at-end \
             --activate-profiles staging \
