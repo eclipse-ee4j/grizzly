@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024 Contributors to the Eclipse Foundation
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  * Copyright 2004 The Apache Software Foundation
  *
@@ -18,16 +19,13 @@
 package org.glassfish.grizzly.http.server;
 
 import static org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARACTER_ENCODING;
+import static org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -38,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.CloseType;
 import org.glassfish.grizzly.Closeable;
@@ -673,7 +670,7 @@ public class Response {
 
     /**
      * Flush the current buffered content to the network.
-     * 
+     *
      * @throws IOException if an occur occurs flushing to the wire.
      */
     public void flush() throws IOException {
@@ -954,17 +951,7 @@ public class Response {
         final StringBuilder sb = new StringBuilder();
         // web application code can receive a IllegalArgumentException
         // from the appendCookieValue invokation
-        if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(new PrivilegedAction() {
-                @Override
-                public Object run() {
-                    CookieSerializerUtils.serializeServerCookie(sb, cookie);
-                    return null;
-                }
-            });
-        } else {
-            CookieSerializerUtils.serializeServerCookie(sb, cookie);
-        }
+        CookieSerializerUtils.serializeServerCookie(sb, cookie);
 
         // if we reached here, no exception, cookie is valid
         // the header name is Set-Cookie for both "old" and v.1 ( RFC2109 )
@@ -988,17 +975,7 @@ public class Response {
         final StringBuilder sb = new StringBuilder();
         // web application code can receive a IllegalArgumentException
         // from the appendCookieValue invokation
-        if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    CookieSerializerUtils.serializeServerCookie(sb, cookie);
-                    return null;
-                }
-            });
-        } else {
-            CookieSerializerUtils.serializeServerCookie(sb, cookie);
-        }
+        CookieSerializerUtils.serializeServerCookie(sb, cookie);
 
         final String cookieString = sb.toString();
 
@@ -1279,7 +1256,18 @@ public class Response {
      * @exception java.io.IOException if an input/output error occurs
      */
     public void sendRedirect(String location) throws IOException {
+        sendRedirect(location, 302, appCommitted);
+    }
 
+    /**
+     * Send a temporary redirect to the specified redirect location URL.
+     *
+     * @param location Location URL to redirect to
+     *
+     * @exception IllegalStateException if this response has already been committed
+     * @exception java.io.IOException if an input/output error occurs
+     */
+    public void sendRedirect(String location, int sc, boolean clearBuffer) throws IOException {
         if (isCommitted()) {
             throw new IllegalStateException("Illegal attempt to redirect the response as the response has been committed.");
         }
@@ -1291,7 +1279,7 @@ public class Response {
         try {
             String absolute = toAbsolute(location, true);
             // END RIMOD 4642650
-            setStatus(HttpStatus.FOUND_302);
+            setStatus(HttpStatus.getHttpStatus(sc));
             setHeader(Header.Location, absolute);
 
             // According to RFC2616 section 10.3.3 302 Found,
@@ -1317,7 +1305,7 @@ public class Response {
                 getWriter().flush();
             } catch (IllegalStateException ise1) {
                 try {
-                    getOutputStream().write(sb.toString().getBytes(org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET));
+                    getOutputStream().write(sb.toString().getBytes(DEFAULT_HTTP_CHARSET));
                 } catch (IllegalStateException ise2) {
                     // ignore; the RFC says "SHOULD" so it is acceptable
                     // to omit the body in case of an error
@@ -1505,12 +1493,12 @@ public class Response {
 
     /**
      * Set the HTTP status and message to be returned with this response.
-     * 
+     *
      * @param status {@link HttpStatus} to set
      */
     public void setStatus(HttpStatus status) {
-
         checkResponse();
+
         if (isCommitted()) {
             return;
         }
@@ -1563,22 +1551,7 @@ public class Response {
                     final int pos = relativePath.lastIndexOf('/');
                     relativePath = relativePath.substring(0, pos);
 
-                    final String encodedURI;
-                    if (System.getSecurityManager() != null) {
-                        try {
-                            final String frelativePath = relativePath;
-                            encodedURI = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
-                                @Override
-                                public String run() throws IOException {
-                                    return urlEncoder.encodeURL(frelativePath);
-                                }
-                            });
-                        } catch (PrivilegedActionException pae) {
-                            throw new IllegalArgumentException(location, pae.getCause());
-                        }
-                    } else {
-                        encodedURI = urlEncoder.encodeURL(relativePath);
-                    }
+                    final String encodedURI = urlEncoder.encodeURL(relativePath);
 
                     cc.append(encodedURI, 0, encodedURI.length());
                     cc.append('/');
@@ -1699,7 +1672,7 @@ public class Response {
     /**
      * Return <tt>true<//tt> if that {@link Response#suspend()} has been
      * invoked and set to <tt>true</tt>
-     * 
+     *
      * @return <tt>true<//tt> if that {@link Response#suspend()} has been
      * invoked and set to <tt>true</tt>
      */
@@ -1924,7 +1897,7 @@ public class Response {
 
         /**
          * Marks {@link Response} as cancelled, but doesn't resume associated {@link FilterChainContext} invocation.
-         * 
+         *
          * @deprecated
          */
         @Deprecated

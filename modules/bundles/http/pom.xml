@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2021 Contributors to the Eclipse Foundation.
+    Copyright 2021, 2023 Contributors to the Eclipse Foundation.
     Copyright (c) 2009, 2020 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-project</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.1.0-SNAPSHOT</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
@@ -65,61 +65,8 @@
         <defaultGoal>install</defaultGoal>
         <plugins>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <instructions>
-                        <Import-Package>
-                            !android.os,
-                            *,
-                        </Import-Package>
-                        <Export-Package>
-                            org.glassfish.grizzly.*;version=${project.version};-split-package:=merge-first,
-                        </Export-Package>
-                        <Embed-Dependency>org.glassfish.grizzly;scope=runtime
-                        </Embed-Dependency>
-                    </instructions>
-                    <unpackBundle>true</unpackBundle>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>osgi-bundle</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>bundle</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <sourcepath>
-                        ${basedir}/../core/src/main/java;
-                        ${basedir}/../../http/src/main/java;
-                        ${basedir}/../../http-server/src/main/java;
-                        ${basedir}/../../http2/src/main/java;
-                        ${basedir}/../../http-ajp/src/main/java;
-                        ${basedir}/../../../extras/http-server-multipart/src/main/java;
-                    </sourcepath>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>fudge-source</id>
-                        <phase>install</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.3.2</version>
                 <configuration>
                     <filesets>
                         <!-- Make sure we remove the fake source directory. -->
@@ -129,27 +76,10 @@
                     </filesets>
                 </configuration>
             </plugin>
+            
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <configuration>
-                            <target>
-                                <delete dir="src" includeemptydirs="true" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <id>src-dependencies</id>
@@ -176,6 +106,63 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Import-Package>
+                            !android.os,
+                            *,
+                        </Import-Package>
+                        <Export-Package>
+                            org.glassfish.grizzly.*;version=${project.version};-split-package:=merge-first,
+                        </Export-Package>
+                        <Embed-Dependency>org.glassfish.grizzly;scope=runtime
+                        </Embed-Dependency>
+                    </instructions>
+                    <unpackBundle>true</unpackBundle>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>osgi-bundle</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fudge-source</id>
+                        <phase>install</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <delete dir="src" includeemptydirs="true" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
