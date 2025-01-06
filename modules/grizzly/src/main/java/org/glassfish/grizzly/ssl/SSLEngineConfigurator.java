@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Contributors to the Eclipse Foundation.
+ * Copyright 2023, 2024 Contributors to the Eclipse Foundation.
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -184,7 +184,7 @@ public class SSLEngineConfigurator implements SSLEngineFactory {
 
         SSLParameters params = copy(sslParameters);
 
-        String[] enabledCipherSuites = params.getProtocols();
+        String[] enabledCipherSuites = params.getCipherSuites();
         if (enabledCipherSuites != null) {
             enabledCipherSuites = configureEnabledCiphers(sslEngine, enabledCipherSuites);
             params.setCipherSuites(enabledCipherSuites);
