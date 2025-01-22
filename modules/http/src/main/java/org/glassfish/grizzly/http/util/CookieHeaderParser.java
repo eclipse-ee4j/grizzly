@@ -236,9 +236,26 @@ public class CookieHeaderParser {
     }
 
     public static boolean isToken(int c) {
+        if (c < 0 || c >= ARRAY_SIZE) {
+            // out of bounds
+            return false;
+        }
         // Fast for correct values, slower for incorrect ones
         try {
             return IS_TOKEN[c];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            return false;
+        }
+    }
+
+    public static boolean isText(int c) {
+        if (c < 0 || c >= 256) {
+            // out of bounds
+            return false;
+        }
+        // Fast for correct values, slower for incorrect ones
+        try {
+            return isText[c];
         } catch (ArrayIndexOutOfBoundsException ex) {
             return false;
         }
