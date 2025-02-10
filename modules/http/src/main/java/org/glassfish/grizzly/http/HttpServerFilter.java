@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -530,11 +530,11 @@ public class HttpServerFilter extends HttpCodecFilter {
 
         final ServerHttpRequestImpl request = (ServerHttpRequestImpl) httpHeader;
 
-        prepareRequest(request, buffer.hasRemaining());
+        prepareRequest(request, buffer.hasRemaining(), ctx);
         return request.getProcessingState().error;
     }
 
-    private void prepareRequest(final ServerHttpRequestImpl request, final boolean hasReadyContent) {
+    private void prepareRequest(final ServerHttpRequestImpl request, final boolean hasReadyContent, final FilterChainContext ctx) {
 
         final ProcessingState state = request.getProcessingState();
         final HttpResponsePacket response = request.getResponse();
@@ -644,9 +644,12 @@ public class HttpServerFilter extends HttpCodecFilter {
         }
 
         if (request.requiresAcknowledgement()) {
-            // if we have any request content, we can ignore the Expect
-            // request
-            request.requiresAcknowledgement(isHttp11 && !hasReadyContent);
+            if (!isHttp11 || hasReadyContent) {
+                // if we have any request content, we can ignore the Expect request
+                request.requiresAcknowledgement(false);
+            } else if (request.isChunked()) {
+                sendAcknowledgment(request, response, ctx);
+            }
         }
     }
 
@@ -1064,6 +1067,25 @@ public class HttpServerFilter extends HttpCodecFilter {
     private boolean checkContentLengthRemainder(final HttpRequestPacket httpRequest) {
         return maxPayloadRemainderToSkip < 0 || httpRequest.getContentLength() <= 0
                 || ((HttpPacketParsing) httpRequest).getContentParsingState().chunkRemainder <= maxPayloadRemainderToSkip;
+    }
+
+    // similar to HttpHandler#sendAcknowledgment()
+    private void sendAcknowledgment(final HttpRequestPacket request, final HttpResponsePacket response,
+                                    final FilterChainContext ctx) {
+        if ("100-continue".equalsIgnoreCase(request.getHeader(Header.Expect))) {
+            // 100-continue is intercepted and acknowledged with a response line with the status 100 in Chunked Transfer Coding.
+            // The request processing will continue after acknowledgment of the expectation.
+            response.setStatus(HttpStatus.CONINTUE_100);
+            response.setAcknowledgement(true);
+            final Buffer resBuf = encodeHttpPacket(ctx, response);
+            if (resBuf != null) {
+                HttpProbeNotifier.notifyDataSent(this, ctx.getConnection(), resBuf);
+                ctx.write(resBuf);
+            }
+        } else {
+            response.setStatus(HttpStatus.EXPECTATION_FAILED_417);
+            sendBadRequestResponse(ctx, response);
+        }
     }
 
     // ---------------------------------------------------------- Nested Classes
